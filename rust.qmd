@@ -434,9 +434,9 @@ These look like operators but are actually conventions or syntax:
 | `?` | Error propagation (actually IS an operator, see above) | `file.read()?` |
 | `.await` | Async/await syntax (postfix keyword) | `future.await` |
 
-**Operator Overloading**
+#### Operator Overloading
 
-Many operators can be overloaded by implementing traits from `std::ops`:
+Many operators can be overloaded by implementing traits from [`std::ops`](https://doc.rust-lang.org/std/ops/index.html). For example:
 
 ```rust
 use std::ops::Add;
@@ -459,19 +459,59 @@ let p2 = Point { x: 3, y: 4 };
 let p3 = p1 + p2;  // uses our Add implementation
 ```
 
-**Common Operator Traits**
+In the following table we include some of A listers and indicate the operator, the trait (in `std::ops`) and the method signature. For a complete list, see [`std::ops`](https://doc.rust-lang.org/std/ops/index.html#traits).
 
 | Operator | Trait | Method |
 |----------|-------|--------|
-| `+` | `Add` | `add()` |
-| `-` | `Sub` | `sub()` |
-| `*` | `Mul` | `mul()` |
-| `/` | `Div` | `div()` |
-| `%` | `Rem` | `rem()` |
-| `==`, `!=` | `PartialEq` | `eq()`, `ne()` |
-| `<`, `>`, `<=`, `>=` | `PartialOrd` | `partial_cmp()` |
-| `[]` | `Index` | `index()` |
-| `[]` (mut) | `IndexMut` | `index_mut()` |
+| `+` | [`Add`](https://doc.rust-lang.org/std/ops/trait.Add.html) | `add(self, other: Self) -> Self` |
+| `-` | [`Sub`](https://doc.rust-lang.org/std/ops/trait.Sub.html) | `sub(self, other: Self) -> Self` |
+| `*` | [`Mul`](https://doc.rust-lang.org/std/ops/trait.Mul.html) | `mul(self, rhs: Rhs) -> Self` |
+| `/` | [`Div`](https://doc.rust-lang.org/std/ops/trait.Div.html) | `div(self, rhs: Rhs) -> Self` |
+| `%` | [`Rem`](https://doc.rust-lang.org/std/ops/trait.Rem.html) | `rem(self, rhs: Rhs) -> Self` |
+| `==`, `!=` | [`PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html) | `eq(&self, other: &Rhs) -> bool`, `ne(&self, &other: Rhs) -> bool` |
+| `<`, `>`, `<=`, `>=` | [`PartialOrd`](https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html) | `partial_cmp(&self, rhs: &Rhs) -> bool` |
+| `[]` | [`Index`](https://doc.rust-lang.org/std/ops/trait.Index.html) | `index(&self, index: Idx) -> &Self::Output` |
+| `[]` (mut) | [`IndexMut`](https://doc.rust-lang.org/std/ops/trait.IndexMut.html) | `index_mut(&mut self, index: Idx) -> &mut Self::Output` |
+
+::: {.callout-note title="Why are some by Reference and others by Value?"}
+The reason comes down to **Copy semantics**. For `PartialEq`, the signature is:
+
+```rust
+fn eq(&self, other: &Self) -> bool;
+```
+
+Both sides take references because equality is a *read-only inspection* — you just need to look at both values, and you're done. Neither side is consumed. Taking references here is the obvious choice regardless of whether the type is Copy or not.
+
+For `Add`, the signature is:
+```rust
+fn add(self, rhs: Self) -> Self::Output;
+```
+
+The operands are taken *by value* because addition is modeled as **consumption and transformation** — you take the inputs and produce a new output. For types where this makes sense (like integers), the values are [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html), so "moving" them is a no-op anyway. The compiler just copies the bits and you never notice.
+
+The reason Rust doesn't default to references for `Add` is that it would be unnecessarily restrictive for *non-Copy* types. Consider a hypothetical big integer or a matrix type — you might genuinely want to consume both operands and reuse their memory in constructing the result, avoiding an extra allocation. If the trait required `&Self`, you'd lose that option.
+
+So the general principle is:
+
+- If the operation is **inspection** (equality, ordering, hashing) → references make sense, nothing is consumed
+- If the operation is **transformation** (arithmetic) → by value, because the inputs are conceptually spent producing the output
+:::
+
+::: {.reminder}
+`Copy` is opt-in, and non-`Copy` is the default. To make a type `Copy`, you have to explicitly opt in:
+
+```rust
+#[derive(Copy, Clone)]
+struct Point {
+    x: f32,
+    y: f32,
+}
+```
+
+Any type that doesn't explicitly derive or implement `Copy` is automatically move semantics. So you get non-Copy behavior for free just by not doing anything.
+
+And there are rules about when you're even allowed to do that — the compiler will reject it if your type contains any non-Copy fields (like a `String` or a `Vec`). The idea being that Copy is a promise that "bitwise copying this value is always safe and correct," and the compiler enforces that the whole type tree is consistent with that promise.
+:::
 
 :::{.see-more}
 See [Appendix B: Operators](https://doc.rust-lang.org/book/appendix-02-operators.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for the complete reference.
@@ -615,18 +655,18 @@ fn sum(arr: &[i32; 5]) -> i32 {
 `String` and `&str`
 :::
 
-Rust has two string types. The distinction maps directly onto owned vs. borrowed:
+Rust has two string types. The distinction maps directly onto [owned](#ownership) vs. [borrowed](#borrowing):
 
 | Type     | Owned? | Mutable? | Lives on  | Analogy                    |
 |----------|--------|----------|-----------|----------------------------|
-| `String` | Yes    | Yes      | Heap      | `std::string` in C++       |
-| `&str`   | No     | No       | Anywhere  | `std::string_view` in C++  |
+| [`String`](https://doc.rust-lang.org/std/string/struct.String.html) | Yes    | Yes      | Heap      | `std::string` in C++       |
+| [`&str`](https://doc.rust-lang.org/std/primitive.str.html)   | No     | No       | Anywhere  | `std::string_view` in C++  |
 
 ##### Representation
 
-`String` stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is *not* null-terminated. The length field is what tells Rust where the string ends.
+[`String`](https://doc.rust-lang.org/std/string/struct.String.html) stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is *not* null-terminated. The length field is what tells Rust where the string ends.
 
-`&str` is a fat pointer: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.
+[`&str`](https://doc.rust-lang.org/std/primitive.str.html) is a fat pointer: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.
 
 Both types are guaranteed to contain valid UTF-8. Rust will not let you construct an invalid string.
 

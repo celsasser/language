@@ -335,11 +335,11 @@ window.Quarto = {
   </ul></li>
   <li><a href="#values" id="toc-values" class="nav-link" data-scroll-target="#values">Values</a>
   <ul class="collapse">
+  <li><a href="#optiont" id="toc-optiont" class="nav-link" data-scroll-target="#optiont"><code>Option&lt;T&gt;</code></a></li>
   <li><a href="#unit-type" id="toc-unit-type" class="nav-link" data-scroll-target="#unit-type">Unit Type</a></li>
   </ul></li>
   <li><a href="#slices" id="toc-slices" class="nav-link" data-scroll-target="#slices">Slices</a>
   <ul class="collapse">
-  <li><a href="#range-syntax" id="toc-range-syntax" class="nav-link" data-scroll-target="#range-syntax">Range syntax</a></li>
   <li><a href="#no-negative-indices" id="toc-no-negative-indices" class="nav-link" data-scroll-target="#no-negative-indices">No negative indices</a></li>
   <li><a href="#slice-types" id="toc-slice-types" class="nav-link" data-scroll-target="#slice-types">Slice types</a></li>
   </ul></li>
@@ -353,7 +353,7 @@ window.Quarto = {
   <li><a href="#functions" id="toc-functions" class="nav-link" data-scroll-target="#functions">Functions</a></li>
   <li><a href="#control-flow" id="toc-control-flow" class="nav-link" data-scroll-target="#control-flow">Control Flow</a></li>
   </ul></li>
-  <li><a href="#optiont" id="toc-optiont" class="nav-link" data-scroll-target="#optiont">Option&lt;T&gt;</a>
+  <li><a href="#option-t" id="toc-option-t" class="nav-link" data-scroll-target="#option-t">Option&lt;T&gt;</a>
   <ul>
   <li><a href="#getting-the-value-out" id="toc-getting-the-value-out" class="nav-link" data-scroll-target="#getting-the-value-out">Getting the Value Out</a>
   <ul class="collapse">
@@ -1597,8 +1597,18 @@ window.Quarto = {
 </table>
 <section id="representation" class="level5">
 <h5 class="anchored" data-anchor-id="representation">Representation</h5>
+<div class="definition" data-label="Laurel and Hardy">
+<p><strong>Fat pointer</strong>: also known as a <strong>wide pointer</strong>, is a data structure that stores a memory address along with additional metadata. For example, an <code>&amp;str</code> is a <em>fat pointer</em> that stores a pointer into a UTF-8 buffer and a length.</p>
+<p><strong>Skinny pointer</strong>: actually known as a <strong>thin pointer</strong>, is a plain old pointer: a single memory address.</p>
+<p>Some common uses of <em>fat pointers</em> are:</p>
+<ul>
+<li><strong>Slices (Dynamic Arrays)</strong>: a <em>fat pointer</em> for a slice stores the base memory address of the first element plus the length of the slice. This allows for safe bounds checking at runtime.</li>
+<li><strong>Trait Objects / Interfaces</strong>: in languages like Rust or Go, when you use dynamic dispatch, the fat pointer contains the data address and a vtable pointer (virtual method table). The vtable tells the program which specific methods to call for that object.</li>
+<li><strong>Memory Safety</strong>: Some research implementations use fat pointers to store bounds (base and end address) to prevent buffer overflows or keys/locks for temporal memory safety.</li>
+</ul>
+</div>
 <p><a href="https://doc.rust-lang.org/std/string/struct.String.html"><code>String</code></a> stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is <em>not</em> null-terminated. The length field is what tells Rust where the string ends.</p>
-<p><a href="https://doc.rust-lang.org/std/primitive.str.html"><code>&amp;str</code></a> is a fat pointer: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.</p>
+<p><a href="https://doc.rust-lang.org/std/primitive.str.html"><code>&amp;str</code></a> is a <strong>fat pointer</strong>: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.</p>
 <p>Both types are guaranteed to contain valid UTF-8. Rust will not let you construct an invalid string.</p>
 </section>
 <section id="creating-a-string" class="level5">
@@ -1619,44 +1629,7 @@ window.Quarto = {
 <section id="common-methods" class="level5">
 <h5 class="anchored" data-anchor-id="common-methods">Common methods</h5>
 <p>Most string methods are defined on <code>&amp;str</code> and are therefore available on both <code>String</code> and <code>&amp;str</code>. Methods that produce a new owned string return <code>String</code>; methods that just inspect or slice return <code>&amp;str</code> or a primitive.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> s <span class="op">=</span> <span class="dt">String</span><span class="pp">::</span>from(<span class="st">"  Hello, World!  "</span>)<span class="op">;</span></span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Inspection</span></span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>len()<span class="op">;</span>                            <span class="co">// byte count (not char count)</span></span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>is_empty()<span class="op">;</span>                       <span class="co">// true if len() == 0</span></span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>contains(<span class="st">"World"</span>)<span class="op">;</span>                <span class="co">// true</span></span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>starts_with(<span class="st">"  He"</span>)<span class="op">;</span>             <span class="co">// true</span></span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>ends_with(<span class="st">"!  "</span>)<span class="op">;</span>                <span class="co">// true</span></span>
-<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a><span class="co">// Searching</span></span>
-<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>find(<span class="st">"World"</span>)<span class="op">;</span>                    <span class="co">// Some(9) — byte offset of first match</span></span>
-<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>trim()<span class="op">;</span>                           <span class="co">// "&amp;Hello, World!" — strip whitespace both ends</span></span>
-<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>trim_start()<span class="op">;</span>                     <span class="co">// strip leading whitespace only</span></span>
-<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>trim_end()<span class="op">;</span>                       <span class="co">// strip trailing whitespace only</span></span>
-<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a><span class="co">// Transforming (returns new String)</span></span>
-<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>to_lowercase()<span class="op">;</span>                   <span class="co">// "  hello, world!  "</span></span>
-<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>to_uppercase()<span class="op">;</span>                   <span class="co">// "  HELLO, WORLD!  "</span></span>
-<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>replace(<span class="st">"World"</span><span class="op">,</span> <span class="st">"Rust"</span>)<span class="op">;</span>        <span class="co">// "  Hello, Rust!  "</span></span>
-<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>replacen(<span class="st">"l"</span><span class="op">,</span> <span class="st">"L"</span><span class="op">,</span> <span class="dv">2</span>)<span class="op">;</span>          <span class="co">// replace first 2 occurrences</span></span>
-<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a><span class="co">// Splitting (returns iterators — collect into Vec if you need indexing)</span></span>
-<span id="cb38-23"><a href="#cb38-23" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> words<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;&amp;</span><span class="dt">str</span><span class="op">&gt;</span> <span class="op">=</span> s<span class="op">.</span>split_whitespace()<span class="op">.</span>collect()<span class="op">;</span>  <span class="co">// ["Hello,", "World!"]</span></span>
-<span id="cb38-24"><a href="#cb38-24" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> parts<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;&amp;</span><span class="dt">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="st">"a,b,c"</span><span class="op">.</span>split(<span class="ch">','</span>)<span class="op">.</span>collect()<span class="op">;</span>    <span class="co">// ["a", "b", "c"]</span></span>
-<span id="cb38-25"><a href="#cb38-25" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> lines<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;&amp;</span><span class="dt">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="st">"one</span><span class="sc">\n</span><span class="st">two</span><span class="sc">\n</span><span class="st">three"</span><span class="op">.</span>lines()<span class="op">.</span>collect()<span class="op">;</span></span>
-<span id="cb38-26"><a href="#cb38-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-27"><a href="#cb38-27" aria-hidden="true" tabindex="-1"></a><span class="co">// Characters (UTF-8 aware)</span></span>
-<span id="cb38-28"><a href="#cb38-28" aria-hidden="true" tabindex="-1"></a><span class="st">"hello"</span><span class="op">.</span>chars()<span class="op">.</span>count()<span class="op">;</span>            <span class="co">// 5 — char count, not byte count</span></span>
-<span id="cb38-29"><a href="#cb38-29" aria-hidden="true" tabindex="-1"></a><span class="st">"hello"</span><span class="op">.</span>chars()<span class="op">.</span>nth(<span class="dv">1</span>)<span class="op">;</span>            <span class="co">// Some('e')</span></span>
-<span id="cb38-30"><a href="#cb38-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-31"><a href="#cb38-31" aria-hidden="true" tabindex="-1"></a><span class="co">// Repeating</span></span>
-<span id="cb38-32"><a href="#cb38-32" aria-hidden="true" tabindex="-1"></a><span class="st">"ab"</span><span class="op">.</span>repeat(<span class="dv">3</span>)<span class="op">;</span>                     <span class="co">// "ababab"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 30%">
-<col style="width: 19%">
-<col style="width: 50%">
-</colgroup>
 <thead>
 <tr class="header">
 <th>Method</th>
@@ -1668,12 +1641,12 @@ window.Quarto = {
 <tr class="odd">
 <td><code>.len()</code></td>
 <td><code>usize</code></td>
-<td>Byte length</td>
+<td>Byte length which is not the same as character count</td>
 </tr>
 <tr class="even">
 <td><code>.is_empty()</code></td>
 <td><code>bool</code></td>
-<td>True if zero bytes</td>
+<td>True if length = zero bytes</td>
 </tr>
 <tr class="odd">
 <td><code>.contains(pat)</code></td>
@@ -1717,22 +1690,22 @@ window.Quarto = {
 </tr>
 <tr class="odd">
 <td><code>.split(pat)</code></td>
-<td>iterator</td>
+<td><a href="#iterators">iterator</a></td>
 <td>Split on pattern</td>
 </tr>
 <tr class="even">
 <td><code>.split_whitespace()</code></td>
-<td>iterator</td>
+<td><a href="#iterators">iterator</a></td>
 <td>Split on any whitespace, skipping empties</td>
 </tr>
 <tr class="odd">
 <td><code>.lines()</code></td>
-<td>iterator</td>
+<td><a href="#iterators">iterator</a></td>
 <td>Split on line endings</td>
 </tr>
 <tr class="even">
 <td><code>.chars()</code></td>
-<td>iterator</td>
+<td><a href="#iterators">iterator</a></td>
 <td>Unicode scalar values (not bytes)</td>
 </tr>
 <tr class="odd">
@@ -1742,6 +1715,38 @@ window.Quarto = {
 </tr>
 </tbody>
 </table>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> s <span class="op">=</span> <span class="dt">String</span><span class="pp">::</span>from(<span class="st">"  Hello, World!  "</span>)<span class="op">;</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Inspection</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>len()<span class="op">;</span>                      <span class="co">// 17</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>is_empty()<span class="op">;</span>                 <span class="co">// true if len() == 0</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>contains(<span class="st">"World"</span>)<span class="op">;</span>          <span class="co">// true</span></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>starts_with(<span class="st">"  He"</span>)<span class="op">;</span>        <span class="co">// true</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>ends_with(<span class="st">"!  "</span>)<span class="op">;</span>           <span class="co">// true</span></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a><span class="co">// Searching</span></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>find(<span class="st">"World"</span>)<span class="op">;</span>              <span class="co">// Some(9) — byte offset of first match</span></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>trim()<span class="op">;</span>                     <span class="co">// "Hello, World!" — strip whitespace both ends</span></span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>trim_start()<span class="op">;</span>               <span class="co">// "Hello, World!  " — strip leading whitespace only</span></span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>trim_end()<span class="op">;</span>                 <span class="co">// "  Hello, World!" — strip trailing whitespace only</span></span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a><span class="co">// Transforming (returns new String)</span></span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>to_lowercase()<span class="op">;</span>             <span class="co">// "  hello, world!  "</span></span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>to_uppercase()<span class="op">;</span>             <span class="co">// "  HELLO, WORLD!  "</span></span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>replace(<span class="st">"World"</span><span class="op">,</span> <span class="st">"Rust"</span>)<span class="op">;</span>   <span class="co">// "  Hello, Rust!  "</span></span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a>s<span class="op">.</span>replacen(<span class="st">"l"</span><span class="op">,</span> <span class="st">"L"</span><span class="op">,</span> <span class="dv">2</span>)<span class="op">;</span>      <span class="co">// replace first 2 occurrences</span></span>
+<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a><span class="co">// Splitting (returns iterators — collect into Vec if you need indexing)</span></span>
+<span id="cb38-23"><a href="#cb38-23" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> words<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;&amp;</span><span class="dt">str</span><span class="op">&gt;</span> <span class="op">=</span> s<span class="op">.</span>split_whitespace()<span class="op">.</span>collect()<span class="op">;</span>  <span class="co">// ["Hello,", "World!"]</span></span>
+<span id="cb38-24"><a href="#cb38-24" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> parts<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;&amp;</span><span class="dt">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="st">"a,b,c"</span><span class="op">.</span>split(<span class="ch">','</span>)<span class="op">.</span>collect()<span class="op">;</span>    <span class="co">// ["a", "b", "c"]</span></span>
+<span id="cb38-25"><a href="#cb38-25" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> lines<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;&amp;</span><span class="dt">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="st">"one</span><span class="sc">\n</span><span class="st">two</span><span class="sc">\n</span><span class="st">three"</span><span class="op">.</span>lines()<span class="op">.</span>collect()<span class="op">;</span></span>
+<span id="cb38-26"><a href="#cb38-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-27"><a href="#cb38-27" aria-hidden="true" tabindex="-1"></a><span class="co">// Characters (UTF-8 aware)</span></span>
+<span id="cb38-28"><a href="#cb38-28" aria-hidden="true" tabindex="-1"></a><span class="st">"hello"</span><span class="op">.</span>chars()<span class="op">.</span>count()<span class="op">;</span>            <span class="co">// 5 — char count, not byte count</span></span>
+<span id="cb38-29"><a href="#cb38-29" aria-hidden="true" tabindex="-1"></a><span class="st">"hello"</span><span class="op">.</span>chars()<span class="op">.</span>nth(<span class="dv">1</span>)<span class="op">;</span>             <span class="co">// Some('e')</span></span>
+<span id="cb38-30"><a href="#cb38-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-31"><a href="#cb38-31" aria-hidden="true" tabindex="-1"></a><span class="co">// Repeating</span></span>
+<span id="cb38-32"><a href="#cb38-32" aria-hidden="true" tabindex="-1"></a><span class="st">"ab"</span><span class="op">.</span>repeat(<span class="dv">3</span>)<span class="op">;</span>                     <span class="co">// "ababab"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="when-to-use-which" class="level5">
 <h5 class="anchored" data-anchor-id="when-to-use-which">When to use which</h5>
@@ -1759,19 +1764,43 @@ window.Quarto = {
 <section id="values" class="level3">
 <h3 class="anchored" data-anchor-id="values">Values</h3>
 <div class="subheading">
+<p>Data Types</p>
+</div>
+<p>Every value in Rust is of a certain data <a href="#types">type</a>, which tells Rust what kind of data is being specified so that it knows how to work with that data. We already went over the various scalars. Later we shall see some data structures. Here we are going to have a look at type wrapping (I don’t know what it’s really called) and Rust’s equivalent of <code>void</code>.</p>
+<section id="optiont" class="level4">
+<h4 class="anchored" data-anchor-id="optiont"><code>Option&lt;T&gt;</code></h4>
+<div class="subheading">
 <p>The “Null Problem”</p>
 </div>
-<p>In languages like Java, Python, or C++, any variable can technically be <em>null</em>. This leads to the infamous “Null Pointer Exception” or “Segment Fault” when you try to use a variable that isn’t actually there. The rust way is: <code>Option&lt;T&gt;</code>. If a value might be missing, you must explicitly wrap it in an Option:</p>
+<p>Sometimes you have a value that might be missing. In C, you would use a pointer and set it to <code>NULL</code> when there is no value. In Java, you would just set the variable to <code>null</code>. In Rust, there is no such thing as <code>null</code>. Instead, Rust has a built-in type called <code>Option&lt;T&gt;</code> that explicitly represents the possibility of absence.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Why No Null?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Why No Null?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Because null references are a billion-dollar mistake. They lead to runtime errors when you try to access something that isn’t there. By making the possibility of “no value” explicit in the type system, Rust forces you to handle it safely at compile time, eliminating an entire class of bugs.</p>
+</div>
+</div>
+<p>Let’s meet our little buddy:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> <span class="dt">Option</span><span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="op">{</span></span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    <span class="cn">Some</span>(T)<span class="op">,</span> <span class="co">// The value is present</span></span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>    <span class="cn">None</span><span class="op">,</span>    <span class="co">// The "null" equivalent</span></span>
 <span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Why this is better:</p>
+<p>We will learn more about <a href="#option-t">Option&lt;T&gt;</a> and how to use it in the chapter on <a href="#enums">Enums</a>. For now, know that <code>Option&lt;T&gt;</code> is how Rust represents a value that can either be something (<code>Some</code>) or nothing (<code>None</code>).</p>
+<section id="why-this-is-better" class="level5">
+<h5 class="anchored" data-anchor-id="why-this-is-better">Why this is better?</h5>
 <ol type="1">
 <li><strong>The Compiler Forces You to Handle It</strong>: If you have an <code>Option&lt;String&gt;</code>, you cannot call methods like <code>.len()</code> on it directly. You must use a match statement or an if let to “unwrap” the value first.</li>
 <li><strong>Type Safety</strong>: You can never accidentally treat a “null” value as a real one. If a variable is just a <code>String</code>, it is guaranteed to be a valid string. If it’s an <code>Option&lt;String&gt;</code>, you know it might be empty.</li>
 <li><strong>Efficiency</strong>: Rust uses a “null-pointer optimization.” For types like references or Box, an <code>Option&lt;T&gt;</code> takes up the same amount of memory as a regular <code>T</code>. The None case is represented by a literal null pointer under the hood, but the language makes it impossible for you to interact with that pointer unsafely.</li>
 </ol>
+</section>
+</section>
 <section id="unit-type" class="level4">
 <h4 class="anchored" data-anchor-id="unit-type">Unit Type</h4>
 <p>In Rust, <code>()</code> is called the <strong>unit type</strong> (and also the <strong>unit value</strong>). It is essentially Rust’s version of <code>void</code> from languages like C, C++, or Java, but with a key difference: it is an actual value that occupies zero bytes of memory. You will frequently see it used in <code>Ok(...)</code> statements: <code>Ok(())</code>. Looks a little weird doesn’t it? It looks like we are calling a function without specifying the function name. Here is the breakdown of <code>Ok(())</code>:</p>
@@ -1792,16 +1821,7 @@ window.Quarto = {
 <div class="subheading">
 <p>A view into a sequence, without copying</p>
 </div>
-<p>A slice is a reference to a contiguous subsequence of an array or string. It is a <em>fat pointer</em>: two words wide, carrying both a pointer to the first element and a length. No heap allocation, no copy.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> a <span class="op">=</span> [<span class="dv">10</span><span class="op">,</span> <span class="dv">20</span><span class="op">,</span> <span class="dv">30</span><span class="op">,</span> <span class="dv">40</span><span class="op">,</span> <span class="dv">50</span>]<span class="op">;</span></span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> all   <span class="op">=</span> <span class="op">&amp;</span>a[<span class="op">..</span>]<span class="op">;</span>      <span class="co">// [10, 20, 30, 40, 50] — the whole array</span></span>
-<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> first <span class="op">=</span> <span class="op">&amp;</span>a[<span class="op">..</span><span class="dv">3</span>]<span class="op">;</span>     <span class="co">// [10, 20, 30]           — open on the right</span></span>
-<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> last  <span class="op">=</span> <span class="op">&amp;</span>a[<span class="dv">2</span><span class="op">..</span>]<span class="op">;</span>     <span class="co">// [30, 40, 50]           — open on the left</span></span>
-<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> mid   <span class="op">=</span> <span class="op">&amp;</span>a[<span class="dv">1</span><span class="op">..</span><span class="dv">4</span>]<span class="op">;</span>    <span class="co">// [20, 30, 40]           — half-open (end excluded)</span></span>
-<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> incl  <span class="op">=</span> <span class="op">&amp;</span>a[<span class="dv">1</span><span class="op">..=</span><span class="dv">3</span>]<span class="op">;</span>   <span class="co">// [20, 30, 40]           — inclusive end with ..=</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<section id="range-syntax" class="level4">
-<h4 class="anchored" data-anchor-id="range-syntax">Range syntax</h4>
+<p>A slice is a reference to a contiguous subsequence of an array or string. It is a <em>fat pointer</em>: two (machine) words wide, carrying both a pointer to the first element and a length. No heap allocation, no copy. Follows is a table of slice syntax and what it means:</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1832,7 +1852,13 @@ window.Quarto = {
 </tr>
 </tbody>
 </table>
-</section>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> a <span class="op">=</span> [<span class="dv">10</span><span class="op">,</span> <span class="dv">20</span><span class="op">,</span> <span class="dv">30</span><span class="op">,</span> <span class="dv">40</span><span class="op">,</span> <span class="dv">50</span>]<span class="op">;</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> all   <span class="op">=</span> <span class="op">&amp;</span>a[<span class="op">..</span>]<span class="op">;</span>      <span class="co">// [10, 20, 30, 40, 50] — the whole array</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> first <span class="op">=</span> <span class="op">&amp;</span>a[<span class="op">..</span><span class="dv">3</span>]<span class="op">;</span>     <span class="co">// [10, 20, 30]           — open on the right</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> last  <span class="op">=</span> <span class="op">&amp;</span>a[<span class="dv">2</span><span class="op">..</span>]<span class="op">;</span>     <span class="co">// [30, 40, 50]           — open on the left</span></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> mid   <span class="op">=</span> <span class="op">&amp;</span>a[<span class="dv">1</span><span class="op">..</span><span class="dv">4</span>]<span class="op">;</span>    <span class="co">// [20, 30, 40]           — half-open (end excluded)</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> incl  <span class="op">=</span> <span class="op">&amp;</span>a[<span class="dv">1</span><span class="op">..=</span><span class="dv">3</span>]<span class="op">;</span>   <span class="co">// [20, 30, 40]           — inclusive end with ..=</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <section id="no-negative-indices" class="level4">
 <h4 class="anchored" data-anchor-id="no-negative-indices">No negative indices</h4>
 <p>Unlike Python, Rust slices do not accept negative indices. To index relative to the end, use <code>len()</code>:</p>
@@ -2005,8 +2031,8 @@ window.Quarto = {
 </div>
 </section>
 </section>
-<section id="optiont" class="level2">
-<h2 class="anchored" data-anchor-id="optiont">Option&lt;T&gt;</h2>
+<section id="option-t" class="level2">
+<h2 class="anchored" data-anchor-id="option-t">Option&lt;T&gt;</h2>
 <div class="subheading">
 <p>I use this guy frequently, and I frequently forget how to use him.</p>
 </div>

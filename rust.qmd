@@ -663,10 +663,21 @@ Rust has two string types. The distinction maps directly onto [owned](#ownership
 | [`&str`](https://doc.rust-lang.org/std/primitive.str.html)   | No     | No       | Anywhere  | `std::string_view` in C++  |
 
 ##### Representation
+::: {.definition data-label="Laurel and Hardy"}
+**Fat pointer**: also known as a **wide pointer**, is a data structure that stores a memory address along with additional metadata. For example, an `&str` is a *fat pointer* that stores a pointer into a UTF-8 buffer and a length.
+
+**Skinny pointer**: actually known as a **thin pointer**, is a plain old pointer: a single memory address.
+
+Some common uses of *fat pointers* are:
+
+- **Slices (Dynamic Arrays)**: a *fat pointer* for a slice stores the base memory address of the first element plus the length of the slice. This allows for safe bounds checking at runtime.
+- **Trait Objects / Interfaces**: in languages like Rust or Go, when you use dynamic dispatch, the fat pointer contains the data address and a vtable pointer (virtual method table). The vtable tells the program which specific methods to call for that object.
+- **Memory Safety**: Some research implementations use fat pointers to store bounds (base and end address) to prevent buffer overflows or keys/locks for temporal memory safety.
+:::
 
 [`String`](https://doc.rust-lang.org/std/string/struct.String.html) stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is *not* null-terminated. The length field is what tells Rust where the string ends.
 
-[`&str`](https://doc.rust-lang.org/std/primitive.str.html) is a fat pointer: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.
+[`&str`](https://doc.rust-lang.org/std/primitive.str.html) is a **fat pointer**: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.
 
 Both types are guaranteed to contain valid UTF-8. Rust will not let you construct an invalid string.
 
@@ -693,45 +704,10 @@ let t: &str = &a[0..3];             // slice of an existing String
 
 Most string methods are defined on `&str` and are therefore available on both `String` and `&str`. Methods that produce a new owned string return `String`; methods that just inspect or slice return `&str` or a primitive.
 
-```rust
-let s = String::from("  Hello, World!  ");
-
-// Inspection
-s.len();                            // byte count (not char count)
-s.is_empty();                       // true if len() == 0
-s.contains("World");                // true
-s.starts_with("  He");             // true
-s.ends_with("!  ");                // true
-
-// Searching
-s.find("World");                    // Some(9) — byte offset of first match
-s.trim();                           // "&Hello, World!" — strip whitespace both ends
-s.trim_start();                     // strip leading whitespace only
-s.trim_end();                       // strip trailing whitespace only
-
-// Transforming (returns new String)
-s.to_lowercase();                   // "  hello, world!  "
-s.to_uppercase();                   // "  HELLO, WORLD!  "
-s.replace("World", "Rust");        // "  Hello, Rust!  "
-s.replacen("l", "L", 2);          // replace first 2 occurrences
-
-// Splitting (returns iterators — collect into Vec if you need indexing)
-let words: Vec<&str> = s.split_whitespace().collect();  // ["Hello,", "World!"]
-let parts: Vec<&str> = "a,b,c".split(',').collect();    // ["a", "b", "c"]
-let lines: Vec<&str> = "one\ntwo\nthree".lines().collect();
-
-// Characters (UTF-8 aware)
-"hello".chars().count();            // 5 — char count, not byte count
-"hello".chars().nth(1);            // Some('e')
-
-// Repeating
-"ab".repeat(3);                     // "ababab"
-```
-
 | Method                   | Returns         | What it does                              |
 |--------------------------|-----------------|-------------------------------------------|
-| `.len()`                 | `usize`         | Byte length                               |
-| `.is_empty()`            | `bool`          | True if zero bytes                        |
+| `.len()`                 | `usize`         | Byte length which is not the same as character count |
+| `.is_empty()`            | `bool`          | True if length = zero bytes               |
 | `.contains(pat)`         | `bool`          | True if pattern is present                |
 | `.starts_with(pat)`      | `bool`          | Prefix check                              |
 | `.ends_with(pat)`        | `bool`          | Suffix check                              |
@@ -740,11 +716,47 @@ let lines: Vec<&str> = "one\ntwo\nthree".lines().collect();
 | `.to_lowercase()`        | `String`        | New lowercased string                     |
 | `.to_uppercase()`        | `String`        | New uppercased string                     |
 | `.replace(from, to)`     | `String`        | Replace all occurrences                   |
-| `.split(pat)`            | iterator        | Split on pattern                          |
-| `.split_whitespace()`    | iterator        | Split on any whitespace, skipping empties |
-| `.lines()`               | iterator        | Split on line endings                     |
-| `.chars()`               | iterator        | Unicode scalar values (not bytes)         |
+| `.split(pat)`            | [iterator](#iterators) | Split on pattern                   |
+| `.split_whitespace()`    | [iterator](#iterators) | Split on any whitespace, skipping empties |
+| `.lines()`               | [iterator](#iterators) | Split on line endings              |
+| `.chars()`               | [iterator](#iterators) | Unicode scalar values (not bytes)  |
 | `.repeat(n)`             | `String`        | Concatenate `n` copies                    |
+
+
+```rust
+let s = String::from("  Hello, World!  ");
+
+// Inspection
+s.len();                      // 17
+s.is_empty();                 // true if len() == 0
+s.contains("World");          // true
+s.starts_with("  He");        // true
+s.ends_with("!  ");           // true
+
+// Searching
+s.find("World");              // Some(9) — byte offset of first match
+s.trim();                     // "Hello, World!" — strip whitespace both ends
+s.trim_start();               // "Hello, World!  " — strip leading whitespace only
+s.trim_end();                 // "  Hello, World!" — strip trailing whitespace only
+
+// Transforming (returns new String)
+s.to_lowercase();             // "  hello, world!  "
+s.to_uppercase();             // "  HELLO, WORLD!  "
+s.replace("World", "Rust");   // "  Hello, Rust!  "
+s.replacen("l", "L", 2);      // replace first 2 occurrences
+
+// Splitting (returns iterators — collect into Vec if you need indexing)
+let words: Vec<&str> = s.split_whitespace().collect();  // ["Hello,", "World!"]
+let parts: Vec<&str> = "a,b,c".split(',').collect();    // ["a", "b", "c"]
+let lines: Vec<&str> = "one\ntwo\nthree".lines().collect();
+
+// Characters (UTF-8 aware)
+"hello".chars().count();            // 5 — char count, not byte count
+"hello".chars().nth(1);             // Some('e')
+
+// Repeating
+"ab".repeat(3);                     // "ababab"
+```
 
 ##### When to use which
 
@@ -763,10 +775,23 @@ Use `String` when you need to own or mutate the text.
 
 ### Values
 ::: {.subheading}
+Data Types
+:::
+
+Every value in Rust is of a certain data [type](#types), which tells Rust what kind of data is being specified so that it knows how to work with that data. We already went over the various scalars. Later we shall see some data structures. Here we are going to have a look at type wrapping (I don't know what it's really called) and Rust's equivalent of `void`.
+
+#### `Option<T>`
+::: {.subheading}
 The "Null Problem"
 :::
 
-In languages like Java, Python, or C++, any variable can technically be *null*. This leads to the infamous "Null Pointer Exception" or "Segment Fault" when you try to use a variable that isn't actually there. The rust way is: `Option<T>`. If a value might be missing, you must explicitly wrap it in an Option:
+Sometimes you have a value that might be missing. In C, you would use a pointer and set it to `NULL` when there is no value. In Java, you would just set the variable to `null`. In Rust, there is no such thing as `null`. Instead, Rust has a built-in type called `Option<T>` that explicitly represents the possibility of absence.
+
+::: {.callout-note title="Why No Null?"}
+Because null references are a billion-dollar mistake. They lead to runtime errors when you try to access something that isn't there. By making the possibility of "no value" explicit in the type system, Rust forces you to handle it safely at compile time, eliminating an entire class of bugs.
+:::
+
+Let's meet our little buddy:
 
 ```rust
 enum Option<T> {
@@ -775,7 +800,9 @@ enum Option<T> {
 }
 ```
 
-Why this is better:
+We will learn more about [Option\<T\>](#option-t) and how to use it in the chapter on [Enums](#enums). For now, know that `Option<T>` is how Rust represents a value that can either be something (`Some`) or nothing (`None`).
+
+##### Why this is better?
 
 1. **The Compiler Forces You to Handle It**: If you have an `Option<String>`, you cannot call methods like `.len()` on it directly. You must use a match statement or an if let to "unwrap" the value first.
 2. **Type Safety**: You can never accidentally treat a "null" value as a real one. If a variable is just a `String`, it is guaranteed to be a valid string. If it's an `Option<String>`, you know it might be empty.
@@ -800,7 +827,16 @@ In short, `()` is Rust's way to say "no meaningful value," whether as a function
 A view into a sequence, without copying
 :::
 
-A slice is a reference to a contiguous subsequence of an array or string. It is a *fat pointer*: two words wide, carrying both a pointer to the first element and a length. No heap allocation, no copy.
+A slice is a reference to a contiguous subsequence of an array or string. It is a *fat pointer*: two (machine) words wide, carrying both a pointer to the first element and a length. No heap allocation, no copy. Follows is a table of slice syntax and what it means:
+
+| Syntax    | Meaning                          |
+|---------|----------------------------------|
+| `[..]`    | Entire sequence                  |
+| `[a..b]`  | From index `a` up to (not including) `b` |
+| `[a..=b]` | From index `a` through `b` (inclusive)   |
+| `[a..]`   | From index `a` to the end        |
+| `[..b]`   | From the start up to (not including) `b` |
+
 
 ```rust
 let a = [10, 20, 30, 40, 50];
@@ -811,16 +847,6 @@ let last  = &a[2..];     // [30, 40, 50]           — open on the left
 let mid   = &a[1..4];    // [20, 30, 40]           — half-open (end excluded)
 let incl  = &a[1..=3];   // [20, 30, 40]           — inclusive end with ..=
 ```
-
-#### Range syntax
-
-| Syntax    | Meaning                          |
-|-----------|----------------------------------|
-| `[..]`    | Entire sequence                  |
-| `[a..b]`  | From index `a` up to (not including) `b` |
-| `[a..=b]` | From index `a` through `b` (inclusive)   |
-| `[a..]`   | From index `a` to the end        |
-| `[..b]`   | From the start up to (not including) `b` |
 
 #### No negative indices
 
@@ -985,7 +1011,7 @@ for n in &nums {
 See [Common Programming Concepts](https://doc.rust-lang.org/book/ch03-00-common-programming-concepts.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
-## Option\<T\>
+## Option\<T\> {#option-t}
 ::: {.subheading}
 I use this guy frequently, and I frequently forget how to use him.
 :::

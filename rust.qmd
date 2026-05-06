@@ -4,7 +4,7 @@ subtitle: "A practical bridge to Rust's fundamentals"
 ---
 
 ## Why Rust Exists
-Rust was created at Mozilla Research around 2010 and reached 1.0 in 2015. The motivation was straightforward and familiar to anyone who has debugged a segfault at 2am: **systems programming is unsafe by default**, and the traditional tools (C, C++) leave memory safety entirely to the programmer.
+Rust was created at Mozilla Research around 2010 and reached 1.0 in 2015. The motivation was straightforward and familiar to anyone who has debugged a segfault at 2am: systems programming is unsafe by default, and the traditional tools (C, C++) leave memory safety entirely to the programmer.
 
 The designers asked a pointed question: *can we have the performance of C with memory safety guaranteed at compile time, without a garbage collector?*
 
@@ -68,7 +68,7 @@ In modern Rust (since 2018), `mod.rs` is often replaced by a file with the same 
 :::
 
 ### Modules
-A **module** is a namespace within a crate — the closest equivalent to a Python module. Modules organize code into logical units and control what is visible outside (`pub`) versus private. Items are **private by default** — you opt into visibility explicitly. Before we dive deep on our own, we are to share *The Rust Programming Language*'s  ["Modules Cheat Sheet"](https://doc.rust-lang.org/book/ch07-02-defining-modules-to-control-scope-and-privacy.html){target="_blank"}. It was just what I was looking for when learning about modules; so, here it is word for word:
+A **module** is a namespace within a crate — the closest equivalent to a Python module. Modules organize code into logical units and control what is visible outside (`pub`) versus private. Items are *private by default* — you opt into visibility explicitly. Before we dive deep on our own, we are to share *The Rust Programming Language*'s  ["Modules Cheat Sheet"](https://doc.rust-lang.org/book/ch07-02-defining-modules-to-control-scope-and-privacy.html){target="_blank"}. It was just what I was looking for when learning about modules; so, here it is word for word:
 
 ::: {.exploration data-label="Modules Cheat Sheet"}
 Before we get to the details of modules and paths, here we provide a quick reference on how modules, paths, the use keyword, and the pub keyword work in the compiler, and how most developers organize their code. We’ll be going through examples of each of these rules throughout this chapter, but this is a great place to refer to as a reminder of how modules work.
@@ -301,7 +301,7 @@ mod config {
 }
 ```
 
-This is the right choice for small, tightly related helpers that do not warrant their own file. The most common use case, however, is **unit tests**. The idiomatic Rust pattern puts tests in an inline module at the bottom of the file they test:
+This is the right choice for small, tightly related helpers that do not warrant their own file. The most common use case, however, is unit tests. The idiomatic Rust pattern puts tests in an inline module at the bottom of the file they test:
 
 ```rust
 // src/math.rs
@@ -470,7 +470,7 @@ See [Appendix B: Operators](https://doc.rust-lang.org/book/appendix-02-operators
 and Mutability
 :::
 
-In C you declare a variable and it's mutable by default. In Rust, variables are **immutable by default**. You opt into mutability with `mut`.
+In C you declare a variable and it's mutable by default. In Rust, variables are *immutable by default*. You opt into mutability with `mut`.
 
 ```rust
 let x = 5;          // immutable
@@ -612,7 +612,7 @@ Rust has two string types. The distinction maps directly onto owned vs. borrowed
 
 ##### Representation
 
-`String` stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is **not** null-terminated. The length field is what tells Rust where the string ends.
+`String` stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is *not* null-terminated. The length field is what tells Rust where the string ends.
 
 `&str` is a fat pointer: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.
 
@@ -1254,7 +1254,7 @@ println!("{:?}", label);   // Some("HELLO")
 
 
 ## Macros
-Throughout this chapter you have seen `println!`, `vec!`, `format!`, and `panic!`. The `!` signals a **macro call**, not a function call. Macros in Rust are code that writes code at compile time, before the compiler type-checks anything.
+Throughout this chapter you have seen `println!`, `vec!`, `format!`, and `panic!`. The `!` signals a *macro call*, not a function call. **Macros** in Rust are code that writes code at compile time, before the compiler type-checks anything.
 
 Why do macros exist? Because they can do things ordinary functions cannot. For example, `println!` accepts a variable number of arguments of different types — impossible for a regular Rust function without significant compromise. Macros solve this by expanding at compile time into whatever code is needed.
 
@@ -2087,7 +2087,7 @@ The compiler will tell you. Common situations:
 4. **Closures that capture references** (usually inferred, but not always)
 
 ::: {.callout-tip}
-**Don't worry if this feels overwhelming.** In practice:
+Don't worry if this feels overwhelming. In practice:
 
 - The compiler infers lifetimes in most code
 - Error messages tell you exactly where annotations are needed
@@ -2176,7 +2176,7 @@ impl Config {
 let config = Config::new(String::from("example.com"), 443);
 ```
 
-`new()` is **not special** — it's just a regular function you write yourself. You can name it anything (`create()`, `make()`, `build()`), but `new()` is the convention.
+`new()` is not special — it's just a regular function you write yourself. You can name it anything (`create()`, `make()`, `build()`), but `new()` is the convention.
 
 ###### The `Default` Trait
 For types with sensible defaults, implement the `Default` trait:
@@ -2258,7 +2258,7 @@ let db = Database {
 };
 ```
 
-The `Database` struct itself (its stack frame) is small — it contains only the **pointers and metadata** for `Vec`, `HashMap`, and `String`. The actual data lives on the heap:
+The `Database` struct itself (its stack frame) is small — it contains only the pointers and metadata for `Vec`, `HashMap`, and `String`. The actual data lives on the heap:
 
 ```
 Stack:                    Heap:
@@ -2427,7 +2427,7 @@ Use `as i32` to get the integer value. The reverse (integer to enum) requires ma
 Algebraic Data Types
 :::
 
-Here's where Rust diverges from C/C++: **each variant can carry data**. This makes enums a tagged union — a type that can be one of several variants, each with its own payload.
+Here's where Rust diverges from C/C++: each variant can carry data. This makes enums a tagged union — a type that can be one of several variants, each with its own payload.
 
 ```rust
 enum Message {
@@ -2711,7 +2711,7 @@ let s = p.to_string();       // Display also gives you .to_string() for free
 
 The `fmt` method writes into a formatter using `write!` (same syntax as `println!` but targeting the formatter). Return `fmt::Result` — either `Ok(())` on success or an error if writing failed.
 
-**Implementing both** is the standard pattern for any type you plan to use in output or error handling. `Debug` for internal diagnostics, `Display` for anything a user might see:
+Implementing both is the standard pattern for any type you plan to use in output or error handling. `Debug` for internal diagnostics, `Display` for anything a user might see:
 
 ```rust
 use std::fmt;
@@ -2811,7 +2811,7 @@ See [Generic Types, Traits, and Lifetimes](https://doc.rust-lang.org/book/ch10-0
 :::
 
 ## Pattern Matching
-Pattern matching in Rust is deeper than a switch statement. It simultaneously **tests the structure** of a value and **extracts** data from it. Every `match` arm is a pattern, and the compiler guarantees you have handled every possible case — exhaustiveness is enforced at compile time.
+Pattern matching in Rust is deeper than a switch statement. It simultaneously tests the structure of a value and extracts data from it. Every `match` arm is a pattern, and the compiler guarantees you have handled every possible case — exhaustiveness is enforced at compile time.
 
 ### The `match` Expression
 [`match`](https://doc.rust-lang.org/book/ch19-01-all-the-places-for-patterns.html#match-arms){target="_blank" rel="noopener noreferrer"} as per *The Rust Programming Language*.
@@ -4775,9 +4775,9 @@ Opt-in language evolution without breaking the ecosystem
 
 Yes, editions are named by year: `2015`, `2018`, `2021`, and `2024`. Each edition allows the Rust team to make changes to the language's syntax and semantics that would otherwise be backward-incompatible, without forcing anyone to upgrade immediately.
 
-The key insight is that **editions are per-crate, and all editions can link together**. A crate compiled with edition 2015 and a crate compiled with edition 2021 produce compatible object code. The edition setting lives in `Cargo.toml` and affects only the crate it belongs to. This means the ecosystem never splits the way Python 2 vs Python 3 did.
+The key insight is that *editions are per-crate, and all editions can link together*. A crate compiled with edition 2015 and a crate compiled with edition 2021 produce compatible object code. The edition setting lives in `Cargo.toml` and affects only the crate it belongs to. This means the ecosystem never splits the way Python 2 vs Python 3 did.
 
-What changes between editions is **language syntax and a small number of semantic rules**, not the standard library. The standard library API is versioned by the Rust release channel separately. An example: in edition 2015 you had to write `extern crate serde;` at the top of `main.rs` to bring an external crate into scope. In 2018 that was removed entirely. Both editions call the same `serde` functions at runtime.
+What changes between editions is language syntax and a small number of semantic rules, not the standard library. The standard library API is versioned by the Rust release channel separately. An example: in edition 2015 you had to write `extern crate serde;` at the top of `main.rs` to bring an external crate into scope. In 2018 that was removed entirely. Both editions call the same `serde` functions at runtime.
 
 | Edition | Notable changes                                                                                                                                     |
 |---------|-----------------------------------------------------------------------------------------------------------------------------------------------------|

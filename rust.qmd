@@ -34,9 +34,19 @@ I looked over here, and I looked over there. Then I found the cheat sheet I was 
 ## Project Anatomy
 Three nested concepts organize Rust code: **packages**, **crates**, and **modules**. They map roughly — but not exactly — onto what you know from C and Python.
 
-[![](images/rust-01.jpg){fig-align="center" width=9in}](https://iota-for-flutter.github.io/tutorial/fundamentals/rust/project-structure.html){target="_blank" rel="noopener noreferrer"}
+[![](images/rust-01.jpg){fig-align="center" width=10in}](https://iota-for-flutter.github.io/tutorial/fundamentals/rust/project-structure.html){target="_blank" rel="noopener noreferrer"}
 
 ### Crates
+Before we define what a create is, it's important to understand what a *fundamental unit of compilation* is in Rust.
+
+::: {.explanation data-label="Fundamental Unit of Compilation"}
+A *compilation unit* isn't the smallest unit the compiler considers when compiling source. That is a **syntactic unit**. Rather it is the most granular unit the compiler creates when compiling code. For example, in C, a *compilation unit* is the object file \(.o or .obj\). But Rust is different.
+
+![](images/rust-02.webp){fig-align="center" width=4.75in style="float: right; margin-top: -20pt;"}
+
+The Rust compiler (`rustc`) does not compile individual files. Instead, it takes a single root file (like `main.rs` or `lib.rs`), automatically finds all the other files connected to it, and compiles that entire tree of files together in one single pass. And its output is either an executable (it has a `main()` function) or a library (it doesn't have a `main()` function)
+:::
+
 A **crate** is the fundamental unit of compilation, meaning it is the smallest unit of code that Rust will compile. The Rust compiler takes a crate and produces either an executable or a library. Think of it as the equivalent of a compiled C library (`.a`, `.so`) or a Python package on PyPI — the distributable unit that other projects depend on.
 
 Two kinds of crates:
@@ -44,6 +54,8 @@ Two kinds of crates:
 - **Binary crate** — has a `main()` entry point, produces an executable. Root file is `src/main.rs`.
 - **Library crate** — no `main()`, produces a library for other code to use. Root file is `src/lib.rs`.
 
+:::{style="clear: both;"}
+:::
 ### Packages
 A **package** is what Cargo manages: a directory with a `Cargo.toml` manifest. A package contains at least one crate. Most projects you will work on are a single package with a single binary crate:
 

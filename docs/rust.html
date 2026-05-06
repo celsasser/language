@@ -637,17 +637,30 @@ window.Quarto = {
 <p>Three nested concepts organize Rust code: <strong>packages</strong>, <strong>crates</strong>, and <strong>modules</strong>. They map roughly — but not exactly — onto what you know from C and Python.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="https://iota-for-flutter.github.io/tutorial/fundamentals/rust/project-structure.html" target="_blank" rel="noopener noreferrer"><img src="images/rust-01.jpg" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:9in"></a></p>
+<p><a href="https://iota-for-flutter.github.io/tutorial/fundamentals/rust/project-structure.html" target="_blank" rel="noopener noreferrer"><img src="images/rust-01.jpg" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:10in"></a></p>
 </figure>
 </div>
 <section id="crates" class="level3">
 <h3 class="anchored" data-anchor-id="crates">Crates</h3>
+<p>Before we define what a create is, it’s important to understand what a <em>fundamental unit of compilation</em> is in Rust.</p>
+<div class="explanation" data-label="Fundamental Unit of Compilation">
+<p>A <em>compilation unit</em> isn’t the smallest unit the compiler considers when compiling source. That is a <strong>syntactic unit</strong>. Rather it is the most granular unit the compiler creates when compiling code. For example, in C, a <em>compilation unit</em> is the object file (.o or .obj). But Rust is different.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/rust-02.webp" class="img-fluid quarto-figure quarto-figure-center figure-img" style="float: right; margin-top: -20pt;;width:4.75in"></p>
+</figure>
+</div>
+<p>The Rust compiler (<code>rustc</code>) does not compile individual files. Instead, it takes a single root file (like <code>main.rs</code> or <code>lib.rs</code>), automatically finds all the other files connected to it, and compiles that entire tree of files together in one single pass. And its output is either an executable (it has a <code>main()</code> function) or a library (it doesn’t have a <code>main()</code> function)</p>
+</div>
 <p>A <strong>crate</strong> is the fundamental unit of compilation, meaning it is the smallest unit of code that Rust will compile. The Rust compiler takes a crate and produces either an executable or a library. Think of it as the equivalent of a compiled C library (<code>.a</code>, <code>.so</code>) or a Python package on PyPI — the distributable unit that other projects depend on.</p>
 <p>Two kinds of crates:</p>
 <ul>
 <li><strong>Binary crate</strong> — has a <code>main()</code> entry point, produces an executable. Root file is <code>src/main.rs</code>.</li>
 <li><strong>Library crate</strong> — no <code>main()</code>, produces a library for other code to use. Root file is <code>src/lib.rs</code>.</li>
 </ul>
+<div style="clear: both;">
+
+</div>
 </section>
 <section id="packages" class="level3">
 <h3 class="anchored" data-anchor-id="packages">Packages</h3>

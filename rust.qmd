@@ -26,6 +26,82 @@ Rust's high-level features ([iterators](#iterators), [generics](#generics-and-tr
 ###### 5. Explicit over implicit
 Rust rarely does things behind your back. Integer overflow is checked in debug builds and wraps in release (with explicit opt-in). Type coercions are almost never automatic. Mutability must be declared. This is intentionally more verbose than C++ in places, in exchange for fewer surprises.
 
+## Five Questions Answered
+When the Tangerine and Passion Fruit Kombucha Genie popped out of my bottle, he said to me: "Five Questions from ye, I shall answer truthfully. But on Rust, from ye, they must be."
+
+##### 1. Does Rust support Inheritance? If not, then why?
+
+No. Rust deliberately omits implementation inheritance, and the omission is a design choice, not an oversight.
+
+Inheritance bundles two distinct things: *code reuse* (sharing implementation) and *subtype polymorphism* (treating a derived type as its base). Object-oriented languages couple them; you inherit the implementation to get the polymorphism. Decades of experience showed that this coupling causes problems: fragile base class syndrome, deep hierarchies that are hard to reason about, and the pressure to contort a design to fit a tree when the real relationships form a graph.
+
+Rust separates the two concerns cleanly. For code reuse, you use *traits with default methods* — a [trait](#traits) can provide a default implementation of any method, and any type that implements the trait gets that implementation for free (or overrides it). For subtype polymorphism, you use [*trait objects*](https://doc.rust-lang.org/reference/types/trait-object.html?highlight=dyn%20Trait#trait-objects){target=_blank} (`dyn Trait`), which let you write code that works over any type implementing a given trait. You can also compose behavior by having one struct hold another as a field and delegating to it, which is explicit and therefore more honest about what is actually happening.
+
+The payoff is that Rust's type system is simpler to reason about. There is no implicit behavior coming from somewhere up the hierarchy, and the borrow checker doesn't have to contend with inherited mutable state. If you miss inheritance, you usually find that a trait with default methods plus composition covers the real need without the baggage.
+
+
+##### 2. Is Rust as efficient and fast as C?
+
+Yes, with one honest qualification.
+
+On the machine-code level, Rust and C compile to essentially identical output. Both use LLVM (Clang also uses LLVM), both have no runtime or garbage collector, and Rust's abstractions — iterators, generics, closures — are zero-cost: they disappear at compile time. Benchmarks between idiomatic Rust and idiomatic C are routinely within a percent or two of each other, and Rust sometimes wins because the compiler can apply optimizations that would be illegal in C due to aliasing rules (`restrict` in C is opt-in; Rust's ownership model gives the compiler that guarantee automatically).
+
+The qualification: Rust has bounds-checked array indexing in debug builds, and in release builds the checks are still present unless you use [`unsafe`](https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword){target=_blank} indexing explicitly. In tight inner loops over arrays this can matter. C has no such checks at all. If you need to squeeze out that last few percent, Rust gives you the escape hatch (`unsafe`), but you have to ask for it deliberately. In practice, for most systems code, the difference does not appear outside of microbenchmarks.
+
+
+##### 3. Is it possible for a Rust app to experience a segfault?
+
+Yes, but it requires deliberate effort.
+
+In safe Rust, a segfault is essentially impossible by construction. The borrow checker prevents dangling pointers, use-after-free, and out-of-bounds memory access at compile time. What you get instead of a segfault is a compile error. The few things that could cause memory problems at runtime (like out-of-bounds slice indexing) are caught and turned into a controlled [`panic`](https://doc.rust-lang.org/reference/panic.html){target=_blank} rather than undefined behavior.
+
+However, Rust has [`unsafe`](https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword){target=_blank} blocks, and `unsafe` suspends those guarantees. Code inside an `unsafe` block can dereference raw pointers, call C functions via FFI, and do other things the compiler cannot verify. Any of those can produce a segfault if you get them wrong. The critical design point is that `unsafe` is explicit and lexically scoped, so when something does go wrong you know exactly where to look: somewhere inside an `unsafe` block, not anywhere in the program.
+
+So: pure safe Rust, no segfaults. Unsafe Rust, yes — but you opted in, and the surface area is small and visible.
+
+
+##### 4. What makes Rust good for systems development?
+
+Systems code has two requirements that historically have been in tension: it must be fast and it must be correct. C and C++ solved the first problem and left the second largely to the programmer. Garbage-collected languages solved much of the second problem and compromised on the first. Rust's central achievement is that it solves both at the same time, and it does it through the type system rather than through a runtime.
+
+More concretely, the properties that matter for systems work:
+
+- **No garbage collector.** Rust is suitable for real-time systems, embedded targets, kernels, and anywhere else where GC pauses are unacceptable. Memory is freed deterministically when owners go out of scope.
+- **Predictable performance.** Zero-cost abstractions mean you can write high-level code without paying a runtime penalty. The performance model is transparent in the same way C's is.
+- **Memory safety without overhead.** The borrow checker eliminates entire classes of bugs (use-after-free, buffer overflow, data races) at compile time. These are the bugs that dominate CVE lists for systems software.
+- **Fearless concurrency.** The ownership rules make data races a compile error. Writing multithreaded systems code in Rust is substantially less dangerous than in C.
+- **`unsafe` as a controlled escape hatch.** When you genuinely need to do something the type system cannot verify (MMIO, inline assembly, platform intrinsics), you can. The `unsafe` boundary is explicit, auditable, and doesn't corrupt the surrounding safe code.
+- **First-class C interoperability.** Rust can call C functions and expose a C ABI, which means it can be dropped into existing systems incrementally rather than requiring a full rewrite.
+
+The result is a language that can do everything C can do, on the same hardware, with the same performance characteristics, while ruling out at compile time the bugs that make systems code notoriously hard to ship safely.
+
+
+##### 5. Could you please compare Rust to Go, listing the pros and cons of each?
+
+Rust and Go are both modern systems-adjacent languages that improve on C in terms of tooling and safety, but they aim at different targets and make very different tradeoffs.
+
+| | **Rust** | **Go** |
+|---|---|---|
+| **Memory model** | Ownership; no GC | Garbage collected |
+| **Performance** | C-level; fully predictable | Very fast; occasional GC pauses |
+| **Concurrency** | Ownership enforces data-race freedom at compile time | CSP-style goroutines; runtime scheduler |
+| **Compilation** | Slower (borrow checking, monomorphization) | Extremely fast |
+| **Learning curve** | Steep; borrow checker requires a new mental model | Shallow; designed to be learnable in a day |
+| **Abstraction cost** | Zero-cost (generics, iterators compile away) | Small runtime overhead (interfaces use dynamic dispatch) |
+| **Error handling** | `Result<T, E>`; explicit, composable | Multiple return values; convention-based |
+| **Target use cases** | Systems programming, embedded, WebAssembly, security-critical code | Network services, DevOps tooling, CLIs, cloud infrastructure |
+
+**Rust pros:** maximum performance, no GC, memory and thread safety by construction, rich type system (enums, traits, generics), excellent for safety-critical or resource-constrained environments.
+
+**Rust cons:** steep learning curve, slower compile times, more boilerplate for simple tasks, the borrow checker fights you until the mental model clicks.
+
+**Go pros:** fast to learn, extremely fast to compile, simple and readable, goroutines make concurrency approachable, excellent standard library for network and I/O work, easy to deploy (single static binary).
+
+**Go cons:** garbage collector rules out hard real-time and most embedded targets, GC pauses are real (though small in modern Go), generics arrived late and are still maturing, less expressive type system, no way to enforce data-race freedom at compile time.
+
+The practical heuristic: if you are writing a web service, a CLI tool, or infrastructure software where developer velocity matters more than squeezing every nanosecond, Go is faster to ship. If you are writing a database engine, an OS component, a codec, an embedded runtime, or anything where performance predictability or memory safety guarantees are non-negotiable, Rust is the better tool.
+
+
 ## Cheat Sheet
 I looked over here, and I looked over there. Then I found the cheat sheet I was looking for. He's all squished together and highly 2 dimensional. I edited him a little to get him to fit on a single page, but otherwise it's all [RefMint](https://refmint.com/topics/rust/){target=_blank}.
 
@@ -887,6 +963,39 @@ let b: u8  = 255i32 as u8;    // truncates if out of range — be careful
 ```
 
 #### `From` and `Into`
+::: {.explanation}
+In the following you will see syntax that looks a little like inheritance in other languages: `A: From<B>`. But we know it's not inheritance, \`cuz Rust doesn't support inheritance. It is called a **trait bound**. It means "A implements the `From` trait for `B`." In other words, you can convert from `B` to `A` using the From trait's method. The following example is in [The Rust Reference](https://doc.rust-lang.org/reference/trait-bounds.html) (there is a wicked looking syntax diagram on that page):
+
+```rust
+trait Shape {
+    fn draw(&self, surface: Surface);
+    fn name() -> &'static str;
+}
+
+fn draw_twice<T: Shape>(surface: Surface, sh: T) {
+    sh.draw(surface);           // Can call method because T: Shape
+    sh.draw(surface);
+}
+
+fn copy_and_draw_twice<T: Copy>(surface: Surface, sh: T) where T: Shape {
+    let shape_copy = sh;        // doesn't move sh because T: Copy
+    draw_twice(surface, sh);    // Can use generic function because T: Shape
+}
+
+struct Figure<S: Shape>(S, S);
+
+fn name_figure<U: Shape>(
+    figure: Figure<U>,          // Type Figure<U> is well-formed because U: Shape
+) {
+    println!(
+        "Figure of two {}",
+        U::name(),              // Can use associated function
+    );
+}
+```
+
+We will learn more about traits in the [Structs, Enums and Traits](#structs-enums-and-traits) section. And we will learn more about trait bounds in the [Generics and Trait Bounds](#generics-and-trait-bounds) section.
+:::
 
 For non-primitive conversions, Rust uses the `From` and `Into` traits. If `A: From<B>`, then you can write `A::from(b)` or, equivalently, `b.into()` (the compiler figures out the target from context):
 

@@ -371,15 +371,139 @@ pub fn origin() -> Point { Point { x: 0.0, y: 0.0 } }
 ```
 
 #### Bringing Items Into Scope
-`use` avoids writing the full path repeatedly:
+::: {.subheading}
+`use` is your friend. Love him.
+:::
+
+`use` is an extremely useful and flexible keyword that was described to me to an "alias injector". [The Rust Reference](https://doc.rust-lang.org/reference/items/use-declarations.html) has the following to say about `use`:
+
+> A `use` declaration creates one or more local name bindings synonymous with some other path. Usually a `use` declaration is used to shorten the path required to refer to a module item. These declarations may appear in modules and blocks, usually at the top. A `use` declaration is also sometimes called an `import`, or, if it is public, a re-export.
+
+`import` is how I view him, but I don't think it's a good memory model. "import" implies action, and makes it sound like `use` is doing more than he does. `use` frees us from having to type out the full path. And he has some flavor crystals that we will see a little later.
 
 ```rust
 use geometry::shapes::Circle;          // bring one item into scope
-use geometry::shapes::*;               // bring everything public — use sparingly
-use geometry::{shapes, transforms};    // bring multiple submodules at once
+
+Circle::new(...);
 ```
 
-::: {.callout-note title="Inline Modules: `mod Name { }`"}
+Rust would be completely fine with the following:
+
+```rust
+geometry::shapes::Circle::new(...);
+```
+
+##### `use` Scores a Perfect 10
+::: {.subheading}
+on his floor routine at the 2028 Summer Olympics
+:::
+
+The thing I find the most cool about `use` is it's flexibility. You may specify any portion of a full path and Rust will do the rest. `use` is essentially an *alias injector*: it binds a name at the current scope, and you can stop the path at any depth you like. Assuming that `A:B:C:something` exists, the following are all valid:
+
+```rust
+use A:B:C:something;
+something()
+```
+
+```rust
+use A:B;
+C::something()
+```
+
+```rust
+use A;
+B::C::something()
+```
+
+I just went my pants. Very exciting indeed. And the architects did something that speaks on behalf of their thoroughness. It's easier to demonstrate than it is to describe with words and hand puppets (🕺). Let's assume that we have a module with the following hierarchy:
+
+```
+crate
+└── network
+    └── http
+        ├── (functions/types defined directly in http)
+        └── client  (a submodule)
+```
+
+###### Without `self`:
+
+```rust
+use network::http::client;
+
+client::connect(...};       // ✅
+http::get(...);             // ❌
+network::http::get(...);    // ✅
+```
+
+You have: `client`, but you don't have: `http`. You must write `network::http::` to reach anything in it.
+
+###### With `self`:
+```rust
+use network::http::{self, client};
+
+client::connect(...};       // ✅
+http::get(...);             // ✅
+```
+
+You have: `http`  because `self` bound `http` itself. The `self` inside the braces refers to the module named at the end of the path before the `::{...}`. So `network::http::{self, client}` is exactly equivalent to writing two separate use statements:
+
+```rust
+use network::http;
+use network::http::client;
+```
+
+##### Superpowers and Conveniences
+Finally, follows are some of the superpowers and conveniences built into `use`:
+
+* You can rename with `as`:
+
+    ```rust
+    use A::B::C::something as do_the_thing;`
+    do_the_thing()
+    ```
+
+* You can pull in multiple items from the same path with braces:
+
+    ```rust
+    use A::B::C::{something, another_thing};
+    ```
+
+* You can combine both of the above:
+
+    ```rust
+    use A::B::C::{something, another_thing as other};
+    ```
+
+* You can use `self` inside braces to bring in the module itself alongside its children:
+
+    ```rust
+    use A::B::{self, C};  // binds both B and B::C
+    ```
+
+* You can glob-import everything public from a path:
+
+    ```rust
+    use A::B::C::*;  // everything public in C lands in the current scope
+    ```
+
+* Simultaneously binding a list of paths with a common prefix, using the brace syntax:
+
+    ```rust
+    use a::b::{c, d, e::f, g::h::i};
+    ```
+
+* Rebinding the target name as a new local name, using the syntax
+
+    ```rust
+    use p::q::r as x;
+    ```
+
+    This can also be used with the last two features:
+    ```rust
+    use a::b::{self as ab, c as abc}
+    ```
+
+##### Inline Modules: `mod Name { }`
 You can declare and define a module in one place, without a separate file:
 
 ```rust
@@ -407,6 +531,9 @@ mod tests {
 ```
 
 `#[cfg(test)]` means the module is compiled only when running `cargo test` — it is absent from release builds entirely. `use super::*` brings the parent module's items into scope, which is why `add` can be called directly without a path prefix. For anything beyond a handful of items, a separate file is almost always cleaner.
+
+::: {.see-more}
+See [Use declarations](https://doc.rust-lang.org/reference/items/use-declarations.html){target="_blank" rel="noopener noreferrer"} in *The Rust Reference* for more information.
 :::
 
 ### External Dependencies

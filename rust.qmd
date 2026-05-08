@@ -112,6 +112,18 @@ Three nested concepts organize Rust code: **packages**, **crates**, and **module
 
 [![](images/rust-01.jpg){fig-align="center" width=10in}](https://iota-for-flutter.github.io/tutorial/fundamentals/rust/project-structure.html){target="_blank" rel="noopener noreferrer"}
 
+### The Analogy Table
+This used to be at the end of the *Project Anatomy* chapter. But by the time you get there, you no longer need it. So he picked himself up by his outer columns and moved shop.
+
+| Concept               | C                        | Python              | Rust              |
+|-----------------------|--------------------------|---------------------|-------------------|
+| Distributable unit    | `.a` / `.so`             | Package (PyPI)      | Crate (crates.io) |
+| Project manifest      | Makefile                 | `pyproject.toml`    | `Cargo.toml`      |
+| Namespace / file unit | (file, no formal system) | Module (`.py` file) | Module (`mod`)    |
+| Import                | `#include`               | `import`            | `use`             |
+| Package manager       | (none built in)          | pip                 | cargo             |
+
+
 ### Crates
 Before we define what a create is, it's important to understand what a *fundamental unit of compilation* is in Rust.
 
@@ -132,6 +144,44 @@ Two kinds of crates:
 
 :::{style="clear: both;"}
 :::
+
+#### The Most Popular Crates
+The following list is a top 30 crates capture from [Most popular Rust Libraries](https://lib.rs/std). When I finish this document, I'm going to put it in a time-capsule bury it.
+
+> To whoever is reading this, the date is 4/8/2026. We drank too much Orange Crush and not enough Tang and we died. Follows is a list of the top 30 most popular Rust crates. I have also left some Tang in the capsule. Live long and prosper.
+
+| Library | Description |
+|---------|-------------|
+| [serde](https://lib.rs/crates/serde) | A generic serialization/deserialization framework |
+| [thiserror](https://lib.rs/crates/thiserror) | derive(Error) |
+| [serde_json](https://lib.rs/crates/serde_json) | A JSON serialization file format |
+| [rand](https://lib.rs/crates/rand) | Random number generators and other randomness functionality |
+| [tokio](https://lib.rs/crates/tokio) | An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications |
+| [clap](https://lib.rs/crates/clap) | efficient, and full-featured Command Line Argument Parser |
+| [anyhow](https://lib.rs/crates/anyhow) | Flexible concrete Error type built on std::error::Error |
+| [syn](https://lib.rs/crates/syn) | Parser for Rust source code |
+| [regex](https://lib.rs/crates/regex) | regular expressions for Rust. This implementation uses finite automata and guarantees linear time matching on all inputs. |
+| [base64](https://lib.rs/crates/base64) | encodes and decodes base64 as bytes or utf8 |
+| [log](https://lib.rs/crates/log) | A lightweight logging facade for Rust |
+| [tracing](https://lib.rs/crates/tracing) | Application-level tracing for Rust |
+| [tempfile](https://lib.rs/crates/tempfile) | managing temporary files and directories |
+| [chrono](https://lib.rs/crates/chrono) | Date and time library for Rust |
+| [quote](https://lib.rs/crates/quote) | Quasi-quoting macro quote!(...) |
+| [reqwest](https://lib.rs/crates/reqwest) | higher level HTTP client library |
+| [libc](https://lib.rs/crates/libc) | Raw FFI bindings to platform libraries like libc |
+| [proc-macro2](https://lib.rs/crates/proc-macro2) | A substitute implementation of the compiler’s proc_macro API to decouple token-based libraries from the procedural macro use case |
+| [toml](https://lib.rs/crates/toml) | A native Rust encoder and decoder of TOML-formatted files and streams. Provides implementations of the standard Serialize/Deserialize traits for TOML data to facilitate deserializing and serializing Rust structures. |
+| [sha2](https://lib.rs/crates/sha2) | Pure Rust implementation of the SHA-2 hash function family including SHA-224, SHA-256, SHA-384, and SHA-512 |
+| [futures](https://lib.rs/crates/futures) | streams featuring zero allocations, composability, and iterator-like interfaces |
+| [uuid](https://lib.rs/crates/uuid) | generate and parse UUIDs |
+| [tracing-subscriber](https://lib.rs/crates/tracing-subscriber) | implementing and composing tracing subscribers |
+| [bytes](https://lib.rs/crates/bytes) | Types and traits for working with bytes |
+| [url](https://lib.rs/crates/url) | based on the WHATWG URL Standard |
+| [itertools](https://lib.rs/crates/itertools) | Extra iterator adaptors, iterator methods, free functions, and macros |
+| [once_cell](https://lib.rs/crates/once_cell) | Single assignment cells and lazy values |
+| [getrandom](https://lib.rs/crates/getrandom) | A small cross-platform library for retrieving random data from system source |
+| [indexmap](https://lib.rs/crates/indexmap) | A hash table with consistent order and fast iteration |
+
 ### Packages
 A **package** is what Cargo manages: a directory with a `Cargo.toml` manifest. A package contains at least one crate. Most projects you will work on are a single package with a single binary crate:
 
@@ -537,7 +587,7 @@ See [Use declarations](https://doc.rust-lang.org/reference/items/use-declaration
 :::
 
 ### External Dependencies
-Dependencies from crates.io (Rust's public registry, the equivalent of PyPI) go in `Cargo.toml`:
+Dependencies from [crates.io](https://crates.io/){target=_blank} (Rust's public registry, the equivalent of PyPI) go in `Cargo.toml`:
 
 ```toml
 [dependencies]
@@ -552,15 +602,6 @@ use regex::Regex;
 ```
 
 This is the `pip install` + `import` of Rust, collapsed into one tool that also handles building, testing, and formatting.
-
-### The Analogy Table
-| Concept               | C                        | Python              | Rust              |
-|-----------------------|--------------------------|---------------------|-------------------|
-| Distributable unit    | `.a` / `.so`             | Package (PyPI)      | Crate (crates.io) |
-| Project manifest      | Makefile                 | `pyproject.toml`    | `Cargo.toml`      |
-| Namespace / file unit | (file, no formal system) | Module (`.py` file) | Module (`mod`)    |
-| Import                | `#include`               | `import`            | `use`             |
-| Package manager       | (none built in)          | pip                 | cargo             |
 
 ## The Basics
 ### Operators

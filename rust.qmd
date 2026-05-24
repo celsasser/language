@@ -4,7 +4,7 @@ subtitle: "A practical bridge to Rust's fundamentals"
 ---
 
 ## Why Rust Exists
-Rust was created at Mozilla Research around 2010 and reached 1.0 in 2015. The motivation was straightforward and familiar to anyone who has debugged a segfault at 2am: **systems programming is unsafe by default**, and the traditional tools (C, C++) leave memory safety entirely to the programmer.
+Rust was created at Mozilla Research around 2010 and reached 1.0 in 2015. The motivation was straightforward and familiar to anyone who has debugged a segfault at 2am: systems programming is unsafe by default, and the traditional tools (C, C++) leave memory safety entirely to the programmer.
 
 The designers asked a pointed question: *can we have the performance of C with memory safety guaranteed at compile time, without a garbage collector?*
 
@@ -26,6 +26,81 @@ Rust's high-level features ([iterators](#iterators), [generics](#generics-and-tr
 ###### 5. Explicit over implicit
 Rust rarely does things behind your back. Integer overflow is checked in debug builds and wraps in release (with explicit opt-in). Type coercions are almost never automatic. Mutability must be declared. This is intentionally more verbose than C++ in places, in exchange for fewer surprises.
 
+## Five Questions Answered
+When the Tangerine and Passion Fruit Kombucha Genie popped out of my bottle, he said to me: "Five Questions from ye, I shall answer truthfully. But on Rust, from ye, they must be."
+
+##### 1. Does Rust support Inheritance? If not, then why?
+
+No. Rust deliberately omits implementation inheritance, and the omission is a design choice, not an oversight.
+
+Inheritance bundles two distinct things: *code reuse* (sharing implementation) and *subtype polymorphism* (treating a derived type as its base). Object-oriented languages couple them; you inherit the implementation to get the polymorphism. Decades of experience showed that this coupling causes problems: fragile base class syndrome, deep hierarchies that are hard to reason about, and the pressure to contort a design to fit a tree when the real relationships form a graph.
+
+Rust separates the two concerns cleanly. For code reuse, you use *traits with default methods* — a [trait](#traits) can provide a default implementation of any method, and any type that implements the trait gets that implementation for free (or overrides it). For subtype polymorphism, you use [*trait objects*](https://doc.rust-lang.org/reference/types/trait-object.html?highlight=dyn%20Trait#trait-objects){target=_blank} (`dyn Trait`), which let you write code that works over any type implementing a given trait. You can also compose behavior by having one struct hold another as a field and delegating to it, which is explicit and therefore more honest about what is actually happening.
+
+The payoff is that Rust's type system is simpler to reason about. There is no implicit behavior coming from somewhere up the hierarchy, and the borrow checker doesn't have to contend with inherited mutable state. If you miss inheritance, you usually find that a trait with default methods plus composition covers the real need without the baggage.
+
+
+##### 2. Is Rust as efficient and fast as C?
+
+Yes, with one honest qualification.
+
+On the machine-code level, Rust and C compile to essentially identical output. Both use LLVM (Clang also uses LLVM), both have no runtime or garbage collector, and Rust's abstractions — iterators, generics, closures — are zero-cost: they disappear at compile time. Benchmarks between idiomatic Rust and idiomatic C are routinely within a percent or two of each other, and Rust sometimes wins because the compiler can apply optimizations that would be illegal in C due to aliasing rules (`restrict` in C is opt-in; Rust's ownership model gives the compiler that guarantee automatically).
+
+The qualification: Rust has bounds-checked array indexing in debug builds. In optimized builds, those checks are often eliminated when the compiler can prove an access is in range, and idiomatic safe Rust often uses iterators or slice methods that compile down without per-access bounds checks. In tight inner loops over arrays this can still matter in some cases, and C has no such checks by default. If you truly need manual unchecked indexing, Rust gives you the escape hatch via [`unsafe`](https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword){target=_blank}, but you have to ask for it deliberately. In practice, for most systems code, the difference does not appear outside of microbenchmarks.
+
+##### 3. Is it possible for a Rust app to experience a segfault?
+
+Yes, but it requires deliberate effort.
+
+In safe Rust, a segfault is essentially impossible by construction. The borrow checker prevents dangling pointers, use-after-free, and out-of-bounds memory access at compile time. What you get instead of a segfault is a compile error. The few things that could cause memory problems at runtime (like out-of-bounds slice indexing) are caught and turned into a controlled [`panic`](https://doc.rust-lang.org/reference/panic.html){target=_blank} rather than undefined behavior.
+
+However, Rust has [`unsafe`](https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword){target=_blank} blocks, and `unsafe` suspends those guarantees. Code inside an `unsafe` block can dereference raw pointers, call C functions via FFI, and do other things the compiler cannot verify. Any of those can produce a segfault if you get them wrong. The critical design point is that `unsafe` is explicit and lexically scoped, so when something does go wrong you know exactly where to look: somewhere inside an `unsafe` block, not anywhere in the program.
+
+So: pure safe Rust, no segfaults. Unsafe Rust, yes — but you opted in, and the surface area is small and visible.
+
+
+##### 4. What makes Rust good for systems development?
+
+Systems code has two requirements that historically have been in tension: it must be fast and it must be correct. C and C++ solved the first problem and left the second largely to the programmer. Garbage-collected languages solved much of the second problem and compromised on the first. Rust's central achievement is that it solves both at the same time, and it does it through the type system rather than through a runtime.
+
+More concretely, the properties that matter for systems work:
+
+- **No garbage collector.** Rust is suitable for real-time systems, embedded targets, kernels, and anywhere else where GC pauses are unacceptable. Memory is freed deterministically when owners go out of scope.
+- **Predictable performance.** Zero-cost abstractions mean you can write high-level code without paying a runtime penalty. The performance model is transparent in the same way C's is.
+- **Memory safety without overhead.** The borrow checker eliminates entire classes of bugs (use-after-free, buffer overflow, data races) at compile time. These are the bugs that dominate CVE lists for systems software.
+- **Fearless concurrency.** The ownership rules make data races a compile error. Writing multithreaded systems code in Rust is substantially less dangerous than in C.
+- **`unsafe` as a controlled escape hatch.** When you genuinely need to do something the type system cannot verify (MMIO, inline assembly, platform intrinsics), you can. The `unsafe` boundary is explicit, auditable, and doesn't corrupt the surrounding safe code.
+- **First-class C interoperability.** Rust can call C functions and expose a C ABI, which means it can be dropped into existing systems incrementally rather than requiring a full rewrite.
+
+The result is a language that can do everything C can do, on the same hardware, with the same performance characteristics, while ruling out at compile time the bugs that make systems code notoriously hard to ship safely.
+
+
+##### 5. Could you please compare Rust to Go, listing the pros and cons of each?
+
+Rust and Go are both modern systems-adjacent languages that improve on C in terms of tooling and safety, but they aim at different targets and make very different tradeoffs.
+
+| | **Rust** | **Go** |
+|---|---|---|
+| **Memory model** | Ownership; no GC | Garbage collected |
+| **Performance** | C-level; fully predictable | Very fast; occasional GC pauses |
+| **Concurrency** | Ownership enforces data-race freedom at compile time | CSP-style goroutines; runtime scheduler |
+| **Compilation** | Slower (borrow checking, monomorphization) | Extremely fast |
+| **Learning curve** | Steep; borrow checker requires a new mental model | Shallow; designed to be learnable in a day |
+| **Abstraction cost** | Zero-cost (generics, iterators compile away) | Small runtime overhead (interfaces use dynamic dispatch) |
+| **Error handling** | `Result<T, E>`; explicit, composable | Multiple return values; convention-based |
+| **Target use cases** | Systems programming, embedded, WebAssembly, security-critical code | Network services, DevOps tooling, CLIs, cloud infrastructure |
+
+**Rust pros:** maximum performance, no GC, memory and thread safety by construction, rich type system (enums, traits, generics), excellent for safety-critical or resource-constrained environments.
+
+**Rust cons:** steep learning curve, slower compile times, more boilerplate for simple tasks, the borrow checker fights you until the mental model clicks.
+
+**Go pros:** fast to learn, extremely fast to compile, simple and readable, goroutines make concurrency approachable, excellent standard library for network and I/O work, easy to deploy (single static binary).
+
+**Go cons:** garbage collector rules out hard real-time and most embedded targets, GC pauses are real (though small in modern Go), generics arrived late and are still maturing, less expressive type system, no way to enforce data-race freedom at compile time.
+
+The practical heuristic: if you are writing a web service, a CLI tool, or infrastructure software where developer velocity matters more than squeezing every nanosecond, Go is faster to ship. If you are writing a database engine, an OS component, a codec, an embedded runtime, or anything where performance predictability or memory safety guarantees are non-negotiable, Rust is the better tool.
+
+
 ## Cheat Sheet
 I looked over here, and I looked over there. Then I found the cheat sheet I was looking for. He's all squished together and highly 2 dimensional. I edited him a little to get him to fit on a single page, but otherwise it's all [RefMint](https://refmint.com/topics/rust/){target=_blank}.
 
@@ -34,15 +109,77 @@ I looked over here, and I looked over there. Then I found the cheat sheet I was 
 ## Project Anatomy
 Three nested concepts organize Rust code: **packages**, **crates**, and **modules**. They map roughly — but not exactly — onto what you know from C and Python.
 
-[![](images/rust-01.jpg){fig-align="center" width=9in}](https://iota-for-flutter.github.io/tutorial/fundamentals/rust/project-structure.html){target="_blank" rel="noopener noreferrer"}
+[![](images/rust-01.jpg){fig-align="center" width=10in}](https://iota-for-flutter.github.io/tutorial/fundamentals/rust/project-structure.html){target="_blank" rel="noopener noreferrer"}
+
+### The Analogy Table
+This used to be at the end of the *Project Anatomy* chapter. But by the time you get there, you no longer need it. So he picked himself up by his outer columns and moved shop.
+
+| Concept               | C                        | Python              | Rust              |
+|-----------------------|--------------------------|---------------------|-------------------|
+| Distributable unit    | `.a` / `.so`             | Package (PyPI)      | Crate (crates.io) |
+| Project manifest      | Makefile                 | `pyproject.toml`    | `Cargo.toml`      |
+| Namespace / file unit | (file, no formal system) | Module (`.py` file) | Module (`mod`)    |
+| Import                | `#include`               | `import`            | `use`             |
+| Package manager       | (none built in)          | pip                 | cargo             |
+
 
 ### Crates
+Before we define what a crate is, it's important to understand what a *fundamental unit of compilation* is in Rust.
+
+::: {.explanation data-label="Fundamental Unit of Compilation"}
+A *compilation unit* isn't the smallest unit the compiler considers when compiling source. That is a **syntactic unit**. Rather it is the most granular unit the compiler creates when compiling code. For example, in C, a *compilation unit* is the object file \(.o or .obj\). But Rust is different.
+
+![](images/rust-02.webp){fig-align="center" width=4.75in style="float: right; margin-top: -20pt;"}
+
+The Rust compiler (`rustc`) does not compile individual files. Instead, it takes a single root file (like `main.rs` or `lib.rs`), automatically finds all the other files connected to it, and compiles that entire tree of files together in one single pass. And its output is either an executable (it has a `main()` function) or a library (it doesn't have a `main()` function)
+:::
+
 A **crate** is the fundamental unit of compilation, meaning it is the smallest unit of code that Rust will compile. The Rust compiler takes a crate and produces either an executable or a library. Think of it as the equivalent of a compiled C library (`.a`, `.so`) or a Python package on PyPI — the distributable unit that other projects depend on.
 
 Two kinds of crates:
 
 - **Binary crate** — has a `main()` entry point, produces an executable. Root file is `src/main.rs`.
 - **Library crate** — no `main()`, produces a library for other code to use. Root file is `src/lib.rs`.
+
+:::{style="clear: both;"}
+:::
+
+#### The Most Popular Crates
+The following list is a top 30 crates capture from [Most popular Rust Libraries](https://lib.rs/std). When I finish this document, I'm going to put it in a time-capsule bury it.
+
+> To whoever is reading this, the date is 4/8/2026. We drank too much Orange Crush and not enough Tang and we died. Follows is a list of the top 30 most popular Rust crates. I have also left some Tang in the capsule. Live long and prosper.
+
+| Library | Description |
+|---------|-------------|
+| [serde](https://lib.rs/crates/serde) | A generic serialization/deserialization framework |
+| [thiserror](https://lib.rs/crates/thiserror) | derive(Error) |
+| [serde_json](https://lib.rs/crates/serde_json) | A JSON serialization file format |
+| [rand](https://lib.rs/crates/rand) | Random number generators and other randomness functionality |
+| [tokio](https://lib.rs/crates/tokio) | An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications |
+| [clap](https://lib.rs/crates/clap) | efficient, and full-featured Command Line Argument Parser |
+| [anyhow](https://lib.rs/crates/anyhow) | Flexible concrete Error type built on std::error::Error |
+| [syn](https://lib.rs/crates/syn) | Parser for Rust source code |
+| [regex](https://lib.rs/crates/regex) | regular expressions for Rust. This implementation uses finite automata and guarantees linear time matching on all inputs. |
+| [base64](https://lib.rs/crates/base64) | encodes and decodes base64 as bytes or utf8 |
+| [log](https://lib.rs/crates/log) | A lightweight logging facade for Rust |
+| [tracing](https://lib.rs/crates/tracing) | Application-level tracing for Rust |
+| [tempfile](https://lib.rs/crates/tempfile) | managing temporary files and directories |
+| [chrono](https://lib.rs/crates/chrono) | Date and time library for Rust |
+| [quote](https://lib.rs/crates/quote) | Quasi-quoting macro quote!(...) |
+| [reqwest](https://lib.rs/crates/reqwest) | higher level HTTP client library |
+| [libc](https://lib.rs/crates/libc) | Raw FFI bindings to platform libraries like libc |
+| [proc-macro2](https://lib.rs/crates/proc-macro2) | A substitute implementation of the compiler’s proc_macro API to decouple token-based libraries from the procedural macro use case |
+| [toml](https://lib.rs/crates/toml) | A native Rust encoder and decoder of TOML-formatted files and streams. Provides implementations of the standard Serialize/Deserialize traits for TOML data to facilitate deserializing and serializing Rust structures. |
+| [sha2](https://lib.rs/crates/sha2) | Pure Rust implementation of the SHA-2 hash function family including SHA-224, SHA-256, SHA-384, and SHA-512 |
+| [futures](https://lib.rs/crates/futures) | streams featuring zero allocations, composability, and iterator-like interfaces |
+| [uuid](https://lib.rs/crates/uuid) | generate and parse UUIDs |
+| [tracing-subscriber](https://lib.rs/crates/tracing-subscriber) | implementing and composing tracing subscribers |
+| [bytes](https://lib.rs/crates/bytes) | Types and traits for working with bytes |
+| [url](https://lib.rs/crates/url) | based on the WHATWG URL Standard |
+| [itertools](https://lib.rs/crates/itertools) | Extra iterator adaptors, iterator methods, free functions, and macros |
+| [once_cell](https://lib.rs/crates/once_cell) | Single assignment cells and lazy values |
+| [getrandom](https://lib.rs/crates/getrandom) | A small cross-platform library for retrieving random data from system source |
+| [indexmap](https://lib.rs/crates/indexmap) | A hash table with consistent order and fast iteration |
 
 ### Packages
 A **package** is what Cargo manages: a directory with a `Cargo.toml` manifest. A package contains at least one crate. Most projects you will work on are a single package with a single binary crate:
@@ -68,7 +205,7 @@ In modern Rust (since 2018), `mod.rs` is often replaced by a file with the same 
 :::
 
 ### Modules
-A **module** is a namespace within a crate — the closest equivalent to a Python module. Modules organize code into logical units and control what is visible outside (`pub`) versus private. Items are **private by default** — you opt into visibility explicitly. Before we dive deep on our own, we are to share *The Rust Programming Language*'s  ["Modules Cheat Sheet"](https://doc.rust-lang.org/book/ch07-02-defining-modules-to-control-scope-and-privacy.html){target="_blank"}. It was just what I was looking for when learning about modules; so, here it is word for word:
+A **module** is a namespace within a crate — the closest equivalent to a Python module. Modules organize code into logical units and control what is visible outside (`pub`) versus private. Items are *private by default* — you opt into visibility explicitly. Before we dive deep on our own, we are to share *The Rust Programming Language*'s  ["Modules Cheat Sheet"](https://doc.rust-lang.org/book/ch07-02-defining-modules-to-control-scope-and-privacy.html){target="_blank"}. It was just what I was looking for when learning about modules; so, here it is word for word:
 
 ::: {.exploration data-label="Modules Cheat Sheet"}
 Before we get to the details of modules and paths, here we provide a quick reference on how modules, paths, the use keyword, and the pub keyword work in the compiler, and how most developers organize their code. We’ll be going through examples of each of these rules throughout this chapter, but this is a great place to refer to as a reminder of how modules work.
@@ -283,15 +420,142 @@ pub fn origin() -> Point { Point { x: 0.0, y: 0.0 } }
 ```
 
 #### Bringing Items Into Scope
-`use` avoids writing the full path repeatedly:
+::: {.subheading}
+`use` is your friend. Love him.
+:::
+
+`use` is an extremely useful and flexible keyword that was described to me to an "alias injector". [The Rust Reference](https://doc.rust-lang.org/reference/items/use-declarations.html) has the following to say about `use`:
+
+> A `use` declaration creates one or more local name bindings synonymous with some other path. Usually a `use` declaration is used to shorten the path required to refer to a module item. These declarations may appear in modules and blocks, usually at the top. A `use` declaration is also sometimes called an `import`, or, if it is public, a re-export.
+
+`import` is how I view him, but I don't think it's a good memory model. "import" implies action, and makes it sound like `use` is doing more than he does. `use` frees us from having to type out the full path. And he has some flavor crystals that we will see a little later.
 
 ```rust
 use geometry::shapes::Circle;          // bring one item into scope
-use geometry::shapes::*;               // bring everything public — use sparingly
-use geometry::{shapes, transforms};    // bring multiple submodules at once
+
+Circle::new(...);
 ```
 
-::: {.callout-note title="Inline Modules: `mod Name { }`"}
+Rust would be completely fine with the following:
+
+```rust
+geometry::shapes::Circle::new(...);
+```
+
+##### `use` Scores a Perfect 10
+::: {.subheading}
+on his floor routine at the 2028 Summer Olympics
+:::
+
+The thing I find the most cool about `use` is it's flexibility. You may specify any portion of a full path and Rust will do the rest. `use` is essentially an *alias injector*: it binds a name at the current scope, and you can stop the path at any depth you like. Assuming that `A:B:C:something` exists, the following are all valid:
+
+```rust
+use A::B::C::something;
+
+something();
+```
+
+```rust
+use A::B;
+
+C::something();
+```
+
+```rust
+use A;
+
+B::C::something();
+```
+
+I just went my pants. Very exciting indeed. And the architects did something that speaks on behalf of their thoroughness. It's easier to demonstrate than it is to describe with words and hand puppets (🕺). Let's assume that we have a module with the following hierarchy:
+
+```
+crate
+└── network
+    └── http
+        ├── (functions/types defined directly in http)
+        └── client  (a submodule)
+```
+
+###### Without `self`:
+
+```rust
+use network::http::client;
+
+client::connect(...);       // ✅
+http::get(...);             // ❌
+network::http::get(...);    // ✅
+```
+
+You have: `client`, but you don't have: `http`. You must write `network::http::` to reach anything in it.
+
+###### With `self`:
+```rust
+use network::http::{self, client};
+
+client::connect(...};       // ✅
+http::get(...);             // ✅
+```
+
+You have: `http`  because `self` bound `http` itself. The `self` inside the braces refers to the module named at the end of the path before the `::{...}`. So `network::http::{self, client}` is exactly equivalent to writing two separate use statements:
+
+```rust
+use network::http;
+use network::http::client;
+```
+
+##### Superpowers and Conveniences
+Finally, follows are some of the superpowers and conveniences built into `use`:
+
+* You can rename with `as`:
+
+    ```rust
+    use A::B::C::something as do_the_thing;
+    do_the_thing()
+    ```
+
+* You can pull in multiple items from the same path with braces:
+
+    ```rust
+    use A::B::C::{something, another_thing};
+    ```
+
+* You can combine both of the above:
+
+    ```rust
+    use A::B::C::{something, another_thing as other};
+    ```
+
+* You can use `self` inside braces to bring in the module itself alongside its children:
+
+    ```rust
+    use A::B::{self, C};  // binds both B and B::C
+    ```
+
+* You can glob-import everything public from a path:
+
+    ```rust
+    use A::B::C::*;  // everything public in C lands in the current scope
+    ```
+
+* Simultaneously binding a list of paths with a common prefix, using the brace syntax:
+
+    ```rust
+    use a::b::{c, d, e::f, g::h::i};
+    ```
+
+* Rebinding the target name as a new local name, using the syntax
+
+    ```rust
+    use p::q::r as x;
+    ```
+
+    This can also be used with the last two features:
+    ```rust
+    use a::b::{self as ab, c as abc}
+    ```
+
+##### Inline Modules: `mod Name { }`
 You can declare and define a module in one place, without a separate file:
 
 ```rust
@@ -301,7 +565,7 @@ mod config {
 }
 ```
 
-This is the right choice for small, tightly related helpers that do not warrant their own file. The most common use case, however, is **unit tests**. The idiomatic Rust pattern puts tests in an inline module at the bottom of the file they test:
+This is the right choice for small, tightly related helpers that do not warrant their own file. The most common use case, however, is unit tests. The idiomatic Rust pattern puts tests in an inline module at the bottom of the file they test:
 
 ```rust
 // src/math.rs
@@ -319,10 +583,13 @@ mod tests {
 ```
 
 `#[cfg(test)]` means the module is compiled only when running `cargo test` — it is absent from release builds entirely. `use super::*` brings the parent module's items into scope, which is why `add` can be called directly without a path prefix. For anything beyond a handful of items, a separate file is almost always cleaner.
+
+::: {.see-more}
+See [Use declarations](https://doc.rust-lang.org/reference/items/use-declarations.html){target="_blank" rel="noopener noreferrer"} in *The Rust Reference* for more information.
 :::
 
 ### External Dependencies
-Dependencies from crates.io (Rust's public registry, the equivalent of PyPI) go in `Cargo.toml`:
+Dependencies from [crates.io](https://crates.io/){target=_blank} (Rust's public registry, the equivalent of PyPI) go in `Cargo.toml`:
 
 ```toml
 [dependencies]
@@ -337,15 +604,6 @@ use regex::Regex;
 ```
 
 This is the `pip install` + `import` of Rust, collapsed into one tool that also handles building, testing, and formatting.
-
-### The Analogy Table
-| Concept               | C                        | Python              | Rust              |
-|-----------------------|--------------------------|---------------------|-------------------|
-| Distributable unit    | `.a` / `.so`             | Package (PyPI)      | Crate (crates.io) |
-| Project manifest      | Makefile                 | `pyproject.toml`    | `Cargo.toml`      |
-| Namespace / file unit | (file, no formal system) | Module (`.py` file) | Module (`mod`)    |
-| Import                | `#include`               | `import`            | `use`             |
-| Package manager       | (none built in)          | pip                 | cargo             |
 
 ## The Basics
 ### Operators
@@ -422,9 +680,9 @@ These look like operators but are actually conventions or syntax:
 | `?` | Error propagation (actually IS an operator, see above) | `file.read()?` |
 | `.await` | Async/await syntax (postfix keyword) | `future.await` |
 
-**Operator Overloading**
+#### Operator Overloading
 
-Many operators can be overloaded by implementing traits from `std::ops`:
+Many operators can be overloaded by implementing traits from [`std::ops`](https://doc.rust-lang.org/std/ops/index.html). For example:
 
 ```rust
 use std::ops::Add;
@@ -447,19 +705,59 @@ let p2 = Point { x: 3, y: 4 };
 let p3 = p1 + p2;  // uses our Add implementation
 ```
 
-**Common Operator Traits**
+In the following table we include some of A listers and indicate the operator, the trait (in `std::ops`) and the method signature. For a complete list, see [`std::ops`](https://doc.rust-lang.org/std/ops/index.html#traits).
 
 | Operator | Trait | Method |
 |----------|-------|--------|
-| `+` | `Add` | `add()` |
-| `-` | `Sub` | `sub()` |
-| `*` | `Mul` | `mul()` |
-| `/` | `Div` | `div()` |
-| `%` | `Rem` | `rem()` |
-| `==`, `!=` | `PartialEq` | `eq()`, `ne()` |
-| `<`, `>`, `<=`, `>=` | `PartialOrd` | `partial_cmp()` |
-| `[]` | `Index` | `index()` |
-| `[]` (mut) | `IndexMut` | `index_mut()` |
+| `+` | [`Add`](https://doc.rust-lang.org/std/ops/trait.Add.html) | `add(self, rhs: Rhs) -> Self` |
+| `-` | [`Sub`](https://doc.rust-lang.org/std/ops/trait.Sub.html) | `sub(self, rhs: Rhs) -> Self` |
+| `*` | [`Mul`](https://doc.rust-lang.org/std/ops/trait.Mul.html) | `mul(self, rhs: Rhs) -> Self` |
+| `/` | [`Div`](https://doc.rust-lang.org/std/ops/trait.Div.html) | `div(self, rhs: Rhs) -> Self` |
+| `%` | [`Rem`](https://doc.rust-lang.org/std/ops/trait.Rem.html) | `rem(self, rhs: Rhs) -> Self` |
+| `==`, `!=` | [`PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html) | `eq(&self, other: &Rhs) -> bool`, `ne(&self, other: &Rhs) -> bool` |
+| `<`, `>`, `<=`, `>=` | [`PartialOrd`](https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html) | `partial_cmp(&self, rhs: &Rhs) -> Option<Ordering>` |
+| `[]` | [`Index`](https://doc.rust-lang.org/std/ops/trait.Index.html) | `index(&self, index: Idx) -> &Self::Output` |
+| `[]` (mut) | [`IndexMut`](https://doc.rust-lang.org/std/ops/trait.IndexMut.html) | `index_mut(&mut self, index: Idx) -> &mut Self::Output` |
+
+::: {.callout-note title="Why are some by Reference and others by Value?"}
+The reason comes down to **Copy semantics**. For `PartialEq`, the signature is:
+
+```rust
+fn eq(&self, other: &Self) -> bool;
+```
+
+Both sides take references because equality is a *read-only inspection* — you just need to look at both values, and you're done. Neither side is consumed. Taking references here is the obvious choice regardless of whether the type is Copy or not.
+
+For `Add`, the signature is:
+```rust
+fn add(self, rhs: Self) -> Self::Output;
+```
+
+The operands are taken *by value* because addition is modeled as **consumption and transformation** — you take the inputs and produce a new output. For types where this makes sense (like integers), the values are [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html), so "moving" them is a no-op anyway. The compiler just copies the bits and you never notice.
+
+The reason Rust doesn't default to references for `Add` is that it would be unnecessarily restrictive for *non-Copy* types. Consider a hypothetical big integer or a matrix type — you might genuinely want to consume both operands and reuse their memory in constructing the result, avoiding an extra allocation. If the trait required `&Self`, you'd lose that option.
+
+So the general principle is:
+
+- If the operation is **inspection** (equality, ordering, hashing) → references make sense, nothing is consumed
+- If the operation is **transformation** (arithmetic) → by value, because the inputs are conceptually spent producing the output
+:::
+
+::: {.reminder}
+`Copy` is opt-in, and non-`Copy` is the default. To make a type `Copy`, you have to explicitly opt in:
+
+```rust
+#[derive(Copy, Clone)]
+struct Point {
+    x: f32,
+    y: f32,
+}
+```
+
+Any type that doesn't explicitly derive or implement `Copy` is automatically move semantics. So you get non-Copy behavior for free just by not doing anything.
+
+And there are rules about when you're even allowed to do that — the compiler will reject it if your type contains any non-Copy fields (like a `String` or a `Vec`). The idea being that Copy is a promise that "bitwise copying this value is always safe and correct," and the compiler enforces that the whole type tree is consistent with that promise.
+:::
 
 :::{.see-more}
 See [Appendix B: Operators](https://doc.rust-lang.org/book/appendix-02-operators.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for the complete reference.
@@ -470,7 +768,7 @@ See [Appendix B: Operators](https://doc.rust-lang.org/book/appendix-02-operators
 and Mutability
 :::
 
-In C you declare a variable and it's mutable by default. In Rust, variables are **immutable by default**. You opt into mutability with `mut`.
+In C you declare a variable and it's mutable by default. In Rust, variables are *immutable by default*. You opt into mutability with `mut`.
 
 ```rust
 let x = 5;          // immutable
@@ -603,18 +901,29 @@ fn sum(arr: &[i32; 5]) -> i32 {
 `String` and `&str`
 :::
 
-Rust has two string types. The distinction maps directly onto owned vs. borrowed:
+Rust has two string types. The distinction maps directly onto [owned](#ownership) vs. [borrowed](#borrowing):
 
 | Type     | Owned? | Mutable? | Lives on  | Analogy                    |
 |----------|--------|----------|-----------|----------------------------|
-| `String` | Yes    | Yes      | Heap      | `std::string` in C++       |
-| `&str`   | No     | No       | Anywhere  | `std::string_view` in C++  |
+| [`String`](https://doc.rust-lang.org/std/string/struct.String.html) | Yes    | Yes      | Heap      | `std::string` in C++       |
+| [`&str`](https://doc.rust-lang.org/std/primitive.str.html)   | No     | No       | Anywhere  | `std::string_view` in C++  |
 
 ##### Representation
+::: {.definition data-label="Laurel and Hardy"}
+**Fat pointer**: also known as a **wide pointer**, is a data structure that stores a memory address along with additional metadata. For example, an `&str` is a *fat pointer* that stores a pointer into a UTF-8 buffer and a length.
 
-`String` stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is **not** null-terminated. The length field is what tells Rust where the string ends.
+**Skinny pointer**: actually known as a **thin pointer**, is a plain old pointer: a single memory address.
 
-`&str` is a fat pointer: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.
+Some common uses of *fat pointers* are:
+
+- **Slices (Dynamic Arrays)**: a *fat pointer* for a slice stores the base memory address of the first element plus the length of the slice. This allows for safe bounds checking at runtime.
+- **Trait Objects / Interfaces**: in languages like Rust or Go, when you use dynamic dispatch, the fat pointer contains the data address and a vtable pointer (virtual method table). The vtable tells the program which specific methods to call for that object.
+- **Memory Safety**: Some research implementations use fat pointers to store bounds (base and end address) to prevent buffer overflows or keys/locks for temporal memory safety.
+:::
+
+[`String`](https://doc.rust-lang.org/std/string/struct.String.html) stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is *not* null-terminated. The length field is what tells Rust where the string ends.
+
+[`&str`](https://doc.rust-lang.org/std/primitive.str.html) is a **fat pointer**: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.
 
 Both types are guaranteed to contain valid UTF-8. Rust will not let you construct an invalid string.
 
@@ -641,45 +950,10 @@ let t: &str = &a[0..3];             // slice of an existing String
 
 Most string methods are defined on `&str` and are therefore available on both `String` and `&str`. Methods that produce a new owned string return `String`; methods that just inspect or slice return `&str` or a primitive.
 
-```rust
-let s = String::from("  Hello, World!  ");
-
-// Inspection
-s.len();                            // byte count (not char count)
-s.is_empty();                       // true if len() == 0
-s.contains("World");                // true
-s.starts_with("  He");             // true
-s.ends_with("!  ");                // true
-
-// Searching
-s.find("World");                    // Some(9) — byte offset of first match
-s.trim();                           // "&Hello, World!" — strip whitespace both ends
-s.trim_start();                     // strip leading whitespace only
-s.trim_end();                       // strip trailing whitespace only
-
-// Transforming (returns new String)
-s.to_lowercase();                   // "  hello, world!  "
-s.to_uppercase();                   // "  HELLO, WORLD!  "
-s.replace("World", "Rust");        // "  Hello, Rust!  "
-s.replacen("l", "L", 2);          // replace first 2 occurrences
-
-// Splitting (returns iterators — collect into Vec if you need indexing)
-let words: Vec<&str> = s.split_whitespace().collect();  // ["Hello,", "World!"]
-let parts: Vec<&str> = "a,b,c".split(',').collect();    // ["a", "b", "c"]
-let lines: Vec<&str> = "one\ntwo\nthree".lines().collect();
-
-// Characters (UTF-8 aware)
-"hello".chars().count();            // 5 — char count, not byte count
-"hello".chars().nth(1);            // Some('e')
-
-// Repeating
-"ab".repeat(3);                     // "ababab"
-```
-
 | Method                   | Returns         | What it does                              |
 |--------------------------|-----------------|-------------------------------------------|
-| `.len()`                 | `usize`         | Byte length                               |
-| `.is_empty()`            | `bool`          | True if zero bytes                        |
+| `.len()`                 | `usize`         | Byte length which is not the same as character count |
+| `.is_empty()`            | `bool`          | True if length = zero bytes               |
 | `.contains(pat)`         | `bool`          | True if pattern is present                |
 | `.starts_with(pat)`      | `bool`          | Prefix check                              |
 | `.ends_with(pat)`        | `bool`          | Suffix check                              |
@@ -688,11 +962,47 @@ let lines: Vec<&str> = "one\ntwo\nthree".lines().collect();
 | `.to_lowercase()`        | `String`        | New lowercased string                     |
 | `.to_uppercase()`        | `String`        | New uppercased string                     |
 | `.replace(from, to)`     | `String`        | Replace all occurrences                   |
-| `.split(pat)`            | iterator        | Split on pattern                          |
-| `.split_whitespace()`    | iterator        | Split on any whitespace, skipping empties |
-| `.lines()`               | iterator        | Split on line endings                     |
-| `.chars()`               | iterator        | Unicode scalar values (not bytes)         |
+| `.split(pat)`            | [iterator](#iterators) | Split on pattern                   |
+| `.split_whitespace()`    | [iterator](#iterators) | Split on any whitespace, skipping empties |
+| `.lines()`               | [iterator](#iterators) | Split on line endings              |
+| `.chars()`               | [iterator](#iterators) | Unicode scalar values (not bytes)  |
 | `.repeat(n)`             | `String`        | Concatenate `n` copies                    |
+
+
+```rust
+let s = String::from("  Hello, World!  ");
+
+// Inspection
+s.len();                      // 17
+s.is_empty();                 // true if len() == 0
+s.contains("World");          // true
+s.starts_with("  He");        // true
+s.ends_with("!  ");           // true
+
+// Searching
+s.find("World");              // Some(9) — byte offset of first match
+s.trim();                     // "Hello, World!" — strip whitespace both ends
+s.trim_start();               // "Hello, World!  " — strip leading whitespace only
+s.trim_end();                 // "  Hello, World!" — strip trailing whitespace only
+
+// Transforming (returns new String)
+s.to_lowercase();             // "  hello, world!  "
+s.to_uppercase();             // "  HELLO, WORLD!  "
+s.replace("World", "Rust");   // "  Hello, Rust!  "
+s.replacen("l", "L", 2);      // replace first 2 occurrences
+
+// Splitting (returns iterators — collect into Vec if you need indexing)
+let words: Vec<&str> = s.split_whitespace().collect();  // ["Hello,", "World!"]
+let parts: Vec<&str> = "a,b,c".split(',').collect();    // ["a", "b", "c"]
+let lines: Vec<&str> = "one\ntwo\nthree".lines().collect();
+
+// Characters (UTF-8 aware)
+"hello".chars().count();            // 5 — char count, not byte count
+"hello".chars().nth(1);             // Some('e')
+
+// Repeating
+"ab".repeat(3);                     // "ababab"
+```
 
 ##### When to use which
 
@@ -711,10 +1021,23 @@ Use `String` when you need to own or mutate the text.
 
 ### Values
 ::: {.subheading}
+Data Types
+:::
+
+Every value in Rust is of a certain data [type](#types), which tells Rust what kind of data is being specified so that it knows how to work with that data. We already went over the various scalars. Later we shall see some data structures. Here we are going to have a look at type wrapping (I don't know what it's really called) and Rust's equivalent of `void`.
+
+#### `Option<T>`
+::: {.subheading}
 The "Null Problem"
 :::
 
-In languages like Java, Python, or C++, any variable can technically be *null*. This leads to the infamous "Null Pointer Exception" or "Segment Fault" when you try to use a variable that isn't actually there. The rust way is: `Option<T>`. If a value might be missing, you must explicitly wrap it in an Option:
+Sometimes you have a value that might be missing. In C, you would use a pointer and set it to `NULL` when there is no value. In Java, you would just set the variable to `null`. In Rust, there is no such thing as `null`. Instead, Rust has a built-in type called `Option<T>` that explicitly represents the possibility of absence.
+
+::: {.callout-note title="Why No Null?"}
+Because null references are a billion-dollar mistake. They lead to runtime errors when you try to access something that isn't there. By making the possibility of "no value" explicit in the type system, Rust forces you to handle it safely at compile time, eliminating an entire class of bugs.
+:::
+
+Let's meet our little buddy:
 
 ```rust
 enum Option<T> {
@@ -723,7 +1046,9 @@ enum Option<T> {
 }
 ```
 
-Why this is better:
+We will learn more about [Option\<T\>](#option-t) and how to use it in the chapter on [Enums](#enums). For now, know that `Option<T>` is how Rust represents a value that can either be something (`Some`) or nothing (`None`).
+
+##### Why this is better?
 
 1. **The Compiler Forces You to Handle It**: If you have an `Option<String>`, you cannot call methods like `.len()` on it directly. You must use a match statement or an if let to "unwrap" the value first.
 2. **Type Safety**: You can never accidentally treat a "null" value as a real one. If a variable is just a `String`, it is guaranteed to be a valid string. If it's an `Option<String>`, you know it might be empty.
@@ -748,7 +1073,16 @@ In short, `()` is Rust's way to say "no meaningful value," whether as a function
 A view into a sequence, without copying
 :::
 
-A slice is a reference to a contiguous subsequence of an array or string. It is a *fat pointer*: two words wide, carrying both a pointer to the first element and a length. No heap allocation, no copy.
+A slice is a reference to a contiguous subsequence of an array or string. It is a *fat pointer*: two (machine) words wide, carrying both a pointer to the first element and a length. No heap allocation, no copy. Follows is a table of slice syntax and what it means:
+
+| Syntax    | Meaning                          |
+|---------|----------------------------------|
+| `[..]`    | Entire sequence                  |
+| `[a..b]`  | From index `a` up to (not including) `b` |
+| `[a..=b]` | From index `a` through `b` (inclusive)   |
+| `[a..]`   | From index `a` to the end        |
+| `[..b]`   | From the start up to (not including) `b` |
+
 
 ```rust
 let a = [10, 20, 30, 40, 50];
@@ -759,16 +1093,6 @@ let last  = &a[2..];     // [30, 40, 50]           — open on the left
 let mid   = &a[1..4];    // [20, 30, 40]           — half-open (end excluded)
 let incl  = &a[1..=3];   // [20, 30, 40]           — inclusive end with ..=
 ```
-
-#### Range syntax
-
-| Syntax    | Meaning                          |
-|-----------|----------------------------------|
-| `[..]`    | Entire sequence                  |
-| `[a..b]`  | From index `a` up to (not including) `b` |
-| `[a..=b]` | From index `a` through `b` (inclusive)   |
-| `[a..]`   | From index `a` to the end        |
-| `[..b]`   | From the start up to (not including) `b` |
 
 #### No negative indices
 
@@ -809,6 +1133,39 @@ let b: u8  = 255i32 as u8;    // truncates if out of range — be careful
 ```
 
 #### `From` and `Into`
+::: {.explanation}
+In the following you will see syntax that looks a little like inheritance in other languages: `A: From<B>`. But we know it's not inheritance, \`cuz Rust doesn't support inheritance. It is called a **trait bound**. It means "A implements the `From` trait for `B`." In other words, you can convert from `B` to `A` using the From trait's method. The following example is in [The Rust Reference](https://doc.rust-lang.org/reference/trait-bounds.html) (there is a wicked looking syntax diagram on that page):
+
+```rust
+trait Shape {
+    fn draw(&self, surface: Surface);
+    fn name() -> &'static str;
+}
+
+fn draw_twice<T: Shape>(surface: Surface, sh: T) {
+    sh.draw(surface);           // Can call method because T: Shape
+    sh.draw(surface);
+}
+
+fn copy_and_draw_twice<T: Copy>(surface: Surface, sh: T) where T: Shape {
+    let shape_copy = sh;        // doesn't move sh because T: Copy
+    draw_twice(surface, sh);    // Can use generic function because T: Shape
+}
+
+struct Figure<S: Shape>(S, S);
+
+fn name_figure<U: Shape>(
+    figure: Figure<U>,          // Type Figure<U> is well-formed because U: Shape
+) {
+    println!(
+        "Figure of two {}",
+        U::name(),              // Can use associated function
+    );
+}
+```
+
+We will learn more about traits in the [Structs, Enums and Traits](#structs-enums-and-traits) section. And we will learn more about trait bounds in the [Generics and Trait Bounds](#generics-and-trait-bounds) section.
+:::
 
 For non-primitive conversions, Rust uses the `From` and `Into` traits. If `A: From<B>`, then you can write `A::from(b)` or, equivalently, `b.into()` (the compiler figures out the target from context):
 
@@ -890,17 +1247,37 @@ The `::<>` spelling looks strange but follows the same pattern as other generic 
 :::
 
 ### Functions
+Functions are beautiful, reusable blocks of logic. [Wikipedia](https://en.wikipedia.org/wiki/Function_(computer_programming)) describes a **function** as "a callable unit of software logic that has a well-formed interface and behavior and can be invoked multiple times... Their primary purpose is to allow for the decomposition of a large and/or complicated problem into chunks that have relatively low cognitive load and to assign the chunks meaningful names (unless they are anonymous). Judicious application can reduce the cost of developing and maintaining software, while increasing its quality and reliability." Where would any language be without them?
+
+#### Common Type
+The most commonly used function type in rust is declared with `fn`:
+
 ```rust
 fn add(a: i32, b: i32) -> i32 {
     a + b       // no semicolon = expression = return value
 }
 
-fn greet(name: &str) {
-    println!("Hello, {}!", name);  // no return value = returns ()
-}
+println!("2 + 3 = {}", add(2, 3));
 ```
 
-The last expression in a block is its value. `return` exists but is idiomatic only for early returns.
+If your function doesn't have a return type then you simply drop the `-> <type>` in the declaration. But if it does (have a return type), then the last expression in a block is its value. `return` exists but is idiomatic only for early returns. The reason this works is because the return value of a function is synonymous with the value of the final expression in the block of the body of a function. You can return early from a function by using the `return` keyword and specifying a value, but most functions return the last expression implicitly. I'm not crazy about dropping `return`. Including it makes it painlessly clear what is being returned. But then people won't think your cool and they won't come to your birthday party. Let the force guide you.
+
+#### Anonymous Type
+Another form of functions supported by Rust is *closures*. They are nameless, but may be assigned to variables and/or passed as arguments. There are a few differences between a closure and a `fn` function:
+
+1. They are nameless.
+2. They usually can infer parameter and return types and in such cases do not need to be specified.
+3. By default, they capture the state of variables in their surrounding scope.
+
+The equivalent of the `add` function up above is any of the following:
+
+```rust
+let add = |a, b|                      a + b
+let add = |a, b|                    { a + b }
+let add = |a: i32, b: i32| -> i32   { a + b}
+```
+
+We cover [closures](https://doc.rust-lang.org/book/ch13-01-closures.html) in more detail [below](#closures).
 
 ### Control Flow
 ```rust
@@ -933,12 +1310,12 @@ for n in &nums {
 See [Common Programming Concepts](https://doc.rust-lang.org/book/ch03-00-common-programming-concepts.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
-## Option\<T\>
+## Option\<T\> {#option-t}
 ::: {.subheading}
 I use this guy frequently, and I frequently forget how to use him.
 :::
 
-I described `Option<T>` as a pointer and AI got defensive. He's right, it's more than just a pointer. It's an impenetrable fortress built up around a pointer. In the late 90s, just when Java was becoming popular and .NET was a twinkle in Microsft's eye, a commonly quoted statistic was floating around, "90% of C/C++ bugs have to do with memory management". I don't know how accurate it is, but having been a C/C++ developer for many years at the time, I have no doubt that memory management is the primary culprit of all C/C++ bugs.
+I described `Option<T>` as a pointer and AI got defensive. He's right, it's more than just a pointer. It's an impenetrable fortress built up around a pointer. In the late 90s, just when Java was becoming popular and .NET was a twinkle in Microsoft's eye, a commonly quoted statistic was floating around, "90% of C/C++ bugs have to do with memory management". I don't know how accurate it is, but having been a C/C++ developer for many years at the time, I have no doubt that memory management is the primary culprit of all C/C++ bugs.
 
 So what is it about Rust that makes him different? Rust does not have `null`s. It has `None` but no `NULL`. And he has a wicked enum - `Option<T>` - that can encode the concept of a value being present or absent. `Option<T>` is defined by the [standard library](https://doc.rust-lang.org/std/option/enum.Option.html) as follows:
 
@@ -1254,7 +1631,7 @@ println!("{:?}", label);   // Some("HELLO")
 
 
 ## Macros
-Throughout this chapter you have seen `println!`, `vec!`, `format!`, and `panic!`. The `!` signals a **macro call**, not a function call. Macros in Rust are code that writes code at compile time, before the compiler type-checks anything.
+Throughout this chapter you have seen `println!`, `vec!`, `format!`, and `panic!`. The `!` signals a *macro call*, not a function call. **Macros** in Rust are code that writes code at compile time, before the compiler type-checks anything.
 
 Why do macros exist? Because they can do things ordinary functions cannot. For example, `println!` accepts a variable number of arguments of different types — impossible for a regular Rust function without significant compromise. Macros solve this by expanding at compile time into whatever code is needed.
 
@@ -2087,7 +2464,7 @@ The compiler will tell you. Common situations:
 4. **Closures that capture references** (usually inferred, but not always)
 
 ::: {.callout-tip}
-**Don't worry if this feels overwhelming.** In practice:
+Don't worry if this feels overwhelming. In practice:
 
 - The compiler infers lifetimes in most code
 - Error messages tell you exactly where annotations are needed
@@ -2176,7 +2553,7 @@ impl Config {
 let config = Config::new(String::from("example.com"), 443);
 ```
 
-`new()` is **not special** — it's just a regular function you write yourself. You can name it anything (`create()`, `make()`, `build()`), but `new()` is the convention.
+`new()` is not special — it's just a regular function you write yourself. You can name it anything (`create()`, `make()`, `build()`), but `new()` is the convention.
 
 ###### The `Default` Trait
 For types with sensible defaults, implement the `Default` trait:
@@ -2258,7 +2635,7 @@ let db = Database {
 };
 ```
 
-The `Database` struct itself (its stack frame) is small — it contains only the **pointers and metadata** for `Vec`, `HashMap`, and `String`. The actual data lives on the heap:
+The `Database` struct itself (its stack frame) is small — it contains only the pointers and metadata for `Vec`, `HashMap`, and `String`. The actual data lives on the heap:
 
 ```
 Stack:                    Heap:
@@ -2427,7 +2804,7 @@ Use `as i32` to get the integer value. The reverse (integer to enum) requires ma
 Algebraic Data Types
 :::
 
-Here's where Rust diverges from C/C++: **each variant can carry data**. This makes enums a tagged union — a type that can be one of several variants, each with its own payload.
+Here's where Rust diverges from C/C++: each variant can carry data. This makes enums a tagged union — a type that can be one of several variants, each with its own payload.
 
 ```rust
 enum Message {
@@ -2596,7 +2973,7 @@ See [Enums and Pattern Matching](https://doc.rust-lang.org/book/ch06-00-enums.ht
 :::
 
 ### Traits
-Traits are Rust's answer to interfaces. A trait defines behaviour; structs implement it.
+Traits are Rust's answer to interfaces. A trait defines behavior; structs implement it.
 
 ```rust
 trait Describe {
@@ -2711,7 +3088,7 @@ let s = p.to_string();       // Display also gives you .to_string() for free
 
 The `fmt` method writes into a formatter using `write!` (same syntax as `println!` but targeting the formatter). Return `fmt::Result` — either `Ok(())` on success or an error if writing failed.
 
-**Implementing both** is the standard pattern for any type you plan to use in output or error handling. `Debug` for internal diagnostics, `Display` for anything a user might see:
+Implementing both is the standard pattern for any type you plan to use in output or error handling. `Debug` for internal diagnostics, `Display` for anything a user might see:
 
 ```rust
 use std::fmt;
@@ -2811,7 +3188,7 @@ See [Generic Types, Traits, and Lifetimes](https://doc.rust-lang.org/book/ch10-0
 :::
 
 ## Pattern Matching
-Pattern matching in Rust is deeper than a switch statement. It simultaneously **tests the structure** of a value and **extracts** data from it. Every `match` arm is a pattern, and the compiler guarantees you have handled every possible case — exhaustiveness is enforced at compile time.
+Pattern matching in Rust is deeper than a switch statement. It simultaneously tests the structure of a value and extracts data from it. Every `match` arm is a pattern, and the compiler guarantees you have handled every possible case — exhaustiveness is enforced at compile time.
 
 ### The `match` Expression
 [`match`](https://doc.rust-lang.org/book/ch19-01-all-the-places-for-patterns.html#match-arms){target="_blank" rel="noopener noreferrer"} as per *The Rust Programming Language*.
@@ -3826,21 +4203,19 @@ See [Common Collections](https://doc.rust-lang.org/book/ch08-00-common-collectio
 "lambdas" in other worlds
 :::
 
-A **closure** is an anonymous function that can capture values from its surrounding scope. C++ and Python programmers will recognize them as *lambdas*.
+A **closure** is an anonymous function that can capture values from its surrounding scope. C++ and Python programmers will recognize them as *lambdas*. They are typically short, one line expressions, but this is not enforced. A closure may be as large as you need him to be. Whereas people went bonkers with ES6's support for arrow function expressions, you probably don't want to go bonkers with Rust's closures due to their (default) absorbent (capture surrounding scope) nature. Also, closures generally don’t require you to annotate the types of the parameters or the return value like `fn` functions do. Type annotations are required on `fn` functions because the types are part of an explicit interface exposed to your users. We specify a closure with  `|...|`:
 
 ```rust
 let add = |a, b| a + b;
 println!("{}", add(2, 3));   // 5
-
-let threshold = 10;
-let above = |n| n > threshold;   // captures threshold from the enclosing scope
-println!("{}", above(15));        // true
 ```
 
-Closures infer parameter and return types from context. You can annotate explicitly if needed:
+Using our `add` friend as an example, a closure may take any of the following forms:
 
 ```rust
-let square = |x: f64| -> f64 { x * x };
+let add = |a, b|                    a + b;
+let add = |a, b|                  { a + b };
+let add = |a: i16, b: i16| -> i16 { a + b }
 ```
 
 Closures are inherently flexible and will do what the functionality requires to make the closure work without annotation. This allows capturing to flexibly adapt to the use case, sometimes moving and sometimes borrowing. Closures can capture variables:
@@ -3849,9 +4224,7 @@ Closures are inherently flexible and will do what the functionality requires to 
 - by mutable reference: `&mut T`
 - by value: `T`
 
-By default closures capture variables by *reference* and only go lower when required.
-
-If you need the closure to own its captured data (to send it to another thread, for example) use `move`. `move` before vertical pipes forces closure to take ownership of captured variables:
+By default closures capture variables by *reference* and only go lower when required. If you need the closure to own its captured data (to send it to another thread, for example) use `move`. `move` before vertical pipes forces closure to take ownership of captured variables:
 
 ```rust
 let name = String::from("world");
@@ -3860,9 +4233,9 @@ greet();
 // name is no longer accessible here
 ```
 
-#### `Fn`, `FnMut`, and `FnOnce`
+#### Closure Traits
 
-Every closure implements one or more of three traits. The compiler assigns them automatically based on what the closure does with its captured values. You rarely name these traits when writing closures, but you must understand them when writing functions that *accept* closures as parameters.
+Every closure implements one or more of three traits: `Fn`, `FnMut`, and `FnOnce`. The compiler assigns them automatically based on what the closure does with its captured values. You rarely name these traits when writing closures, but you must understand them when writing functions that *accept* closures as parameters.
 
 | Trait     | Can be called | Captures         | When the compiler assigns it                        |
 |-----------|---------------|------------------|-----------------------------------------------------|
@@ -3905,7 +4278,10 @@ greet("Alice");   // hello, Alice!
 greet("Bob");     // hello, Bob!
 ```
 
-#### Choosing the right bound for function parameters
+#### Closure Parameters
+::: {.subheading}
+Choosing the right bound for function parameters
+:::
 
 When you write a function that takes a closure, pick the bound based on what you need:
 
@@ -4775,9 +5151,9 @@ Opt-in language evolution without breaking the ecosystem
 
 Yes, editions are named by year: `2015`, `2018`, `2021`, and `2024`. Each edition allows the Rust team to make changes to the language's syntax and semantics that would otherwise be backward-incompatible, without forcing anyone to upgrade immediately.
 
-The key insight is that **editions are per-crate, and all editions can link together**. A crate compiled with edition 2015 and a crate compiled with edition 2021 produce compatible object code. The edition setting lives in `Cargo.toml` and affects only the crate it belongs to. This means the ecosystem never splits the way Python 2 vs Python 3 did.
+The key insight is that *editions are per-crate, and all editions can link together*. A crate compiled with edition 2015 and a crate compiled with edition 2021 produce compatible object code. The edition setting lives in `Cargo.toml` and affects only the crate it belongs to. This means the ecosystem never splits the way Python 2 vs Python 3 did.
 
-What changes between editions is **language syntax and a small number of semantic rules**, not the standard library. The standard library API is versioned by the Rust release channel separately. An example: in edition 2015 you had to write `extern crate serde;` at the top of `main.rs` to bring an external crate into scope. In 2018 that was removed entirely. Both editions call the same `serde` functions at runtime.
+What changes between editions is language syntax and a small number of semantic rules, not the standard library. The standard library API is versioned by the Rust release channel separately. An example: in edition 2015 you had to write `extern crate serde;` at the top of `main.rs` to bring an external crate into scope. In 2018 that was removed entirely. Both editions call the same `serde` functions at runtime.
 
 | Edition | Notable changes                                                                                                                                     |
 |---------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -4877,7 +5253,57 @@ debug     = true    # keep symbols for profiling
 ```
 
 ### Environment Variables
-Cargo sets and reads a number of [environment variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html){target="_blank"} which you (in your code) can detect or override by setting. The list is long so the lists here are subsets. See the official documentation (which I think is [The Cargo Book](https://doc.rust-lang.org/cargo/reference/environment-variables.html){target="_blank"}).
+Cargo manages a well-known list of [environment variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html){target="_blank"}. They fall into to major categories:
+
+1. **Variables Cargo sets**: these are variables that Cargo prepares for our consumption during compilation.
+2. **Variables Cargo reads**: these are variables that Cargo consumes during compilation.
+
+::: {.panel data-label="Environment Variable I/O"}
+##### `env` the Function
+Rust includes the [`env`](https://doc.rust-lang.org/stable/std/env/){target="_blank"} module as part of the standard library. It includes functions to read and write environment variables.
+
+###### Examples
+```rust
+use std::env;
+
+let key = "HOME";
+match env::var(key) {
+    Ok(val) => println!("{key}: {val:?}"),
+    Err(e) => println!("couldn't interpret {key}: {e}"),
+}
+```
+
+```rust
+use std::env;
+
+let key = "KEY";
+unsafe {
+    env::set_var(key, "VALUE");
+}
+assert_eq!(env::var(key), Ok("VALUE".to_string()));
+```
+
+But the *super-cool* way of reading an environment variable is the `env!` macro.
+
+##### `env!` the Macro
+
+`env!` inspects an environment variable at *compile time*. This macro will expand to the value of the named environment variable at compile time, yielding an expression of type `&'static str`. If the environment variable is not defined, then a compilation error will be emitted. To not emit a compile error, use the `option_env!` macro instead.
+
+###### Examples
+```rust
+let path: &'static str = env!("PATH");
+println!("the $PATH variable at the time of compiling was: {path}");
+```
+
+You can customize the error message by passing a string as the second parameter:
+
+```rust
+let doc: &'static str = env!("documentation", "what's that?!");
+```
+:::
+
+
+Cargo's environment variable list is very long, so we've picked out some fan favorites as a sampler platter. See the official documentation (which I think is): [The Cargo Book](https://doc.rust-lang.org/cargo/reference/environment-variables.html){target="_blank"}.
 
 #### Cargo Sets
 
@@ -5399,7 +5825,7 @@ Quick Reference
 | `#include`                     | `use`                                  |
 | Header files                   | No headers — modules handle visibility |
 | Manual `free` / `delete`       | Automatic via ownership                |
-| Undefined behaviour on misuse  | Compile error on misuse                |
+| Undefined behavior on misuse  | Compile error on misuse                |
 | `printf`                       | `println!("{}",  val)`                 |
 
 ## Where to Go Next

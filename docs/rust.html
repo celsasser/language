@@ -648,7 +648,7 @@ window.Quarto = {
 <h5 class="anchored" data-anchor-id="is-rust-as-efficient-and-fast-as-c">2. Is Rust as efficient and fast as C?</h5>
 <p>Yes, with one honest qualification.</p>
 <p>On the machine-code level, Rust and C compile to essentially identical output. Both use LLVM (Clang also uses LLVM), both have no runtime or garbage collector, and Rust’s abstractions — iterators, generics, closures — are zero-cost: they disappear at compile time. Benchmarks between idiomatic Rust and idiomatic C are routinely within a percent or two of each other, and Rust sometimes wins because the compiler can apply optimizations that would be illegal in C due to aliasing rules (<code>restrict</code> in C is opt-in; Rust’s ownership model gives the compiler that guarantee automatically).</p>
-<p>The qualification: Rust has bounds-checked array indexing in debug builds, and in release builds the checks are still present unless you use <a href="https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword" target="_blank"><code>unsafe</code></a> indexing explicitly. In tight inner loops over arrays this can matter. C has no such checks at all. If you need to squeeze out that last few percent, Rust gives you the escape hatch (<code>unsafe</code>), but you have to ask for it deliberately. In practice, for most systems code, the difference does not appear outside of microbenchmarks.</p>
+<p>The qualification: Rust has bounds-checked array indexing in debug builds. In optimized builds, those checks are often eliminated when the compiler can prove an access is in range, and idiomatic safe Rust often uses iterators or slice methods that compile down without per-access bounds checks. In tight inner loops over arrays this can still matter in some cases, and C has no such checks by default. If you truly need manual unchecked indexing, Rust gives you the escape hatch via <a href="https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword" target="_blank"><code>unsafe</code></a>, but you have to ask for it deliberately. In practice, for most systems code, the difference does not appear outside of microbenchmarks.</p>
 </section>
 <section id="is-it-possible-for-a-rust-app-to-experience-a-segfault" class="level5">
 <h5 class="anchored" data-anchor-id="is-it-possible-for-a-rust-app-to-experience-a-segfault">3. Is it possible for a Rust app to experience a segfault?</h5>
@@ -808,7 +808,7 @@ window.Quarto = {
 </section>
 <section id="crates" class="level3">
 <h3 class="anchored" data-anchor-id="crates">Crates</h3>
-<p>Before we define what a create is, it’s important to understand what a <em>fundamental unit of compilation</em> is in Rust.</p>
+<p>Before we define what a crate is, it’s important to understand what a <em>fundamental unit of compilation</em> is in Rust.</p>
 <div class="explanation" data-label="Fundamental Unit of Compilation">
 <p>A <em>compilation unit</em> isn’t the smallest unit the compiler considers when compiling source. That is a <strong>syntactic unit</strong>. Rather it is the most granular unit the compiler creates when compiling code. For example, in C, a <em>compilation unit</em> is the object file (.o or .obj). But Rust is different.</p>
 <div class="quarto-figure quarto-figure-center">
@@ -1196,12 +1196,15 @@ window.Quarto = {
 <p>on his floor routine at the 2028 Summer Olympics</p>
 </div>
 <p>The thing I find the most cool about <code>use</code> is it’s flexibility. You may specify any portion of a full path and Rust will do the rest. <code>use</code> is essentially an <em>alias injector</em>: it binds a name at the current scope, and you can stop the path at any depth you like. Assuming that <code>A:B:C:something</code> exists, the following are all valid:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> A<span class="op">:</span>B<span class="op">:</span>C<span class="op">:</span>something<span class="op">;</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>something()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> A<span class="op">:</span>B<span class="op">;</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="pp">C::</span>something()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">A::B::C::</span>something<span class="op">;</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>something()<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">A::</span>B<span class="op">;</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="pp">C::</span>something()<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> A<span class="op">;</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="pp">B::C::</span>something()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="pp">B::C::</span>something()<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>I just went my pants. Very exciting indeed. And the architects did something that speaks on behalf of their thoroughness. It’s easier to demonstrate than it is to describe with words and hand puppets (🕺). Let’s assume that we have a module with the following hierarchy:</p>
 <pre><code>crate
 └── network
@@ -1212,7 +1215,7 @@ window.Quarto = {
 <h6 class="anchored" data-anchor-id="without-self">Without <code>self</code>:</h6>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">network::http::</span>client<span class="op">;</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="pp">client::</span>connect(<span class="op">...};</span>       <span class="co">// ✅</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="pp">client::</span>connect(<span class="op">...</span>)<span class="op">;</span>       <span class="co">// ✅</span></span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="pp">http::</span>get(<span class="op">...</span>)<span class="op">;</span>             <span class="co">// ❌</span></span>
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="pp">network::http::</span>get(<span class="op">...</span>)<span class="op">;</span>    <span class="co">// ✅</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>You have: <code>client</code>, but you don’t have: <code>http</code>. You must write <code>network::http::</code> to reach anything in it.</p>
@@ -1233,7 +1236,7 @@ window.Quarto = {
 <p>Finally, follows are some of the superpowers and conveniences built into <code>use</code>:</p>
 <ul>
 <li><p>You can rename with <code>as</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">A::B::C::</span>something <span class="kw">as</span> do_the_thing<span class="op">;</span>`</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">A::B::C::</span>something <span class="kw">as</span> do_the_thing<span class="op">;</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>do_the_thing()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 <li><p>You can pull in multiple items from the same path with braces:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">A::B::C::</span><span class="op">{</span>something<span class="op">,</span> another_thing<span class="op">};</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
@@ -1687,12 +1690,12 @@ window.Quarto = {
 <tr class="odd">
 <td><code>+</code></td>
 <td><a href="https://doc.rust-lang.org/std/ops/trait.Add.html"><code>Add</code></a></td>
-<td><code>add(self, other: Self) -&gt; Self</code></td>
+<td><code>add(self, rhs: Rhs) -&gt; Self</code></td>
 </tr>
 <tr class="even">
 <td><code>-</code></td>
 <td><a href="https://doc.rust-lang.org/std/ops/trait.Sub.html"><code>Sub</code></a></td>
-<td><code>sub(self, other: Self) -&gt; Self</code></td>
+<td><code>sub(self, rhs: Rhs) -&gt; Self</code></td>
 </tr>
 <tr class="odd">
 <td><code>*</code></td>
@@ -1712,12 +1715,12 @@ window.Quarto = {
 <tr class="even">
 <td><code>==</code>, <code>!=</code></td>
 <td><a href="https://doc.rust-lang.org/std/cmp/trait.PartialEq.html"><code>PartialEq</code></a></td>
-<td><code>eq(&amp;self, other: &amp;Rhs) -&gt; bool</code>, <code>ne(&amp;self, &amp;other: Rhs) -&gt; bool</code></td>
+<td><code>eq(&amp;self, other: &amp;Rhs) -&gt; bool</code>, <code>ne(&amp;self, other: &amp;Rhs) -&gt; bool</code></td>
 </tr>
 <tr class="odd">
 <td><code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code></td>
 <td><a href="https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html"><code>PartialOrd</code></a></td>
-<td><code>partial_cmp(&amp;self, rhs: &amp;Rhs) -&gt; bool</code></td>
+<td><code>partial_cmp(&amp;self, rhs: &amp;Rhs) -&gt; Option&lt;Ordering&gt;</code></td>
 </tr>
 <tr class="even">
 <td><code>[]</code></td>
@@ -2329,7 +2332,7 @@ window.Quarto = {
 </section>
 <section id="functions" class="level3">
 <h3 class="anchored" data-anchor-id="functions">Functions</h3>
-<p>Functions are beautiful, reusible blocks of logic. <a href="https://en.wikipedia.org/wiki/Function_(computer_programming)">Wikipedia</a> describes a <strong>function</strong> as “a callable unit of software logic that has a well-formed interface and behavior and can be invoked multiple times… Their primary purpose is to allow for the decomposition of a large and/or complicated problem into chunks that have relatively low cognitive load and to assign the chunks meaningful names (unless they are anonymous). Judicious application can reduce the cost of developing and maintaining software, while increasing its quality and reliability.” Where would any language be without them?</p>
+<p>Functions are beautiful, reusable blocks of logic. <a href="https://en.wikipedia.org/wiki/Function_(computer_programming)">Wikipedia</a> describes a <strong>function</strong> as “a callable unit of software logic that has a well-formed interface and behavior and can be invoked multiple times… Their primary purpose is to allow for the decomposition of a large and/or complicated problem into chunks that have relatively low cognitive load and to assign the chunks meaningful names (unless they are anonymous). Judicious application can reduce the cost of developing and maintaining software, while increasing its quality and reliability.” Where would any language be without them?</p>
 <section id="common-type" class="level4">
 <h4 class="anchored" data-anchor-id="common-type">Common Type</h4>
 <p>The most commonly used function type in rust is declared with <code>fn</code>:</p>

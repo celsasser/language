@@ -46,8 +46,7 @@ Yes, with one honest qualification.
 
 On the machine-code level, Rust and C compile to essentially identical output. Both use LLVM (Clang also uses LLVM), both have no runtime or garbage collector, and Rust's abstractions — iterators, generics, closures — are zero-cost: they disappear at compile time. Benchmarks between idiomatic Rust and idiomatic C are routinely within a percent or two of each other, and Rust sometimes wins because the compiler can apply optimizations that would be illegal in C due to aliasing rules (`restrict` in C is opt-in; Rust's ownership model gives the compiler that guarantee automatically).
 
-The qualification: Rust has bounds-checked array indexing in debug builds, and in release builds the checks are still present unless you use [`unsafe`](https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword){target=_blank} indexing explicitly. In tight inner loops over arrays this can matter. C has no such checks at all. If you need to squeeze out that last few percent, Rust gives you the escape hatch (`unsafe`), but you have to ask for it deliberately. In practice, for most systems code, the difference does not appear outside of microbenchmarks.
-
+The qualification: Rust has bounds-checked array indexing in debug builds. In optimized builds, those checks are often eliminated when the compiler can prove an access is in range, and idiomatic safe Rust often uses iterators or slice methods that compile down without per-access bounds checks. In tight inner loops over arrays this can still matter in some cases, and C has no such checks by default. If you truly need manual unchecked indexing, Rust gives you the escape hatch via [`unsafe`](https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword){target=_blank}, but you have to ask for it deliberately. In practice, for most systems code, the difference does not appear outside of microbenchmarks.
 
 ##### 3. Is it possible for a Rust app to experience a segfault?
 
@@ -125,7 +124,7 @@ This used to be at the end of the *Project Anatomy* chapter. But by the time you
 
 
 ### Crates
-Before we define what a create is, it's important to understand what a *fundamental unit of compilation* is in Rust.
+Before we define what a crate is, it's important to understand what a *fundamental unit of compilation* is in Rust.
 
 ::: {.explanation data-label="Fundamental Unit of Compilation"}
 A *compilation unit* isn't the smallest unit the compiler considers when compiling source. That is a **syntactic unit**. Rather it is the most granular unit the compiler creates when compiling code. For example, in C, a *compilation unit* is the object file \(.o or .obj\). But Rust is different.
@@ -451,18 +450,21 @@ on his floor routine at the 2028 Summer Olympics
 The thing I find the most cool about `use` is it's flexibility. You may specify any portion of a full path and Rust will do the rest. `use` is essentially an *alias injector*: it binds a name at the current scope, and you can stop the path at any depth you like. Assuming that `A:B:C:something` exists, the following are all valid:
 
 ```rust
-use A:B:C:something;
-something()
+use A::B::C::something;
+
+something();
 ```
 
 ```rust
-use A:B;
-C::something()
+use A::B;
+
+C::something();
 ```
 
 ```rust
 use A;
-B::C::something()
+
+B::C::something();
 ```
 
 I just went my pants. Very exciting indeed. And the architects did something that speaks on behalf of their thoroughness. It's easier to demonstrate than it is to describe with words and hand puppets (🕺). Let's assume that we have a module with the following hierarchy:
@@ -480,7 +482,7 @@ crate
 ```rust
 use network::http::client;
 
-client::connect(...};       // ✅
+client::connect(...);       // ✅
 http::get(...);             // ❌
 network::http::get(...);    // ✅
 ```
@@ -508,7 +510,7 @@ Finally, follows are some of the superpowers and conveniences built into `use`:
 * You can rename with `as`:
 
     ```rust
-    use A::B::C::something as do_the_thing;`
+    use A::B::C::something as do_the_thing;
     do_the_thing()
     ```
 
@@ -707,13 +709,13 @@ In the following table we include some of A listers and indicate the operator, t
 
 | Operator | Trait | Method |
 |----------|-------|--------|
-| `+` | [`Add`](https://doc.rust-lang.org/std/ops/trait.Add.html) | `add(self, other: Self) -> Self` |
-| `-` | [`Sub`](https://doc.rust-lang.org/std/ops/trait.Sub.html) | `sub(self, other: Self) -> Self` |
+| `+` | [`Add`](https://doc.rust-lang.org/std/ops/trait.Add.html) | `add(self, rhs: Rhs) -> Self` |
+| `-` | [`Sub`](https://doc.rust-lang.org/std/ops/trait.Sub.html) | `sub(self, rhs: Rhs) -> Self` |
 | `*` | [`Mul`](https://doc.rust-lang.org/std/ops/trait.Mul.html) | `mul(self, rhs: Rhs) -> Self` |
 | `/` | [`Div`](https://doc.rust-lang.org/std/ops/trait.Div.html) | `div(self, rhs: Rhs) -> Self` |
 | `%` | [`Rem`](https://doc.rust-lang.org/std/ops/trait.Rem.html) | `rem(self, rhs: Rhs) -> Self` |
-| `==`, `!=` | [`PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html) | `eq(&self, other: &Rhs) -> bool`, `ne(&self, &other: Rhs) -> bool` |
-| `<`, `>`, `<=`, `>=` | [`PartialOrd`](https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html) | `partial_cmp(&self, rhs: &Rhs) -> bool` |
+| `==`, `!=` | [`PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html) | `eq(&self, other: &Rhs) -> bool`, `ne(&self, other: &Rhs) -> bool` |
+| `<`, `>`, `<=`, `>=` | [`PartialOrd`](https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html) | `partial_cmp(&self, rhs: &Rhs) -> Option<Ordering>` |
 | `[]` | [`Index`](https://doc.rust-lang.org/std/ops/trait.Index.html) | `index(&self, index: Idx) -> &Self::Output` |
 | `[]` (mut) | [`IndexMut`](https://doc.rust-lang.org/std/ops/trait.IndexMut.html) | `index_mut(&mut self, index: Idx) -> &mut Self::Output` |
 
@@ -1245,7 +1247,7 @@ The `::<>` spelling looks strange but follows the same pattern as other generic 
 :::
 
 ### Functions
-Functions are beautiful, reusible blocks of logic. [Wikipedia](https://en.wikipedia.org/wiki/Function_(computer_programming)) describes a **function** as "a callable unit of software logic that has a well-formed interface and behavior and can be invoked multiple times... Their primary purpose is to allow for the decomposition of a large and/or complicated problem into chunks that have relatively low cognitive load and to assign the chunks meaningful names (unless they are anonymous). Judicious application can reduce the cost of developing and maintaining software, while increasing its quality and reliability." Where would any language be without them?
+Functions are beautiful, reusable blocks of logic. [Wikipedia](https://en.wikipedia.org/wiki/Function_(computer_programming)) describes a **function** as "a callable unit of software logic that has a well-formed interface and behavior and can be invoked multiple times... Their primary purpose is to allow for the decomposition of a large and/or complicated problem into chunks that have relatively low cognitive load and to assign the chunks meaningful names (unless they are anonymous). Judicious application can reduce the cost of developing and maintaining software, while increasing its quality and reliability." Where would any language be without them?
 
 #### Common Type
 The most commonly used function type in rust is declared with `fn`:

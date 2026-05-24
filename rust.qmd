@@ -1245,17 +1245,37 @@ The `::<>` spelling looks strange but follows the same pattern as other generic 
 :::
 
 ### Functions
+Functions are beautiful, reusible blocks of logic. [Wikipedia](https://en.wikipedia.org/wiki/Function_(computer_programming)) describes a **function** as "a callable unit of software logic that has a well-formed interface and behavior and can be invoked multiple times... Their primary purpose is to allow for the decomposition of a large and/or complicated problem into chunks that have relatively low cognitive load and to assign the chunks meaningful names (unless they are anonymous). Judicious application can reduce the cost of developing and maintaining software, while increasing its quality and reliability." Where would any language be without them?
+
+#### Common Type
+The most commonly used function type in rust is declared with `fn`:
+
 ```rust
 fn add(a: i32, b: i32) -> i32 {
     a + b       // no semicolon = expression = return value
 }
 
-fn greet(name: &str) {
-    println!("Hello, {}!", name);  // no return value = returns ()
-}
+println!("2 + 3 = {}", add(2, 3));
 ```
 
-The last expression in a block is its value. `return` exists but is idiomatic only for early returns.
+If your function doesn't have a return type then you simply drop the `-> <type>` in the declaration. But if it does (have a return type), then the last expression in a block is its value. `return` exists but is idiomatic only for early returns. The reason this works is because the return value of a function is synonymous with the value of the final expression in the block of the body of a function. You can return early from a function by using the `return` keyword and specifying a value, but most functions return the last expression implicitly. I'm not crazy about dropping `return`. Including it makes it painlessly clear what is being returned. But then people won't think your cool and they won't come to your birthday party. Let the force guide you.
+
+#### Anonymous Type
+Another form of functions supported by Rust is *closures*. They are nameless, but may be assigned to variables and/or passed as arguments. There are a few differences between a closure and a `fn` function:
+
+1. They are nameless.
+2. They usually can infer parameter and return types and in such cases do not need to be specified.
+3. By default, they capture the state of variables in their surrounding scope.
+
+The equivalent of the `add` function up above is any of the following:
+
+```rust
+let add = |a, b|                      a + b
+let add = |a, b|                    { a + b }
+let add = |a: i32, b: i32| -> i32   { a + b}
+```
+
+We cover [closures](https://doc.rust-lang.org/book/ch13-01-closures.html) in more detail [below](#closures).
 
 ### Control Flow
 ```rust
@@ -4181,21 +4201,19 @@ See [Common Collections](https://doc.rust-lang.org/book/ch08-00-common-collectio
 "lambdas" in other worlds
 :::
 
-A **closure** is an anonymous function that can capture values from its surrounding scope. C++ and Python programmers will recognize them as *lambdas*.
+A **closure** is an anonymous function that can capture values from its surrounding scope. C++ and Python programmers will recognize them as *lambdas*. They are typically short, one line expressions, but this is not enforced. A closure may be as large as you need him to be. Whereas people went bonkers with ES6's support for arrow function expressions, you probably don't want to go bonkers with Rust's closures due to their (default) absorbent (capture surrounding scope) nature. Also, closures generally don’t require you to annotate the types of the parameters or the return value like `fn` functions do. Type annotations are required on `fn` functions because the types are part of an explicit interface exposed to your users. We specify a closure with  `|...|`:
 
 ```rust
 let add = |a, b| a + b;
 println!("{}", add(2, 3));   // 5
-
-let threshold = 10;
-let above = |n| n > threshold;   // captures threshold from the enclosing scope
-println!("{}", above(15));        // true
 ```
 
-Closures infer parameter and return types from context. You can annotate explicitly if needed:
+Using our `add` friend as an example, a closure may take any of the following forms:
 
 ```rust
-let square = |x: f64| -> f64 { x * x };
+let add = |a, b|                    a + b;
+let add = |a, b|                  { a + b };
+let add = |a: i16, b: i16| -> i16 { a + b }
 ```
 
 Closures are inherently flexible and will do what the functionality requires to make the closure work without annotation. This allows capturing to flexibly adapt to the use case, sometimes moving and sometimes borrowing. Closures can capture variables:
@@ -4204,9 +4222,7 @@ Closures are inherently flexible and will do what the functionality requires to 
 - by mutable reference: `&mut T`
 - by value: `T`
 
-By default closures capture variables by *reference* and only go lower when required.
-
-If you need the closure to own its captured data (to send it to another thread, for example) use `move`. `move` before vertical pipes forces closure to take ownership of captured variables:
+By default closures capture variables by *reference* and only go lower when required. If you need the closure to own its captured data (to send it to another thread, for example) use `move`. `move` before vertical pipes forces closure to take ownership of captured variables:
 
 ```rust
 let name = String::from("world");
@@ -4215,9 +4231,9 @@ greet();
 // name is no longer accessible here
 ```
 
-#### `Fn`, `FnMut`, and `FnOnce`
+#### Closure Traits
 
-Every closure implements one or more of three traits. The compiler assigns them automatically based on what the closure does with its captured values. You rarely name these traits when writing closures, but you must understand them when writing functions that *accept* closures as parameters.
+Every closure implements one or more of three traits: `Fn`, `FnMut`, and `FnOnce`. The compiler assigns them automatically based on what the closure does with its captured values. You rarely name these traits when writing closures, but you must understand them when writing functions that *accept* closures as parameters.
 
 | Trait     | Can be called | Captures         | When the compiler assigns it                        |
 |-----------|---------------|------------------|-----------------------------------------------------|
@@ -4260,7 +4276,10 @@ greet("Alice");   // hello, Alice!
 greet("Bob");     // hello, Bob!
 ```
 
-#### Choosing the right bound for function parameters
+#### Closure Parameters
+::: {.subheading}
+Choosing the right bound for function parameters
+:::
 
 When you write a function that takes a closure, pick the bound based on what you need:
 

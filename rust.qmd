@@ -1355,6 +1355,38 @@ match name {
 }
 ```
 
+::: {.callout-important title="=> is unique to *match*"}
+For the longest while I thought `=>` was anonymous function syntax, and I couldn't understand why `return` caused the outer function to exit. Such as in the following:
+
+::: {.columns}
+
+::: {.column width=25%}
+![](images/rust-03.png){fig-align="center" height=4in style="margin-bottom: 0"}
+:::
+
+::: {.column width=72%}
+```rust
+fn embassy(lang_key: &str) {
+    let translator = match config.delegate.get(&lang_key) {
+        Some(cmd) => cmd,
+        None => {
+            diag::warning(&format!(
+                "delegate: didn't find translator for '{}'", lang_key
+            ));
+            return None;
+        }
+    };
+}
+```
+
+*"Why does `return None` exit `fn embassy()`?" *
+
+Well, silly me, it's just an arm boundary for `match`. It's not a function: it's a syntactical way of creating an arm.
+
+:::
+:::
+:::
+
 #### `if let`
 ::: {.u-subheading}
 handle only `Some`, ignore `None`

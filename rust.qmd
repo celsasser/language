@@ -1280,10 +1280,59 @@ let add = |a: i32, b: i32| -> i32   { a + b}
 We cover [closures](https://doc.rust-lang.org/book/ch13-01-closures.html) in more detail [below](#closures).
 
 ### Control Flow
+#### Conditional
+An `if` expression allows you to branch your code depending on conditions. We think we know him well, and no doubt we do, but he's got his own nuances in rust. The two that come to mind are:
+
+1. Rust's Python like *ternary* which isn't called a "ternary".
+2. `if` with `Some` is a little strange, unique and super handy.
+
+The "*ternary*" is a lot like Python's ternary: it's an if else squeezed that is typically squeezed into one line.
+
 ```rust
 // if is an expression
 let max = if a > b { a } else { b };
+```
 
+And `if Some(var)...` is a magical beast. I'm sure it does a lot more than I'm recalling, but right now the only use case I can think is how in one fell swoop it allows you to test an optional (`Option<>`) variable and if it has a value, then do something with it.
+
+```rust
+let cat: Option<String> = Some(String::from("George"));
+if let Some(name) = &cat {
+    println!("{}: fuzzy wuz he", name);
+}
+```
+
+We go deeper in the [Option\<T\>](#optiont) (next section).
+
+#### Looping
+As with most languages there are a number of ways to loop. I think the coolest one is via iteration of an object. I'm going to copy what Claude said about it. I was asking him about the following:
+
+```rust
+let body_lines: Vec<String> = [...];
+for line in &body_lines {
+    // do stuff with `line`
+}
+```
+
+A for loop calls `.into_iter()` on whatever you give it. If you write `for line in body_lines` (no &), the vector is moved into the loop and consumed. After the loop, `body_lines` is gone. Writing `for line in &body_lines` passes a reference to the loop instead. The compiler calls `.into_iter()` on `&Vec<String>`, which yields `&String` references. The vector stays alive and usable after the loop. `line` is `&String`, not `String`.
+
+**What trait makes this work?**
+
+Two traits are at play:
+
+1. `IntoIterator`
+    - `IntoIterator` is the trait that for loops depend on. A for loop is syntactic sugar for calling `.into_iter()` and then repeatedly calling `.next()` on the result. Any type that implements `IntoIterator` can appear in a for loop.
+    - `Vec<T>` implements `IntoIterator` three ways:
+        - `for x in vec` (consumes the vector, yields `T`)
+        - `for x in &vec` (borrows the vector, yields `&T`)
+        - `for x in &mut vec` (mutably borrows the vector, yields `&mut T`)
+2. `Iterator`
+    - This trait defines the actual sequence and the logic for traversing the items. It requires defining an Item type and implementing the `.next()` method, which returns `Some(item)` until the iteration is complete, at which point it returns `None.`
+
+The `&Vec<T>` case works because the standard library implements `IntoIterator` for `&Vec<T>`, which delegates to `Vec::iter()` under the hood and produces an iterator over `&T` values. So for line in `&body_lines` is exactly equivalent to `for line in body_lines.iter()`. The `&` form is just more concise and is what you will see in idiomatic Rust.
+
+
+```rust
 // loop
 loop {
     break;   // only way to exit a bare loop
@@ -4362,24 +4411,31 @@ println!("{:?}", result);   // [4, 16, 36]
 
 The first decision for any iterator chain is which of the three entry points to use:
 
-| Method         | Yields   | Effect on collection | Use when                        |
-|----------------|----------|----------------------|---------------------------------|
-| `.iter()`      | `&T`     | Borrows              | Reading without consuming       |
-| `.iter_mut()`  | `&mut T` | Mutably borrows      | Modifying elements in place     |
-| `.into_iter()` | `T`      | Consumes             | You no longer need the original |
+| Method / form      | Yields   | Effect on collection | Use when                        |
+|--------------------|----------|----------------------|---------------------------------|
+| `.iter()`          | `&T`     | Borrows              | Reading without consuming       |
+| `&collection`      | `&T`     | Borrows              | Shorthand for `.iter()` in `for` loops |
+| `.iter_mut()`      | `&mut T` | Mutably borrows      | Modifying elements in place     |
+| `&mut collection`  | `&mut T` | Mutably borrows      | Shorthand for `.iter_mut()` in `for` loops |
+| `.into_iter()`     | `T`      | Consumes             | You no longer need the original |
+
+The `&v` and `&mut v` forms work because `Vec<T>` implements `IntoIterator` for `&Vec<T>` and `&mut Vec<T>`. A `for` loop calls `.into_iter()` on whatever expression you give it, so `for x in &v` is exactly equivalent to `for x in v.iter()`.
 
 ```rust
 let mut v = vec![1, 2, 3];
 
-// Borrow — v still usable after
+// Borrow — v still usable after (two equivalent forms)
 for x in v.iter() { print!("{} ", x); }
+for x in &v      { print!("{} ", x); }  // same thing
 
-// Mutably borrow — modify in place
+// Mutably borrow — modify in place (two equivalent forms)
 for x in v.iter_mut() { *x *= 2; }
-println!("{:?}", v);   // [2, 4, 6]
+for x in &mut v       { *x *= 2; }  // same thing
+println!("{:?}", v);   // [2, 4, 6] then [4, 8, 12]
 
 // Consume — v is moved, no longer accessible
 for x in v.into_iter() { print!("{} ", x); }
+// equivalently: for x in v { ... }
 ```
 
 #### Adapter chain

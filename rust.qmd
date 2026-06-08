@@ -12,19 +12,19 @@ The designers asked a pointed question: *can we have the performance of C with m
 The answer is Rust.
 
 ### The Core Design Decisions
-###### 1. Ownership replaces manual memory management
+##### 1. Ownership replaces manual memory management
 Rather than `malloc`/`free` or smart pointers bolted on after the fact, Rust builds ownership into the type system. The compiler tracks who owns what, and memory is freed automatically when the owner goes out of scope. No GC, no runtime overhead.
 
-###### 2. Borrowing replaces raw pointers
+##### 2. Borrowing replaces raw pointers
 Instead of passing pointers around freely, Rust has a formal concept of *borrowing* — you can lend a reference to data without transferring ownership. The compiler (the *borrow checker*) enforces that references are always valid. No dangling pointers, no use-after-free.
 
-###### 3. Fearless concurrency
+##### 3. Fearless concurrency
 Data races are a compile error. The same ownership rules that prevent memory bugs also make entire classes of concurrency bugs impossible.
 
-###### 4. Zero-cost abstractions
+##### 4. Zero-cost abstractions
 Rust's high-level features ([iterators](#iterators), [generics](#generics-and-trait-bounds), [traits](#traits)) compile down to the same machine code you'd write by hand. You don't pay for what you don't use — the same guarantee C++ makes, but delivered more consistently.
 
-###### 5. Explicit over implicit
+##### 5. Explicit over implicit
 Rust rarely does things behind your back. Integer overflow is checked in debug builds and wraps in release (with explicit opt-in). Type coercions are almost never automatic. Mutability must be declared. This is intentionally more verbose than C++ in places, in exchange for fewer surprises.
 
 ## Five Questions Answered
@@ -478,7 +478,7 @@ crate
         └── client  (a submodule)
 ```
 
-###### Without `self`:
+##### Without `self`:
 
 ```rust
 use network::http::client;
@@ -490,7 +490,7 @@ network::http::get(...);    // ✅
 
 You have: `client`, but you don't have: `http`. You must write `network::http::` to reach anything in it.
 
-###### With `self`:
+##### With `self`:
 ```rust
 use network::http::{self, client};
 
@@ -875,7 +875,7 @@ let last = arr[4];           // 5
 println!("Length: {}", arr.len());  // 5
 ```
 
-###### Key characteristics
+##### Key characteristics
 - **Stack-allocated** — arrays live on the stack, not the heap
 - **Fixed size** — length cannot change after creation
 - **Type includes length** — `[i32; 3]` and `[i32; 5]` are different, incompatible types
@@ -2025,18 +2025,18 @@ The fundamental difference is that C macros are based on string substitution (te
 - **Hygienic**: variables defined inside a macro do not accidentally clash with variables in the surrounding code.
 - **Unhygienic**: variables can unintentionally shadow or overwrite local variables.
 
-###### Input Handling
+##### Input Handling
 - **C Macros**: Treat inputs as raw text. This can lead to operator precedence bugs (e.g.,  becoming  instead of ) unless you manually add parentheses.
 - **Rust Macros**: Match against specific syntax categories like  (expression),  (identifier), or . This ensures the input is syntactically valid before expansion.
 
-###### Types of Macros
+##### Types of Macros
 - **C**: Has only one type — the `#define` preprocessor directive.
 - **Rust**: Has two systems (declarative and procedural) with four distinct subtypes. See the Types of Macros section above for the full breakdown.
 
-###### Compilation Stage
+##### Compilation Stage
 C macros are handled by a separate preprocessor before the compiler sees the code. Rust macros are expanded during the early stages of compilation, meaning the compiler "understands" the structure of the expanded code.
 
-###### Visual Distinction
+##### Visual Distinction
 In Rust, function-like macros are called with a trailing `!` (e.g., `println!`, `vec!`), making them instantly distinguishable from standard functions for better readability. C macros look identical to function calls.
 
 :::{.see-more}
@@ -2381,7 +2381,7 @@ The `<'a>` declares a lifetime parameter (like a generic type parameter). The `&
 
 This tells the compiler: "The returned reference is valid for as long as both inputs are valid."
 
-###### Why it matters
+##### Why it matters
 ```rust
 let result;
 {
@@ -2395,14 +2395,14 @@ println!("{}", result);  // compile error: s1 and s2 are out of scope
 The compiler prevents the dangling reference at compile time, not runtime.
 
 #### Comprehensive Lifetime Syntax Reference
-###### Single lifetime parameter
+##### Single lifetime parameter
 ```rust
 fn first_word<'a>(s: &'a str) -> &'a str {
     s.split_whitespace().next().unwrap_or("")
 }
 ```
 
-###### Multiple independent lifetimes
+##### Multiple independent lifetimes
 ```rust
 fn announce<'a, 'b>(x: &'a str, y: &'b str) -> &'a str {
     println!("Announcement: {}", y);  // y can have a different lifetime
@@ -2410,7 +2410,7 @@ fn announce<'a, 'b>(x: &'a str, y: &'b str) -> &'a str {
 }
 ```
 
-###### Lifetime bounds
+##### Lifetime bounds
 ::: {.subheading}
 `'b: 'a` means `'b` outlives `'a`**
 :::
@@ -2422,7 +2422,7 @@ fn choose<'a, 'b: 'a>(x: &'a str, y: &'b str) -> &'a str {
 }
 ```
 
-###### Structs with lifetimes
+##### Structs with lifetimes
 ```rust
 struct Excerpt<'a> {
     text: &'a str,  // this struct holds a reference that lives 'a
@@ -2435,7 +2435,7 @@ impl<'a> Excerpt<'a> {
 }
 ```
 
-###### Multiple lifetimes in structs
+##### Multiple lifetimes in structs
 ```rust
 struct Context<'a, 'b> {
     config: &'a str,
@@ -2443,7 +2443,7 @@ struct Context<'a, 'b> {
 }
 ```
 
-###### Static lifetime
+##### Static lifetime
 ::: {.subheading}
 `'static` lives for entire program
 :::
@@ -2456,7 +2456,7 @@ fn leak_value() -> &'static str {
 }
 ```
 
-###### Lifetime elision
+##### Lifetime elision
 ::: {.subheading}
 When the compiler infers lifetimes
 :::
@@ -2475,7 +2475,7 @@ fn first(s: &str) -> &str { s }
 fn first<'a>(s: &'a str) -> &'a str { s }
 ```
 
-###### Trait bounds with lifetimes
+##### Trait bounds with lifetimes
 ```rust
 fn print_ref<'a, T>(value: &'a T)
 where
@@ -2485,7 +2485,7 @@ where
 }
 ```
 
-###### Higher-Rank Trait Bounds
+##### Higher-Rank Trait Bounds
 ::: {.subheading}
 HRTB: `for<'a>`
 :::
@@ -2503,7 +2503,7 @@ where
 ```
 
 #### Common Lifetime Patterns
-###### Returning references from methods
+##### Returning references from methods
 ```rust
 impl<'a> MyStruct<'a> {
     fn get_field(&self) -> &'a str {
@@ -2512,14 +2512,14 @@ impl<'a> MyStruct<'a> {
 }
 ```
 
-###### Mutable and immutable references with different lifetimes
+##### Mutable and immutable references with different lifetimes
 ```rust
 fn split_at<'a>(s: &'a mut str, mid: usize) -> (&'a mut str, &'a mut str) {
     // ... splits s into two mutable references
 }
 ```
 
-###### Anonymous lifetime
+##### Anonymous lifetime
 ::: {.subheading}
 `'_`
 :::
@@ -2604,7 +2604,7 @@ How structs are created and where they live
 
 Rust doesn't have constructors in the C++/Java sense. There's no special `new` keyword or automatic initialization. Instead, you create structs explicitly, and by convention provide a `new()` associated function (a static method in C++ terms).
 
-###### The `new()` Convention
+##### The `new()` Convention
 ```rust
 struct Config {
     host: String,
@@ -2637,7 +2637,7 @@ let config = Config::new(String::from("example.com"), 443);
 
 `new()` is not special — it's just a regular function you write yourself. You can name it anything (`create()`, `make()`, `build()`), but `new()` is the convention.
 
-###### The `Default` Trait
+##### The `Default` Trait
 For types with sensible defaults, implement the `Default` trait:
 
 ```rust
@@ -2669,7 +2669,7 @@ struct Stats {
 }
 ```
 
-###### Stack vs Heap
+##### Stack vs Heap
 ::: {.subheading}
 Where Does Your Struct Live?
 :::
@@ -2729,7 +2729,7 @@ Stack:                    Heap:
 └─────────────┘
 ```
 
-###### Vector Allocation in Detail
+##### Vector Allocation in Detail
 Since your question was about `Vec`, here are all the ways to create one:
 
 ```rust
@@ -2754,7 +2754,7 @@ let v = arr.to_vec();
 let v2 = v.clone();
 ```
 
-###### Applying This to Your `Exs24` Struct
+##### Applying This to Your `Exs24` Struct
 ```rust
 pub struct Exs24 {
     chunks: Vec<Chunk>,
@@ -2795,7 +2795,7 @@ exs.chunks.push(chunk1);  // grows heap allocation as needed
 let mut exs = Box::new(Exs24::new());
 ```
 
-###### When to Use Box
+##### When to Use Box
 ::: {.subheading}
 Heap-Allocate the Struct
 ::::
@@ -2815,7 +2815,7 @@ struct HugeBuffer {
 let buffer = Box::new(HugeBuffer { data: [0; 1024 * 1024] });
 ```
 
-###### Value vs Reference Semantics
+##### Value vs Reference Semantics
 In C, you choose value or reference explicitly:
 
 ```c
@@ -2912,7 +2912,7 @@ This is more powerful than C unions because:
 2. The compiler ensures you can't access the wrong variant's data
 3. Each variant can have completely different types
 
-###### Real-world example
+##### Real-world example
 ```rust
 enum Shape {
     Circle(f64),                              // radius
@@ -2937,7 +2937,7 @@ println!("Area: {}", circle.area());  // 78.54
 #### Standard Library Enums
 Two enums you'll use constantly:
 
-###### `Option<T>`
+##### `Option<T>`
 ::: {.subheading}
 replaces null pointers
 :::
@@ -3031,7 +3031,7 @@ let text: Option<String> = Some(s);     // Same enum, different T
 | Methods                   | ✗                      | ✓                                         |
 
 #### When to Use Each Style
-###### C-style
+##### C-style
 ::: {.subheading}
 no data
 :::
@@ -3040,7 +3040,7 @@ no data
 - Status codes with explicit discriminants
 - Simple categorization
 
-###### Algebraic data types
+##### Algebraic data types
 ::: {.subheading}
 with data
 :::
@@ -3633,7 +3633,7 @@ Every error type must implement both:
 
 This separation lets you choose the right representation for the context. In production logs you might want `Debug` to see all the details. When showing an error to a user, you want `Display` to give them a clear message without internal noise.
 
-###### 2. The `source()` method
+##### 2. The `source()` method
 Errors can be chained. If parsing a config file fails because of an I/O error, the parse error can *wrap* the I/O error. `source()` returns the underlying cause, letting you walk the error chain:
 
 ```rust
@@ -3988,7 +3988,7 @@ A growable, heap-allocated array
 
 `Vec<T>` is the most-used collection in Rust. It owns its elements, stores them contiguously in memory, and grows automatically as you push to it.
 
-###### Creating and populating
+##### Creating and populating
 ```rust
 // With an explicit type annotation
 let mut v: Vec<i32> = Vec::new();
@@ -4003,7 +4003,7 @@ let mut scores = vec![95, 87, 72, 100, 68];
 let mut big: Vec<String> = Vec::with_capacity(1000);
 ```
 
-###### Indexing
+##### Indexing
 Indexing a `Vec` with `[]` requires the index type to be `usize`, not a general integer. Using `i32`, `u32`, or any other integer type directly will not compile; you must cast explicitly with `as usize`.
 
 ```rust
@@ -4024,7 +4024,7 @@ let found = v.get(0);       // Some(&10)
 
 The `[]` operator is implemented via the `Index` trait. When you define your own struct and want it to be indexable, you implement `Index<usize>` for it. The compiler error you saw ("need to implement something") is exactly that trait being required.
 
-###### Iterating
+##### Iterating
 ```rust
 let v = vec![1, 2, 3];
 
@@ -4047,7 +4047,7 @@ for x in v {
 // v is moved; it cannot be used here
 ```
 
-###### Cloning
+##### Cloning
 Because `Vec<T>` owns its data, assignment moves it rather than copying it. Use `.clone()` when you need an independent copy.
 
 ```rust
@@ -4068,7 +4068,7 @@ println!("{:?}", nums);      // still accessible
 
 `.clone()` on a `Vec<T>` is a deep clone: it clones the vector and every element inside it. For large vecs of heap-allocated types (like `String`), this is not free.
 
-###### Sorting
+##### Sorting
 `Vec<T>` provides several `sort*` methods, including stable and unstable variants. The right choice depends on whether your element type implements `Ord`, whether you need a custom comparison, and whether you need stability.
 
 ```rust
@@ -4117,7 +4117,7 @@ students.sort_by_key(|s| s.grade);
 students.sort_by(|a, b| a.name.cmp(&b.name));
 ```
 
-###### Working methods
+##### Working methods
 
 The methods you will reach for most in everyday code:
 
@@ -4690,7 +4690,7 @@ File I/O in Rust is built around the [`std::fs`](https://doc.rust-lang.org/std/f
 
 
 ### Basic File Operations
-###### Opening and creating files
+##### Opening and creating files
 ```rust
 use std::fs::File;
 use std::io::{self, Read, Write};
@@ -4714,7 +4714,7 @@ let file = OpenOptions::new()
 The `?` operator propagates `io::Error` to the caller. All file operations return `Result<T, io::Error>`.
 
 ### Unbuffered I/O
-###### Reading directly from `File`
+##### Reading directly from `File`
 ```rust
 use std::fs::File;
 use std::io::Read;
@@ -4735,7 +4735,7 @@ let mut exact = [0u8; 16];
 file.read_exact(&mut exact)?;
 ```
 
-###### Writing directly to `File`
+##### Writing directly to `File`
 ```rust
 use std::fs::File;
 use std::io::Write;
@@ -4752,7 +4752,7 @@ file.flush()?;
 Unbuffered I/O makes a system call for every read/write operation. This is fine for large transfers, but inefficient for many small operations.
 
 ### Buffered I/O
-###### Buffered reading with `BufReader`
+##### Buffered reading with `BufReader`
 ```rust
 use std::fs::File;
 use std::io::{BufReader, BufRead};
@@ -4782,7 +4782,7 @@ let mut content = String::new();
 reader.read_to_string(&mut content)?;
 ```
 
-###### Buffered writing with `BufWriter`
+##### Buffered writing with `BufWriter`
 ```rust
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -4824,7 +4824,7 @@ These are buffered internally and handle open/close automatically. Perfect for s
 ### Binary I/O and Byte Order
 When reading binary formats, you often need to handle multi-byte integers with specific endianness.
 
-###### Reading primitives with byte order
+##### Reading primitives with byte order
 Rust provides methods on primitive types to read/write with explicit endianness:
 
 ```rust
@@ -4847,7 +4847,7 @@ file.read_exact(&mut buf)?;
 let value = u32::from_ne_bytes(buf);
 ```
 
-###### Writing primitives with byte order
+##### Writing primitives with byte order
 ```rust
 let mut file = File::create("output.dat")?;
 
@@ -4863,7 +4863,7 @@ file.write_all(&value.to_be_bytes())?;
 file.write_all(&value.to_ne_bytes())?;
 ```
 
-###### Reading/writing multiple values
+##### Reading/writing multiple values
 ```rust
 use std::io::{BufReader, BufWriter, Read, Write};
 
@@ -4961,7 +4961,7 @@ let file = File::open("data.txt")
 ```
 
 ### Common Patterns
-###### Reading a binary header
+##### Reading a binary header
 ```rust
 use std::fs::File;
 use std::io::Read;
@@ -4986,7 +4986,7 @@ fn read_header(path: &str) -> io::Result<Header> {
 }
 ```
 
-###### Processing a large file line by line
+##### Processing a large file line by line
 ```rust
 use std::fs::File;
 use std::io::{BufReader, BufRead};
@@ -5005,7 +5005,7 @@ fn process_log_file(path: &str) -> io::Result<()> {
 }
 ```
 
-###### Writing CSV-like data
+##### Writing CSV-like data
 ```rust
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -5351,7 +5351,7 @@ Cargo manages a well-known list of [environment variables](https://doc.rust-lang
 ##### `env` the Function
 Rust includes the [`env`](https://doc.rust-lang.org/stable/std/env/){target="_blank"} module as part of the standard library. It includes functions to read and write environment variables.
 
-###### Examples
+##### Examples
 ```rust
 use std::env;
 
@@ -5378,7 +5378,7 @@ But the *super-cool* way of reading an environment variable is the `env!` macro.
 
 `env!` inspects an environment variable at *compile time*. This macro will expand to the value of the named environment variable at compile time, yielding an expression of type `&'static str`. If the environment variable is not defined, then a compilation error will be emitted. To not emit a compile error, use the `option_env!` macro instead.
 
-###### Examples
+##### Examples
 ```rust
 let path: &'static str = env!("PATH");
 println!("the $PATH variable at the time of compiling was: {path}");
@@ -5592,7 +5592,7 @@ struct Cli {
 Usage: prog <FILE>
 ```
 
-###### What does `name = "FILE"` mean?
+##### What does `name = "FILE"` mean?
 The `name` attribute in `#[arg(...)]` sets the argument's internal **ID** and, for positional arguments, its **metavar** — the placeholder text shown in usage and help output. The uppercase `FILE` in `<FILE>` is a Unix convention: metavars are written in ALL_CAPS to visually distinguish the placeholder from the flags around it, and to make the type of input obvious at a glance.
 
 ```

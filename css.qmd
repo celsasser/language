@@ -5,51 +5,27 @@ title: "CSS"
 ## Overview
 ### The Design of CSS
 ![](images/css-00.png){width=2.25in style="float: left; padding: 0 1.5em 0 0.5em"}
-**CSS** (Cascading Style Sheets) is the language that governs the visual presentation of documents
-written in HTML and XML. Where HTML defines *what* content is, CSS defines *how* it looks: its
-colors, typefaces, spacing, and layout. This separation of structure from presentation is the
-foundational design principle behind CSS, and it matters in practice. A single HTML document can be
-paired with multiple stylesheets to produce entirely different visual results, making it possible to
-redesign a site without touching its content, or to serve different layouts to different devices from
-the same markup.
 
-CSS is a **declarative language**. You describe the desired visual state of an element rather than
-writing instructions for how to compute it. The browser's rendering engine resolves those
-descriptions into pixels. Because rules can come from many sources, can conflict, and can apply
-partially, the engine follows well-defined resolution rules to produce a deterministic result.
+**CSS** (Cascading Style Sheets) is the language that governs the visual presentation of documents written in HTML and XML. Where HTML defines *what* content is, CSS defines *how* it looks: its colors, typefaces, spacing, and layout. This separation of structure from presentation is the foundational design principle behind CSS, and it matters in practice. A single HTML document can be paired with multiple stylesheets to produce entirely different visual results, making it possible to redesign a site without touching its content, or to serve different layouts to different devices from the same markup.
+
+CSS is a **declarative language**. You describe the desired visual state of an element rather than writing instructions for how to compute it. The browser's rendering engine resolves those descriptions into pixels. Because rules can come from many sources, can conflict, and can apply partially, the engine follows well-defined resolution rules to produce a deterministic result.
 
 ### The Cascade
-The word "cascading" refers to the algorithm that determines which styles apply when multiple rules
-could match the same element and property. Rules from different sources layer in a defined order:
-browser defaults at the bottom, author stylesheets in the middle, and user overrides at the top.
-Within an author stylesheet, rules are ordered first by **specificity** and then by **source order**
-(the later rule wins when specificity is equal).
+The word "cascading" refers to the algorithm that determines which styles apply when multiple rules could match the same element and property. Rules from different sources layer in a defined order: browser defaults at the bottom, author stylesheets in the middle, and user overrides at the top. Within an author stylesheet, rules are ordered first by **specificity** and then by **source order** (the later rule wins when specificity is equal).
 
-This layering is not a limitation; it is the architecture. It allows a general rule to establish a
-baseline that more specific rules selectively override, without requiring every property to be
-declared for every element.
+This layering is not a limitation; it is the architecture. It allows a general rule to establish a baseline that more specific rules selectively override, without requiring every property to be declared for every element.
 
 ### Inheritance
-Many CSS properties **inherit** from parent elements to their children. Text-related properties such
-as `font-family`, `color`, and `line-height` propagate down the document tree automatically, which
-is why setting a font on the `<body>` element applies it throughout the page. Layout properties such
-as `margin`, `padding`, and `border` do not inherit, because they describe the geometry of an
-individual element rather than a characteristic shared with its descendants.
+Many CSS properties **inherit** from parent elements to their children. Text-related properties such as `font-family`, `color`, and `line-height` propagate down the document tree automatically, which is why setting a font on the `<body>` element applies it throughout the page. Layout properties such as `margin`, `padding`, and `border` do not inherit, because they describe the geometry of an individual element rather than a characteristic shared with its descendants.
 
-Four keywords give explicit control over inheritance. `inherit` forces a property to take its
-parent's computed value. `initial` resets it to the CSS specification's default. `unset` behaves as
-`inherit` for naturally inheriting properties and as `initial` for those that do not.
-`revert` rolls the value back to the browser's default stylesheet.
+Four keywords give explicit control over inheritance. `inherit` forces a property to take its parent's computed value. `initial` resets it to the CSS specification's default. `unset` behaves as `inherit` for naturally inheriting properties and as `initial` for those that do not. `revert` rolls the value back to the browser's default stylesheet.
 
 ## Selectors
-A **selector** is the part of a CSS rule that identifies which elements in the document the rule
-applies to. CSS provides a rich selector language that can target elements by their type,
-attributes, position in the document tree, and interactive state.
+A **selector** is the part of a CSS rule that identifies which elements in the document the rule applies to. CSS provides a rich selector language that can target elements by their type, attributes, position in the document tree, and interactive state.
 
 ### Simple Selectors
 #### Type Selectors
-A **type selector** (also called an element selector) matches every element of a given HTML tag
-name.
+A **type selector** (also called an element selector) matches every element of a given HTML tag name.
 
 ```css
 p {
@@ -62,8 +38,7 @@ h2 {
 ```
 
 #### The Universal Selector
-The **universal selector** (`*`) matches every element in the document. It is most commonly used to
-reset browser defaults or to apply `box-sizing` globally.
+The **universal selector** (`*`) matches every element in the document. It is most commonly used to reset browser defaults or to apply `box-sizing` globally.
 
 ```css
 *,
@@ -74,8 +49,7 @@ reset browser defaults or to apply `box-sizing` globally.
 ```
 
 #### Class Selectors
-A **class selector** matches elements whose `class` attribute includes the specified name. It is
-prefixed with a period.
+A **class selector** matches elements whose `class` attribute includes the specified name. It is prefixed with a period.
 
 ```css
 .highlight {
@@ -83,8 +57,7 @@ prefixed with a period.
 }
 ```
 
-An element may belong to multiple classes. Chaining class selectors without spaces requires all of
-them to be present on the same element:
+An element may belong to multiple classes. Chaining class selectors without spaces requires all of them to be present on the same element:
 
 ```css
 /* Matches elements that have both 'card' and 'featured' classes */
@@ -94,8 +67,7 @@ them to be present on the same element:
 ```
 
 #### ID Selectors
-An **ID selector** matches a single element whose `id` attribute equals the specified value. It is
-prefixed with a hash symbol.
+An **ID selector** matches a single element whose `id` attribute equals the specified value. It is prefixed with a hash symbol.
 
 ```css
 #main-header {
@@ -105,24 +77,21 @@ prefixed with a hash symbol.
 ```
 
 ::: {.callout-note title="IDs vs. Classes"}
-Because an `id` must be unique within a document, ID selectors are rarely used in production
-stylesheets. Their high specificity makes them difficult to override. Class selectors are almost
-always preferred.
+Because an `id` must be unique within a document, ID selectors are rarely used in production stylesheets. Their high specificity makes them difficult to override. Class selectors are almost always preferred.
 :::
 
 #### Attribute Selectors
-**Attribute selectors** match elements based on the presence or value of their HTML attributes.
-They are written inside square brackets and offer seven distinct matching modes:
+**Attribute selectors** match elements based on the presence or value of their HTML attributes. They are written inside square brackets and offer seven distinct matching modes:
 
-| Selector        | Matches when the attribute...                 |
-|:----------------|:----------------------------------------------|
-| `[attr]`        | is present, regardless of value               |
-| `[attr="val"]`  | equals `val` exactly                          |
-| `[attr~="val"]` | contains `val` as a whitespace-separated word |
+| Selector         | Matches when the attribute...                 |
+|:-----------------|:----------------------------------------------|
+| `[attr]`         | is present, regardless of value               |
+| `[attr="val"]`   | equals `val` exactly                          |
+| `[attr~="val"]`  | contains `val` as a whitespace-separated word |
 | `[attr\|="val"]` | equals `val` or begins with `val-`            |
-| `[attr^="val"]` | begins with `val`                             |
-| `[attr$="val"]` | ends with `val`                               |
-| `[attr*="val"]` | contains `val` as a substring                 |
+| `[attr^="val"]`  | begins with `val`                             |
+| `[attr$="val"]`  | ends with `val`                               |
+| `[attr*="val"]`  | contains `val` as a substring                 |
 
 ```css
 /* Any element with a 'disabled' attribute */
@@ -142,16 +111,13 @@ img[alt$="diagram"] {
 }
 ```
 
-Attribute value matching is case-sensitive by default. Appending the `i` flag before the closing
-bracket enables case-insensitive matching: `[attr="val" i]`.
+Attribute value matching is case-sensitive by default. Appending the `i` flag before the closing bracket enables case-insensitive matching: `[attr="val" i]`.
 
 ### Combinators
-**Combinators** describe the structural relationship between two selectors. They are the mechanism
-by which you express document-tree relationships rather than just individual element properties.
+**Combinators** describe the structural relationship between two selectors. They are the mechanism by which you express document-tree relationships rather than just individual element properties.
 
 #### Descendant Combinator
-A **space** between two selectors matches elements that are descendants (children, grandchildren,
-and so on) of the first element.
+A **space** between two selectors matches elements that are descendants (children, grandchildren, and so on) of the first element.
 
 ```css
 /* Any <a> inside a <nav>, however deeply nested */
@@ -161,8 +127,7 @@ nav a {
 ```
 
 #### Child Combinator
-The **child combinator** (`>`) matches elements that are direct children only, not deeper
-descendants.
+The **child combinator** (`>`) matches elements that are direct children only, not deeper descendants.
 
 ```css
 /* Only direct <li> children of <ul>, not items in nested lists */
@@ -172,8 +137,7 @@ ul > li {
 ```
 
 #### Adjacent Sibling Combinator
-The **adjacent sibling combinator** (`+`) matches an element that immediately follows a specified
-sibling at the same level in the tree.
+The **adjacent sibling combinator** (`+`) matches an element that immediately follows a specified sibling at the same level in the tree.
 
 ```css
 /* A <p> that immediately follows an <h2> */
@@ -183,8 +147,7 @@ h2 + p {
 ```
 
 #### General Sibling Combinator
-The **general sibling combinator** (`~`) matches all subsequent siblings at the same level, not
-just the immediate one.
+The **general sibling combinator** (`~`) matches all subsequent siblings at the same level, not just the immediate one.
 
 ```css
 /* All <p> elements that follow an <h2> within the same parent */
@@ -194,9 +157,7 @@ h2 ~ p {
 ```
 
 ### Pseudo-Classes
-A **pseudo-class** selects an element based on a state or condition that cannot be expressed with
-attribute or structural information alone: user interaction, document position, or form validity.
-Pseudo-classes are prefixed with a single colon.
+A **pseudo-class** selects an element based on a state or condition that cannot be expressed with attribute or structural information alone: user interaction, document position, or form validity. Pseudo-classes are prefixed with a single colon.
 
 #### User Action States
 | Pseudo-class     | Matches when...                                               |
@@ -208,10 +169,7 @@ Pseudo-classes are prefixed with a single colon.
 | `:focus-within`  | the element or any of its descendants has focus               |
 
 ::: {.callout-note title=":focus-visible vs. :focus"}
-`:focus` fires for all focus events, including mouse clicks. `:focus-visible` fires only when the
-browser determines a visible focus indicator is appropriate, typically for keyboard navigation.
-Using `:focus-visible` preserves accessibility without showing focus rings on mouse-clicked
-elements.
+`:focus` fires for all focus events, including mouse clicks. `:focus-visible` fires only when the browser determines a visible focus indicator is appropriate, typically for keyboard navigation. Using `:focus-visible` preserves accessibility without showing focus rings on mouse-clicked elements.
 :::
 
 #### Link States
@@ -221,9 +179,7 @@ elements.
 | `:visited`   | an `<a>` element the user has already visited                |
 | `:any-link`  | any `<a>` or `<area>` element with an `href`, visited or not |
 
-The conventional order for link styling is `:link`, `:visited`, `:hover`, `:active` (remembered as
-**LVHA**) because specificity is equal across these pseudo-classes and source order determines which
-rule wins.
+The conventional order for link styling is `:link`, `:visited`, `:hover`, `:active` (remembered as **LVHA**) because specificity is equal across these pseudo-classes and source order determines which rule wins.
 
 #### Structural Pseudo-Classes
 These pseudo-classes match elements based on their position in the document tree.
@@ -243,8 +199,7 @@ These pseudo-classes match elements based on their position in the document tree
 | `:nth-of-type(n)`      | the nth sibling of its tag type                           |
 | `:nth-last-of-type(n)` | the nth sibling of its tag type, counting from the last   |
 
-The `n` argument in `:nth-child()` and `:nth-of-type()` accepts a number, the keywords `odd` or
-`even`, or an **An+B** expression where A is the step and B is the offset:
+The `n` argument in `:nth-child()` and `:nth-of-type()` accepts a number, the keywords `odd` or `even`, or an **An+B** expression where A is the step and B is the offset:
 
 ```css
 /* Every other row starting from the second */
@@ -283,8 +238,7 @@ li:nth-last-child(-n+3) {
 #### Logical Pseudo-Classes
 These pseudo-classes accept selector arguments, enabling complex matching logic.
 
-**`:not(selector)`** matches elements that do *not* match the argument. Modern CSS accepts a
-selector list.
+**`:not(selector)`** matches elements that do *not* match the argument. Modern CSS accepts a selector list.
 
 ```css
 /* All inputs except submit buttons */
@@ -298,8 +252,7 @@ li:not(:last-child) {
 }
 ```
 
-**`:is(selector-list)`** matches elements that match any selector in the list. Its specificity
-equals that of its most specific argument.
+**`:is(selector-list)`** matches elements that match any selector in the list. Its specificity equals that of its most specific argument.
 
 ```css
 /* Equivalent to: h1 a, h2 a, h3 a */
@@ -308,8 +261,7 @@ equals that of its most specific argument.
 }
 ```
 
-**`:where(selector-list)`** behaves identically to `:is()` but always contributes **zero
-specificity**. It is ideal for base styles and resets that should be easily overridden by anything.
+**`:where(selector-list)`** behaves identically to `:is()` but always contributes **zero specificity**. It is ideal for base styles and resets that should be easily overridden by anything.
 
 ```css
 /* These styles have zero specificity and yield to any other rule */
@@ -318,8 +270,7 @@ specificity**. It is ideal for base styles and resets that should be easily over
 }
 ```
 
-**`:has(selector)`** matches an element if the given relative selector matches at least one of its
-descendants. It functions as the CSS equivalent of a parent selector.
+**`:has(selector)`** matches an element if the given relative selector matches at least one of its descendants. It functions as the CSS equivalent of a parent selector.
 
 ```css
 /* A <figure> that contains an <img> */
@@ -343,9 +294,7 @@ figure:has(img) {
 | `:scope`      | the element acting as the reference point for the selector |
 
 ### Pseudo-Elements
-A **pseudo-element** targets a specific part of an element's content or generates virtual content
-that has no corresponding node in the HTML source. Pseudo-elements are prefixed with two colons
-(though a single colon is accepted for legacy compatibility).
+A **pseudo-element** targets a specific part of an element's content or generates virtual content that has no corresponding node in the HTML source. Pseudo-elements are prefixed with two colons (though a single colon is accepted for legacy compatibility).
 
 | Pseudo-element   | Targets...                                                      |
 |:-----------------|:----------------------------------------------------------------|
@@ -358,8 +307,7 @@ that has no corresponding node in the HTML source. Pseudo-elements are prefixed 
 | `::marker`       | the marker box of a list item (the bullet or number)            |
 | `::backdrop`     | the full-viewport backdrop rendered behind a `<dialog>` element |
 
-`::before` and `::after` require the `content` property to render. The value can be an empty string
-when only visual styling is needed.
+`::before` and `::after` require the `content` property to render. The value can be an empty string when only visual styling is needed.
 
 ```css
 /* Decorative quotation mark added via CSS, not HTML */
@@ -386,10 +334,7 @@ li::marker {
 ```
 
 ### Specificity
-**Specificity** is the weight the browser assigns to a selector to determine which rule wins when
-multiple rules target the same element and property. It is calculated as a three-part score:
-**(ID count, Class/Attribute/Pseudo-class count, Type/Pseudo-element count)**. The scores are
-compared left to right; a single ID outweighs any number of class selectors.
+**Specificity** is the weight the browser assigns to a selector to determine which rule wins when multiple rules target the same element and property. It is calculated as a three-part score: **(ID count, Class/Attribute/Pseudo-class count, Type/Pseudo-element count)**. The scores are compared left to right; a single ID outweighs any number of class selectors.
 
 | Selector         | ID  | Class / Attr / Pseudo-class | Type / Pseudo-element | Score   |
 |:-----------------|:---:|:---------------------------:|:---------------------:|:-------:|
@@ -402,40 +347,26 @@ compared left to right; a single ID outweighs any number of class selectors.
 | `:is(h1, h2)`    | 0   | 0                           | 1                     | (0,0,1) |
 | `:where(h1, h2)` | 0   | 0                           | 0                     | (0,0,0) |
 
-**Inline styles** declared with the `style` attribute on an element beat all selector-based rules.
-The `!important` declaration overrides everything, including inline styles, and should be treated as
-a last resort because it breaks the natural cascade and makes future overrides difficult.
+**Inline styles** declared with the `style` attribute on an element beat all selector-based rules. The `!important` declaration overrides everything, including inline styles, and should be treated as a last resort because it breaks the natural cascade and makes future overrides difficult.
 
-When two rules share equal specificity, the one that appears **later in the source** wins. This is
-the cascade at work: rules flow downward, and later rules prevail on equal footing.
+When two rules share equal specificity, the one that appears **later in the source** wins. This is the cascade at work: rules flow downward, and later rules prevail on equal footing.
 
 ## Element Types and the Box Model
 ### The Display Model
-Every HTML element has a default **display type** that determines how it participates in layout. The
-`display` property overrides this default and is the primary lever for controlling how an element
-behaves in document flow.
+Every HTML element has a default **display type** that determines how it participates in layout. The `display` property overrides this default and is the primary lever for controlling how an element behaves in document flow.
 
 #### Block Elements
-A **block element** generates a block-level box. It occupies the full width available in its
-container by default, starts on a new line, and forces subsequent content onto a new line. Block
-elements respond to all four sides of `width`, `height`, `margin`, and `padding`.
+A **block element** generates a block-level box. It occupies the full width available in its container by default, starts on a new line, and forces subsequent content onto a new line. Block elements respond to all four sides of `width`, `height`, `margin`, and `padding`.
 
-Default block elements include `<div>`, `<p>`, `<h1>` through `<h6>`, `<ul>`, `<ol>`, `<li>`,
-`<section>`, `<article>`, `<nav>`, and `<footer>`.
+Default block elements include `<div>`, `<p>`, `<h1>` through `<h6>`, `<ul>`, `<ol>`, `<li>`, `<section>`, `<article>`, `<nav>`, and `<footer>`.
 
 #### Inline Elements
-An **inline element** generates one or more inline-level boxes that flow within a line of text. It
-does not start a new line; its dimensions are determined by its content. The `width` and `height`
-properties have no effect. Padding and border apply on all four sides, but vertical `margin` does
-not push surrounding lines apart.
+An **inline element** generates one or more inline-level boxes that flow within a line of text. It does not start a new line; its dimensions are determined by its content. The `width` and `height` properties have no effect. Padding and border apply on all four sides, but vertical `margin` does not push surrounding lines apart.
 
 Default inline elements include `<span>`, `<a>`, `<strong>`, `<em>`, `<code>`, and `<label>`.
 
 #### Inline-Block
-`display: inline-block` is a hybrid: the element flows in line with text like an inline element,
-but it responds to `width`, `height`, and all four sides of `margin` and `padding` like a block
-element. This is the natural choice for buttons, badges, and any component that must sit inline
-while also having precise dimensions.
+`display: inline-block` is a hybrid: the element flows in line with text like an inline element, but it responds to `width`, `height`, and all four sides of `margin` and `padding` like a block element. This is the natural choice for buttons, badges, and any component that must sit inline while also having precise dimensions.
 
 ```css
 .badge {
@@ -447,10 +378,7 @@ while also having precise dimensions.
 ```
 
 #### Replaced Elements
-A **replaced element** is one whose content is controlled by an external resource rather than by
-CSS. The browser renders it according to its intrinsic dimensions. `<img>`, `<video>`, `<canvas>`,
-`<iframe>`, and form controls are replaced elements. They behave like inline-block by default and
-accept `width` and `height`.
+A **replaced element** is one whose content is controlled by an external resource rather than by CSS. The browser renders it according to its intrinsic dimensions. `<img>`, `<video>`, `<canvas>`, `<iframe>`, and form controls are replaced elements. They behave like inline-block by default and accept `width` and `height`.
 
 #### The `display` Property
 The `display` property accepts a broad set of values:
@@ -474,22 +402,17 @@ Every element in CSS is represented as a rectangular **box** composed of four ne
 1. **Content box**: The area where the element's text or child elements are rendered.
 2. **Padding box**: Transparent space between the content and the border.
 3. **Border box**: A stroke that surrounds the padding.
-4. **Margin box**: Transparent space outside the border that separates the element from its
-   neighbors.
+4. **Margin box**: Transparent space outside the border that separates the element from its neighbors.
 
-Padding and border are visible (or at least occupy space) and contribute to the element's rendered
-size. Margins are always transparent and collapse in specific circumstances.
+Padding and border are visible (or at least occupy space) and contribute to the element's rendered size. Margins are always transparent and collapse in specific circumstances.
 
 #### `box-sizing`
 The `box-sizing` property controls what the `width` and `height` properties actually measure.
 
-- **`content-box`** (the browser default): `width` and `height` set the content area only. Padding
-   and border are added on top, so the rendered element is larger than the declared dimensions.
-- **`border-box`**: `width` and `height` include padding and border. The content area shrinks to
-   accommodate them, so declared dimensions match rendered dimensions precisely.
+- **`content-box`** (the browser default): `width` and `height` set the content area only. Padding and border are added on top, so the rendered element is larger than the declared dimensions.
+- **`border-box`**: `width` and `height` include padding and border. The content area shrinks to accommodate them, so declared dimensions match rendered dimensions precisely.
 
-`border-box` is almost universally preferred in modern CSS. Applying it globally is standard
-practice:
+`border-box` is almost universally preferred in modern CSS. Applying it globally is standard practice:
 
 ```css
 *,
@@ -500,9 +423,17 @@ practice:
 ```
 
 #### Margin Collapse
-Adjacent **vertical** margins between block elements collapse into a single margin equal to the
-larger of the two values. This does not apply to horizontal margins, flexbox children, or grid
-items.
+Adjacent **vertical** margins between block elements collapse into a single margin equal to the larger of the two values. This does not apply to horizontal margins, flexbox children, grid items, or elements with `display: inline-block`.
+
+Margin collapse is a design feature intended to make text spacing consistent. If every paragraph had a `1em` top and bottom margin, the gap between paragraphs would be `2em`, while the gap at the top of the page would only be `1em`. Collapsing ensures the gap remains consistent at `1em` everywhere.
+
+Common scenarios where margins do **not** collapse:
+
+- **Horizontal margins** never collapse.
+- **Flexbox and Grid items** do not collapse.
+- **Inline-block** elements do not collapse margins with siblings or parents.
+- **Absolutely positioned** or **floated** elements.
+- **Elements with overflow** other than `visible` (which create a new Block Formatting Context).
 
 ```css
 p {
@@ -514,16 +445,11 @@ p {
 ```
 
 ## Positioning
-CSS provides several positioning systems. Elements in **normal flow** are laid out in document
-order: block elements stack vertically in a block formatting context, and inline elements flow
-horizontally within lines. Every positioning tool described below either modifies normal flow or
-replaces it.
+CSS provides several positioning systems. Elements in **normal flow** are laid out in document order: block elements stack vertically in a block formatting context, and inline elements flow horizontally within lines. Every positioning tool described below either modifies normal flow or replaces it.
 
 ### The `position` Property
 #### Relative Positioning
-`position: relative` offsets an element from where it would naturally appear, using the `top`,
-`right`, `bottom`, and `left` properties. The element's original space in the flow is preserved;
-surrounding elements are not affected and do not shift to fill the gap.
+`position: relative` offsets an element from where it would naturally appear, using the `top`, `right`, `bottom`, and `left` properties. The element's original space in the flow is preserved; surrounding elements are not affected and do not shift to fill the gap.
 
 ```css
 .nudged {
@@ -533,14 +459,10 @@ surrounding elements are not affected and do not shift to fill the gap.
 }
 ```
 
-Relative positioning also establishes a **containing block** for any absolutely positioned
-descendants.
+Relative positioning also establishes a **containing block** for any absolutely positioned descendants.
 
 #### Absolute Positioning
-`position: absolute` removes an element from normal flow entirely. It is positioned relative to its
-nearest **positioned ancestor**, which is any ancestor with a `position` value other than `static`.
-If no positioned ancestor exists, the element is positioned relative to the initial containing
-block (effectively the viewport).
+`position: absolute` removes an element from normal flow entirely. It is positioned relative to its nearest **positioned ancestor**, which is any ancestor with a `position` value other than `static`. If no positioned ancestor exists, the element is positioned relative to the initial containing block (effectively the viewport).
 
 ```css
 .parent {
@@ -555,13 +477,10 @@ block (effectively the viewport).
 }
 ```
 
-Specifying both `left` and `right` without an explicit `width` stretches the element to span the
-horizontal space between those two inset values. The same principle applies to `top` and `bottom`.
+Specifying both `left` and `right` without an explicit `width` stretches the element to span the horizontal space between those two inset values. The same principle applies to `top` and `bottom`.
 
 #### Fixed Positioning
-`position: fixed` positions an element relative to the **viewport** rather than any ancestor. It
-does not scroll with the page, making it the standard approach for persistent navigation bars,
-floating action buttons, and modal overlays.
+`position: fixed` positions an element relative to the **viewport** rather than any ancestor. It does not scroll with the page, making it the standard approach for persistent navigation bars, floating action buttons, and modal overlays.
 
 ```css
 .top-bar {
@@ -574,16 +493,11 @@ floating action buttons, and modal overlays.
 ```
 
 ::: {.callout-note title="Transforms Break Fixed Positioning"}
-If any ancestor has a `transform`, `filter`, or `perspective` property applied to it, `position:
-fixed` behaves like `position: absolute` relative to that ancestor rather than the viewport. This
-is specified behavior and a common source of confusion.
+If any ancestor has a `transform`, `filter`, or `perspective` property applied to it, `position: fixed` behaves like `position: absolute` relative to that ancestor rather than the viewport. This is specified behavior and a common source of confusion.
 :::
 
 #### Sticky Positioning
-`position: sticky` is a hybrid of relative and fixed. The element behaves as `position: relative`
-until scrolling would cause it to cross a specified threshold, at which point it "sticks" and
-behaves as `position: fixed` within the bounds of its containing block. When the containing block
-scrolls out of view, the element unsticks and disappears with it.
+`position: sticky` is a hybrid of relative and fixed. The element behaves as `position: relative` until scrolling would cause it to cross a specified threshold, at which point it "sticks" and behaves as `position: fixed` within the bounds of its containing block. When the containing block scrolls out of view, the element unsticks and disappears with it.
 
 ```css
 thead th {
@@ -594,34 +508,26 @@ thead th {
 ```
 
 #### `z-index` and Stacking Order
-When elements overlap, their paint order is governed by **stacking contexts**. Within a stacking
-context, elements are painted back to front according to their `z-index`. A positioned element with
-`z-index: 1` is painted on top of a positioned element with `z-index: 0`.
+When elements overlap, their paint order is governed by **stacking contexts**. Within a stacking context, elements are painted back to front according to their `z-index`. A positioned element with `z-index: 1` is painted on top of a positioned element with `z-index: 0`.
 
-A new stacking context is created by any positioned element with a `z-index` value other than
-`auto`, as well as by elements with `opacity` less than 1, or with `transform`, `filter`, or
-`will-change` applied. Stacking contexts are hierarchical: a child can never paint on top of
-another stacking context at a higher level than its own parent.
+A new stacking context is created by any positioned element with a `z-index` value other than `auto`, as well as by elements with `opacity` less than 1, or with `transform`, `filter`, or `will-change` applied. Stacking contexts are hierarchical: a child can never paint on top of another stacking context at a higher level than its own parent.
 
 ### Flexbox
 ::: {.subheading}
 One-Dimensional Layout
 :::
 
-**Flexbox** (`display: flex`) is designed for distributing space and aligning items along a single
-axis. It elegantly solves a large class of layout problems: centering content vertically,
-distributing items with equal spacing, and building responsive navigation bars.
+**Flexbox** (`display: flex`) is designed for distributing space and aligning items along a single axis. It elegantly solves a large class of layout problems: centering content vertically, distributing items with equal spacing, and building responsive navigation bars.
 
 #### Concepts
-The **flex container** is the element with `display: flex`. Its direct children become **flex
-items**. Two axes govern alignment:
+The **flex container** is the element with `display: flex`. Its direct children become **flex items**. Two axes govern alignment:
 
 - The **main axis** runs in the direction defined by `flex-direction`.
 - The **cross axis** runs perpendicular to the main axis.
 
 #### Container Properties
 | Property          | Values                                                                              | Effect                                        |
-|:-----------------------|:-------------------------------------------------------------------------------|:----------------------------------------------|
+|:------------------|:------------------------------------------------------------------------------------|:----------------------------------------------|
 | `flex-direction`  | `row` (default), `row-reverse`, `column`, `column-reverse`                          | Sets the main axis direction                  |
 | `flex-wrap`       | `nowrap` (default), `wrap`, `wrap-reverse`                                          | Allows items to wrap onto multiple lines      |
 | `flex-flow`       | shorthand for `flex-direction` and `flex-wrap`                                      |                                               |
@@ -676,13 +582,10 @@ items**. Two axes govern alignment:
 Two-Dimensional Layout
 :::
 
-**CSS Grid** (`display: grid`) controls rows and columns simultaneously. Where Flexbox works along
-one axis at a time, Grid governs both axes together, making it the right tool for page-level layouts
-and any design that requires precise alignment across rows and columns.
+**CSS Grid** (`display: grid`) controls rows and columns simultaneously. Where Flexbox works along one axis at a time, Grid governs both axes together, making it the right tool for page-level layouts and any design that requires precise alignment across rows and columns.
 
 #### Defining the Grid
-The grid container's columns and rows are declared with `grid-template-columns` and
-`grid-template-rows`.
+The grid container's columns and rows are declared with `grid-template-columns` and `grid-template-rows`.
 
 ```css
 .page {
@@ -693,8 +596,7 @@ The grid container's columns and rows are declared with `grid-template-columns` 
 }
 ```
 
-The **`fr` unit** represents a fraction of the available space after fixed lengths and content sizes
-are subtracted. It is analogous to `flex-grow`.
+The **`fr` unit** represents a fraction of the available space after fixed lengths and content sizes are subtracted. It is analogous to `flex-grow`.
 
 **`repeat()`** shortens repetitive declarations:
 
@@ -748,13 +650,10 @@ Named areas provide a visual description of the layout directly in the CSS:
 .page-footer  { grid-area: footer; }
 ```
 
-A period (`.`) in a template area string denotes an empty cell. Area names must form contiguous
-rectangles; irregular shapes are not permitted.
+A period (`.`) in a template area string denotes an empty cell. Area names must form contiguous rectangles; irregular shapes are not permitted.
 
 #### Auto-Placement
-Items not explicitly placed are inserted by the **auto-placement algorithm**, which fills cells in
-row order by default. `grid-auto-flow: column` switches to column order. `grid-auto-rows` and
-`grid-auto-columns` define the size of implicitly created tracks.
+Items not explicitly placed are inserted by the **auto-placement algorithm**, which fills cells in row order by default. `grid-auto-flow: column` switches to column order. `grid-auto-rows` and `grid-auto-columns` define the size of implicitly created tracks.
 
 ```css
 /* Responsive image gallery */
@@ -767,14 +666,10 @@ row order by default. `grid-auto-flow: column` switches to column order. `grid-a
 ```
 
 ## Drawing
-CSS provides a rich set of properties for rendering visible decoration on elements. Borders, fills,
-gradients, and shadows operate on the box model regions and are composited in a defined order:
-background color first, then background images (including gradients), then borders, then box
-shadows.
+CSS provides a rich set of properties for rendering visible decoration on elements. Borders, fills, gradients, and shadows operate on the box model regions and are composited in a defined order: background color first, then background images (including gradients), then borders, then box shadows.
 
 ### Borders
-The `border` shorthand sets width, style, and color in one declaration. The `border-style` value is
-required; a border with no defined style does not render regardless of other settings.
+The `border` shorthand sets width, style, and color in one declaration. The `border-style` value is required; a border with no defined style does not render regardless of other settings.
 
 ```css
 .box {
@@ -782,9 +677,7 @@ required; a border with no defined style does not render regardless of other set
 }
 ```
 
-Individual sides are controlled with `border-top`, `border-right`, `border-bottom`, and
-`border-left`. The constituent properties can also be set independently using the familiar
-top-right-bottom-left shorthand order:
+Individual sides are controlled with `border-top`, `border-right`, `border-bottom`, and `border-left`. The constituent properties can also be set independently using the familiar top-right-bottom-left shorthand order:
 
 ```css
 .box {
@@ -794,13 +687,10 @@ top-right-bottom-left shorthand order:
 }
 ```
 
-Valid `border-style` values include: `none`, `hidden`, `solid`, `dashed`, `dotted`, `double`,
-`groove`, `ridge`, `inset`, and `outset`.
+Valid `border-style` values include: `none`, `hidden`, `solid`, `dashed`, `dotted`, `double`, `groove`, `ridge`, `inset`, and `outset`.
 
 #### Border Radius
-`border-radius` rounds the corners of the border box. A single value applies equally to all four
-corners. Four values apply in top-left, top-right, bottom-right, bottom-left order. A slash-separated
-pair specifies separate horizontal and vertical radii for elliptical corners.
+`border-radius` rounds the corners of the border box. A single value applies equally to all four corners. Four values apply in top-left, top-right, bottom-right, bottom-left order. A slash-separated pair specifies separate horizontal and vertical radii for elliptical corners.
 
 ```css
 /* All corners equally rounded */
@@ -822,9 +712,7 @@ pair specifies separate horizontal and vertical radii for elliptical corners.
 A `border-radius` of `50%` on an element with equal `width` and `height` produces a perfect circle.
 
 #### Outline
-`outline` renders similarly to `border` but does not participate in the box model. It occupies no
-space and does not affect layout. Outlines are drawn outside the border and are most commonly used
-for focus indicators.
+`outline` renders similarly to `border` but does not participate in the box model. It occupies no space and does not affect layout. Outlines are drawn outside the border and are most commonly used for focus indicators.
 
 ```css
 :focus-visible {
@@ -834,8 +722,7 @@ for focus indicators.
 ```
 
 ### Backgrounds and Fills
-The `background` shorthand composes one or more background layers. Multiple layers are painted front
-to back, separated by commas. The `background-color` is always the bottommost layer.
+The `background` shorthand composes one or more background layers. Multiple layers are painted front to back, separated by commas. The `background-color` is always the bottommost layer.
 
 #### Background Color
 ```css
@@ -865,12 +752,10 @@ Any URL-referenced image can serve as a background:
 | `background-origin`     | `border-box`, `padding-box`, `content-box`         | Which box the position is relative to      |
 | `background-clip`       | `border-box`, `padding-box`, `content-box`, `text` | Which box clips the painted area           |
 
-`background-clip: text` combined with a transparent text color allows a gradient to show through
-the text glyphs themselves.
+`background-clip: text` combined with a transparent text color allows a gradient to show through the text glyphs themselves.
 
 ### Gradients
-CSS gradients are generated images. They can be used anywhere an image value is accepted and require
-no external files.
+CSS gradients are generated images. They can be used anywhere an image value is accepted and require no external files.
 
 #### Linear Gradients
 `linear-gradient()` transitions colors along a straight line.
@@ -898,8 +783,7 @@ background: linear-gradient(to right, red 50%, blue 50%);
 ```
 
 #### Radial Gradients
-`radial-gradient()` radiates colors outward from a center point. The default shape is an ellipse
-sized to the farthest corner.
+`radial-gradient()` radiates colors outward from a center point. The default shape is an ellipse sized to the farthest corner.
 
 ```css
 /* Default: ellipse centered in the element */
@@ -909,16 +793,14 @@ background: radial-gradient(#e66465, #9198e5);
 background: radial-gradient(circle at top left, #fff, #333);
 ```
 
-The extent keywords `closest-side`, `farthest-side`, `closest-corner`, and `farthest-corner`
-control how the gradient's endpoint is sized relative to the container:
+The extent keywords `closest-side`, `farthest-side`, `closest-corner`, and `farthest-corner` control how the gradient's endpoint is sized relative to the container:
 
 ```css
 background: radial-gradient(circle closest-side at 50% 50%, white, black);
 ```
 
 #### Conic Gradients
-`conic-gradient()` rotates colors around a center point, producing a sweep effect analogous to a
-color wheel or pie chart.
+`conic-gradient()` rotates colors around a center point, producing a sweep effect analogous to a color wheel or pie chart.
 
 ```css
 /* A full color wheel */
@@ -963,8 +845,7 @@ Gradients and images can be layered freely. Each layer is a comma-separated valu
 ```
 
 ### Box Shadow
-`box-shadow` renders one or more shadows outside or inside an element's border box. Multiple shadows
-are composited front to back, separated by commas.
+`box-shadow` renders one or more shadows outside or inside an element's border box. Multiple shadows are composited front to back, separated by commas.
 
 ```css
 /* Single subtle shadow */
@@ -995,8 +876,7 @@ are composited front to back, separated by commas.
 | `inset`         | Optional keyword; draws the shadow inside the border rather than outside  |
 
 ## Further Reading
-- [MDN Web Docs: CSS](https://developer.mozilla.org/en-US/docs/Web/CSS){target="_blank" rel="noopener noreferrer"} — The
-   definitive reference for every CSS property, selector, and function.
+- [MDN Web Docs: CSS](https://developer.mozilla.org/en-US/docs/Web/CSS){target="_blank" rel="noopener noreferrer"} — The definitive reference for every CSS property, selector, and function.
 - Meyer, E., & Weyl, E. (2023). *CSS: The Definitive Guide* (5th ed.). O'Reilly Media.
 - [CSS-Tricks: A Complete Guide to Flexbox](https://css-tricks.com/snippets/css/a-guide-to-flexbox/){target="_blank" rel="noopener noreferrer"}
 - [CSS-Tricks: A Complete Guide to Grid](https://css-tricks.com/snippets/css/complete-guide-grid/){target="_blank" rel="noopener noreferrer"}

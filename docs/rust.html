@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-05-30">
+<meta name="dcterms.date" content="2026-06-08">
 
 <title>Rust for C/C++ Programmers – Computer Language Notebook</title>
 <style>
@@ -223,6 +223,18 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="./css.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">The CSS Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./matlab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The MATLAB Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shell.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Shell Scripting</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -603,7 +615,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">May 30, 2026</p>
+      <p class="date">June 8, 2026</p>
     </div>
   </div>
   
@@ -622,24 +634,24 @@ window.Quarto = {
 <p>The answer is Rust.</p>
 <section id="the-core-design-decisions" class="level3">
 <h3 class="anchored" data-anchor-id="the-core-design-decisions">The Core Design Decisions</h3>
-<section id="ownership-replaces-manual-memory-management" class="level6">
-<h6 class="anchored" data-anchor-id="ownership-replaces-manual-memory-management">1. Ownership replaces manual memory management</h6>
+<section id="ownership-replaces-manual-memory-management" class="level5">
+<h5 class="anchored" data-anchor-id="ownership-replaces-manual-memory-management">1. Ownership replaces manual memory management</h5>
 <p>Rather than <code>malloc</code>/<code>free</code> or smart pointers bolted on after the fact, Rust builds ownership into the type system. The compiler tracks who owns what, and memory is freed automatically when the owner goes out of scope. No GC, no runtime overhead.</p>
 </section>
-<section id="borrowing-replaces-raw-pointers" class="level6">
-<h6 class="anchored" data-anchor-id="borrowing-replaces-raw-pointers">2. Borrowing replaces raw pointers</h6>
+<section id="borrowing-replaces-raw-pointers" class="level5">
+<h5 class="anchored" data-anchor-id="borrowing-replaces-raw-pointers">2. Borrowing replaces raw pointers</h5>
 <p>Instead of passing pointers around freely, Rust has a formal concept of <em>borrowing</em> — you can lend a reference to data without transferring ownership. The compiler (the <em>borrow checker</em>) enforces that references are always valid. No dangling pointers, no use-after-free.</p>
 </section>
-<section id="fearless-concurrency" class="level6">
-<h6 class="anchored" data-anchor-id="fearless-concurrency">3. Fearless concurrency</h6>
+<section id="fearless-concurrency" class="level5">
+<h5 class="anchored" data-anchor-id="fearless-concurrency">3. Fearless concurrency</h5>
 <p>Data races are a compile error. The same ownership rules that prevent memory bugs also make entire classes of concurrency bugs impossible.</p>
 </section>
-<section id="zero-cost-abstractions" class="level6">
-<h6 class="anchored" data-anchor-id="zero-cost-abstractions">4. Zero-cost abstractions</h6>
+<section id="zero-cost-abstractions" class="level5">
+<h5 class="anchored" data-anchor-id="zero-cost-abstractions">4. Zero-cost abstractions</h5>
 <p>Rust’s high-level features (<a href="#iterators">iterators</a>, <a href="#generics-and-trait-bounds">generics</a>, <a href="#traits">traits</a>) compile down to the same machine code you’d write by hand. You don’t pay for what you don’t use — the same guarantee C++ makes, but delivered more consistently.</p>
 </section>
-<section id="explicit-over-implicit" class="level6">
-<h6 class="anchored" data-anchor-id="explicit-over-implicit">5. Explicit over implicit</h6>
+<section id="explicit-over-implicit" class="level5">
+<h5 class="anchored" data-anchor-id="explicit-over-implicit">5. Explicit over implicit</h5>
 <p>Rust rarely does things behind your back. Integer overflow is checked in debug builds and wraps in release (with explicit opt-in). Type coercions are almost never automatic. Mutability must be declared. This is intentionally more verbose than C++ in places, in exchange for fewer surprises.</p>
 </section>
 </section>
@@ -1221,8 +1233,9 @@ window.Quarto = {
     └── http
         ├── (functions/types defined directly in http)
         └── client  (a submodule)</code></pre>
-<section id="without-self" class="level6">
-<h6 class="anchored" data-anchor-id="without-self">Without <code>self</code>:</h6>
+</section>
+<section id="without-self" class="level5">
+<h5 class="anchored" data-anchor-id="without-self">Without <code>self</code>:</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">network::http::</span>client<span class="op">;</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="pp">client::</span>connect(<span class="op">...</span>)<span class="op">;</span>       <span class="co">// ✅</span></span>
@@ -1230,8 +1243,8 @@ window.Quarto = {
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="pp">network::http::</span>get(<span class="op">...</span>)<span class="op">;</span>    <span class="co">// ✅</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>You have: <code>client</code>, but you don’t have: <code>http</code>. You must write <code>network::http::</code> to reach anything in it.</p>
 </section>
-<section id="with-self" class="level6">
-<h6 class="anchored" data-anchor-id="with-self">With <code>self</code>:</h6>
+<section id="with-self" class="level5">
+<h5 class="anchored" data-anchor-id="with-self">With <code>self</code>:</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">network::http::</span><span class="op">{</span><span class="kw">self</span><span class="op">,</span> client<span class="op">};</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="pp">client::</span>connect(<span class="op">...};</span>       <span class="co">// ✅</span></span>
@@ -1239,7 +1252,6 @@ window.Quarto = {
 <p>You have: <code>http</code> because <code>self</code> bound <code>http</code> itself. The <code>self</code> inside the braces refers to the module named at the end of the path before the <code>::{...}</code>. So <code>network::http::{self, client}</code> is exactly equivalent to writing two separate use statements:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">network::</span>http<span class="op">;</span></span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">network::http::</span>client<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
 </section>
 <section id="superpowers-and-conveniences" class="level5">
 <h5 class="anchored" data-anchor-id="superpowers-and-conveniences">Superpowers and Conveniences</h5>
@@ -1861,8 +1873,8 @@ window.Quarto = {
 <span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a><span class="co">// Length is part of the type</span></span>
 <span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a><span class="pp">println!</span>(<span class="st">"Length: {}"</span><span class="op">,</span> arr<span class="op">.</span>len())<span class="op">;</span>  <span class="co">// 5</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<section id="key-characteristics" class="level6">
-<h6 class="anchored" data-anchor-id="key-characteristics">Key characteristics</h6>
+<section id="key-characteristics" class="level5">
+<h5 class="anchored" data-anchor-id="key-characteristics">Key characteristics</h5>
 <ul>
 <li><strong>Stack-allocated</strong> — arrays live on the stack, not the heap</li>
 <li><strong>Fixed size</strong> — length cannot change after creation</li>
@@ -3133,26 +3145,26 @@ Tip
 <li><strong>Hygienic</strong>: variables defined inside a macro do not accidentally clash with variables in the surrounding code.</li>
 <li><strong>Unhygienic</strong>: variables can unintentionally shadow or overwrite local variables.</li>
 </ul>
-<section id="input-handling" class="level6">
-<h6 class="anchored" data-anchor-id="input-handling">Input Handling</h6>
+<section id="input-handling" class="level5">
+<h5 class="anchored" data-anchor-id="input-handling">Input Handling</h5>
 <ul>
 <li><strong>C Macros</strong>: Treat inputs as raw text. This can lead to operator precedence bugs (e.g., becoming instead of ) unless you manually add parentheses.</li>
 <li><strong>Rust Macros</strong>: Match against specific syntax categories like (expression), (identifier), or . This ensures the input is syntactically valid before expansion.</li>
 </ul>
 </section>
-<section id="types-of-macros-1" class="level6">
-<h6 class="anchored" data-anchor-id="types-of-macros-1">Types of Macros</h6>
+<section id="types-of-macros-1" class="level5">
+<h5 class="anchored" data-anchor-id="types-of-macros-1">Types of Macros</h5>
 <ul>
 <li><strong>C</strong>: Has only one type — the <code>#define</code> preprocessor directive.</li>
 <li><strong>Rust</strong>: Has two systems (declarative and procedural) with four distinct subtypes. See the Types of Macros section above for the full breakdown.</li>
 </ul>
 </section>
-<section id="compilation-stage" class="level6">
-<h6 class="anchored" data-anchor-id="compilation-stage">Compilation Stage</h6>
+<section id="compilation-stage" class="level5">
+<h5 class="anchored" data-anchor-id="compilation-stage">Compilation Stage</h5>
 <p>C macros are handled by a separate preprocessor before the compiler sees the code. Rust macros are expanded during the early stages of compilation, meaning the compiler “understands” the structure of the expanded code.</p>
 </section>
-<section id="visual-distinction" class="level6">
-<h6 class="anchored" data-anchor-id="visual-distinction">Visual Distinction</h6>
+<section id="visual-distinction" class="level5">
+<h5 class="anchored" data-anchor-id="visual-distinction">Visual Distinction</h5>
 <p>In Rust, function-like macros are called with a trailing <code>!</code> (e.g., <code>println!</code>, <code>vec!</code>), making them instantly distinguishable from standard functions for better readability. C macros look identical to function calls.</p>
 <div class="see-more">
 <p>See <a href="https://doc.rust-lang.org/book/ch20-05-macros.html" target="_blank" rel="noopener noreferrer">Macros</a> in <em>The Rust Programming Language</em> for more information.</p>
@@ -3494,8 +3506,8 @@ Tip
 <li>The output reference lives at most as long as <code>'a</code></li>
 </ul>
 <p>This tells the compiler: “The returned reference is valid for as long as both inputs are valid.”</p>
-<section id="why-it-matters" class="level6">
-<h6 class="anchored" data-anchor-id="why-it-matters">Why it matters</h6>
+<section id="why-it-matters" class="level5">
+<h5 class="anchored" data-anchor-id="why-it-matters">Why it matters</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb129"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb129-1"><a href="#cb129-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> result<span class="op">;</span></span>
 <span id="cb129-2"><a href="#cb129-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
 <span id="cb129-3"><a href="#cb129-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> s1 <span class="op">=</span> <span class="dt">String</span><span class="pp">::</span>from(<span class="st">"long string"</span>)<span class="op">;</span></span>
@@ -3508,21 +3520,21 @@ Tip
 </section>
 <section id="comprehensive-lifetime-syntax-reference" class="level4">
 <h4 class="anchored" data-anchor-id="comprehensive-lifetime-syntax-reference">Comprehensive Lifetime Syntax Reference</h4>
-<section id="single-lifetime-parameter" class="level6">
-<h6 class="anchored" data-anchor-id="single-lifetime-parameter">Single lifetime parameter</h6>
+<section id="single-lifetime-parameter" class="level5">
+<h5 class="anchored" data-anchor-id="single-lifetime-parameter">Single lifetime parameter</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb130"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb130-1"><a href="#cb130-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> first_word<span class="op">&lt;</span><span class="ot">'a</span><span class="op">&gt;</span>(s<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'a</span> <span class="dt">str</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="ot">'a</span> <span class="dt">str</span> <span class="op">{</span></span>
 <span id="cb130-2"><a href="#cb130-2" aria-hidden="true" tabindex="-1"></a>    s<span class="op">.</span>split_whitespace()<span class="op">.</span>next()<span class="op">.</span>unwrap_or(<span class="st">""</span>)</span>
 <span id="cb130-3"><a href="#cb130-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="multiple-independent-lifetimes" class="level6">
-<h6 class="anchored" data-anchor-id="multiple-independent-lifetimes">Multiple independent lifetimes</h6>
+<section id="multiple-independent-lifetimes" class="level5">
+<h5 class="anchored" data-anchor-id="multiple-independent-lifetimes">Multiple independent lifetimes</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb131"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> announce<span class="op">&lt;</span><span class="ot">'a</span><span class="op">,</span> <span class="ot">'b</span><span class="op">&gt;</span>(x<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'a</span> <span class="dt">str</span><span class="op">,</span> y<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'b</span> <span class="dt">str</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="ot">'a</span> <span class="dt">str</span> <span class="op">{</span></span>
 <span id="cb131-2"><a href="#cb131-2" aria-hidden="true" tabindex="-1"></a>    <span class="pp">println!</span>(<span class="st">"Announcement: {}"</span><span class="op">,</span> y)<span class="op">;</span>  <span class="co">// y can have a different lifetime</span></span>
 <span id="cb131-3"><a href="#cb131-3" aria-hidden="true" tabindex="-1"></a>    x  <span class="co">// returned reference tied only to x's lifetime</span></span>
 <span id="cb131-4"><a href="#cb131-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="lifetime-bounds" class="level6">
-<h6 class="anchored" data-anchor-id="lifetime-bounds">Lifetime bounds</h6>
+<section id="lifetime-bounds" class="level5">
+<h5 class="anchored" data-anchor-id="lifetime-bounds">Lifetime bounds</h5>
 <div class="subheading">
 <p><code>'b: 'a</code> means <code>'b</code> outlives <code>'a</code>**</p>
 </div>
@@ -3531,8 +3543,8 @@ Tip
 <span id="cb132-3"><a href="#cb132-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// y must live at least as long as 'a to be returned</span></span>
 <span id="cb132-4"><a href="#cb132-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="structs-with-lifetimes" class="level6">
-<h6 class="anchored" data-anchor-id="structs-with-lifetimes">Structs with lifetimes</h6>
+<section id="structs-with-lifetimes" class="level5">
+<h5 class="anchored" data-anchor-id="structs-with-lifetimes">Structs with lifetimes</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb133"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb133-1"><a href="#cb133-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Excerpt<span class="op">&lt;</span><span class="ot">'a</span><span class="op">&gt;</span> <span class="op">{</span></span>
 <span id="cb133-2"><a href="#cb133-2" aria-hidden="true" tabindex="-1"></a>    text<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'a</span> <span class="dt">str</span><span class="op">,</span>  <span class="co">// this struct holds a reference that lives 'a</span></span>
 <span id="cb133-3"><a href="#cb133-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
@@ -3543,15 +3555,15 @@ Tip
 <span id="cb133-8"><a href="#cb133-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
 <span id="cb133-9"><a href="#cb133-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="multiple-lifetimes-in-structs" class="level6">
-<h6 class="anchored" data-anchor-id="multiple-lifetimes-in-structs">Multiple lifetimes in structs</h6>
+<section id="multiple-lifetimes-in-structs" class="level5">
+<h5 class="anchored" data-anchor-id="multiple-lifetimes-in-structs">Multiple lifetimes in structs</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb134"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb134-1"><a href="#cb134-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Context<span class="op">&lt;</span><span class="ot">'a</span><span class="op">,</span> <span class="ot">'b</span><span class="op">&gt;</span> <span class="op">{</span></span>
 <span id="cb134-2"><a href="#cb134-2" aria-hidden="true" tabindex="-1"></a>    config<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'a</span> <span class="dt">str</span><span class="op">,</span></span>
 <span id="cb134-3"><a href="#cb134-3" aria-hidden="true" tabindex="-1"></a>    buffer<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'b</span> <span class="kw">mut</span> [<span class="dt">u8</span>]<span class="op">,</span></span>
 <span id="cb134-4"><a href="#cb134-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="static-lifetime" class="level6">
-<h6 class="anchored" data-anchor-id="static-lifetime">Static lifetime</h6>
+<section id="static-lifetime" class="level5">
+<h5 class="anchored" data-anchor-id="static-lifetime">Static lifetime</h5>
 <div class="subheading">
 <p><code>'static</code> lives for entire program</p>
 </div>
@@ -3561,8 +3573,8 @@ Tip
 <span id="cb135-4"><a href="#cb135-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Box</span><span class="pp">::</span>leak(<span class="dt">Box</span><span class="pp">::</span>new(<span class="dt">String</span><span class="pp">::</span>from(<span class="st">"leaked"</span>)))  <span class="co">// deliberately leak to get 'static</span></span>
 <span id="cb135-5"><a href="#cb135-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="lifetime-elision" class="level6">
-<h6 class="anchored" data-anchor-id="lifetime-elision">Lifetime elision</h6>
+<section id="lifetime-elision" class="level5">
+<h5 class="anchored" data-anchor-id="lifetime-elision">Lifetime elision</h5>
 <div class="subheading">
 <p>When the compiler infers lifetimes</p>
 </div>
@@ -3578,8 +3590,8 @@ Tip
 <span id="cb136-4"><a href="#cb136-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Compiler sees:</span></span>
 <span id="cb136-5"><a href="#cb136-5" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> first<span class="op">&lt;</span><span class="ot">'a</span><span class="op">&gt;</span>(s<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'a</span> <span class="dt">str</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="ot">'a</span> <span class="dt">str</span> <span class="op">{</span> s <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="trait-bounds-with-lifetimes" class="level6">
-<h6 class="anchored" data-anchor-id="trait-bounds-with-lifetimes">Trait bounds with lifetimes</h6>
+<section id="trait-bounds-with-lifetimes" class="level5">
+<h5 class="anchored" data-anchor-id="trait-bounds-with-lifetimes">Trait bounds with lifetimes</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb137"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb137-1"><a href="#cb137-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> print_ref<span class="op">&lt;</span><span class="ot">'a</span><span class="op">,</span> T<span class="op">&gt;</span>(value<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'a</span> T)</span>
 <span id="cb137-2"><a href="#cb137-2" aria-hidden="true" tabindex="-1"></a><span class="kw">where</span></span>
 <span id="cb137-3"><a href="#cb137-3" aria-hidden="true" tabindex="-1"></a>    T<span class="op">:</span> <span class="pp">std::fmt::</span><span class="bu">Display</span> <span class="op">+</span> <span class="ot">'a</span>  <span class="co">// T must live at least 'a</span></span>
@@ -3587,8 +3599,8 @@ Tip
 <span id="cb137-5"><a href="#cb137-5" aria-hidden="true" tabindex="-1"></a>    <span class="pp">println!</span>(<span class="st">"{}"</span><span class="op">,</span> value)<span class="op">;</span></span>
 <span id="cb137-6"><a href="#cb137-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="higher-rank-trait-bounds" class="level6">
-<h6 class="anchored" data-anchor-id="higher-rank-trait-bounds">Higher-Rank Trait Bounds</h6>
+<section id="higher-rank-trait-bounds" class="level5">
+<h5 class="anchored" data-anchor-id="higher-rank-trait-bounds">Higher-Rank Trait Bounds</h5>
 <div class="subheading">
 <p>HRTB: <code>for&lt;'a&gt;</code></p>
 </div>
@@ -3604,22 +3616,22 @@ Tip
 </section>
 <section id="common-lifetime-patterns" class="level4">
 <h4 class="anchored" data-anchor-id="common-lifetime-patterns">Common Lifetime Patterns</h4>
-<section id="returning-references-from-methods" class="level6">
-<h6 class="anchored" data-anchor-id="returning-references-from-methods">Returning references from methods</h6>
+<section id="returning-references-from-methods" class="level5">
+<h5 class="anchored" data-anchor-id="returning-references-from-methods">Returning references from methods</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb139"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb139-1"><a href="#cb139-1" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span><span class="op">&lt;</span><span class="ot">'a</span><span class="op">&gt;</span> MyStruct<span class="op">&lt;</span><span class="ot">'a</span><span class="op">&gt;</span> <span class="op">{</span></span>
 <span id="cb139-2"><a href="#cb139-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">fn</span> get_field(<span class="op">&amp;</span><span class="kw">self</span>) <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="ot">'a</span> <span class="dt">str</span> <span class="op">{</span></span>
 <span id="cb139-3"><a href="#cb139-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">self</span><span class="op">.</span>field  <span class="co">// tied to struct's lifetime, not method's &amp;self</span></span>
 <span id="cb139-4"><a href="#cb139-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
 <span id="cb139-5"><a href="#cb139-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="mutable-and-immutable-references-with-different-lifetimes" class="level6">
-<h6 class="anchored" data-anchor-id="mutable-and-immutable-references-with-different-lifetimes">Mutable and immutable references with different lifetimes</h6>
+<section id="mutable-and-immutable-references-with-different-lifetimes" class="level5">
+<h5 class="anchored" data-anchor-id="mutable-and-immutable-references-with-different-lifetimes">Mutable and immutable references with different lifetimes</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb140"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb140-1"><a href="#cb140-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> split_at<span class="op">&lt;</span><span class="ot">'a</span><span class="op">&gt;</span>(s<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'a</span> <span class="kw">mut</span> <span class="dt">str</span><span class="op">,</span> mid<span class="op">:</span> <span class="dt">usize</span>) <span class="op">-&gt;</span> (<span class="op">&amp;</span><span class="ot">'a</span> <span class="kw">mut</span> <span class="dt">str</span><span class="op">,</span> <span class="op">&amp;</span><span class="ot">'a</span> <span class="kw">mut</span> <span class="dt">str</span>) <span class="op">{</span></span>
 <span id="cb140-2"><a href="#cb140-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ... splits s into two mutable references</span></span>
 <span id="cb140-3"><a href="#cb140-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="anonymous-lifetime" class="level6">
-<h6 class="anchored" data-anchor-id="anonymous-lifetime">Anonymous lifetime</h6>
+<section id="anonymous-lifetime" class="level5">
+<h5 class="anchored" data-anchor-id="anonymous-lifetime">Anonymous lifetime</h5>
 <div class="subheading">
 <p><code>'_</code></p>
 </div>
@@ -3748,8 +3760,8 @@ Tip
 <p>How structs are created and where they live</p>
 </div>
 <p>Rust doesn’t have constructors in the C++/Java sense. There’s no special <code>new</code> keyword or automatic initialization. Instead, you create structs explicitly, and by convention provide a <code>new()</code> associated function (a static method in C++ terms).</p>
-<section id="the-new-convention" class="level6">
-<h6 class="anchored" data-anchor-id="the-new-convention">The <code>new()</code> Convention</h6>
+<section id="the-new-convention" class="level5">
+<h5 class="anchored" data-anchor-id="the-new-convention">The <code>new()</code> Convention</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb143"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb143-1"><a href="#cb143-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Config <span class="op">{</span></span>
 <span id="cb143-2"><a href="#cb143-2" aria-hidden="true" tabindex="-1"></a>    host<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
 <span id="cb143-3"><a href="#cb143-3" aria-hidden="true" tabindex="-1"></a>    port<span class="op">:</span> <span class="dt">u16</span><span class="op">,</span></span>
@@ -3779,8 +3791,8 @@ Tip
 <span id="cb143-27"><a href="#cb143-27" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> config <span class="op">=</span> <span class="pp">Config::</span>new(<span class="dt">String</span><span class="pp">::</span>from(<span class="st">"example.com"</span>)<span class="op">,</span> <span class="dv">443</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>new()</code> is not special — it’s just a regular function you write yourself. You can name it anything (<code>create()</code>, <code>make()</code>, <code>build()</code>), but <code>new()</code> is the convention.</p>
 </section>
-<section id="the-default-trait" class="level6">
-<h6 class="anchored" data-anchor-id="the-default-trait">The <code>Default</code> Trait</h6>
+<section id="the-default-trait" class="level5">
+<h5 class="anchored" data-anchor-id="the-default-trait">The <code>Default</code> Trait</h5>
 <p>For types with sensible defaults, implement the <code>Default</code> trait:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb144"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb144-1"><a href="#cb144-1" aria-hidden="true" tabindex="-1"></a><span class="kw">impl</span> <span class="bu">Default</span> <span class="cf">for</span> Config <span class="op">{</span></span>
 <span id="cb144-2"><a href="#cb144-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">fn</span> default() <span class="op">-&gt;</span> <span class="dt">Self</span> <span class="op">{</span></span>
@@ -3805,8 +3817,8 @@ Tip
 <span id="cb145-5"><a href="#cb145-5" aria-hidden="true" tabindex="-1"></a>    enabled<span class="op">:</span> <span class="dt">bool</span><span class="op">,</span>   <span class="co">// defaults to false</span></span>
 <span id="cb145-6"><a href="#cb145-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="stack-vs-heap" class="level6">
-<h6 class="anchored" data-anchor-id="stack-vs-heap">Stack vs Heap</h6>
+<section id="stack-vs-heap" class="level5">
+<h5 class="anchored" data-anchor-id="stack-vs-heap">Stack vs Heap</h5>
 <div class="subheading">
 <p>Where Does Your Struct Live?</p>
 </div>
@@ -3845,8 +3857,8 @@ Tip
 │  name       │──────────&gt; "mydb"
 └─────────────┘</code></pre>
 </section>
-<section id="vector-allocation-in-detail" class="level6">
-<h6 class="anchored" data-anchor-id="vector-allocation-in-detail">Vector Allocation in Detail</h6>
+<section id="vector-allocation-in-detail" class="level5">
+<h5 class="anchored" data-anchor-id="vector-allocation-in-detail">Vector Allocation in Detail</h5>
 <p>Since your question was about <code>Vec</code>, here are all the ways to create one:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb151"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb151-1"><a href="#cb151-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Empty vector (no heap allocation until you push)</span></span>
 <span id="cb151-2"><a href="#cb151-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> v<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">i32</span><span class="op">&gt;</span> <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>new()<span class="op">;</span></span>
@@ -3868,8 +3880,8 @@ Tip
 <span id="cb151-18"><a href="#cb151-18" aria-hidden="true" tabindex="-1"></a><span class="co">// Clone another vector (new heap allocation)</span></span>
 <span id="cb151-19"><a href="#cb151-19" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> v2 <span class="op">=</span> v<span class="op">.</span>clone()<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="applying-this-to-your-exs24-struct" class="level6">
-<h6 class="anchored" data-anchor-id="applying-this-to-your-exs24-struct">Applying This to Your <code>Exs24</code> Struct</h6>
+<section id="applying-this-to-your-exs24-struct" class="level5">
+<h5 class="anchored" data-anchor-id="applying-this-to-your-exs24-struct">Applying This to Your <code>Exs24</code> Struct</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb152"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb152-1"><a href="#cb152-1" aria-hidden="true" tabindex="-1"></a><span class="kw">pub</span> <span class="kw">struct</span> Exs24 <span class="op">{</span></span>
 <span id="cb152-2"><a href="#cb152-2" aria-hidden="true" tabindex="-1"></a>    chunks<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span>Chunk<span class="op">&gt;,</span></span>
 <span id="cb152-3"><a href="#cb152-3" aria-hidden="true" tabindex="-1"></a>    headers<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span>Header<span class="op">&gt;,</span></span>
@@ -3908,8 +3920,8 @@ Tip
 <span id="cb152-36"><a href="#cb152-36" aria-hidden="true" tabindex="-1"></a><span class="co">// Heap-allocated Exs24 (if the struct itself is large)</span></span>
 <span id="cb152-37"><a href="#cb152-37" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> exs <span class="op">=</span> <span class="dt">Box</span><span class="pp">::</span>new(<span class="pp">Exs24::</span>new())<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="when-to-use-box" class="level6">
-<h6 class="anchored" data-anchor-id="when-to-use-box">When to Use Box</h6>
+<section id="when-to-use-box" class="level5">
+<h5 class="anchored" data-anchor-id="when-to-use-box">When to Use Box</h5>
 <div class="subheading">
 <p>Heap-Allocate the Struct</p>
 </div>
@@ -3926,8 +3938,8 @@ Tip
 <span id="cb153-5"><a href="#cb153-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb153-6"><a href="#cb153-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> buffer <span class="op">=</span> <span class="dt">Box</span><span class="pp">::</span>new(HugeBuffer <span class="op">{</span> data<span class="op">:</span> [<span class="dv">0</span><span class="op">;</span> <span class="dv">1024</span> <span class="op">*</span> <span class="dv">1024</span>] <span class="op">}</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="value-vs-reference-semantics" class="level6">
-<h6 class="anchored" data-anchor-id="value-vs-reference-semantics">Value vs Reference Semantics</h6>
+<section id="value-vs-reference-semantics" class="level5">
+<h5 class="anchored" data-anchor-id="value-vs-reference-semantics">Value vs Reference Semantics</h5>
 <p>In C, you choose value or reference explicitly:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb154"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb154-1"><a href="#cb154-1" aria-hidden="true" tabindex="-1"></a>Config cfg<span class="op">;</span>         <span class="co">// value (on stack)</span></span>
 <span id="cb154-2"><a href="#cb154-2" aria-hidden="true" tabindex="-1"></a>Config<span class="op">*</span> cfg_ptr<span class="op">;</span>    <span class="co">// reference (pointer)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -4004,8 +4016,8 @@ Tip
 <li>The compiler ensures you can’t access the wrong variant’s data</li>
 <li>Each variant can have completely different types</li>
 </ol>
-<section id="real-world-example" class="level6">
-<h6 class="anchored" data-anchor-id="real-world-example">Real-world example</h6>
+<section id="real-world-example" class="level5">
+<h5 class="anchored" data-anchor-id="real-world-example">Real-world example</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb159"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb159-1"><a href="#cb159-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> Shape <span class="op">{</span></span>
 <span id="cb159-2"><a href="#cb159-2" aria-hidden="true" tabindex="-1"></a>    Circle(<span class="dt">f64</span>)<span class="op">,</span>                              <span class="co">// radius</span></span>
 <span id="cb159-3"><a href="#cb159-3" aria-hidden="true" tabindex="-1"></a>    Rectangle(<span class="dt">f64</span><span class="op">,</span> <span class="dt">f64</span>)<span class="op">,</span>                      <span class="co">// width, height</span></span>
@@ -4029,8 +4041,8 @@ Tip
 <section id="standard-library-enums" class="level4">
 <h4 class="anchored" data-anchor-id="standard-library-enums">Standard Library Enums</h4>
 <p>Two enums you’ll use constantly:</p>
-<section id="optiont-1" class="level6">
-<h6 class="anchored" data-anchor-id="optiont-1"><code>Option&lt;T&gt;</code></h6>
+<section id="optiont-1" class="level5">
+<h5 class="anchored" data-anchor-id="optiont-1"><code>Option&lt;T&gt;</code></h5>
 <div class="subheading">
 <p>replaces null pointers</p>
 </div>
@@ -4153,8 +4165,8 @@ Tip
 </section>
 <section id="when-to-use-each-style" class="level4">
 <h4 class="anchored" data-anchor-id="when-to-use-each-style">When to Use Each Style</h4>
-<section id="c-style" class="level6">
-<h6 class="anchored" data-anchor-id="c-style">C-style</h6>
+<section id="c-style" class="level5">
+<h5 class="anchored" data-anchor-id="c-style">C-style</h5>
 <div class="subheading">
 <p>no data</p>
 </div>
@@ -4164,8 +4176,8 @@ Tip
 <li>Simple categorization</li>
 </ul>
 </section>
-<section id="algebraic-data-types" class="level6">
-<h6 class="anchored" data-anchor-id="algebraic-data-types">Algebraic data types</h6>
+<section id="algebraic-data-types" class="level5">
+<h5 class="anchored" data-anchor-id="algebraic-data-types">Algebraic data types</h5>
 <div class="subheading">
 <p>with data</p>
 </div>
@@ -4663,8 +4675,8 @@ Tip
 <li><strong><code>Display</code></strong> — for user-facing output with <code>{}</code>. Shows a human-readable message.</li>
 </ul>
 <p>This separation lets you choose the right representation for the context. In production logs you might want <code>Debug</code> to see all the details. When showing an error to a user, you want <code>Display</code> to give them a clear message without internal noise.</p>
-<section id="the-source-method" class="level6">
-<h6 class="anchored" data-anchor-id="the-source-method">2. The <code>source()</code> method</h6>
+<section id="the-source-method" class="level5">
+<h5 class="anchored" data-anchor-id="the-source-method">2. The <code>source()</code> method</h5>
 <p>Errors can be chained. If parsing a config file fails because of an I/O error, the parse error can <em>wrap</em> the I/O error. <code>source()</code> returns the underlying cause, letting you walk the error chain:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb200"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb200-1"><a href="#cb200-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> cause <span class="op">=</span> <span class="op">&amp;</span>error<span class="op">;</span></span>
 <span id="cb200-2"><a href="#cb200-2" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="kw">let</span> <span class="cn">Some</span>(source) <span class="op">=</span> cause<span class="op">.</span>source() <span class="op">{</span></span>
@@ -5031,8 +5043,8 @@ Important
 <p>A growable, heap-allocated array</p>
 </div>
 <p><code>Vec&lt;T&gt;</code> is the most-used collection in Rust. It owns its elements, stores them contiguously in memory, and grows automatically as you push to it.</p>
-<section id="creating-and-populating" class="level6">
-<h6 class="anchored" data-anchor-id="creating-and-populating">Creating and populating</h6>
+<section id="creating-and-populating" class="level5">
+<h5 class="anchored" data-anchor-id="creating-and-populating">Creating and populating</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb225"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb225-1"><a href="#cb225-1" aria-hidden="true" tabindex="-1"></a><span class="co">// With an explicit type annotation</span></span>
 <span id="cb225-2"><a href="#cb225-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> v<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">i32</span><span class="op">&gt;</span> <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>new()<span class="op">;</span></span>
 <span id="cb225-3"><a href="#cb225-3" aria-hidden="true" tabindex="-1"></a>v<span class="op">.</span>push(<span class="dv">10</span>)<span class="op">;</span></span>
@@ -5045,8 +5057,8 @@ Important
 <span id="cb225-10"><a href="#cb225-10" aria-hidden="true" tabindex="-1"></a><span class="co">// Pre-allocated capacity avoids repeated reallocation</span></span>
 <span id="cb225-11"><a href="#cb225-11" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> big<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="dt">Vec</span><span class="pp">::</span>with_capacity(<span class="dv">1000</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="indexing" class="level6">
-<h6 class="anchored" data-anchor-id="indexing">Indexing</h6>
+<section id="indexing" class="level5">
+<h5 class="anchored" data-anchor-id="indexing">Indexing</h5>
 <p>Indexing a <code>Vec</code> with <code>[]</code> requires the index type to be <code>usize</code>, not a general integer. Using <code>i32</code>, <code>u32</code>, or any other integer type directly will not compile; you must cast explicitly with <code>as usize</code>.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb226"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb226-1"><a href="#cb226-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> v <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">10</span><span class="op">,</span> <span class="dv">20</span><span class="op">,</span> <span class="dv">30</span>]<span class="op">;</span></span>
 <span id="cb226-2"><a href="#cb226-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -5063,8 +5075,8 @@ Important
 <span id="cb226-13"><a href="#cb226-13" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> found <span class="op">=</span> v<span class="op">.</span>get(<span class="dv">0</span>)<span class="op">;</span>       <span class="co">// Some(&amp;10)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The <code>[]</code> operator is implemented via the <code>Index</code> trait. When you define your own struct and want it to be indexable, you implement <code>Index&lt;usize&gt;</code> for it. The compiler error you saw (“need to implement something”) is exactly that trait being required.</p>
 </section>
-<section id="iterating" class="level6">
-<h6 class="anchored" data-anchor-id="iterating">Iterating</h6>
+<section id="iterating" class="level5">
+<h5 class="anchored" data-anchor-id="iterating">Iterating</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb227"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb227-1"><a href="#cb227-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> v <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>]<span class="op">;</span></span>
 <span id="cb227-2"><a href="#cb227-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb227-3"><a href="#cb227-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Borrow each element — v is still usable after the loop</span></span>
@@ -5085,8 +5097,8 @@ Important
 <span id="cb227-18"><a href="#cb227-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
 <span id="cb227-19"><a href="#cb227-19" aria-hidden="true" tabindex="-1"></a><span class="co">// v is moved; it cannot be used here</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="cloning" class="level6">
-<h6 class="anchored" data-anchor-id="cloning">Cloning</h6>
+<section id="cloning" class="level5">
+<h5 class="anchored" data-anchor-id="cloning">Cloning</h5>
 <p>Because <code>Vec&lt;T&gt;</code> owns its data, assignment moves it rather than copying it. Use <code>.clone()</code> when you need an independent copy.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb228"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb228-1"><a href="#cb228-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> original <span class="op">=</span> <span class="pp">vec!</span>[<span class="dt">String</span><span class="pp">::</span>from(<span class="st">"alpha"</span>)<span class="op">,</span> <span class="dt">String</span><span class="pp">::</span>from(<span class="st">"beta"</span>)]<span class="op">;</span></span>
 <span id="cb228-2"><a href="#cb228-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -5103,8 +5115,8 @@ Important
 <span id="cb228-13"><a href="#cb228-13" aria-hidden="true" tabindex="-1"></a><span class="pp">println!</span>(<span class="st">"{:?}"</span><span class="op">,</span> nums)<span class="op">;</span>      <span class="co">// still accessible</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>.clone()</code> on a <code>Vec&lt;T&gt;</code> is a deep clone: it clones the vector and every element inside it. For large vecs of heap-allocated types (like <code>String</code>), this is not free.</p>
 </section>
-<section id="sorting" class="level6">
-<h6 class="anchored" data-anchor-id="sorting">Sorting</h6>
+<section id="sorting" class="level5">
+<h5 class="anchored" data-anchor-id="sorting">Sorting</h5>
 <p><code>Vec&lt;T&gt;</code> provides several <code>sort*</code> methods, including stable and unstable variants. The right choice depends on whether your element type implements <code>Ord</code>, whether you need a custom comparison, and whether you need stability.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb229"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb229-1"><a href="#cb229-1" aria-hidden="true" tabindex="-1"></a><span class="co">// .sort() — stable, requires T: Ord</span></span>
 <span id="cb229-2"><a href="#cb229-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> nums <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">3</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="dv">9</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">6</span>]<span class="op">;</span></span>
@@ -5142,8 +5154,8 @@ Important
 <span id="cb231-16"><a href="#cb231-16" aria-hidden="true" tabindex="-1"></a><span class="co">// Sort by name</span></span>
 <span id="cb231-17"><a href="#cb231-17" aria-hidden="true" tabindex="-1"></a>students<span class="op">.</span>sort_by(<span class="op">|</span>a<span class="op">,</span> b<span class="op">|</span> a<span class="op">.</span>name<span class="op">.</span>cmp(<span class="op">&amp;</span>b<span class="op">.</span>name))<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="working-methods" class="level6">
-<h6 class="anchored" data-anchor-id="working-methods">Working methods</h6>
+<section id="working-methods" class="level5">
+<h5 class="anchored" data-anchor-id="working-methods">Working methods</h5>
 <p>The methods you will reach for most in everyday code:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb232"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb232-1"><a href="#cb232-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> v <span class="op">=</span> <span class="pp">vec!</span>[<span class="dv">3</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="dv">9</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">6</span>]<span class="op">;</span></span>
 <span id="cb232-2"><a href="#cb232-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -5876,8 +5888,8 @@ Tip
 </section>
 <section id="basic-file-operations" class="level3">
 <h3 class="anchored" data-anchor-id="basic-file-operations">Basic File Operations</h3>
-<section id="opening-and-creating-files" class="level6">
-<h6 class="anchored" data-anchor-id="opening-and-creating-files">Opening and creating files</h6>
+<section id="opening-and-creating-files" class="level5">
+<h5 class="anchored" data-anchor-id="opening-and-creating-files">Opening and creating files</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb264"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb264-1"><a href="#cb264-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::fs::</span>File<span class="op">;</span></span>
 <span id="cb264-2"><a href="#cb264-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::io::</span><span class="op">{</span><span class="kw">self</span><span class="op">,</span> <span class="bu">Read</span><span class="op">,</span> <span class="bu">Write</span><span class="op">};</span></span>
 <span id="cb264-3"><a href="#cb264-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -5900,8 +5912,8 @@ Tip
 </section>
 <section id="unbuffered-io" class="level3">
 <h3 class="anchored" data-anchor-id="unbuffered-io">Unbuffered I/O</h3>
-<section id="reading-directly-from-file" class="level6">
-<h6 class="anchored" data-anchor-id="reading-directly-from-file">Reading directly from <code>File</code></h6>
+<section id="reading-directly-from-file" class="level5">
+<h5 class="anchored" data-anchor-id="reading-directly-from-file">Reading directly from <code>File</code></h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb265"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb265-1"><a href="#cb265-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::fs::</span>File<span class="op">;</span></span>
 <span id="cb265-2"><a href="#cb265-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::io::</span><span class="bu">Read</span><span class="op">;</span></span>
 <span id="cb265-3"><a href="#cb265-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -5920,8 +5932,8 @@ Tip
 <span id="cb265-16"><a href="#cb265-16" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> exact <span class="op">=</span> [<span class="dv">0u8</span><span class="op">;</span> <span class="dv">16</span>]<span class="op">;</span></span>
 <span id="cb265-17"><a href="#cb265-17" aria-hidden="true" tabindex="-1"></a>file<span class="op">.</span>read_exact(<span class="op">&amp;</span><span class="kw">mut</span> exact)<span class="op">?;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="writing-directly-to-file" class="level6">
-<h6 class="anchored" data-anchor-id="writing-directly-to-file">Writing directly to <code>File</code></h6>
+<section id="writing-directly-to-file" class="level5">
+<h5 class="anchored" data-anchor-id="writing-directly-to-file">Writing directly to <code>File</code></h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb266"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb266-1"><a href="#cb266-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::fs::</span>File<span class="op">;</span></span>
 <span id="cb266-2"><a href="#cb266-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::io::</span><span class="bu">Write</span><span class="op">;</span></span>
 <span id="cb266-3"><a href="#cb266-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -5937,8 +5949,8 @@ Tip
 </section>
 <section id="buffered-io" class="level3">
 <h3 class="anchored" data-anchor-id="buffered-io">Buffered I/O</h3>
-<section id="buffered-reading-with-bufreader" class="level6">
-<h6 class="anchored" data-anchor-id="buffered-reading-with-bufreader">Buffered reading with <code>BufReader</code></h6>
+<section id="buffered-reading-with-bufreader" class="level5">
+<h5 class="anchored" data-anchor-id="buffered-reading-with-bufreader">Buffered reading with <code>BufReader</code></h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb267"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb267-1"><a href="#cb267-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::fs::</span>File<span class="op">;</span></span>
 <span id="cb267-2"><a href="#cb267-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::io::</span><span class="op">{</span>BufReader<span class="op">,</span> <span class="bu">BufRead</span><span class="op">};</span></span>
 <span id="cb267-3"><a href="#cb267-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -5966,8 +5978,8 @@ Tip
 <span id="cb267-25"><a href="#cb267-25" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> content <span class="op">=</span> <span class="dt">String</span><span class="pp">::</span>new()<span class="op">;</span></span>
 <span id="cb267-26"><a href="#cb267-26" aria-hidden="true" tabindex="-1"></a>reader<span class="op">.</span>read_to_string(<span class="op">&amp;</span><span class="kw">mut</span> content)<span class="op">?;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="buffered-writing-with-bufwriter" class="level6">
-<h6 class="anchored" data-anchor-id="buffered-writing-with-bufwriter">Buffered writing with <code>BufWriter</code></h6>
+<section id="buffered-writing-with-bufwriter" class="level5">
+<h5 class="anchored" data-anchor-id="buffered-writing-with-bufwriter">Buffered writing with <code>BufWriter</code></h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb268"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb268-1"><a href="#cb268-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::fs::</span>File<span class="op">;</span></span>
 <span id="cb268-2"><a href="#cb268-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::io::</span><span class="op">{</span>BufWriter<span class="op">,</span> <span class="bu">Write</span><span class="op">};</span></span>
 <span id="cb268-3"><a href="#cb268-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -6004,8 +6016,8 @@ Tip
 <section id="binary-io-and-byte-order" class="level3">
 <h3 class="anchored" data-anchor-id="binary-io-and-byte-order">Binary I/O and Byte Order</h3>
 <p>When reading binary formats, you often need to handle multi-byte integers with specific endianness.</p>
-<section id="reading-primitives-with-byte-order" class="level6">
-<h6 class="anchored" data-anchor-id="reading-primitives-with-byte-order">Reading primitives with byte order</h6>
+<section id="reading-primitives-with-byte-order" class="level5">
+<h5 class="anchored" data-anchor-id="reading-primitives-with-byte-order">Reading primitives with byte order</h5>
 <p>Rust provides methods on primitive types to read/write with explicit endianness:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb270"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb270-1"><a href="#cb270-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::fs::</span>File<span class="op">;</span></span>
 <span id="cb270-2"><a href="#cb270-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::io::</span><span class="op">{</span><span class="bu">Read</span><span class="op">,</span> <span class="bu">Write</span><span class="op">};</span></span>
@@ -6025,8 +6037,8 @@ Tip
 <span id="cb270-16"><a href="#cb270-16" aria-hidden="true" tabindex="-1"></a>file<span class="op">.</span>read_exact(<span class="op">&amp;</span><span class="kw">mut</span> buf)<span class="op">?;</span></span>
 <span id="cb270-17"><a href="#cb270-17" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> value <span class="op">=</span> <span class="dt">u32</span><span class="pp">::</span>from_ne_bytes(buf)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="writing-primitives-with-byte-order" class="level6">
-<h6 class="anchored" data-anchor-id="writing-primitives-with-byte-order">Writing primitives with byte order</h6>
+<section id="writing-primitives-with-byte-order" class="level5">
+<h5 class="anchored" data-anchor-id="writing-primitives-with-byte-order">Writing primitives with byte order</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb271"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb271-1"><a href="#cb271-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> <span class="kw">mut</span> file <span class="op">=</span> <span class="pp">File::</span>create(<span class="st">"output.dat"</span>)<span class="op">?;</span></span>
 <span id="cb271-2"><a href="#cb271-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb271-3"><a href="#cb271-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> value<span class="op">:</span> <span class="dt">u32</span> <span class="op">=</span> <span class="dv">0x12345678</span><span class="op">;</span></span>
@@ -6040,8 +6052,8 @@ Tip
 <span id="cb271-11"><a href="#cb271-11" aria-hidden="true" tabindex="-1"></a><span class="co">// Write in native byte order</span></span>
 <span id="cb271-12"><a href="#cb271-12" aria-hidden="true" tabindex="-1"></a>file<span class="op">.</span>write_all(<span class="op">&amp;</span>value<span class="op">.</span>to_ne_bytes())<span class="op">?;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="readingwriting-multiple-values" class="level6">
-<h6 class="anchored" data-anchor-id="readingwriting-multiple-values">Reading/writing multiple values</h6>
+<section id="readingwriting-multiple-values" class="level5">
+<h5 class="anchored" data-anchor-id="readingwriting-multiple-values">Reading/writing multiple values</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb272"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb272-1"><a href="#cb272-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::io::</span><span class="op">{</span>BufReader<span class="op">,</span> BufWriter<span class="op">,</span> <span class="bu">Read</span><span class="op">,</span> <span class="bu">Write</span><span class="op">};</span></span>
 <span id="cb272-2"><a href="#cb272-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb272-3"><a href="#cb272-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Reading a binary file with known structure</span></span>
@@ -6131,8 +6143,8 @@ Tip
 </section>
 <section id="common-patterns" class="level3">
 <h3 class="anchored" data-anchor-id="common-patterns">Common Patterns</h3>
-<section id="reading-a-binary-header" class="level6">
-<h6 class="anchored" data-anchor-id="reading-a-binary-header">Reading a binary header</h6>
+<section id="reading-a-binary-header" class="level5">
+<h5 class="anchored" data-anchor-id="reading-a-binary-header">Reading a binary header</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb276"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb276-1"><a href="#cb276-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::fs::</span>File<span class="op">;</span></span>
 <span id="cb276-2"><a href="#cb276-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::io::</span><span class="bu">Read</span><span class="op">;</span></span>
 <span id="cb276-3"><a href="#cb276-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -6155,8 +6167,8 @@ Tip
 <span id="cb276-20"><a href="#cb276-20" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span>)</span>
 <span id="cb276-21"><a href="#cb276-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="processing-a-large-file-line-by-line" class="level6">
-<h6 class="anchored" data-anchor-id="processing-a-large-file-line-by-line">Processing a large file line by line</h6>
+<section id="processing-a-large-file-line-by-line" class="level5">
+<h5 class="anchored" data-anchor-id="processing-a-large-file-line-by-line">Processing a large file line by line</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb277"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb277-1"><a href="#cb277-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::fs::</span>File<span class="op">;</span></span>
 <span id="cb277-2"><a href="#cb277-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::io::</span><span class="op">{</span>BufReader<span class="op">,</span> <span class="bu">BufRead</span><span class="op">};</span></span>
 <span id="cb277-3"><a href="#cb277-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -6173,8 +6185,8 @@ Tip
 <span id="cb277-14"><a href="#cb277-14" aria-hidden="true" tabindex="-1"></a>    <span class="cn">Ok</span>(())</span>
 <span id="cb277-15"><a href="#cb277-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="writing-csv-like-data" class="level6">
-<h6 class="anchored" data-anchor-id="writing-csv-like-data">Writing CSV-like data</h6>
+<section id="writing-csv-like-data" class="level5">
+<h5 class="anchored" data-anchor-id="writing-csv-like-data">Writing CSV-like data</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb278"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb278-1"><a href="#cb278-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::fs::</span>File<span class="op">;</span></span>
 <span id="cb278-2"><a href="#cb278-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::io::</span><span class="op">{</span>BufWriter<span class="op">,</span> <span class="bu">Write</span><span class="op">};</span></span>
 <span id="cb278-3"><a href="#cb278-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -6563,8 +6575,9 @@ Tip
 <section id="env-the-function" class="level5">
 <h5 class="anchored" data-anchor-id="env-the-function"><code>env</code> the Function</h5>
 <p>Rust includes the <a href="https://doc.rust-lang.org/stable/std/env/" target="_blank"><code>env</code></a> module as part of the standard library. It includes functions to read and write environment variables.</p>
-<section id="examples" class="level6">
-<h6 class="anchored" data-anchor-id="examples">Examples</h6>
+</section>
+<section id="examples" class="level5">
+<h5 class="anchored" data-anchor-id="examples">Examples</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb294"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb294-1"><a href="#cb294-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::</span>env<span class="op">;</span></span>
 <span id="cb294-2"><a href="#cb294-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb294-3"><a href="#cb294-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> key <span class="op">=</span> <span class="st">"HOME"</span><span class="op">;</span></span>
@@ -6581,17 +6594,16 @@ Tip
 <span id="cb295-7"><a href="#cb295-7" aria-hidden="true" tabindex="-1"></a><span class="pp">assert_eq!</span>(<span class="pp">env::</span>var(key)<span class="op">,</span> <span class="cn">Ok</span>(<span class="st">"VALUE"</span><span class="op">.</span>to_string()))<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>But the <em>super-cool</em> way of reading an environment variable is the <code>env!</code> macro.</p>
 </section>
-</section>
 <section id="env-the-macro" class="level5">
 <h5 class="anchored" data-anchor-id="env-the-macro"><code>env!</code> the Macro</h5>
 <p><code>env!</code> inspects an environment variable at <em>compile time</em>. This macro will expand to the value of the named environment variable at compile time, yielding an expression of type <code>&amp;'static str</code>. If the environment variable is not defined, then a compilation error will be emitted. To not emit a compile error, use the <code>option_env!</code> macro instead.</p>
-<section id="examples-1" class="level6">
-<h6 class="anchored" data-anchor-id="examples-1">Examples</h6>
+</section>
+<section id="examples-1" class="level5">
+<h5 class="anchored" data-anchor-id="examples-1">Examples</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb296"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb296-1"><a href="#cb296-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> path<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'static</span> <span class="dt">str</span> <span class="op">=</span> <span class="pp">env!</span>(<span class="st">"PATH"</span>)<span class="op">;</span></span>
 <span id="cb296-2"><a href="#cb296-2" aria-hidden="true" tabindex="-1"></a><span class="pp">println!</span>(<span class="st">"the $PATH variable at the time of compiling was: {path}"</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>You can customize the error message by passing a string as the second parameter:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb297"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb297-1"><a href="#cb297-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> doc<span class="op">:</span> <span class="op">&amp;</span><span class="ot">'static</span> <span class="dt">str</span> <span class="op">=</span> <span class="pp">env!</span>(<span class="st">"documentation"</span><span class="op">,</span> <span class="st">"what's that?!"</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
 </section>
 </div>
 <p>Cargo’s environment variable list is very long, so we’ve picked out some fan favorites as a sampler platter. See the official documentation (which I think is): <a href="https://doc.rust-lang.org/cargo/reference/environment-variables.html" target="_blank">The Cargo Book</a>.</p>
@@ -6984,8 +6996,9 @@ pexs24 0.3.1</code></pre>
 <span id="cb306-4"><a href="#cb306-4" aria-hidden="true" tabindex="-1"></a>    input<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
 <span id="cb306-5"><a href="#cb306-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <pre><code>Usage: prog &lt;FILE&gt;</code></pre>
-<section id="what-does-name-file-mean" class="level6">
-<h6 class="anchored" data-anchor-id="what-does-name-file-mean">What does <code>name = "FILE"</code> mean?</h6>
+</section>
+<section id="what-does-name-file-mean" class="level5">
+<h5 class="anchored" data-anchor-id="what-does-name-file-mean">What does <code>name = "FILE"</code> mean?</h5>
 <p>The <code>name</code> attribute in <code>#[arg(...)]</code> sets the argument’s internal <strong>ID</strong> and, for positional arguments, its <strong>metavar</strong> — the placeholder text shown in usage and help output. The uppercase <code>FILE</code> in <code>&lt;FILE&gt;</code> is a Unix convention: metavars are written in ALL_CAPS to visually distinguish the placeholder from the flags around it, and to make the type of input obvious at a glance.</p>
 <pre><code>Usage: prog [OPTIONS] &lt;FILE&gt;              # FILE is the metavar
             ^^^^^^^^  ^^^^^^
@@ -7061,7 +7074,6 @@ pexs24 0.3.1</code></pre>
 </tr>
 </tbody>
 </table>
-</section>
 </section>
 <section id="flags-and-options" class="level5">
 <h5 class="anchored" data-anchor-id="flags-and-options">Flags and Options</h5>

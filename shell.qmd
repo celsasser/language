@@ -1,0 +1,919 @@
+---
+title: "The Shell"
+subtitle: "A language whose type is text and whose composer is the pipe"
+---
+
+## Why the Shell Exists
+![](images/sh-00.png){width=1.8in style="float: left; padding: 0 1em 0 0.5em"}
+
+::: {style="padding-top: 20pt"}
+The shell is the oldest interactive programming language most of us use daily, and it is easy to mistake it for something less than a language. It looks like a place to type commands. It is, but that framing hides the design that makes it powerful. The shell is a *language*, and once you see it as one, the pieces that otherwise feel like disconnected trivia (quoting, globs, pipes, `grep`, `find`) snap into a single coherent picture.
+:::
+
+::: {style="clear: both"}
+:::
+
+The thesis of this notebook is one sentence:
+
+> **The shell is a programming language whose only data type is text, and whose function-composition operator is the pipe.**
+
+Everything else follows from that. Hold onto it; we will return to it constantly.
+
+### The Core Design Decisions
+##### 1. The universal data type is a stream of bytes, interpreted as text
+In C you have `int`, `double`, `struct`, pointers. The shell has one type that matters: a stream of characters. A filename is text. A number is text. The contents of a file are text. The output of a program is text. Because everything is the same type, *any program's output can feed any other program's input*. This is the Unix bet, made in 1973 and still paying off: standardize on the lowest-common-denominator format and you get composability for free.
+
+##### 2. The pipe is function composition
+In a real language you write `f(g(x))`. In the shell you write `g x | f`. The pipe (`|`) connects the standard output of one program to the standard input of the next, and the connection is a live stream, not a temporary file. `g` and `f` run *at the same time*, with the kernel passing bytes between them. This is the shell's single most important operator, and it is why small single-purpose programs (`grep`, `sort`, `wc`, `cut`) are worth more than their size suggests: they are composable functions.
+
+##### 3. Programs are the standard library
+Python has `import`; C has `#include`. The shell's library is `/usr/bin`. Every executable on your `PATH` is a callable function. `grep` is not built into the shell any more than `printf` is built into C; it is a separate program the shell invokes. This is why the toolkit feels open-ended: adding a function to the language is as simple as dropping an executable on the `PATH`.
+
+##### 4. The shell expands your text before any program sees it
+This is the decision that surprises people coming from C. Before the shell runs a command, it *rewrites the command line*: it substitutes variables, expands `*` into filenames, runs `$(...)` sub-commands, and splits the result into words. The program you call receives the finished product and has no idea what the original text looked like. Quoting (the next section) is entirely about controlling this rewriting step. If you understand expansion, you understand 80% of the shell's "gotchas."
+
+##### 5. Exit codes are the boolean type
+Every program returns an integer when it finishes: `0` for success, non-zero for failure. The shell treats `0` as *true* (note: the opposite of C). This is what makes `&&`, `||`, and `if` work without a separate boolean type. `grep` returning "found nothing" is just `grep` returning `1`, and that integer is enough to drive control flow.
+
+::: {.callout-note title="zsh"}
+This guide is general, but it focuses on `zsh` (the Z shell), the default on macOS and many Linux distros. If you use `bash` or another shell, almost all of this applies; differences are noted where they bite.
+:::
+
+## Quoting and Expansion
+Quoting is not decoration. It is how you *control the shell's rewriting of your command line* (decision #4 above). Get quoting wrong and the shell hands your program a mangled set of arguments; get it right and you have exact control over what every program receives.
+
+### The Processing Order
+Before any command runs, the shell walks your line through a fixed pipeline:
+
+1. **Parse quotes** to decide which characters are literal and which are special.
+2. **Expand** variables (`$VAR`), command substitutions (`$(...)`), and globs (`*`, `?`, `[]`).
+3. **Split** the unquoted result into words on whitespace.
+4. **Remove the quote characters** so the program never sees them.
+5. **Run the command** with the finished argument list.
+
+The single most useful debugging habit in the shell is to ask: *what does this look like after step 4, when the program actually receives it?*
+
+### Three Quote Types
+The three quoting styles are three different settings for "how much expansion do I want?"
+
+#### Single Quotes `'text'`
+::: {.subheading}
+literal everything
+:::
+
+- **No expansions at all.** Every character is taken verbatim.
+- You cannot put a single quote inside single quotes, not even escaped.
+
+##### Command Executed
+```bash
+echo 'Hello $USER * $(date)'
+```
+
+##### Output
+```
+Hello $USER * $(date)
+```
+
+Use single quotes whenever you want the program, not the shell, to interpret the text. Regular expressions are the classic case: the regex metacharacters `$`, `*`, `[` mean something to `grep`, and you almost never want the shell touching them first.
+
+#### Double Quotes `"text"`
+::: {.subheading}
+expand variables, but nothing else
+:::
+
+- **Variable and command expansion happens**: `$VAR`, `${VAR}`, `$(command)`.
+- **Globs stay literal**: `*`, `?`, `[]` are passed through untouched.
+- **A few escapes work**: `\"`, `\$`, `\\`.
+
+##### Command Executed
+```bash
+echo "Hello $USER, files: *.txt"
+```
+
+##### Output
+```
+Hello curtis, files: *.txt
+```
+
+Double quotes are the safe default for strings that contain variables. Crucially, they also **suppress word splitting**, so `"$file"` survives intact even if the filename contains spaces. This one habit prevents a large fraction of real-world shell bugs.
+
+#### No Quotes
+::: {.subheading}
+bare: everything expands
+:::
+
+- **Everything expands**: variables, globs, command substitution.
+- **Word splitting** happens on whitespace, so one bare variable can become many arguments.
+
+##### Command Executed
+```bash
+echo Hello $USER, files: *.qmd | head -c 50
+```
+
+##### Output
+```
+Hello curtis, files: index.qmd la-decomposition.qm%
+```
+
+Bare words are what you want when you *intend* the expansion, for example `ls *.txt`, where letting the shell turn `*.txt` into a list of filenames is the whole point.
+
+### Quote Removal in Action
+The quote characters are removed before the program runs. The program receives the *content*, never the quotes:
+
+When the following is run over our [DATA 605 notebook](https://celsasser.github.io/sps-605-notes/).
+
+```bash
+grep "matrix" la-eigenspace.qmd | head -1
+```
+
+We receive:
+
+```
+- **Matrix operations**: See [Matrix multiplication](la-matrices.qmd#multiplication) and ...
+```
+
+`grep` receives `matrix` as its first argument, with no quotes attached. The quotes existed only to tell the shell how to build that argument.
+
+### Word Splitting
+Unquoted text splits on whitespace into separate arguments. This is the difference between passing one argument and passing several:
+
+```bash
+# These are NOT the same:
+echo "one two three"     # 1 argument:  "one two three"
+echo one two three       # 3 arguments: "one", "two", "three"
+```
+
+For `echo` the visible result is the same, but for a program that cares how many arguments it received, the distinction is everything. This is also why unquoted variables are dangerous: `rm $file` where `$file` is `my report.txt` tries to remove two files, `my` and `report.txt`. `rm "$file"` does the right thing.
+
+### Mixing Quotes
+Adjacent quoted and unquoted pieces concatenate into a single word, so you can mix styles within one argument to control expansion piece by piece:
+
+##### Command Executed
+```bash
+echo 'User: '$USER' at '$(date +%H:%M)
+```
+
+##### Output
+```
+User: curtis at 13:40
+```
+
+The literal labels are single-quoted (no surprises), while `$USER` and `$(date ...)` are left bare so they expand.
+
+### Common Patterns
+```bash
+# Regex with special chars → single quotes keep them away from the shell
+grep '\$[0-9]+' file.txt
+
+# Variable inside a regex → double quotes so $USER expands but * does not
+grep "^$USER:" /etc/passwd
+
+# Remote command with spaces → quote so the whole thing arrives intact
+ssh server "cd /path/with spaces && ls -la"
+
+# Preserve a literal asterisk for the program
+find . -name "*.txt"    # good: find receives *.txt and matches itself
+find . -name *.txt      # bad:  the shell expands * before find runs
+```
+
+That last pair is worth staring at. `find`'s `-name` wants the *pattern* `*.txt`, but if you leave it bare the shell expands it first against the current directory, and `find` receives a list of filenames instead of a pattern. Quoting hands `find` the pattern it asked for.
+
+### Quick Reference
+| Need                       | Use           | Example              |
+|----------------------------|---------------|----------------------|
+| **Literal everything**     | `'text'`      | `grep '\$[0-9]+'`    |
+| **Variables but no globs** | `"text"`      | `echo "Hello $USER"` |
+| **Everything expands**     | `text` (bare) | `ls *.txt`           |
+| **Whitespace preserved**   | `"text"`      | `rm "$file"`         |
+
+The one insight to keep: **the shell processes quotes and expansions before your command ever sees its arguments.**
+
+## Globbing
+A *glob* is a filename pattern the shell expands into a list of matching paths. It is one of the expansions from step 2 above, and it deserves its own section because people routinely confuse it with regular expressions. They are not the same language, and conflating them is a common source of frustration.
+
+### Globs Are Not Regexes
+A glob is a small pattern language for matching *filenames*, expanded by the shell. A regex is a richer pattern language for matching *text inside lines*, used by programs like `grep`. The same character means different things in each:
+
+| Pattern | As a glob (filenames) | As a regex (text)                   |
+|---------|-----------------------|-------------------------------------|
+| `*`     | any run of characters | zero or more of the *previous* item |
+| `?`     | exactly one character | zero or one of the previous item    |
+| `.`     | a literal dot         | any single character                |
+
+So `*.txt` as a glob means "any filename ending in `.txt`," but `*.txt` as a regex would be a syntax error (there is nothing before the `*` to repeat). Keep the two languages mentally separate and a lot of confusion evaporates.
+
+### The Glob Operators
+| Glob     | Matches                                                         |
+|----------|-----------------------------------------------------------------|
+| `*`      | any number of characters (including none), except a leading `.` |
+| `?`      | exactly one character                                           |
+| `[abc]`  | one character from the set                                      |
+| `[a-z]`  | one character from the range                                    |
+| `[!abc]` | one character *not* in the set                                  |
+| `**`     | any depth of directories (recursive; on by default in zsh)      |
+
+```bash
+ls *.qmd            # every .qmd file in this directory
+ls la-*.qmd         # every .qmd file starting with "la-"
+ls chapter?.md      # chapter1.md, chapter7.md — but not chapter12.md
+ls [abc]*.txt       # .txt files starting with a, b, or c
+ls **/*.png         # every .png at any depth (zsh)
+```
+
+### What Happens When Nothing Matches
+This is a genuine `bash` vs. `zsh` difference, and it surprises people who switch:
+
+- **`bash`**: if a glob matches nothing, it is left *unexpanded* and passed through literally. `ls *.xyz` with no `.xyz` files actually runs `ls *.xyz`, and `ls` complains it cannot find a file literally named `*.xyz`.
+- **`zsh`**: if a glob matches nothing, it is an *error* and the command does not run at all: `zsh: no matches found: *.xyz`.
+
+zsh's behavior is safer (it refuses to run a command built from a broken assumption) but trips up scripts written for bash. When you need the literal pattern regardless of matches, quote it.
+
+## Pipes and Redirection
+Here is decision #2 made concrete. Every program starts life with three open streams, and the shell lets you rewire them.
+
+### The Three Standard Streams
+| Stream     | Number | Default  | Purpose                                         |
+|------------|--------|----------|-------------------------------------------------|
+| **stdin**  | `0`    | keyboard | where the program reads input                   |
+| **stdout** | `1`    | terminal | where the program writes normal output          |
+| **stderr** | `2`    | terminal | where the program writes errors and diagnostics |
+
+The separation of `stdout` from `stderr` is deliberate and important: it lets you capture a program's *results* while still seeing its *errors* on screen (or route them somewhere else entirely). A program that mixes errors into stdout is considered poorly behaved precisely because it pollutes the data stream that the next program in the pipe is trying to read.
+
+### The Pipe `|`
+The pipe connects one program's stdout to the next program's stdin:
+
+```bash
+grep "matrix" *.qmd | wc -l        # how many matching lines, total
+ls -l | grep "\.qmd$" | sort -k5 -n   # qmd files, sorted by size
+```
+
+Read a pipeline left to right as data flowing through a series of transforms. `ls -l` produces lines, `grep` keeps the ones ending in `.qmd`, `sort` orders them by the 5th column numerically. Each stage is a function; the pipe is the composition. This is the same shape as `sort(grep(ls()))`, written in the order the data actually travels.
+
+### Redirection
+Where the pipe connects programs to each other, redirection connects a program to a *file*:
+
+```bash
+command > file       # send stdout to file (overwrite)
+command >> file      # send stdout to file (append)
+command < file       # take stdin from file
+command 2> file      # send stderr to file
+command > out 2>&1   # stdout to out, then stderr to wherever stdout now goes
+command 2>&1 | less  # merge stderr into stdout, then pipe both into less
+```
+
+The `2>&1` idiom reads as "make stream 2 (stderr) point to wherever stream 1 (stdout) currently points." Order matters: `> out 2>&1` redirects stdout to the file *first*, then aliases stderr onto it, so both land in `out`. Reverse the order and stderr would still be going to the terminal.
+
+::: {.callout-tip title="The redirect-then-pipe trick"}
+A pipe only carries stdout. If a program writes the interesting part to stderr (compilers love to do this), `cmd | grep error` will miss it. Merge first with `cmd 2>&1 | grep error`.
+:::
+
+### `grep` Reads stdin Too
+Worth stating early because it changes how you use it: `grep` searches files when given filenames, but with **no** filename it reads stdin. That is what makes it a pipeline citizen.
+
+```bash
+grep "pattern" file.txt        # search a file
+ps aux | grep "python"         # search another program's output
+cat file.txt | grep "pattern"  # works, but the file form above is simpler
+```
+
+That last line is the famous "useless use of `cat`": since `grep "pattern" file.txt` already reads the file directly, piping `cat` into it adds a process for nothing. It is harmless and occasionally convenient, but knowing that `grep` reads files natively is the cleaner habit.
+
+## Flow Control
+Everything so far has been about a single command line. Flow control is how you assemble those lines into programs: run something *only if* a condition holds, run it *repeatedly*, or branch on a value. The shell has `if`, `while`, `for`, and `case`, and they look roughly like their C cousins, but one design decision makes them feel different at first.
+
+### Conditions Are Exit Codes, Not Booleans
+Recall decision #5 from the intro: every program returns an integer when it finishes, `0` for success and non-zero for failure, and the shell treats **`0` as true** (the opposite of C). The shell has no boolean type, so this exit code *is* the condition. When you write `if grep -q foo file`, the shell does not evaluate an expression; it runs `grep`, and branches on whether `grep` succeeded.
+
+```bash
+if grep -q "matrix" la-eigenspace.qmd; then
+    echo "found it"
+fi
+```
+
+`grep -q` searches silently and exits `0` if it matched, `1` if it did not. There is no comparison operator here at all; the *exit code is the condition*. This is worth internalizing, because it means **any command can be a condition**. `if ping -c1 host`, `if make`, `if curl -sf url` are all valid and idiomatic.
+
+The last command's exit code is always available in `$?`, which is occasionally useful for inspecting or branching on a specific failure code:
+
+```bash
+grep -q "matrix" file.qmd
+echo $?        # 0 if matched, 1 if not
+```
+
+### The `test` Command, a.k.a. `[ ]`
+So if `if` runs a command, how do you test a plain fact like "does this file exist?" The answer is a program named `test`, which evaluates a condition and exits `0` or `1` accordingly. It has an alias that makes the syntax look like other languages: `[`. Yes, the open bracket is literally a command (which is why it needs spaces around it, and why it needs a closing `]` as its final argument).
+
+```bash
+# These two lines are identical:
+if test -f config.toml; then echo "exists"; fi
+if [ -f config.toml ]; then echo "exists"; fi
+```
+
+That equivalence is the thing to remember when the syntax feels fussy: `[ -f config.toml ]` is just calling the program `[` with the arguments `-f`, `config.toml`, and `]`. The spaces are mandatory because they are argument separators, not decoration. `[-f config.toml]` would be the shell looking for a command named `[-f`.
+
+#### File Tests
+These are the options you are always looking up. They each ask one yes/no question about a path:
+
+| Test      | True when                              |
+|-----------|----------------------------------------|
+| `-e path` | path **e**xists (any type)             |
+| `-f path` | exists and is a regular **f**ile       |
+| `-d path` | exists and is a **d**irectory          |
+| `-r path` | exists and is **r**eadable             |
+| `-w path` | exists and is **w**ritable             |
+| `-x path` | exists and is e**x**ecutable           |
+| `-s path` | exists and is non-empty (**s**ize > 0) |
+| `-L path` | exists and is a symbolic **L**ink      |
+
+```bash
+[ -f "$file" ]          # is it a regular file?
+[ -d "$dir" ]           # is it a directory?
+[ -e "$path" ]          # does it exist at all?
+[ -s "$logfile" ]       # does it exist and have content?
+[ ! -e "$path" ]        # ! negates: true when path does NOT exist
+```
+
+#### String and Number Tests
+Strings and numbers use *different* operators, and mixing them up is a classic bug. Strings compare with `=` and `!=`; numbers compare with the lettered operators `-eq`, `-lt`, and friends.
+
+| Strings    |                         | Numbers   |                          |
+|------------|-------------------------|-----------|--------------------------|
+| `-z str`   | empty (**z**ero length) | `n -eq m` | **eq**ual                |
+| `-n str`   | **n**on-empty           | `n -ne m` | **n**ot **e**qual        |
+| `s1 = s2`  | equal                   | `n -lt m` | **l**ess **t**han        |
+| `s1 != s2` | not equal               | `n -le m` | **l**ess or **e**qual    |
+|            |                         | `n -gt m` | **g**reater **t**han     |
+|            |                         | `n -ge m` | **g**reater or **e**qual |
+
+```bash
+[ "$name" = "curtis" ]      # string equality uses =, not ==
+[ -z "$input" ]             # true if $input is empty
+[ "$count" -gt 10 ]         # numeric: greater than
+```
+
+::: {.callout-warning title="Always quote variables inside `[ ]`"}
+If `$file` is empty, `[ -f $file ]` expands to `[ -f ]`, which `test` misreads, and `[ "$a" = "$b" ]` with an empty unquoted `$a` becomes `[ = "$b" ]`, a syntax error. Quoting (`[ -f "$file" ]`) keeps each value a single argument no matter what it contains. This is the same word-splitting hazard from the quoting section, and `[ ]` is where it bites hardest.
+:::
+
+#### Combining Tests
+::: {.subheading}
+`[[ ]]`
+:::
+
+zsh and bash also provide `[[ ]]`, a shell *keyword* rather than a program. Because the shell parses it specially (it is not subject to word splitting), it is safer and supports `&&`, `||`, and pattern matching directly:
+
+```bash
+[[ -f "$file" && -r "$file" ]]     # exists AND readable
+[[ "$name" == cur* ]]              # == does glob-style pattern matching here
+[[ "$n" -gt 0 && "$n" -lt 100 ]]   # combine numeric tests
+```
+
+Prefer `[[ ]]` for new code in bash/zsh: it does what you mean with fewer footguns. Reach for the older `[ ]` only when you need POSIX portability (e.g. scripts that must run under `sh`/`dash`).
+
+### `if` / `elif` / `else`
+With conditions understood, the branching itself is unremarkable:
+
+```bash
+if [ "$count" -eq 0 ]; then
+    echo "nothing found"
+elif [ "$count" -lt 10 ]; then
+    echo "a few"
+else
+    echo "lots"
+fi
+```
+
+The `then` can share a line with `if` if you separate them with a semicolon (`if ...; then`), which is the conventional style. `fi` closes the block (`if` spelled backwards, a 1970s flourish that also gives us `esac` for `case`).
+
+### `while` and `until`
+`while` loops as long as a command keeps succeeding; `until` is its mirror, looping until a command succeeds:
+
+```bash
+# Count down
+n=5
+while [ "$n" -gt 0 ]; do
+    echo "$n"
+    n=$((n - 1))        # $(( )) is arithmetic expansion
+done
+
+# Wait for a service to come up
+until curl -sf http://localhost:8080/health; do
+    sleep 1
+done
+```
+
+The most idiomatic `while` in the shell reads a stream line by line. This is the canonical way to process input that may contain spaces, and it leans on every concept so far:
+
+```bash
+while IFS= read -r line; do
+    echo "got: $line"
+done < input.txt
+```
+
+`read` pulls one line into `line` and exits non-zero at end of file, ending the loop. `IFS=` prevents leading/trailing whitespace from being trimmed, and `-r` stops backslashes from being interpreted, so the line arrives exactly as written.
+
+### `for`
+The shell's `for` is a *for-each* over a list of words, not a C-style counter. This is a direct consequence of the thesis: the shell deals in lists of text, so iterating over a glob or a command's output is the natural shape.
+
+```bash
+# Iterate over files (the glob expands to the list)
+for file in *.qmd; do
+    echo "processing $file"
+done
+
+# Iterate over the words of a command's output
+for branch in $(git branch --format='%(refname:short)'); do
+    echo "$branch"
+done
+
+# C-style counter, when you genuinely need numbers (bash/zsh)
+for ((i = 0; i < 5; i++)); do
+    echo "$i"
+done
+```
+
+The first form is the one you will write most. `for file in *.qmd` reads as "for each file matching `*.qmd`," and because the glob produces a proper list, filenames with spaces survive (unlike iterating over unquoted command output, which word-splits).
+
+### `case`
+::: {.subheading}
+the Shell's `switch`
+:::
+
+`case` matches a value against a series of **glob patterns** (not regexes, and not C's exact-value `switch`), running the first branch that matches. It is the cleanest way to dispatch on a string, and it shows up constantly in argument parsing.
+
+```bash
+case "$1" in
+    start)
+        echo "starting"
+        ;;
+    stop|halt)              # | separates alternative patterns
+        echo "stopping"
+        ;;
+    *.txt)                  # patterns are globs, so this matches any .txt arg
+        echo "a text file"
+        ;;
+    *)                      # the default case: * matches anything
+        echo "unknown: $1"
+        ;;
+esac
+```
+
+The anatomy: each branch is `pattern) commands ;;`. The `;;` terminates a branch (there is no fall-through by default, unlike C, so no `break` is needed). `|` offers alternative patterns, and `*` as the final pattern is the catch-all default, exactly like `default:` in a `switch`. Because the patterns are globs, `case` is genuinely more expressive than C's `switch`: `*.txt`, `[0-9]*`, and `cur*` are all valid patterns.
+
+::: {.callout-tip title="Why `case` for argument parsing"}
+The `case "$1" in start) ... stop) ...` shape is the backbone of nearly every init script and CLI dispatcher you will read. When you see a script handling subcommands, it is almost always a `case` on `$1`. Recognizing the pattern makes a lot of "real world" shell instantly legible.
+:::
+
+## Searching
+::: {.subheading}
+`grep`
+:::
+
+`grep` is the shell's text search function. The name is an artifact of its lineage: in the old `ed` line editor, the command `g/re/p` meant "**g**lobally search for a **r**egular **e**xpression and **p**rint" the matching lines. That expansion also tells you exactly what `grep` is built around: it is **line-oriented** and **regex-driven**. It reads input one line at a time, tests each line against a pattern, and prints the lines that match. Almost every option is a variation on that one loop.
+
+Once you see `grep` as "filter lines by regex," the design coheres. It is not a general text tool; it is one tightly-focused function, which is exactly why it composes so well in pipelines.
+
+```bash
+grep [options] "pattern" file(s)
+grep [options] "pattern" directory/*
+```
+
+### Choosing Which Files to Search
+There are two distinct ways to tell `grep` which files to look in, and they operate at different stages. Knowing which is which removes a lot of confusion.
+
+#### 1. Shell Glob
+::: {.subheading}
+`*.qmd`
+:::
+
+The shell expands the glob *before* `grep` runs (this is just globbing from the previous section). `grep` never sees `*.qmd`; it receives the actual filenames the shell substituted in.
+
+```bash
+grep "pattern" *.qmd        # current directory only
+grep "pattern" *.txt *.md   # multiple types, current dir
+```
+
+Because the *shell* does the expansion, this only reaches files in the current directory. It cannot recurse, because the glob is resolved before `grep` ever starts.
+
+#### 2. `grep`'s Own `--include`
+With recursive search (`-r`), `grep` walks the directory tree itself and decides which files to open. `--include` is a filter *grep* applies during that walk, so it works at any depth:
+
+```bash
+grep -r "pattern" . --include="*.qmd" | wc -l
+```
+
+The distinction in one line: **the glob is the shell choosing files for grep; `--include` is grep choosing files for itself.** Use the glob for a quick search of one directory; use `-r --include` to sweep a whole tree.
+
+#### 3. Via `find`
+You can also let `find` locate the files and hand them to `grep`. Here `grep` is used as a *filter* rather than for its output: `find` asks `grep -l` "does this file contain the pattern?" and keeps the files for which the answer is yes.
+
+```bash
+find . -name "*.qmd" -exec grep -l "matrix" {} \;
+```
+
+##### Output
+```
+./la-determinants.qmd
+./la-eigenspace.qmd
+./la-vspaces.qmd
+./pb-combinatorics.qmd
+./la-theorems.qmd
+./la-matrices.qmd
+./la-transformations.qmd
+...
+```
+
+The `{}` is a placeholder for each file `find` discovers, and `\;` ends the `-exec` command (escaped so the shell does not eat the semicolon). We will dig into `find` next.
+
+### Regular Expressions, Briefly
+The "regular expression" in `grep`'s name is the pattern language it tests each line against. A full treatment is its own subject, but the operators you reach for daily are few:
+
+| Pattern        | Matches                           |
+|----------------|-----------------------------------|
+| `.`            | any single character              |
+| `*`            | zero or more of the previous item |
+| `^`            | start of line                     |
+| `$`            | end of line                       |
+| `[abc]`        | one character from the set        |
+| `\b`           | a word boundary                   |
+| `word1\|word2` | either alternative (with `-E`)    |
+
+```bash
+grep -i "matrix" la-eigenspace.qmd | head -3      # case-insensitive
+grep -E "\bmatrix\b" la-eigenspace.qmd | head -3  # whole word only
+```
+
+::: {.callout-note title="Basic vs. Extended regex (`-E`)"}
+`grep` has two regex dialects. In *basic* regex (the default), `+`, `?`, `|`, and `()` are literal characters, and you must backslash-escape them to get their special meaning. *Extended* regex (`grep -E`, historically `egrep`) makes them special without escaping. When a pattern is fighting you with backslashes, reach for `-E`; it is almost always what you actually want.
+:::
+
+### The Cheat Sheet
+The flags below are the ones worth memorizing. Notice how each is a small variation on the core "filter lines by regex" loop, changing either *what* gets matched or *what* gets printed.
+
+```bash
+# What to match
+grep "text" file.txt        # lines containing "text"
+grep -i "text" file.txt     # case-insensitive
+grep -w "text" file.txt     # whole word only
+grep -E "a|b" file.txt      # extended regex: a OR b
+grep -v "text" file.txt     # invert: lines that DON'T match
+
+# What to print
+grep -n "text" file.txt     # prefix each match with its line number
+grep -H "text" *.txt        # prefix each match with its filename
+grep -l "text" *.txt        # just the names of files that match
+grep -c "text" file.txt     # just the count of matching lines
+grep -o "text" file.txt     # print only the matched part, not the whole line
+
+# Where to look
+grep -r "text" .            # recurse through subdirectories
+grep -r "text" . --include="*.qmd"   # recurse, but only certain files
+```
+
+A useful mental split: the first group changes the *predicate* (which lines count as matches), the second changes the *projection* (what you see for each match), and the third changes the *scope* (which files are searched). Most real commands pick one from each group.
+
+## Finding
+::: {.subheading}
+`find`
+:::
+
+If `grep` filters *lines by content*, `find` filters *files by metadata*: name, type, size, modification time, permissions. It is the shell's other great search function, and the two are complementary. `grep` answers "which lines say X?"; `find` answers "which files are X?"
+
+`find` walks a directory tree and, for every entry it encounters, tests it against the conditions you give and runs an action on the ones that pass. Its syntax looks alien at first because it is really a tiny expression language, but the shape is always the same:
+
+```bash
+find <where> <tests> <action>
+```
+
+```bash
+find . -name "*.qmd"                  # by name, anywhere below here
+find . -type f -name "*.png"          # regular files only (not directories)
+find . -type d -name "images"         # directories named "images"
+find . -size +1M                      # larger than 1 megabyte
+find . -mtime -7                      # modified in the last 7 days
+find . -name "*.tmp" -delete          # find and delete, in one pass
+```
+
+### The Two Ways to Run a Command on Each File
+`find`'s superpower is handing every matching file to another program. There are two idioms, and the difference is performance.
+
+```bash
+# One grep process PER file. The {} is the current file; \; ends the command.
+find . -name "*.qmd" -exec grep -l "matrix" {} \;
+
+# One grep process for MANY files. The + batches them into few invocations.
+find . -name "*.qmd" -exec grep -l "matrix" {} +
+```
+
+With `\;`, `find` runs the command once per file, which is simple but slow across thousands of files. With `+`, `find` collects many filenames and passes them to a single command invocation, the same way you would type `grep -l "matrix" a.qmd b.qmd c.qmd` by hand. Prefer `+` when the command accepts multiple files.
+
+::: {.callout-warning title="find vs. glob: who recurses?"}
+A shell glob like `*.qmd` only sees the current directory (and `**/*.qmd` in zsh for recursion). `find` recurses by default and works identically in every shell. When you need to reach into subdirectories portably, `find` is the dependable choice.
+:::
+
+## Editing a Stream
+::: {.subheading}
+`sed`
+:::
+
+`grep` *selects* lines; `sed` *transforms* them. The name is short for **s**tream **ed**itor, and that is exactly what it is: it reads input one line at a time, applies an editing command to each, and writes the result out. Same line-at-a-time loop as `grep`, but instead of deciding whether to print a line, `sed` decides how to *rewrite* it. It edits a stream, not a file in place (unless you ask), which is what makes it a natural pipeline citizen.
+
+You will use `sed` for one thing far more than any other: search and replace. The substitute command, `s/old/new/`, is the 90% case.
+
+```bash
+sed 's/old/new/'           # replace FIRST match on each line
+sed 's/old/new/g'          # replace ALL matches on each line (g = global)
+sed 's/old/new/gI'         # global, case-Insensitive
+```
+
+The `s///` syntax is `s`, a delimiter, the pattern, the same delimiter, the replacement, the delimiter again, then optional flags. The delimiter is usually `/`, but it can be any character, which is the trick for editing paths without a thicket of backslashes:
+
+```bash
+# Replacing a path: / as delimiter forces escaping every slash
+sed 's/\/usr\/local/\/opt/g'
+# Use | as the delimiter instead and it reads cleanly
+sed 's|/usr/local|/opt|g'
+```
+
+### `sed` in a Pipe vs. In Place
+By default `sed` writes to stdout, so it drops straight into a pipeline and never touches your files:
+
+```bash
+grep -r "TODO" . | sed 's/TODO/DONE/'    # transform the search output
+cat config.txt | sed 's/debug/release/g'
+```
+
+To edit files *in place*, use `-i`. This is where a real portability wrinkle bites, and it is worth calling out because it catches everyone on macOS:
+
+```bash
+sed -i 's/old/new/g' file.txt        # GNU/Linux: edits file.txt in place
+sed -i '' 's/old/new/g' file.txt     # BSD/macOS: -i REQUIRES an argument
+                                     #            ('' = no backup suffix)
+sed -i.bak 's/old/new/g' file.txt    # both: edit in place, keep file.txt.bak
+```
+
+::: {.callout-warning title="`sed -i` is not the same on macOS and Linux"}
+GNU `sed` (Linux) treats `-i` as a standalone flag. BSD `sed` (macOS) requires an argument right after `-i`: the backup suffix, or `''` for none. A script written on Linux with bare `-i` will fail cryptically on a Mac, and vice versa. When in doubt, `sed -i.bak` works on both and leaves you a backup.
+:::
+
+### A Few Other `sed` Tricks
+Substitution is the bulk of it, but three more commands round out the daily kit:
+
+```bash
+sed -n '5p'             file.txt   # print ONLY line 5 (-n silences default printing)
+sed -n '10,20p'         file.txt   # print lines 10 through 20
+sed '/^#/d'             file.txt   # delete comment lines (those starting with #)
+sed '/^$/d'             file.txt   # delete blank lines
+```
+
+The pattern is consistent: an optional *address* (a line number, a range, or a `/regex/`) followed by a command (`p` print, `d` delete, `s` substitute). `sed` applies the command to every line the address matches. That is the whole mental model.
+
+## Columns and Computation
+::: {.subheading}
+`awk`
+:::
+
+Where `sed` edits lines as text, `awk` understands them as **records made of fields**. By default it splits each line on whitespace into `$1`, `$2`, `$3`, and so on, with `$0` being the whole line. The instant your data has columns, `awk` is the right tool, and it is shockingly capable: it is a complete little programming language with variables, arithmetic, and conditionals, not just a one-trick filter.
+
+The grain of `awk` is `pattern { action }`: for each line, if the pattern matches, run the action. Omit the pattern and the action runs on every line; omit the action and matching lines are printed (so `awk '/foo/'` is a slower `grep foo`).
+
+```bash
+# Print the first column of each line (e.g. the PID from `ps`)
+ps aux | awk '{print $1}'
+
+# Print columns 1 and 5, in a different order
+ls -l | awk '{print $5, $1}'
+
+# Only rows where column 5 (file size) exceeds 1000
+ls -l | awk '$5 > 1000 {print $9}'
+```
+
+That third example is the one that shows why `awk` earns its keep: `$5 > 1000` is a real numeric comparison used as the pattern, and `{print $9}` is the action. You are filtering *and* projecting columns in a single expression, which would take a clumsier `grep`/`cut` combination otherwise.
+
+### Field Separators and Built-in Variables
+The default split is on whitespace, but `-F` sets any delimiter, which is how `awk` reads `/etc/passwd`, CSVs, and other delimited data:
+
+```bash
+awk -F: '{print $1}' /etc/passwd     # usernames: split on : and take field 1
+awk -F, '{print $2}' data.csv        # second column of a CSV
+```
+
+A handful of built-in variables make `awk` feel like a language rather than a filter:
+
+| Variable      | Holds                                                 |
+|---------------|-------------------------------------------------------|
+| `$0`          | the entire current line                               |
+| `$1`, `$2`, … | individual fields                                     |
+| `NF`          | **N**umber of **F**ields on this line                 |
+| `NR`          | **N**umber of the **R**ecord (the line number so far) |
+| `FS`          | the input **F**ield **S**eparator (what `-F` sets)    |
+
+```bash
+awk '{print NF}'        file.txt   # how many fields on each line
+awk 'NR==1 {print}'     file.txt   # print just the first line (a header)
+awk '{print NR, $0}'    file.txt   # number every line, like `grep -n`
+awk '{print $NF}'       file.txt   # $NF is the LAST field, however many there are
+```
+
+`$NF` deserves a moment: `NF` is a number, so `$NF` is "the field whose index is NF," i.e. the last field. It is the idiomatic way to grab the last column when you do not know how many there are.
+
+### `awk` Can Accumulate
+Because `awk` has variables that persist across lines, it can compute running totals, and the `BEGIN`/`END` blocks let you run setup and teardown. This is the feature that lifts it above the line-at-a-time tools:
+
+```bash
+# Sum the file sizes reported by `ls -l`
+ls -l | awk '{total += $5} END {print total}'
+
+# Average of the numbers in column 3
+awk '{sum += $3; count++} END {print sum / count}' data.txt
+```
+
+`total += $5` runs on every line, quietly accumulating; the `END { }` block runs once, after the last line, and prints the result. (`BEGIN { }`, its mirror, runs once before the first line, handy for printing a header or setting `FS`.) At this point `awk` has stopped being a filter and become a tiny report generator, which is exactly when to reach for it instead of stitching together five smaller tools.
+
+::: {.callout-tip title="grep, sed, awk: which one?"}
+The three text tools divide cleanly along what they do to a line. **`grep`** decides whether to *keep* a line (select). **`sed`** *rewrites* a line (transform). **`awk`** treats a line as *columns* and can *compute* across them (analyze). When a task feels awkward in one, it is often because it belongs to another: filtering by a numeric column is `awk`, not `grep`; bulk find-and-replace is `sed`, not `awk`.
+:::
+
+## Composition Idioms
+This is where the thesis pays off. None of the tools above is impressive alone. Their power is that they *compose*, and a handful of pipelines show up constantly once you start thinking in functions and streams. Read each one left to right as data flowing through transforms.
+
+#### Count matches across a project
+```bash
+grep -r "TODO" . --include="*.qmd" | wc -l
+```
+
+`grep` emits one line per match; `wc -l` counts lines. Composition turns "search" into "count" with no new tool.
+
+#### Find the most common values
+```bash
+grep -rho "la-[a-z]*\.qmd" . | sort | uniq -c | sort -rn | head
+```
+
+A classic four-stage idiom. `grep -o` extracts just the matched filenames, `sort` groups identical lines together, `uniq -c` collapses runs into counts, and the final `sort -rn` orders by count descending. This "sort | uniq -c | sort -rn" sequence is the shell's `GROUP BY ... ORDER BY COUNT`.
+
+#### Search inside a program's output, not a file
+```bash
+ps aux | grep "[p]ython"
+```
+
+`grep` filtering `ps` is the canonical "is this running?" check. The `[p]` trick is a small joke that works: the regex `[p]ython` matches the text `python`, but the *grep process's own command line* contains `[p]ython`, so grep does not match itself.
+
+#### Edit a set of files chosen by content
+```bash
+grep -rl "old_name" . --include="*.qmd" | xargs sed -i '' 's/old_name/new_name/g'
+```
+
+`grep -rl` lists the files that contain the old name, and `xargs` feeds that list as arguments to `sed`, which does the replacement. `xargs` is the bridge that turns *a stream of filenames* (stdout) back into *command arguments*, the inverse of how a pipe normally works.
+
+::: {.callout-tip title="The shape to internalize"}
+Almost every shell task decomposes the same way: **produce** a stream (`ls`, `find`, `grep`, a program's output), **transform** it through filters (`grep`, `sort`, `uniq`, `cut`, `sed`), and **consume** the result (`wc`, `less`, a redirect to a file, or `xargs` into another command). When a task feels hard, you are usually missing one of those three stages, not a fancier tool.
+:::
+
+## Variables and the Environment
+If the pipe passes text *across* programs, the environment passes text *down* into them. A shell variable is a named piece of text; the environment is the subset of those variables that the shell hands to every program it launches. Understanding the difference between the two, and it is exactly one keyword, clears up most of the confusion around configuration, `PATH`, and "why does my variable disappear?"
+
+### Setting and Reading a Variable
+Assignment has no `let` or `var` keyword and, critically, **no spaces around the `=`**. This trips up everyone at least once:
+
+```bash
+name="curtis"        # correct
+name = "curtis"      # WRONG: the shell reads this as running the command `name`
+                     #        with arguments `=` and `curtis`
+```
+
+The no-spaces rule is a direct consequence of decision #4 (the shell splits on whitespace): `name = "curtis"` is three words, so the shell treats `name` as a command. With no spaces, `name="curtis"` is a single word the shell recognizes as an assignment.
+
+You read a variable back by prefixing it with `$`, which is just another expansion the shell performs before running the command:
+
+```bash
+echo "$name"         # curtis
+echo "${name}"       # same; braces let you disambiguate, e.g. "${name}_backup"
+```
+
+The braces matter when the variable name butts up against other text. `"$name_backup"` looks for a variable called `name_backup` (and finds nothing); `"${name}_backup"` reads `name` and appends the literal `_backup`.
+
+### Exported vs. Non-Exported
+This is the heart of it. A plain assignment creates a variable that lives **only in the current shell**. Child processes never see it. `export` promotes a variable into the *environment*, the bundle of name/value pairs that every child process inherits.
+
+```bash
+greeting="hello"            # shell variable: this shell only
+export visible="seen"       # environment variable: this shell AND its children
+```
+
+The cleanest way to feel the difference is to launch a child shell and look:
+
+##### Command Executed
+```bash
+greeting="hello"
+export visible="seen"
+bash -c 'echo "greeting=[$greeting] visible=[$visible]"'
+```
+
+##### Output
+```
+greeting=[] visible=[seen]
+```
+
+The child shell inherited `visible` but not `greeting`. The non-exported variable was real and usable in the parent, but it stopped at the process boundary. This is the whole model:
+
+|                              | Plain assignment                                  | `export`ed                                                             |
+|------------------------------|---------------------------------------------------|------------------------------------------------------------------------|
+| Visible in current shell     | yes                                               | yes                                                                    |
+| Inherited by child processes | **no**                                            | **yes**                                                                |
+| Lives in the environment     | no                                                | yes                                                                    |
+| Typical use                  | scratch values, loop counters, script-local state | config the programs you launch need to read (`PATH`, `EDITOR`, `LANG`) |
+
+A few mechanical notes that follow from the model:
+
+```bash
+export greeting             # export an already-set variable
+export PATH="$PATH:/opt/bin"   # the common idiom: append, then re-export
+
+FOO=bar mycommand           # set FOO for ONE command's environment only,
+                            # without touching the current shell at all
+```
+
+That last form is worth keeping in your pocket. `FOO=bar mycommand` puts `FOO` in the environment of `mycommand` and nothing else, which is the tidy way to pass a one-off setting (`DEBUG=1 ./run.sh`) without leaving it lying around.
+
+::: {.callout-note title="Inheritance is one-way and by-copy"}
+A child receives a *copy* of the parent's environment. Nothing a child does to its own variables, not even exported ones, propagates back up to the parent. This is why you cannot write a normal script that changes your current shell's directory or variables: it runs in a child, and its changes die with it. (The escape hatch is `source script.sh`, which runs the script in the *current* shell instead of a child. More on that below.)
+:::
+
+### `source` vs. Executing
+Running a script the usual way (`./script.sh`) launches a child shell, so per the note above, any variables or `cd`s it performs vanish when it exits. `source script.sh` (or its POSIX spelling `. script.sh`) instead runs the file's commands in your *current* shell:
+
+```bash
+./setup.sh        # runs in a child; its exports do NOT survive
+source setup.sh   # runs here; its exports and cd DO survive
+```
+
+This is exactly why you `source ~/.zshrc` to reload your config rather than executing it, and why Python's `venv` activation is `source venv/bin/activate`: it needs to modify your current shell's `PATH`.
+
+### The Standard Environment Variables
+A handful of environment variables are conventional across Unix systems. Programs read them to discover where things live and how you like to work. These are the `$x` names you will see constantly:
+
+| Variable          | Holds                                                     |
+|-------------------|-----------------------------------------------------------|
+| `$PATH`           | colon-separated list of directories searched for commands |
+| `$HOME`           | your home directory (`~` expands to this)                 |
+| `$USER`           | your login name                                           |
+| `$SHELL`          | path to your login shell (e.g. `/bin/zsh`)                |
+| `$PWD`            | the current working directory                             |
+| `$OLDPWD`         | the previous directory (what `cd -` returns to)           |
+| `$LANG` / `$LC_*` | locale: language, character encoding, formatting          |
+| `$EDITOR`         | your preferred editor, used by `git`, `crontab`, etc.     |
+| `$TERM`           | terminal type, used for colors and capabilities           |
+| `$TMPDIR`         | directory for temporary files                             |
+
+`$PATH` is the one to understand deeply, because it is *how the shell turns a command name into a program* (decision #3, programs are the standard library). When you type `grep`, the shell walks `$PATH` left to right and runs the first `grep` it finds:
+
+##### Command Executed
+```bash
+echo "$PATH"
+```
+
+##### Output
+```
+/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+```
+
+Order matters: a directory earlier in `$PATH` shadows the same-named command later. This is why `/usr/local/bin` usually comes first, so your installed tools win over the system defaults.
+
+### The Special Shell Parameters
+Distinct from the environment variables above, the shell maintains a set of **special parameters**: read-only `$x` values it sets for you, mostly about the running script and the last command. You met `$?` back in [Flow Control](#flow-control); here is the rest of the family:
+
+| Parameter     | Holds                                                |
+|---------------|------------------------------------------------------|
+| `$?`          | exit code of the last command (`0` = success)        |
+| `$$`          | process ID of the current shell                      |
+| `$!`          | process ID of the last backgrounded command          |
+| `$0`          | name of the script (or shell) itself                 |
+| `$1`, `$2`, … | positional arguments passed to the script            |
+| `$#`          | number of positional arguments                       |
+| `$@`          | all arguments, as separate quoted words (use `"$@"`) |
+| `$*`          | all arguments, as one word                           |
+
+The argument parameters are what make a script callable. A minimal example ties them to things you have already seen:
+
+```bash
+#!/usr/bin/env bash
+echo "script: $0"
+echo "got $# arguments"
+
+for arg in "$@"; do        # "$@" expands to each argument as its own word
+    echo "  - $arg"
+done
+```
+
+::: {.callout-warning title="`\"$@\"` vs `$@` vs `$*`"}
+Always quote it: `"$@"` is the only form that preserves arguments exactly, each as a separate word even when it contains spaces. Bare `$@` and `$*` word-split, and unquoted `$*` collapses everything into one string. This is the same quoting hazard from the [Quoting](#quoting-and-expansion) section, now applied to a script's own inputs.
+:::
+
+## Where to Go Next
+This notebook is deliberately a *core toolkit*, not a complete reference. It covers the shell as a language and the text-processing tools you reach for hourly. The natural next steps, when you need them:
+
+- **Scripting proper**: functions, `set -e`/`set -u` for safety, argument parsing beyond `$1`, and traps. You already have the building blocks (variables, conditions, loops, the environment); this is about assembling them into robust programs.
+- **`awk` as a language**: this notebook covers the 90% (fields, patterns, `BEGIN`/`END`, accumulation), but `awk` has functions, arrays, and string operations that turn it into a genuine reporting tool when a one-liner outgrows itself.
+- **`xargs` in depth**: the workhorse for turning streams back into arguments, with control over batching and parallelism.
+
+The one thing to carry out of here: **think in streams of text and compositions of small functions.** Every tool in this notebook is a function over text, and the pipe is how you wire them together.

@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-05-30">
+<meta name="dcterms.date" content="2026-06-08">
 
 <title>The C Language – Computer Language Notebook</title>
 <style>
@@ -227,6 +227,18 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./matlab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The MATLAB Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shell.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Shell Scripting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./git.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Git Version Control</span></a>
   </div>
@@ -434,7 +446,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">May 30, 2026</p>
+      <p class="date">June 8, 2026</p>
     </div>
   </div>
   
@@ -1267,8 +1279,36 @@ window.Quarto = {
 <td style="text-align: left;"><code>|</code></td>
 <td style="text-align: left;">OR</td>
 <td style="text-align: left;">Sets bit to 1 if one of bits is 1</td>
-<td style="text-align: left;"><code>A                  | |</code>^<code>| XOR         | Sets bit to 1 if only one is 1       |</code>A ^ B<code>(</code>0011 1100 ^ 0000 1101<code>) |</code>49<code>(</code>0011 0001<code>)  | |</code><sub><code>| NOT         | Inverts all bits                     |</code></sub>A<code>(</code>~0011 1100<code>)               |</code>-61<code>(</code>1100 0011<code>) | |</code>&lt;&lt;<code>| Left Shift  | Shifts bits left (multiply by $2^n$) |</code>A &lt;&lt; 2<code>(</code>0011 1100 &lt;&lt; 2<code>)       |</code>240<code>(</code>1111 0000<code>) | |</code>&gt;&gt;<code>| Right Shift | Shifts bits right (divide by $2^n$)  |</code>A &gt;&gt; 2<code>(</code>0011 1100 &gt;&gt; 2<code>)       |</code>15<code>(</code>0000 1111`)</td>
-<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>A | B</code> (<code>0011 1100 | 0000 1101</code>)</td>
+<td style="text-align: left;"><code>61</code> (<code>0011 1101</code>)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>^</code></td>
+<td style="text-align: left;">XOR</td>
+<td style="text-align: left;">Sets bit to 1 if only one is 1</td>
+<td style="text-align: left;"><code>A ^ B</code> (<code>0011 1100 ^ 0000 1101</code>)</td>
+<td style="text-align: left;"><code>49</code> (<code>0011 0001</code>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>~</code></td>
+<td style="text-align: left;">NOT</td>
+<td style="text-align: left;">Inverts all bits</td>
+<td style="text-align: left;"><code>~A</code> (<code>~0011 1100</code>)</td>
+<td style="text-align: left;"><code>-61</code> (<code>1100 0011</code>)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&lt;&lt;</code></td>
+<td style="text-align: left;">Left Shift</td>
+<td style="text-align: left;">Shifts bits left (multiply by <span class="math inline">\(2^n\)</span>)</td>
+<td style="text-align: left;"><code>A &lt;&lt; 2</code> (<code>0011 1100 &lt;&lt; 2</code>)</td>
+<td style="text-align: left;"><code>240</code> (<code>1111 0000</code>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&gt;&gt;</code></td>
+<td style="text-align: left;">Right Shift</td>
+<td style="text-align: left;">Shifts bits right (divide by <span class="math inline">\(2^n\)</span>)</td>
+<td style="text-align: left;"><code>A &gt;&gt; 2</code> (<code>0011 1100 &gt;&gt; 2</code>)</td>
+<td style="text-align: left;"><code>15</code> (<code>0000 1111</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -1484,10 +1524,10 @@ Result_{Q15} = (A_{Q15} \times B_{Q15}) &gt;&gt; 15
 <div class="highlight">
 <table class="caption-top table">
 <colgroup>
-<col style="width: 9%">
 <col style="width: 12%">
-<col style="width: 41%">
-<col style="width: 36%">
+<col style="width: 16%">
+<col style="width: 54%">
+<col style="width: 16%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1508,25 +1548,25 @@ Result_{Q15} = (A_{Q15} \times B_{Q15}) &gt;&gt; 15
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>[]</code></td>
 <td>Array Subscript (Square Brackets)</td>
-<td></td>
+<td>Left-to-Right</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>.</code></td>
 <td>Dot Operator</td>
-<td></td>
+<td>Left-to-Right</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>-&gt;</code></td>
 <td>Structure Pointer Operator</td>
-<td></td>
+<td>Left-to-Right</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>++</code> , <code>--</code></td>
 <td>Postfix increment, decrement</td>
-<td></td>
+<td>Left-to-Right</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">2</td>
@@ -1538,37 +1578,37 @@ Result_{Q15} = (A_{Q15} \times B_{Q15}) &gt;&gt; 15
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>+</code>, <code>-</code></td>
 <td>Unary plus, minus</td>
-<td></td>
+<td>Right-to-Left</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>!</code> , <code>~</code></td>
 <td>Logical NOT, Bitwise complement</td>
-<td></td>
+<td>Right-to-Left</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>(type)</code></td>
 <td>Cast Operator</td>
-<td></td>
+<td>Right-to-Left</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>*</code></td>
 <td>Dereference Operator</td>
-<td></td>
+<td>Right-to-Left</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>&amp;</code></td>
-<td>Addressof Operator</td>
-<td></td>
+<td>Address-of Operator</td>
+<td>Right-to-Left</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>sizeof</code></td>
 <td>Determine size in bytes</td>
-<td></td>
+<td>Right-to-Left</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">3</td>
@@ -1598,7 +1638,7 @@ Result_{Q15} = (A_{Q15} \times B_{Q15}) &gt;&gt; 15
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>&gt;</code> , <code>&gt;=</code></td>
 <td>Relational greater than, greater than or equal to</td>
-<td></td>
+<td>Left-to-Right</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">7</td>
@@ -1622,7 +1662,7 @@ Result_{Q15} = (A_{Q15} \times B_{Q15}) &gt;&gt; 15
 <td style="text-align: center;">10</td>
 <td style="text-align: center;"><code>|</code></td>
 <td>Bitwise inclusive OR</td>
-<td></td>
+<td>Left-to-Right</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">11</td>
@@ -1632,9 +1672,9 @@ Result_{Q15} = (A_{Q15} \times B_{Q15}) &gt;&gt; 15
 </tr>
 <tr class="odd">
 <td style="text-align: center;">12</td>
-<td style="text-align: center;"><code>|                                                   |</code></td>
-<td></td>
-<td></td>
+<td style="text-align: center;"><code>||</code></td>
+<td>Logical OR</td>
+<td>Left-to-Right</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">13</td>
@@ -1652,31 +1692,31 @@ Result_{Q15} = (A_{Q15} \times B_{Q15}) &gt;&gt; 15
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>+=</code>, <code>-=</code></td>
 <td>Addition, subtraction assignment</td>
-<td></td>
+<td>Right-to-Left</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>*=</code>, <code>/=</code></td>
 <td>Multiplication, division assignment</td>
-<td></td>
+<td>Right-to-Left</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>%=</code>, <code>&amp;=</code></td>
 <td>Modulus, bitwise AND assignment</td>
-<td></td>
+<td>Right-to-Left</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;"></td>
-<td style="text-align: center;"><code>^=</code>, <code>| =</code></td>
+<td style="text-align: center;"><code>^=</code>, <code>|=</code></td>
 <td>Bitwise exclusive, inclusive OR assignment</td>
-<td></td>
+<td>Right-to-Left</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;"></td>
 <td style="text-align: center;"><code>&lt;&lt;=</code>, <code>&gt;&gt;=</code></td>
 <td>Bitwise shift left, right assignment</td>
-<td></td>
+<td>Right-to-Left</td>
 </tr>
 <tr class="odd">
 <td style="text-align: center;">15</td>

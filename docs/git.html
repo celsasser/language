@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2026-06-08">
+
+<title>Git Reference Manual – Computer Language Notebook</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="././favicon.png" rel="icon" type="image/png">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-238593fbc75c52b1713b5944fbe78712.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": true,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Computer Language Notebook</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Languages</a></li><li class="breadcrumb-item"><a href="./git.html">Git Version Control</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="./index.html" class="sidebar-logo-link">
+      <img src="././images/logo.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="././images/logo.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Languages</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./assembly.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./c.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The C Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Rust Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./python.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Python Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./css.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CSS Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./matlab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The MATLAB Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shell.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Shell Scripting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./git.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Git Version Control</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Briefs</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./b-pyperf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Python Performance Analysis</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Reference</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/assembly-pc.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PC Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-general.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Web Guide</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-selectors.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Selector Guide</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Appendix</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossary</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#the-anatomy-of-a-git-repository" id="toc-the-anatomy-of-a-git-repository" class="nav-link" data-scroll-target="#the-anatomy-of-a-git-repository">The Anatomy of a Git Repository</a>
+  <ul>
+  <li><a href="#the-three-trees" id="toc-the-three-trees" class="nav-link" data-scroll-target="#the-three-trees">The Three Trees</a></li>
+  <li><a href="#the-content-addressable-storage" id="toc-the-content-addressable-storage" class="nav-link" data-scroll-target="#the-content-addressable-storage">The Content-Addressable Storage</a>
+  <ul class="collapse">
+  <li><a href="#blobs" id="toc-blobs" class="nav-link" data-scroll-target="#blobs">1. Blobs</a></li>
+  <li><a href="#trees" id="toc-trees" class="nav-link" data-scroll-target="#trees">2. Trees</a></li>
+  <li><a href="#commits" id="toc-commits" class="nav-link" data-scroll-target="#commits">3. Commits</a></li>
+  <li><a href="#annotated-tags" id="toc-annotated-tags" class="nav-link" data-scroll-target="#annotated-tags">4. Annotated Tags</a></li>
+  </ul></li>
+  <li><a href="#putting-it-all-together" id="toc-putting-it-all-together" class="nav-link" data-scroll-target="#putting-it-all-together">Putting It All Together</a></li>
+  </ul></li>
+  <li><a href="#advanced-search-investigation" id="toc-advanced-search-investigation" class="nav-link" data-scroll-target="#advanced-search-investigation">Advanced Search &amp; Investigation</a>
+  <ul>
+  <li><a href="#the-concept" id="toc-the-concept" class="nav-link" data-scroll-target="#the-concept">The Concept</a></li>
+  <li><a href="#reference-commands" id="toc-reference-commands" class="nav-link" data-scroll-target="#reference-commands">Reference &amp; Commands</a></li>
+  <li><a href="#tutorial" id="toc-tutorial" class="nav-link" data-scroll-target="#tutorial">Tutorial</a></li>
+  </ul></li>
+  <li><a href="#managing-diverged-branches" id="toc-managing-diverged-branches" class="nav-link" data-scroll-target="#managing-diverged-branches">Managing Diverged Branches</a>
+  <ul>
+  <li><a href="#the-concept-1" id="toc-the-concept-1" class="nav-link" data-scroll-target="#the-concept-1">The Concept</a></li>
+  <li><a href="#reference-commands-1" id="toc-reference-commands-1" class="nav-link" data-scroll-target="#reference-commands-1">Reference &amp; Commands</a></li>
+  <li><a href="#tutorial-1" id="toc-tutorial-1" class="nav-link" data-scroll-target="#tutorial-1">Tutorial</a></li>
+  </ul></li>
+  <li><a href="#interactive-rebasing" id="toc-interactive-rebasing" class="nav-link" data-scroll-target="#interactive-rebasing">Interactive Rebasing</a>
+  <ul>
+  <li><a href="#the-concept-2" id="toc-the-concept-2" class="nav-link" data-scroll-target="#the-concept-2">The Concept</a></li>
+  <li><a href="#reference-commands-2" id="toc-reference-commands-2" class="nav-link" data-scroll-target="#reference-commands-2">Reference &amp; Commands</a></li>
+  <li><a href="#tutorial-2" id="toc-tutorial-2" class="nav-link" data-scroll-target="#tutorial-2">Tutorial</a></li>
+  </ul></li>
+  <li><a href="#git-submodules" id="toc-git-submodules" class="nav-link" data-scroll-target="#git-submodules">Git Submodules</a>
+  <ul>
+  <li><a href="#the-concept-3" id="toc-the-concept-3" class="nav-link" data-scroll-target="#the-concept-3">The Concept</a></li>
+  <li><a href="#reference-commands-3" id="toc-reference-commands-3" class="nav-link" data-scroll-target="#reference-commands-3">Reference &amp; Commands</a></li>
+  <li><a href="#tutorial-3" id="toc-tutorial-3" class="nav-link" data-scroll-target="#tutorial-3">Tutorial</a></li>
+  </ul></li>
+  <li><a href="#emergency-recovery-options" id="toc-emergency-recovery-options" class="nav-link" data-scroll-target="#emergency-recovery-options">Emergency Recovery Options</a>
+  <ul>
+  <li><a href="#the-concept-4" id="toc-the-concept-4" class="nav-link" data-scroll-target="#the-concept-4">The Concept</a></li>
+  <li><a href="#reference-commands-4" id="toc-reference-commands-4" class="nav-link" data-scroll-target="#reference-commands-4">Reference &amp; Commands</a></li>
+  <li><a href="#tutorial-4" id="toc-tutorial-4" class="nav-link" data-scroll-target="#tutorial-4">Tutorial</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Languages</a></li><li class="breadcrumb-item"><a href="./git.html">Git Version Control</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Git Reference Manual</h1>
+<p class="subtitle lead">Advanced Workflow Tutorial &amp; Cheat Sheet</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">June 8, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p><img src="images/git-00.svg" class="img-fluid" style="float: left; padding: 0 1em;width:2.25in"> The name “Git” was coined by its creator, Linus Torvalds, “I’m an egotistical bastard, and I name all my projects after myself. First ‘Linux’, now ‘git’”. In British English slang, a “git” is an unpleasant, silly, or incompetent person.</p>
+<p>This document bridges the gap between surface-level Git usage and a deeper understanding of Git’s internal models. It serves as both an immediate command reference and an explanatory guide for complex operations including history tracking, branch synchronization, interactive rebasing, and submodule management.</p>
+<div class="explanation" data-label="Peanut Butter in my Chocolate?">
+<p>“What is Git doing in a notebook on languages? Hello? Is this thing on??” Frankly, I needed a place to park it and this notebook made sense in my mind:</p>
+<ol type="1">
+<li>I’ll never create a version control notebook ’cuz for all intents and purposes there is only one version control system and it is Git.</li>
+<li>Chances are very high that the files we create in these languages are going to be parked in Git.</li>
+<li>Chances are the compilers and interpreters for the languages in this notebook are parked in Git.</li>
+<li>I use Git like a gorilla, but I’m hoping I can expand my horizons with this document.</li>
+</ol>
+</div>
+<p>An introductory section focused on Git’s internal storage model is a great addition. Understanding how Git structures data under the hood makes commands like <code>checkout</code>, <code>reset</code>, and <code>submodules</code> feel much less abstract.</p>
+<p>Here is a section you can drop directly into the top of your markdown file, right under the main title.</p>
+</section>
+<section id="the-anatomy-of-a-git-repository" class="level2">
+<h2 class="anchored" data-anchor-id="the-anatomy-of-a-git-repository">The Anatomy of a Git Repository</h2>
+<div class="subheading">
+<p>The Three Trees and the Object Database</p>
+</div>
+<p>To understand how Git tracks changes, you must look past your visible project files. Git manages your project using three internal conceptual areas (often called the <strong>Three Trees</strong>) backed by a simple key-value object database inside the hidden <code>.git</code> folder.</p>
+<section id="the-three-trees" class="level3">
+<h3 class="anchored" data-anchor-id="the-three-trees">The Three Trees</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/git-01.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:8in"></p>
+</figure>
+</div>
+<p>Efficient Git usage relies on knowing which “tree” you are currently manipulating.</p>
+<ol type="1">
+<li><strong>The Working Directory (The Sandbox):</strong> This is the actual file system on your computer where you modify files. These files are real, physical assets you open in your IDE.</li>
+<li><strong>The Staging Area / Index (The Blueprint):</strong> A single, binary file located at <code>.git/index</code>. It acts as a preparation area that calculates exactly what the next snapshot will look like. When you run <code>git add</code>, you are taking a snapshot of your files at that exact moment and staging them.</li>
+<li><strong>The Commit History / HEAD (The Vault):</strong> This is the permanent record. When you run <code>git commit</code>, Git takes the blueprint from the Staging Area and permanently writes it into the local database as a commit object. <code>HEAD</code> is simply a pointer showing which commit in the vault your Working Directory is currently reflecting.</li>
+</ol>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Action</th>
+<th>Source Tree</th>
+<th>Target Tree</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Stage Changes</strong></td>
+<td>Working Directory</td>
+<td>Staging Area</td>
+<td><code>git add &lt;file&gt;</code></td>
+</tr>
+<tr class="even">
+<td><strong>Commit Changes</strong></td>
+<td>Staging Area</td>
+<td>Local Repository</td>
+<td><code>git commit</code></td>
+</tr>
+<tr class="odd">
+<td><strong>Unstage Changes</strong></td>
+<td>Local Repository / HEAD</td>
+<td>Staging Area</td>
+<td><code>git reset &lt;file&gt;</code></td>
+</tr>
+<tr class="even">
+<td><strong>Discard Local Changes</strong></td>
+<td>Staging Area</td>
+<td>Working Directory</td>
+<td><code>git checkout -- &lt;file&gt;</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="the-content-addressable-storage" class="level3">
+<h3 class="anchored" data-anchor-id="the-content-addressable-storage">The Content-Addressable Storage</h3>
+<div class="subheading">
+<p>The <code>.git/objects</code> Directory</p>
+</div>
+<p>Git does not track file deltas (the differences between version A and version B). Instead, it acts as a content-addressable key-value store. When you stage or commit a file, Git compresses the content, hashes it using a cryptographic algorithm (SHA-1 or SHA-256), and stores it in <code>.git/objects</code>.</p>
+<p>The resulting 40-character hexadecimal string acts as both the unique identifier and the exact folder path to that data. If the content of a file does not change, its hash does not change, meaning Git only stores a single copy of that file across your entire history, no matter how many commits reference it.</p>
+<p>Inside <code>.git/objects</code>, Git breaks data down into four primary object types:</p>
+<pre class="text"><code>.git/objects/
+├── [First 2 chars of hash]/
+│   └── [Remaining 38 chars of hash]  --&gt; (A zipped Blob, Tree, or Commit)
+</code></pre>
+<section id="blobs" class="level4">
+<h4 class="anchored" data-anchor-id="blobs">1. Blobs</h4>
+<div class="subheading">
+<p>Binary Large Objects</p>
+</div>
+<p>A <strong>blob</strong> stores raw file data. It contains only the text or data of a file, completely stripped of metadata. A blob does not know its own filename, its folder structure, or its modification date. It only knows its content.</p>
+</section>
+<section id="trees" class="level4">
+<h4 class="anchored" data-anchor-id="trees">2. Trees</h4>
+<p>A <strong>tree</strong> object solves the mystery of the missing filenames. A tree represents a directory. It is a simple text manifest that maps the SHA-1 hashes of blobs back to their actual filenames, permissions, and directory locations. Trees can also point to other trees to represent nested subdirectories.</p>
+</section>
+<section id="commits" class="level4">
+<h4 class="anchored" data-anchor-id="commits">3. Commits</h4>
+<p>A <strong>commit</strong> object is a small text file pointing to a specific top-level tree object (the snapshot of the project root at that moment). It contains metadata: the author, the committer, the timestamp, the commit log message, and a pointer to one or more <strong>parent commits</strong> (the hashes of the commits that came immediately before it). This chain of parent pointers forms your history graph.</p>
+</section>
+<section id="annotated-tags" class="level4">
+<h4 class="anchored" data-anchor-id="annotated-tags">4. Annotated Tags</h4>
+<p>A tag is an explicit, unchanging pointer containing a commit hash, a tagger name, a message, and a timestamp, used to flag release points like <code>v1.0.0</code>.</p>
+</section>
+</section>
+<section id="putting-it-all-together" class="level3">
+<h3 class="anchored" data-anchor-id="putting-it-all-together">Putting It All Together</h3>
+<div class="subheading">
+<p>The Commit Mechanism</p>
+</div>
+<p>When you make a single commit changing one file in a subfolder:</p>
+<ol type="1">
+<li>Git writes a new <strong>blob</strong> for the modified file content.</li>
+<li>Git writes a new <strong>tree</strong> for the subfolder to map the new blob to its filename.</li>
+<li>Git writes a new top-level <strong>tree</strong> for the repository root to link to the updated subfolder tree. Unchanged folders continue to point to their existing, older tree objects.</li>
+<li>Git writes a <strong>commit object</strong> pointing to the new root tree and listing the previous commit hash as its parent.</li>
+<li>Git updates your current branch pointer (which is just a text file inside <code>.git/refs/heads/</code>) to point to the hash of this new commit object.</li>
+</ol>
+</section>
+</section>
+<section id="advanced-search-investigation" class="level2">
+<h2 class="anchored" data-anchor-id="advanced-search-investigation">Advanced Search &amp; Investigation</h2>
+<div class="subheading">
+<p><code>git log</code> &amp; <code>blame</code></p>
+</div>
+<section id="the-concept" class="level3">
+<h3 class="anchored" data-anchor-id="the-concept">The Concept</h3>
+<div class="subheading">
+<p>Git as a Directed Acyclic Graph (DAG)</p>
+</div>
+<p>Git does not store changes as incremental diffs; it stores snapshots of your staging area as <strong>commits</strong>. Each commit points to its parent(s). When searching history, you are traversing a Directed Acyclic Graph (DAG). Tools like <code>git log</code> and <code>git blame</code> allow you to query this graph based on content transformations rather than just chronological order.</p>
+</section>
+<section id="reference-commands" class="level3">
+<h3 class="anchored" data-anchor-id="reference-commands">Reference &amp; Commands</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 20%">
+<col style="width: 60%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Objective</th>
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Purpose / Context</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Find String Addition/Removal</strong></td>
+<td style="text-align: left;"><code>git log -S "search_string" --oneline</code></td>
+<td style="text-align: left;">Locates commits where the absolute count of the string changed.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Find String Regular Expression</strong></td>
+<td style="text-align: left;"><code>git log -G "regex_pattern" -p</code></td>
+<td style="text-align: left;">Locates commits where the string matches a pattern within the diff lines.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Track Line History Range</strong></td>
+<td style="text-align: left;"><code>git log -L &lt;start&gt;,&lt;end&gt;:&lt;file_path&gt;</code></td>
+<td style="text-align: left;">Traces the evolution of specific line ranges across time.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Trace File Rename History</strong></td>
+<td style="text-align: left;"><code>git log --follow -- &lt;file_path&gt;</code></td>
+<td style="text-align: left;">Ensures history tracking persists across file renames.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Inspect Line Ancestry</strong></td>
+<td style="text-align: left;"><code>git blame -w -M &lt;file_path&gt;</code></td>
+<td style="text-align: left;">Displays author and commit hash for each line, ignoring whitespace (<code>-w</code>) and moving lines within the file (<code>-M</code>).</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tutorial" class="level3">
+<h3 class="anchored" data-anchor-id="tutorial">Tutorial</h3>
+<div class="subheading">
+<p>Tracking the Origins of Code</p>
+</div>
+<p>When a standard <code>git blame</code> shows a generic “Refactor formatting” commit instead of the actual author of the logic, the file’s ancestry must be traced backwards.</p>
+<ol type="1">
+<li><p><strong>Locate the line range</strong> of interest in your file (e.g., lines 45 through 60 in <code>analysis.qmd</code>).</p></li>
+<li><p><strong>Execute the line-log search</strong> to filter the DAG down to only modifications affecting those lines:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> log <span class="at">-L</span> 45,60:analysis.qmd <span class="at">--oneline</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Identify the root commit</strong> at the bottom of this generated log.</p></li>
+<li><p>If the code was introduced from another file entirely, run a <strong>pickaxe search</strong> using a signature keyword or definition from that snippet across the whole history:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> log <span class="at">-S</span> <span class="st">"void calculate_weights"</span> <span class="at">-p</span> <span class="at">--raw</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ol>
+</section>
+</section>
+<section id="managing-diverged-branches" class="level2">
+<h2 class="anchored" data-anchor-id="managing-diverged-branches">Managing Diverged Branches</h2>
+<div class="subheading">
+<p><code>merge</code> vs.&nbsp;<code>rebase</code></p>
+</div>
+<section id="the-concept-1" class="level3">
+<h3 class="anchored" data-anchor-id="the-concept-1">The Concept</h3>
+<div class="subheading">
+<p>Divergence Architecture</p>
+</div>
+<p>Branches diverge when your local branch and its remote counterpart (or a base branch like <code>main</code>) both receive unique commits after their last common ancestor.</p>
+<pre><code>          B---C [feature] (Your Local Branch)
+         /
+    A---D---E [main] (Remote / Shared Branch)</code></pre>
+<p>To integrate changes from <code>main</code> into <code>feature</code>, you have two structural options:</p>
+<ul>
+<li><strong>Explicit Merge (<code>git merge</code>):</strong> Creates a non-destructive, multi-parent merge commit (<code>F</code>). Preserves historical reality but introduces non-linear topology (“train tracks”).</li>
+<li><strong>Rebase (<code>git rebase</code>):</strong> Rewrites history by moving the entire sequence of your local commits (<code>B</code>, <code>C</code>) to the tip of the target branch (<code>E</code>). This creates new commits (<code>B'</code>, <code>C'</code>) with identical content but new hashes, yielding a perfectly linear history.</li>
+</ul>
+<pre><code>                B'---C' [feature] (Rewritten History)
+               /
+    A---D---E [main]</code></pre>
+</section>
+<section id="reference-commands-1" class="level3">
+<h3 class="anchored" data-anchor-id="reference-commands-1">Reference &amp; Commands</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 30%">
+<col style="width: 53%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Objective</th>
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Structural Impact</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Standard Merge</strong></td>
+<td style="text-align: left;"><code>git merge main</code></td>
+<td style="text-align: left;">Creates a merge commit; preserves chronological branch context.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Linear Rebase</strong></td>
+<td style="text-align: left;"><code>git rebase main</code></td>
+<td style="text-align: left;">Replays local commits sequentially on top of target branch base.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Abort Operations</strong></td>
+<td style="text-align: left;"><code>git merge --abort</code> <br> <code>git rebase --abort</code></td>
+<td style="text-align: left;">Halts execution and restores the index and working tree to pre-operation states.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Conflict Discovery</strong></td>
+<td style="text-align: left;"><code>git status</code></td>
+<td style="text-align: left;">Lists unmerged paths requiring manual intervention.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tutorial-1" class="level3">
+<h3 class="anchored" data-anchor-id="tutorial-1">Tutorial</h3>
+<div class="subheading">
+<p>Resolving Divergence with Minimal Friction</p>
+</div>
+<p>When your local branch cannot be pushed because the remote tracking branch has new work, use a rebase-driven alignment to avoid creating unnecessary merge loops.</p>
+<ol type="1">
+<li><p><strong>Fetch current upstream state</strong> without shifting your HEAD pointer:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> fetch origin</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Initiate the rebase</strong> on top of the updated remote branch (e.g., <code>main</code>):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rebase origin/main</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Handle Conflicts Immediatley:</strong> If Git pauses due to conflicting edits, it will leave the markers (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>) directly in your source files.</p>
+<ul>
+<li>Open the affected file.</li>
+<li>The top block (between <code>HEAD</code> and <code>=======</code>) represents the upstream state from <code>main</code>.</li>
+<li>The bottom block (between <code>=======</code> and your commit hash) represents your local changes.</li>
+<li>Edit the file to unify the logic, removing all conflict markers.</li>
+</ul></li>
+<li><p><strong>Stage and Progress:</strong> Do <em>not</em> run a new commit command. Stage the resolved assets and instruct the rebase engine to proceed to your next commit:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add path/to/resolved_file.qmd</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rebase <span class="at">--continue</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ol>
+</section>
+</section>
+<section id="interactive-rebasing" class="level2">
+<h2 class="anchored" data-anchor-id="interactive-rebasing">Interactive Rebasing</h2>
+<div class="subheading">
+<p><code>rebase -i</code></p>
+</div>
+<section id="the-concept-2" class="level3">
+<h3 class="anchored" data-anchor-id="the-concept-2">The Concept</h3>
+<div class="subheading">
+<p>History Sanitization</p>
+</div>
+<p>Interactive rebasing provides precise control over local commits <em>before</em> sharing them with an upstream repository. It allows you to clean up erratic commit history (“fixed typo”, “trying again”, “actual fix”) into clean, logical semantic units.</p>
+<blockquote class="blockquote">
+<p><strong>Absolute Rule:</strong> Never interactively rebase commits that have already been pushed to a public or shared repository. Rewriting shared history invalidates the commit hashes of your collaborators, breaking their downstream trees.</p>
+</blockquote>
+</section>
+<section id="reference-commands-2" class="level3">
+<h3 class="anchored" data-anchor-id="reference-commands-2">Reference &amp; Commands</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 20%">
+<col style="width: 64%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Sub-Command / Action</th>
+<th style="text-align: left;">Syntax in Instruction Sheet</th>
+<th style="text-align: left;">Functional Mechanics</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>pick</strong></td>
+<td style="text-align: left;"><code>pick &lt;hash&gt; &lt;message&gt;</code></td>
+<td style="text-align: left;">Retains the commit exactly as it is.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>reword</strong></td>
+<td style="text-align: left;"><code>reword &lt;hash&gt; &lt;message&gt;</code></td>
+<td style="text-align: left;">Retains the commit content but opens an editor to rewrite the log message.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>edit</strong></td>
+<td style="text-align: left;"><code>edit &lt;hash&gt; &lt;message&gt;</code></td>
+<td style="text-align: left;">Halts execution at this commit to allow modification of file contents.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>squash</strong></td>
+<td style="text-align: left;"><code>squash &lt;hash&gt; &lt;message&gt;</code></td>
+<td style="text-align: left;">Melds the commit content into the <em>previous</em> commit, combining log messages.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>fixup</strong></td>
+<td style="text-align: left;"><code>fixup &lt;hash&gt; &lt;message&gt;</code></td>
+<td style="text-align: left;">Melds the commit content into the <em>previous</em> commit, discarding this commit’s log message.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>drop</strong></td>
+<td style="text-align: left;"><code>drop &lt;hash&gt; &lt;message&gt;</code></td>
+<td style="text-align: left;">Removes the commit entirely from the branch history.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tutorial-2" class="level3">
+<h3 class="anchored" data-anchor-id="tutorial-2">Tutorial</h3>
+<div class="subheading">
+<p>Cleaning Up Your Local Commits</p>
+</div>
+<p>Assume you have made 4 commits locally, but the middle two are intermediate fixes that clutter the project log.</p>
+<ol type="1">
+<li><p><strong>Launch the interactive editor</strong> targetting the last 4 commits on your current branch:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rebase <span class="at">-i</span> HEAD~4</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Analyze the instruction list:</strong> An editor window will open showing your commits chronologically from top to bottom (the reverse of <code>git log</code>).</p>
+<pre class="text"><code>pick a1b2c3d Initial data ingestion script
+pick e5f6g7h Fix broken file path handling
+pick i9j0k1l Typo correction in headers
+pick m3n4o5p Complete visualization pipeline</code></pre></li>
+<li><p><strong>Modify the operations:</strong> Change the instructions to consolidate the intermediate commits into the primary ingestion script.</p>
+<pre class="text"><code>pick a1b2c3d Initial data ingestion script
+fixup e5f6g7h Fix broken file path handling
+fixup i9j0k1l Typo correction in headers
+pick m3n4o5p Complete visualization pipeline</code></pre></li>
+<li><p><strong>Save and Close</strong> the editor. Git will sequentially apply <code>a1b2c3d</code>, merge the structural changes of the next two commits directly into it without changing its intent, and then apply <code>m3n4o5p</code>. Your history is now condensed into two pristine commits.</p></li>
+</ol>
+</section>
+</section>
+<section id="git-submodules" class="level2">
+<h2 class="anchored" data-anchor-id="git-submodules">Git Submodules</h2>
+<section id="the-concept-3" class="level3">
+<h3 class="anchored" data-anchor-id="the-concept-3">The Concept</h3>
+<div class="subheading">
+<p>Pointers to External Repositories</p>
+</div>
+<p>A Git submodule is a fully independent Git repository embedded within a subdirectory of a parent (“superproject”) repository. Crucially, the parent repository does not track the file contents of the submodule. Instead, it tracks exactly two things:</p>
+<ol type="1">
+<li>The <strong>submodule path</strong> and its source URL (recorded in a <code>.gitmodules</code> file).</li>
+<li>A <strong>gitlink entry</strong>: a specific, fixed commit hash pointing to the exact state of the submodule repository.</li>
+</ol>
+</section>
+<section id="reference-commands-3" class="level3">
+<h3 class="anchored" data-anchor-id="reference-commands-3">Reference &amp; Commands</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 24%">
+<col style="width: 54%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Objective</th>
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Clone Parent with Submodules</strong></td>
+<td style="text-align: left;"><code>git clone --recurse-submodules &lt;url&gt;</code></td>
+<td style="text-align: left;">Clones the superproject and automatically checks out all internal submodules.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Initialize Existing Submodules</strong></td>
+<td style="text-align: left;"><code>git submodule update --init --recursive</code></td>
+<td style="text-align: left;">Configures and fetches data for submodules if cloned without the recursive flag.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Check Submodule Status</strong></td>
+<td style="text-align: left;"><code>git submodule status</code></td>
+<td style="text-align: left;">Displays current active hashes of submodules; a leading <code>-</code> indicates uninitialized state.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Pull Submodule Changes</strong></td>
+<td style="text-align: left;"><code>git submodule update --remote --merge</code></td>
+<td style="text-align: left;">Fetches the newest modifications from the remote tracking branch specified in <code>.gitmodules</code>.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tutorial-3" class="level3">
+<h3 class="anchored" data-anchor-id="tutorial-3">Tutorial</h3>
+<div class="subheading">
+<p>Resolving Out-of-Sync Submodules</p>
+</div>
+<p>A common point of failure occurs when a collaborator updates a submodule reference on a remote branch, and your local workspace falls out of sync after a pull, resulting in modified dirty working directories.</p>
+<ol type="1">
+<li><p><strong>Pull the latest parent commits:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull origin main</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>Running <code>git status</code> may show the submodule directory as modified or untracked because your local pointer has moved in history, but the physical files in that directory haven’t shifted yet.</p></li>
+<li><p><strong>Synchronize the physical files</strong> to match the precise commit hash expected by the parent project:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> submodule update <span class="at">--init</span> <span class="at">--recursive</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Making edits inside a submodule:</strong> If you need to make changes to the submodule library itself:</p>
+<ul>
+<li>Change into the submodule directory: <code>cd path/to/submodule</code>.</li>
+<li>Check out an active branch (submodules default to a “detached HEAD” state): <code>git checkout main</code>.</li>
+<li>Stage, commit, and push your changes <em>within</em> the submodule repository first.</li>
+<li>Return to the parent repository (<code>cd ..</code>) and commit the new submodule pointer change so the superproject links to your new work.</li>
+</ul></li>
+</ol>
+</section>
+</section>
+<section id="emergency-recovery-options" class="level2">
+<h2 class="anchored" data-anchor-id="emergency-recovery-options">Emergency Recovery Options</h2>
+<section id="the-concept-4" class="level3">
+<h3 class="anchored" data-anchor-id="the-concept-4">The Concept</h3>
+<div class="subheading">
+<p>The Safety Net (<code>git reflog</code>)</p>
+</div>
+<p>Git almost never deletes anything that has been committed. Even when you rewrite history, delete a branch, or perform a destructive rebase, the old commits remain dangling in your database for a grace period (typically 30–90 days). The <strong>Reference Log</strong> (<code>reflog</code>) records every single movement of the <code>HEAD</code> pointer on your local machine.</p>
+</section>
+<section id="reference-commands-4" class="level3">
+<h3 class="anchored" data-anchor-id="reference-commands-4">Reference &amp; Commands</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 19%">
+<col style="width: 61%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Objective</th>
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Context</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>View Local Pointer History</strong></td>
+<td style="text-align: left;"><code>git reflog</code></td>
+<td style="text-align: left;">Chronological list of every action that shifted your local HEAD pointer.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Restore a Specific State</strong></td>
+<td style="text-align: left;"><code>git reset --hard HEAD@{index}</code></td>
+<td style="text-align: left;">Destructively forces working directory, staging area, and branch pointer to a specific reflog state.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Undo Last Local Commit</strong></td>
+<td style="text-align: left;"><code>git reset --soft HEAD~1</code></td>
+<td style="text-align: left;">Uncommits the last change, preserving your modifications safely in your staging area.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Wipe Untracked Files</strong></td>
+<td style="text-align: left;"><code>git clean -fd</code></td>
+<td style="text-align: left;">Forcefully removes untracked files (<code>-f</code>) and directories (<code>-d</code>) from the workspace.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tutorial-4" class="level3">
+<h3 class="anchored" data-anchor-id="tutorial-4">Tutorial</h3>
+<div class="subheading">
+<p>Recovering from a Destructive Rebase</p>
+</div>
+<p>If you run a rebase that goes completely wrong, corrupts your code, or deletes crucial commits, you can use the reflog to time-travel back to the moment before the rebase started.</p>
+<ol type="1">
+<li><p><strong>Query the local reference log:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> reflog</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Analyze the output log</strong> from top to bottom (most recent actions are at the top):</p>
+<pre class="text"><code>7a8b9c0 HEAD@{0}: rebase (continue): Finished rebase onto origin/main
+3d4e5f6 HEAD@{1}: rebase (step): Applied commit "Fixed typo"
+1a2b3c4 HEAD@{2}: rebase (start): checkout origin/main
+987f65e HEAD@{3}: commit: Ready for production architecture</code></pre></li>
+<li><p><strong>Locate the entry</strong> right before the rebase mechanics began. In this case, <code>HEAD@{3}</code> represents your pristine local state before the rebase started.</p></li>
+<li><p><strong>Hard-reset your branch</strong> back to that safe coordinate:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> reset <span class="at">--hard</span> HEAD@{3}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ol>
+<p>Your working directory and commit history are now restored exactly as they existed before the operation.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2026-06-08">
+
+<title>The Shell – Computer Language Notebook</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="././favicon.png" rel="icon" type="image/png">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-238593fbc75c52b1713b5944fbe78712.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": true,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Computer Language Notebook</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Languages</a></li><li class="breadcrumb-item"><a href="./shell.html">Shell Scripting</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="./index.html" class="sidebar-logo-link">
+      <img src="././images/logo.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="././images/logo.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Languages</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./assembly.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./c.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The C Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Rust Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./python.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Python Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./css.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CSS Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./matlab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The MATLAB Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shell.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Shell Scripting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./git.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Git Version Control</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">Briefs</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./b-pyperf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Python Performance Analysis</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Reference</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/assembly-pc.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PC Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-general.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Web Guide</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-selectors.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Selector Guide</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Appendix</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossary</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#why-the-shell-exists" id="toc-why-the-shell-exists" class="nav-link active" data-scroll-target="#why-the-shell-exists">Why the Shell Exists</a>
+  <ul>
+  <li><a href="#the-core-design-decisions" id="toc-the-core-design-decisions" class="nav-link" data-scroll-target="#the-core-design-decisions">The Core Design Decisions</a></li>
+  </ul></li>
+  <li><a href="#quoting-and-expansion" id="toc-quoting-and-expansion" class="nav-link" data-scroll-target="#quoting-and-expansion">Quoting and Expansion</a>
+  <ul>
+  <li><a href="#the-processing-order" id="toc-the-processing-order" class="nav-link" data-scroll-target="#the-processing-order">The Processing Order</a></li>
+  <li><a href="#three-quote-types" id="toc-three-quote-types" class="nav-link" data-scroll-target="#three-quote-types">Three Quote Types</a>
+  <ul class="collapse">
+  <li><a href="#single-quotes-text" id="toc-single-quotes-text" class="nav-link" data-scroll-target="#single-quotes-text">Single Quotes <code>'text'</code></a></li>
+  <li><a href="#double-quotes-text" id="toc-double-quotes-text" class="nav-link" data-scroll-target="#double-quotes-text">Double Quotes <code>"text"</code></a></li>
+  <li><a href="#no-quotes" id="toc-no-quotes" class="nav-link" data-scroll-target="#no-quotes">No Quotes</a></li>
+  </ul></li>
+  <li><a href="#quote-removal-in-action" id="toc-quote-removal-in-action" class="nav-link" data-scroll-target="#quote-removal-in-action">Quote Removal in Action</a></li>
+  <li><a href="#word-splitting" id="toc-word-splitting" class="nav-link" data-scroll-target="#word-splitting">Word Splitting</a></li>
+  <li><a href="#mixing-quotes" id="toc-mixing-quotes" class="nav-link" data-scroll-target="#mixing-quotes">Mixing Quotes</a></li>
+  <li><a href="#common-patterns" id="toc-common-patterns" class="nav-link" data-scroll-target="#common-patterns">Common Patterns</a></li>
+  <li><a href="#quick-reference" id="toc-quick-reference" class="nav-link" data-scroll-target="#quick-reference">Quick Reference</a></li>
+  </ul></li>
+  <li><a href="#globbing" id="toc-globbing" class="nav-link" data-scroll-target="#globbing">Globbing</a>
+  <ul>
+  <li><a href="#globs-are-not-regexes" id="toc-globs-are-not-regexes" class="nav-link" data-scroll-target="#globs-are-not-regexes">Globs Are Not Regexes</a></li>
+  <li><a href="#the-glob-operators" id="toc-the-glob-operators" class="nav-link" data-scroll-target="#the-glob-operators">The Glob Operators</a></li>
+  <li><a href="#what-happens-when-nothing-matches" id="toc-what-happens-when-nothing-matches" class="nav-link" data-scroll-target="#what-happens-when-nothing-matches">What Happens When Nothing Matches</a></li>
+  </ul></li>
+  <li><a href="#pipes-and-redirection" id="toc-pipes-and-redirection" class="nav-link" data-scroll-target="#pipes-and-redirection">Pipes and Redirection</a>
+  <ul>
+  <li><a href="#the-three-standard-streams" id="toc-the-three-standard-streams" class="nav-link" data-scroll-target="#the-three-standard-streams">The Three Standard Streams</a></li>
+  <li><a href="#the-pipe" id="toc-the-pipe" class="nav-link" data-scroll-target="#the-pipe">The Pipe <code>|</code></a></li>
+  <li><a href="#redirection" id="toc-redirection" class="nav-link" data-scroll-target="#redirection">Redirection</a></li>
+  <li><a href="#grep-reads-stdin-too" id="toc-grep-reads-stdin-too" class="nav-link" data-scroll-target="#grep-reads-stdin-too"><code>grep</code> Reads stdin Too</a></li>
+  </ul></li>
+  <li><a href="#flow-control" id="toc-flow-control" class="nav-link" data-scroll-target="#flow-control">Flow Control</a>
+  <ul>
+  <li><a href="#conditions-are-exit-codes-not-booleans" id="toc-conditions-are-exit-codes-not-booleans" class="nav-link" data-scroll-target="#conditions-are-exit-codes-not-booleans">Conditions Are Exit Codes, Not Booleans</a></li>
+  <li><a href="#the-test-command-a.k.a." id="toc-the-test-command-a.k.a." class="nav-link" data-scroll-target="#the-test-command-a.k.a.">The <code>test</code> Command, a.k.a. <code>[ ]</code></a>
+  <ul class="collapse">
+  <li><a href="#file-tests" id="toc-file-tests" class="nav-link" data-scroll-target="#file-tests">File Tests</a></li>
+  <li><a href="#string-and-number-tests" id="toc-string-and-number-tests" class="nav-link" data-scroll-target="#string-and-number-tests">String and Number Tests</a></li>
+  <li><a href="#combining-tests" id="toc-combining-tests" class="nav-link" data-scroll-target="#combining-tests">Combining Tests</a></li>
+  </ul></li>
+  <li><a href="#if-elif-else" id="toc-if-elif-else" class="nav-link" data-scroll-target="#if-elif-else"><code>if</code> / <code>elif</code> / <code>else</code></a></li>
+  <li><a href="#while-and-until" id="toc-while-and-until" class="nav-link" data-scroll-target="#while-and-until"><code>while</code> and <code>until</code></a></li>
+  <li><a href="#for" id="toc-for" class="nav-link" data-scroll-target="#for"><code>for</code></a></li>
+  <li><a href="#case" id="toc-case" class="nav-link" data-scroll-target="#case"><code>case</code></a></li>
+  </ul></li>
+  <li><a href="#searching" id="toc-searching" class="nav-link" data-scroll-target="#searching">Searching</a>
+  <ul>
+  <li><a href="#choosing-which-files-to-search" id="toc-choosing-which-files-to-search" class="nav-link" data-scroll-target="#choosing-which-files-to-search">Choosing Which Files to Search</a>
+  <ul class="collapse">
+  <li><a href="#shell-glob" id="toc-shell-glob" class="nav-link" data-scroll-target="#shell-glob">1. Shell Glob</a></li>
+  <li><a href="#greps-own---include" id="toc-greps-own---include" class="nav-link" data-scroll-target="#greps-own---include">2. <code>grep</code>’s Own <code>--include</code></a></li>
+  <li><a href="#via-find" id="toc-via-find" class="nav-link" data-scroll-target="#via-find">3. Via <code>find</code></a></li>
+  </ul></li>
+  <li><a href="#regular-expressions-briefly" id="toc-regular-expressions-briefly" class="nav-link" data-scroll-target="#regular-expressions-briefly">Regular Expressions, Briefly</a></li>
+  <li><a href="#the-cheat-sheet" id="toc-the-cheat-sheet" class="nav-link" data-scroll-target="#the-cheat-sheet">The Cheat Sheet</a></li>
+  </ul></li>
+  <li><a href="#finding" id="toc-finding" class="nav-link" data-scroll-target="#finding">Finding</a>
+  <ul>
+  <li><a href="#the-two-ways-to-run-a-command-on-each-file" id="toc-the-two-ways-to-run-a-command-on-each-file" class="nav-link" data-scroll-target="#the-two-ways-to-run-a-command-on-each-file">The Two Ways to Run a Command on Each File</a></li>
+  </ul></li>
+  <li><a href="#editing-a-stream" id="toc-editing-a-stream" class="nav-link" data-scroll-target="#editing-a-stream">Editing a Stream</a>
+  <ul>
+  <li><a href="#sed-in-a-pipe-vs.-in-place" id="toc-sed-in-a-pipe-vs.-in-place" class="nav-link" data-scroll-target="#sed-in-a-pipe-vs.-in-place"><code>sed</code> in a Pipe vs.&nbsp;In Place</a></li>
+  <li><a href="#a-few-other-sed-tricks" id="toc-a-few-other-sed-tricks" class="nav-link" data-scroll-target="#a-few-other-sed-tricks">A Few Other <code>sed</code> Tricks</a></li>
+  </ul></li>
+  <li><a href="#columns-and-computation" id="toc-columns-and-computation" class="nav-link" data-scroll-target="#columns-and-computation">Columns and Computation</a>
+  <ul>
+  <li><a href="#field-separators-and-built-in-variables" id="toc-field-separators-and-built-in-variables" class="nav-link" data-scroll-target="#field-separators-and-built-in-variables">Field Separators and Built-in Variables</a></li>
+  <li><a href="#awk-can-accumulate" id="toc-awk-can-accumulate" class="nav-link" data-scroll-target="#awk-can-accumulate"><code>awk</code> Can Accumulate</a></li>
+  </ul></li>
+  <li><a href="#composition-idioms" id="toc-composition-idioms" class="nav-link" data-scroll-target="#composition-idioms">Composition Idioms</a>
+  <ul>
+  <li><a href="#count-matches-across-a-project" id="toc-count-matches-across-a-project" class="nav-link" data-scroll-target="#count-matches-across-a-project">Count matches across a project</a></li>
+  <li><a href="#find-the-most-common-values" id="toc-find-the-most-common-values" class="nav-link" data-scroll-target="#find-the-most-common-values">Find the most common values</a></li>
+  <li><a href="#search-inside-a-programs-output-not-a-file" id="toc-search-inside-a-programs-output-not-a-file" class="nav-link" data-scroll-target="#search-inside-a-programs-output-not-a-file">Search inside a program’s output, not a file</a></li>
+  <li><a href="#edit-a-set-of-files-chosen-by-content" id="toc-edit-a-set-of-files-chosen-by-content" class="nav-link" data-scroll-target="#edit-a-set-of-files-chosen-by-content">Edit a set of files chosen by content</a></li>
+  </ul></li>
+  <li><a href="#variables-and-the-environment" id="toc-variables-and-the-environment" class="nav-link" data-scroll-target="#variables-and-the-environment">Variables and the Environment</a>
+  <ul>
+  <li><a href="#setting-and-reading-a-variable" id="toc-setting-and-reading-a-variable" class="nav-link" data-scroll-target="#setting-and-reading-a-variable">Setting and Reading a Variable</a></li>
+  <li><a href="#exported-vs.-non-exported" id="toc-exported-vs.-non-exported" class="nav-link" data-scroll-target="#exported-vs.-non-exported">Exported vs.&nbsp;Non-Exported</a></li>
+  <li><a href="#source-vs.-executing" id="toc-source-vs.-executing" class="nav-link" data-scroll-target="#source-vs.-executing"><code>source</code> vs.&nbsp;Executing</a></li>
+  <li><a href="#the-standard-environment-variables" id="toc-the-standard-environment-variables" class="nav-link" data-scroll-target="#the-standard-environment-variables">The Standard Environment Variables</a></li>
+  <li><a href="#the-special-shell-parameters" id="toc-the-special-shell-parameters" class="nav-link" data-scroll-target="#the-special-shell-parameters">The Special Shell Parameters</a></li>
+  </ul></li>
+  <li><a href="#where-to-go-next" id="toc-where-to-go-next" class="nav-link" data-scroll-target="#where-to-go-next">Where to Go Next</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Languages</a></li><li class="breadcrumb-item"><a href="./shell.html">Shell Scripting</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">The Shell</h1>
+<p class="subtitle lead">A language whose type is text and whose composer is the pipe</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">June 8, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="why-the-shell-exists" class="level2">
+<h2 class="anchored" data-anchor-id="why-the-shell-exists">Why the Shell Exists</h2>
+<p><img src="images/sh-00.png" class="img-fluid" style="float: left; padding: 0 1em 0 0.5em;width:1.8in"></p>
+<div style="padding-top: 20pt">
+<p>The shell is the oldest interactive programming language most of us use daily, and it is easy to mistake it for something less than a language. It looks like a place to type commands. It is, but that framing hides the design that makes it powerful. The shell is a <em>language</em>, and once you see it as one, the pieces that otherwise feel like disconnected trivia (quoting, globs, pipes, <code>grep</code>, <code>find</code>) snap into a single coherent picture.</p>
+</div>
+<div style="clear: both">
+
+</div>
+<p>The thesis of this notebook is one sentence:</p>
+<blockquote class="blockquote">
+<p><strong>The shell is a programming language whose only data type is text, and whose function-composition operator is the pipe.</strong></p>
+</blockquote>
+<p>Everything else follows from that. Hold onto it; we will return to it constantly.</p>
+<section id="the-core-design-decisions" class="level3">
+<h3 class="anchored" data-anchor-id="the-core-design-decisions">The Core Design Decisions</h3>
+<section id="the-universal-data-type-is-a-stream-of-bytes-interpreted-as-text" class="level5">
+<h5 class="anchored" data-anchor-id="the-universal-data-type-is-a-stream-of-bytes-interpreted-as-text">1. The universal data type is a stream of bytes, interpreted as text</h5>
+<p>In C you have <code>int</code>, <code>double</code>, <code>struct</code>, pointers. The shell has one type that matters: a stream of characters. A filename is text. A number is text. The contents of a file are text. The output of a program is text. Because everything is the same type, <em>any program’s output can feed any other program’s input</em>. This is the Unix bet, made in 1973 and still paying off: standardize on the lowest-common-denominator format and you get composability for free.</p>
+</section>
+<section id="the-pipe-is-function-composition" class="level5">
+<h5 class="anchored" data-anchor-id="the-pipe-is-function-composition">2. The pipe is function composition</h5>
+<p>In a real language you write <code>f(g(x))</code>. In the shell you write <code>g x | f</code>. The pipe (<code>|</code>) connects the standard output of one program to the standard input of the next, and the connection is a live stream, not a temporary file. <code>g</code> and <code>f</code> run <em>at the same time</em>, with the kernel passing bytes between them. This is the shell’s single most important operator, and it is why small single-purpose programs (<code>grep</code>, <code>sort</code>, <code>wc</code>, <code>cut</code>) are worth more than their size suggests: they are composable functions.</p>
+</section>
+<section id="programs-are-the-standard-library" class="level5">
+<h5 class="anchored" data-anchor-id="programs-are-the-standard-library">3. Programs are the standard library</h5>
+<p>Python has <code>import</code>; C has <code>#include</code>. The shell’s library is <code>/usr/bin</code>. Every executable on your <code>PATH</code> is a callable function. <code>grep</code> is not built into the shell any more than <code>printf</code> is built into C; it is a separate program the shell invokes. This is why the toolkit feels open-ended: adding a function to the language is as simple as dropping an executable on the <code>PATH</code>.</p>
+</section>
+<section id="the-shell-expands-your-text-before-any-program-sees-it" class="level5">
+<h5 class="anchored" data-anchor-id="the-shell-expands-your-text-before-any-program-sees-it">4. The shell expands your text before any program sees it</h5>
+<p>This is the decision that surprises people coming from C. Before the shell runs a command, it <em>rewrites the command line</em>: it substitutes variables, expands <code>*</code> into filenames, runs <code>$(...)</code> sub-commands, and splits the result into words. The program you call receives the finished product and has no idea what the original text looked like. Quoting (the next section) is entirely about controlling this rewriting step. If you understand expansion, you understand 80% of the shell’s “gotchas.”</p>
+</section>
+<section id="exit-codes-are-the-boolean-type" class="level5">
+<h5 class="anchored" data-anchor-id="exit-codes-are-the-boolean-type">5. Exit codes are the boolean type</h5>
+<p>Every program returns an integer when it finishes: <code>0</code> for success, non-zero for failure. The shell treats <code>0</code> as <em>true</em> (note: the opposite of C). This is what makes <code>&amp;&amp;</code>, <code>||</code>, and <code>if</code> work without a separate boolean type. <code>grep</code> returning “found nothing” is just <code>grep</code> returning <code>1</code>, and that integer is enough to drive control flow.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="zsh">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>zsh
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This guide is general, but it focuses on <code>zsh</code> (the Z shell), the default on macOS and many Linux distros. If you use <code>bash</code> or another shell, almost all of this applies; differences are noted where they bite.</p>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="quoting-and-expansion" class="level2">
+<h2 class="anchored" data-anchor-id="quoting-and-expansion">Quoting and Expansion</h2>
+<p>Quoting is not decoration. It is how you <em>control the shell’s rewriting of your command line</em> (decision #4 above). Get quoting wrong and the shell hands your program a mangled set of arguments; get it right and you have exact control over what every program receives.</p>
+<section id="the-processing-order" class="level3">
+<h3 class="anchored" data-anchor-id="the-processing-order">The Processing Order</h3>
+<p>Before any command runs, the shell walks your line through a fixed pipeline:</p>
+<ol type="1">
+<li><strong>Parse quotes</strong> to decide which characters are literal and which are special.</li>
+<li><strong>Expand</strong> variables (<code>$VAR</code>), command substitutions (<code>$(...)</code>), and globs (<code>*</code>, <code>?</code>, <code>[]</code>).</li>
+<li><strong>Split</strong> the unquoted result into words on whitespace.</li>
+<li><strong>Remove the quote characters</strong> so the program never sees them.</li>
+<li><strong>Run the command</strong> with the finished argument list.</li>
+</ol>
+<p>The single most useful debugging habit in the shell is to ask: <em>what does this look like after step 4, when the program actually receives it?</em></p>
+</section>
+<section id="three-quote-types" class="level3">
+<h3 class="anchored" data-anchor-id="three-quote-types">Three Quote Types</h3>
+<p>The three quoting styles are three different settings for “how much expansion do I want?”</p>
+<section id="single-quotes-text" class="level4">
+<h4 class="anchored" data-anchor-id="single-quotes-text">Single Quotes <code>'text'</code></h4>
+<div class="subheading">
+<p>literal everything</p>
+</div>
+<ul>
+<li><strong>No expansions at all.</strong> Every character is taken verbatim.</li>
+<li>You cannot put a single quote inside single quotes, not even escaped.</li>
+</ul>
+<section id="command-executed" class="level5">
+<h5 class="anchored" data-anchor-id="command-executed">Command Executed</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">'Hello $USER * $(date)'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="output" class="level5">
+<h5 class="anchored" data-anchor-id="output">Output</h5>
+<pre><code>Hello $USER * $(date)</code></pre>
+<p>Use single quotes whenever you want the program, not the shell, to interpret the text. Regular expressions are the classic case: the regex metacharacters <code>$</code>, <code>*</code>, <code>[</code> mean something to <code>grep</code>, and you almost never want the shell touching them first.</p>
+</section>
+</section>
+<section id="double-quotes-text" class="level4">
+<h4 class="anchored" data-anchor-id="double-quotes-text">Double Quotes <code>"text"</code></h4>
+<div class="subheading">
+<p>expand variables, but nothing else</p>
+</div>
+<ul>
+<li><strong>Variable and command expansion happens</strong>: <code>$VAR</code>, <code>${VAR}</code>, <code>$(command)</code>.</li>
+<li><strong>Globs stay literal</strong>: <code>*</code>, <code>?</code>, <code>[]</code> are passed through untouched.</li>
+<li><strong>A few escapes work</strong>: <code>\"</code>, <code>\$</code>, <code>\\</code>.</li>
+</ul>
+<section id="command-executed-1" class="level5">
+<h5 class="anchored" data-anchor-id="command-executed-1">Command Executed</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Hello </span><span class="va">$USER</span><span class="st">, files: *.txt"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="output-1" class="level5">
+<h5 class="anchored" data-anchor-id="output-1">Output</h5>
+<pre><code>Hello curtis, files: *.txt</code></pre>
+<p>Double quotes are the safe default for strings that contain variables. Crucially, they also <strong>suppress word splitting</strong>, so <code>"$file"</code> survives intact even if the filename contains spaces. This one habit prevents a large fraction of real-world shell bugs.</p>
+</section>
+</section>
+<section id="no-quotes" class="level4">
+<h4 class="anchored" data-anchor-id="no-quotes">No Quotes</h4>
+<div class="subheading">
+<p>bare: everything expands</p>
+</div>
+<ul>
+<li><strong>Everything expands</strong>: variables, globs, command substitution.</li>
+<li><strong>Word splitting</strong> happens on whitespace, so one bare variable can become many arguments.</li>
+</ul>
+<section id="command-executed-2" class="level5">
+<h5 class="anchored" data-anchor-id="command-executed-2">Command Executed</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> Hello <span class="va">$USER</span>, files: <span class="pp">*</span>.qmd <span class="kw">|</span> <span class="fu">head</span> <span class="at">-c</span> 50</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="output-2" class="level5">
+<h5 class="anchored" data-anchor-id="output-2">Output</h5>
+<pre><code>Hello curtis, files: index.qmd la-decomposition.qm%</code></pre>
+<p>Bare words are what you want when you <em>intend</em> the expansion, for example <code>ls *.txt</code>, where letting the shell turn <code>*.txt</code> into a list of filenames is the whole point.</p>
+</section>
+</section>
+</section>
+<section id="quote-removal-in-action" class="level3">
+<h3 class="anchored" data-anchor-id="quote-removal-in-action">Quote Removal in Action</h3>
+<p>The quote characters are removed before the program runs. The program receives the <em>content</em>, never the quotes:</p>
+<p>When the following is run over our <a href="https://celsasser.github.io/sps-605-notes/" target="_blank">DATA 605 notebook</a>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="st">"matrix"</span> la-eigenspace.qmd <span class="kw">|</span> <span class="fu">head</span> <span class="at">-1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>We receive:</p>
+<pre><code>- **Matrix operations**: See [Matrix multiplication](la-matrices.qmd#multiplication) and ...</code></pre>
+<p><code>grep</code> receives <code>matrix</code> as its first argument, with no quotes attached. The quotes existed only to tell the shell how to build that argument.</p>
+</section>
+<section id="word-splitting" class="level3">
+<h3 class="anchored" data-anchor-id="word-splitting">Word Splitting</h3>
+<p>Unquoted text splits on whitespace into separate arguments. This is the difference between passing one argument and passing several:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># These are NOT the same:</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"one two three"</span>     <span class="co"># 1 argument:  "one two three"</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> one two three       <span class="co"># 3 arguments: "one", "two", "three"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For <code>echo</code> the visible result is the same, but for a program that cares how many arguments it received, the distinction is everything. This is also why unquoted variables are dangerous: <code>rm $file</code> where <code>$file</code> is <code>my report.txt</code> tries to remove two files, <code>my</code> and <code>report.txt</code>. <code>rm "$file"</code> does the right thing.</p>
+</section>
+<section id="mixing-quotes" class="level3">
+<h3 class="anchored" data-anchor-id="mixing-quotes">Mixing Quotes</h3>
+<p>Adjacent quoted and unquoted pieces concatenate into a single word, so you can mix styles within one argument to control expansion piece by piece:</p>
+<section id="command-executed-3" class="level5">
+<h5 class="anchored" data-anchor-id="command-executed-3">Command Executed</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">'User: '</span><span class="va">$USER</span><span class="st">' at '</span><span class="va">$(</span><span class="fu">date</span> +%H:%M<span class="va">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="output-3" class="level5">
+<h5 class="anchored" data-anchor-id="output-3">Output</h5>
+<pre><code>User: curtis at 13:40</code></pre>
+<p>The literal labels are single-quoted (no surprises), while <code>$USER</code> and <code>$(date ...)</code> are left bare so they expand.</p>
+</section>
+</section>
+<section id="common-patterns" class="level3">
+<h3 class="anchored" data-anchor-id="common-patterns">Common Patterns</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Regex with special chars → single quotes keep them away from the shell</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="st">'\$[0-9]+'</span> file.txt</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Variable inside a regex → double quotes so $USER expands but * does not</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="st">"^</span><span class="va">$USER</span><span class="st">:"</span> /etc/passwd</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Remote command with spaces → quote so the whole thing arrives intact</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> server <span class="st">"cd /path/with spaces &amp;&amp; ls -la"</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Preserve a literal asterisk for the program</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> . <span class="at">-name</span> <span class="st">"*.txt"</span>    <span class="co"># good: find receives *.txt and matches itself</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> . <span class="at">-name</span> <span class="pp">*</span>.txt      <span class="co"># bad:  the shell expands * before find runs</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>That last pair is worth staring at. <code>find</code>’s <code>-name</code> wants the <em>pattern</em> <code>*.txt</code>, but if you leave it bare the shell expands it first against the current directory, and <code>find</code> receives a list of filenames instead of a pattern. Quoting hands <code>find</code> the pattern it asked for.</p>
+</section>
+<section id="quick-reference" class="level3">
+<h3 class="anchored" data-anchor-id="quick-reference">Quick Reference</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Need</th>
+<th>Use</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Literal everything</strong></td>
+<td><code>'text'</code></td>
+<td><code>grep '\$[0-9]+'</code></td>
+</tr>
+<tr class="even">
+<td><strong>Variables but no globs</strong></td>
+<td><code>"text"</code></td>
+<td><code>echo "Hello $USER"</code></td>
+</tr>
+<tr class="odd">
+<td><strong>Everything expands</strong></td>
+<td><code>text</code> (bare)</td>
+<td><code>ls *.txt</code></td>
+</tr>
+<tr class="even">
+<td><strong>Whitespace preserved</strong></td>
+<td><code>"text"</code></td>
+<td><code>rm "$file"</code></td>
+</tr>
+</tbody>
+</table>
+<p>The one insight to keep: <strong>the shell processes quotes and expansions before your command ever sees its arguments.</strong></p>
+</section>
+</section>
+<section id="globbing" class="level2">
+<h2 class="anchored" data-anchor-id="globbing">Globbing</h2>
+<p>A <em>glob</em> is a filename pattern the shell expands into a list of matching paths. It is one of the expansions from step 2 above, and it deserves its own section because people routinely confuse it with regular expressions. They are not the same language, and conflating them is a common source of frustration.</p>
+<section id="globs-are-not-regexes" class="level3">
+<h3 class="anchored" data-anchor-id="globs-are-not-regexes">Globs Are Not Regexes</h3>
+<p>A glob is a small pattern language for matching <em>filenames</em>, expanded by the shell. A regex is a richer pattern language for matching <em>text inside lines</em>, used by programs like <code>grep</code>. The same character means different things in each:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 33%">
+<col style="width: 53%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Pattern</th>
+<th>As a glob (filenames)</th>
+<th>As a regex (text)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>*</code></td>
+<td>any run of characters</td>
+<td>zero or more of the <em>previous</em> item</td>
+</tr>
+<tr class="even">
+<td><code>?</code></td>
+<td>exactly one character</td>
+<td>zero or one of the previous item</td>
+</tr>
+<tr class="odd">
+<td><code>.</code></td>
+<td>a literal dot</td>
+<td>any single character</td>
+</tr>
+</tbody>
+</table>
+<p>So <code>*.txt</code> as a glob means “any filename ending in <code>.txt</code>,” but <code>*.txt</code> as a regex would be a syntax error (there is nothing before the <code>*</code> to repeat). Keep the two languages mentally separate and a lot of confusion evaporates.</p>
+</section>
+<section id="the-glob-operators" class="level3">
+<h3 class="anchored" data-anchor-id="the-glob-operators">The Glob Operators</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 86%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Glob</th>
+<th>Matches</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>*</code></td>
+<td>any number of characters (including none), except a leading <code>.</code></td>
+</tr>
+<tr class="even">
+<td><code>?</code></td>
+<td>exactly one character</td>
+</tr>
+<tr class="odd">
+<td><code>[abc]</code></td>
+<td>one character from the set</td>
+</tr>
+<tr class="even">
+<td><code>[a-z]</code></td>
+<td>one character from the range</td>
+</tr>
+<tr class="odd">
+<td><code>[!abc]</code></td>
+<td>one character <em>not</em> in the set</td>
+</tr>
+<tr class="even">
+<td><code>**</code></td>
+<td>any depth of directories (recursive; on by default in zsh)</td>
+</tr>
+</tbody>
+</table>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">*</span>.qmd            <span class="co"># every .qmd file in this directory</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> la-<span class="pp">*</span>.qmd         <span class="co"># every .qmd file starting with "la-"</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> chapter<span class="pp">?</span>.md      <span class="co"># chapter1.md, chapter7.md — but not chapter12.md</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">[</span><span class="ss">abc</span><span class="pp">]*</span>.txt       <span class="co"># .txt files starting with a, b, or c</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="pp">**</span>/<span class="pp">*</span>.png         <span class="co"># every .png at any depth (zsh)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="what-happens-when-nothing-matches" class="level3">
+<h3 class="anchored" data-anchor-id="what-happens-when-nothing-matches">What Happens When Nothing Matches</h3>
+<p>This is a genuine <code>bash</code> vs.&nbsp;<code>zsh</code> difference, and it surprises people who switch:</p>
+<ul>
+<li><strong><code>bash</code></strong>: if a glob matches nothing, it is left <em>unexpanded</em> and passed through literally. <code>ls *.xyz</code> with no <code>.xyz</code> files actually runs <code>ls *.xyz</code>, and <code>ls</code> complains it cannot find a file literally named <code>*.xyz</code>.</li>
+<li><strong><code>zsh</code></strong>: if a glob matches nothing, it is an <em>error</em> and the command does not run at all: <code>zsh: no matches found: *.xyz</code>.</li>
+</ul>
+<p>zsh’s behavior is safer (it refuses to run a command built from a broken assumption) but trips up scripts written for bash. When you need the literal pattern regardless of matches, quote it.</p>
+</section>
+</section>
+<section id="pipes-and-redirection" class="level2">
+<h2 class="anchored" data-anchor-id="pipes-and-redirection">Pipes and Redirection</h2>
+<p>Here is decision #2 made concrete. Every program starts life with three open streams, and the shell lets you rewire them.</p>
+<section id="the-three-standard-streams" class="level3">
+<h3 class="anchored" data-anchor-id="the-three-standard-streams">The Three Standard Streams</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 10%">
+<col style="width: 12%">
+<col style="width: 62%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Stream</th>
+<th>Number</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>stdin</strong></td>
+<td><code>0</code></td>
+<td>keyboard</td>
+<td>where the program reads input</td>
+</tr>
+<tr class="even">
+<td><strong>stdout</strong></td>
+<td><code>1</code></td>
+<td>terminal</td>
+<td>where the program writes normal output</td>
+</tr>
+<tr class="odd">
+<td><strong>stderr</strong></td>
+<td><code>2</code></td>
+<td>terminal</td>
+<td>where the program writes errors and diagnostics</td>
+</tr>
+</tbody>
+</table>
+<p>The separation of <code>stdout</code> from <code>stderr</code> is deliberate and important: it lets you capture a program’s <em>results</em> while still seeing its <em>errors</em> on screen (or route them somewhere else entirely). A program that mixes errors into stdout is considered poorly behaved precisely because it pollutes the data stream that the next program in the pipe is trying to read.</p>
+</section>
+<section id="the-pipe" class="level3">
+<h3 class="anchored" data-anchor-id="the-pipe">The Pipe <code>|</code></h3>
+<p>The pipe connects one program’s stdout to the next program’s stdin:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="st">"matrix"</span> <span class="pp">*</span>.qmd <span class="kw">|</span> <span class="fu">wc</span> <span class="at">-l</span>        <span class="co"># how many matching lines, total</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-l</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"\.qmd$"</span> <span class="kw">|</span> <span class="fu">sort</span> <span class="at">-k5</span> <span class="at">-n</span>   <span class="co"># qmd files, sorted by size</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Read a pipeline left to right as data flowing through a series of transforms. <code>ls -l</code> produces lines, <code>grep</code> keeps the ones ending in <code>.qmd</code>, <code>sort</code> orders them by the 5th column numerically. Each stage is a function; the pipe is the composition. This is the same shape as <code>sort(grep(ls()))</code>, written in the order the data actually travels.</p>
+</section>
+<section id="redirection" class="level3">
+<h3 class="anchored" data-anchor-id="redirection">Redirection</h3>
+<p>Where the pipe connects programs to each other, redirection connects a program to a <em>file</em>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">command</span> <span class="op">&gt;</span> file       <span class="co"># send stdout to file (overwrite)</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="bu">command</span> <span class="op">&gt;&gt;</span> file      <span class="co"># send stdout to file (append)</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="bu">command</span> <span class="op">&lt;</span> file       <span class="co"># take stdin from file</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="bu">command</span> <span class="dv">2</span><span class="op">&gt;</span> file      <span class="co"># send stderr to file</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="bu">command</span> <span class="op">&gt;</span> out <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span>   <span class="co"># stdout to out, then stderr to wherever stdout now goes</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="bu">command</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">|</span> <span class="fu">less</span>  <span class="co"># merge stderr into stdout, then pipe both into less</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>2&gt;&amp;1</code> idiom reads as “make stream 2 (stderr) point to wherever stream 1 (stdout) currently points.” Order matters: <code>&gt; out 2&gt;&amp;1</code> redirects stdout to the file <em>first</em>, then aliases stderr onto it, so both land in <code>out</code>. Reverse the order and stderr would still be going to the terminal.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="The redirect-then-pipe trick">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>The redirect-then-pipe trick
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A pipe only carries stdout. If a program writes the interesting part to stderr (compilers love to do this), <code>cmd | grep error</code> will miss it. Merge first with <code>cmd 2&gt;&amp;1 | grep error</code>.</p>
+</div>
+</div>
+</section>
+<section id="grep-reads-stdin-too" class="level3">
+<h3 class="anchored" data-anchor-id="grep-reads-stdin-too"><code>grep</code> Reads stdin Too</h3>
+<p>Worth stating early because it changes how you use it: <code>grep</code> searches files when given filenames, but with <strong>no</strong> filename it reads stdin. That is what makes it a pipeline citizen.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="st">"pattern"</span> file.txt        <span class="co"># search a file</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ps</span> aux <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"python"</span>         <span class="co"># search another program's output</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> file.txt <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"pattern"</span>  <span class="co"># works, but the file form above is simpler</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>That last line is the famous “useless use of <code>cat</code>”: since <code>grep "pattern" file.txt</code> already reads the file directly, piping <code>cat</code> into it adds a process for nothing. It is harmless and occasionally convenient, but knowing that <code>grep</code> reads files natively is the cleaner habit.</p>
+</section>
+</section>
+<section id="flow-control" class="level2">
+<h2 class="anchored" data-anchor-id="flow-control">Flow Control</h2>
+<p>Everything so far has been about a single command line. Flow control is how you assemble those lines into programs: run something <em>only if</em> a condition holds, run it <em>repeatedly</em>, or branch on a value. The shell has <code>if</code>, <code>while</code>, <code>for</code>, and <code>case</code>, and they look roughly like their C cousins, but one design decision makes them feel different at first.</p>
+<section id="conditions-are-exit-codes-not-booleans" class="level3">
+<h3 class="anchored" data-anchor-id="conditions-are-exit-codes-not-booleans">Conditions Are Exit Codes, Not Booleans</h3>
+<p>Recall decision #5 from the intro: every program returns an integer when it finishes, <code>0</code> for success and non-zero for failure, and the shell treats <strong><code>0</code> as true</strong> (the opposite of C). The shell has no boolean type, so this exit code <em>is</em> the condition. When you write <code>if grep -q foo file</code>, the shell does not evaluate an expression; it runs <code>grep</code>, and branches on whether <code>grep</code> succeeded.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="fu">grep</span> <span class="at">-q</span> <span class="st">"matrix"</span> la-eigenspace.qmd<span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"found it"</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>grep -q</code> searches silently and exits <code>0</code> if it matched, <code>1</code> if it did not. There is no comparison operator here at all; the <em>exit code is the condition</em>. This is worth internalizing, because it means <strong>any command can be a condition</strong>. <code>if ping -c1 host</code>, <code>if make</code>, <code>if curl -sf url</code> are all valid and idiomatic.</p>
+<p>The last command’s exit code is always available in <code>$?</code>, which is occasionally useful for inspecting or branching on a specific failure code:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-q</span> <span class="st">"matrix"</span> file.qmd</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$?</span>        <span class="co"># 0 if matched, 1 if not</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="the-test-command-a.k.a." class="level3">
+<h3 class="anchored" data-anchor-id="the-test-command-a.k.a.">The <code>test</code> Command, a.k.a. <code>[ ]</code></h3>
+<p>So if <code>if</code> runs a command, how do you test a plain fact like “does this file exist?” The answer is a program named <code>test</code>, which evaluates a condition and exits <code>0</code> or <code>1</code> accordingly. It has an alias that makes the syntax look like other languages: <code>[</code>. Yes, the open bracket is literally a command (which is why it needs spaces around it, and why it needs a closing <code>]</code> as its final argument).</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># These two lines are identical:</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">test</span> <span class="at">-f</span> config.toml<span class="kw">;</span> <span class="cf">then</span> <span class="bu">echo</span> <span class="st">"exists"</span><span class="kw">;</span> <span class="cf">fi</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">[</span> <span class="ot">-f</span> config.toml <span class="bu">]</span><span class="kw">;</span> <span class="cf">then</span> <span class="bu">echo</span> <span class="st">"exists"</span><span class="kw">;</span> <span class="cf">fi</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>That equivalence is the thing to remember when the syntax feels fussy: <code>[ -f config.toml ]</code> is just calling the program <code>[</code> with the arguments <code>-f</code>, <code>config.toml</code>, and <code>]</code>. The spaces are mandatory because they are argument separators, not decoration. <code>[-f config.toml]</code> would be the shell looking for a command named <code>[-f</code>.</p>
+<section id="file-tests" class="level4">
+<h4 class="anchored" data-anchor-id="file-tests">File Tests</h4>
+<p>These are the options you are always looking up. They each ask one yes/no question about a path:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Test</th>
+<th>True when</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>-e path</code></td>
+<td>path <strong>e</strong>xists (any type)</td>
+</tr>
+<tr class="even">
+<td><code>-f path</code></td>
+<td>exists and is a regular <strong>f</strong>ile</td>
+</tr>
+<tr class="odd">
+<td><code>-d path</code></td>
+<td>exists and is a <strong>d</strong>irectory</td>
+</tr>
+<tr class="even">
+<td><code>-r path</code></td>
+<td>exists and is <strong>r</strong>eadable</td>
+</tr>
+<tr class="odd">
+<td><code>-w path</code></td>
+<td>exists and is <strong>w</strong>ritable</td>
+</tr>
+<tr class="even">
+<td><code>-x path</code></td>
+<td>exists and is e<strong>x</strong>ecutable</td>
+</tr>
+<tr class="odd">
+<td><code>-s path</code></td>
+<td>exists and is non-empty (<strong>s</strong>ize &gt; 0)</td>
+</tr>
+<tr class="even">
+<td><code>-L path</code></td>
+<td>exists and is a symbolic <strong>L</strong>ink</td>
+</tr>
+</tbody>
+</table>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="bu">[</span> <span class="ot">-f</span> <span class="st">"</span><span class="va">$file</span><span class="st">"</span> <span class="bu">]</span>          <span class="co"># is it a regular file?</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="bu">[</span> <span class="ot">-d</span> <span class="st">"</span><span class="va">$dir</span><span class="st">"</span> <span class="bu">]</span>           <span class="co"># is it a directory?</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="bu">[</span> <span class="ot">-e</span> <span class="st">"</span><span class="va">$path</span><span class="st">"</span> <span class="bu">]</span>          <span class="co"># does it exist at all?</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="bu">[</span> <span class="ot">-s</span> <span class="st">"</span><span class="va">$logfile</span><span class="st">"</span> <span class="bu">]</span>       <span class="co"># does it exist and have content?</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="bu">[</span> <span class="ot">!</span> <span class="ot">-e</span> <span class="st">"</span><span class="va">$path</span><span class="st">"</span> <span class="bu">]</span>        <span class="co"># ! negates: true when path does NOT exist</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="string-and-number-tests" class="level4">
+<h4 class="anchored" data-anchor-id="string-and-number-tests">String and Number Tests</h4>
+<p>Strings and numbers use <em>different</em> operators, and mixing them up is a classic bug. Strings compare with <code>=</code> and <code>!=</code>; numbers compare with the lettered operators <code>-eq</code>, <code>-lt</code>, and friends.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 33%">
+<col style="width: 14%">
+<col style="width: 35%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Strings</th>
+<th></th>
+<th>Numbers</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>-z str</code></td>
+<td>empty (<strong>z</strong>ero length)</td>
+<td><code>n -eq m</code></td>
+<td><strong>eq</strong>ual</td>
+</tr>
+<tr class="even">
+<td><code>-n str</code></td>
+<td><strong>n</strong>on-empty</td>
+<td><code>n -ne m</code></td>
+<td><strong>n</strong>ot <strong>e</strong>qual</td>
+</tr>
+<tr class="odd">
+<td><code>s1 = s2</code></td>
+<td>equal</td>
+<td><code>n -lt m</code></td>
+<td><strong>l</strong>ess <strong>t</strong>han</td>
+</tr>
+<tr class="even">
+<td><code>s1 != s2</code></td>
+<td>not equal</td>
+<td><code>n -le m</code></td>
+<td><strong>l</strong>ess or <strong>e</strong>qual</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td></td>
+<td><code>n -gt m</code></td>
+<td><strong>g</strong>reater <strong>t</strong>han</td>
+</tr>
+<tr class="even">
+<td></td>
+<td></td>
+<td><code>n -ge m</code></td>
+<td><strong>g</strong>reater or <strong>e</strong>qual</td>
+</tr>
+</tbody>
+</table>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="bu">[</span> <span class="st">"</span><span class="va">$name</span><span class="st">"</span> <span class="ot">=</span> <span class="st">"curtis"</span> <span class="bu">]</span>      <span class="co"># string equality uses =, not ==</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="bu">[</span> <span class="ot">-z</span> <span class="st">"</span><span class="va">$input</span><span class="st">"</span> <span class="bu">]</span>             <span class="co"># true if $input is empty</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="bu">[</span> <span class="st">"</span><span class="va">$count</span><span class="st">"</span> <span class="ot">-gt</span> 10 <span class="bu">]</span>         <span class="co"># numeric: greater than</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-warning callout-titled" title="Always quote variables inside `[ ]`">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Always quote variables inside <code>[ ]</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If <code>$file</code> is empty, <code>[ -f $file ]</code> expands to <code>[ -f ]</code>, which <code>test</code> misreads, and <code>[ "$a" = "$b" ]</code> with an empty unquoted <code>$a</code> becomes <code>[ = "$b" ]</code>, a syntax error. Quoting (<code>[ -f "$file" ]</code>) keeps each value a single argument no matter what it contains. This is the same word-splitting hazard from the quoting section, and <code>[ ]</code> is where it bites hardest.</p>
+</div>
+</div>
+</section>
+<section id="combining-tests" class="level4">
+<h4 class="anchored" data-anchor-id="combining-tests">Combining Tests</h4>
+<div class="subheading">
+<p><code>[[ ]]</code></p>
+</div>
+<p>zsh and bash also provide <code>[[ ]]</code>, a shell <em>keyword</em> rather than a program. Because the shell parses it specially (it is not subject to word splitting), it is safer and supports <code>&amp;&amp;</code>, <code>||</code>, and pattern matching directly:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="ot">-f</span> <span class="st">"</span><span class="va">$file</span><span class="st">"</span> <span class="kw">&amp;&amp;</span> <span class="ot">-r</span> <span class="st">"</span><span class="va">$file</span><span class="st">"</span> <span class="kw">]]</span>     <span class="co"># exists AND readable</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="st">"</span><span class="va">$name</span><span class="st">"</span> <span class="ot">==</span> cur<span class="pp">*</span> <span class="kw">]]</span>              <span class="co"># == does glob-style pattern matching here</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="kw">[[</span> <span class="st">"</span><span class="va">$n</span><span class="st">"</span> <span class="ot">-gt</span> 0 <span class="kw">&amp;&amp;</span> <span class="st">"</span><span class="va">$n</span><span class="st">"</span> <span class="ot">-lt</span> 100 <span class="kw">]]</span>   <span class="co"># combine numeric tests</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Prefer <code>[[ ]]</code> for new code in bash/zsh: it does what you mean with fewer footguns. Reach for the older <code>[ ]</code> only when you need POSIX portability (e.g.&nbsp;scripts that must run under <code>sh</code>/<code>dash</code>).</p>
+</section>
+</section>
+<section id="if-elif-else" class="level3">
+<h3 class="anchored" data-anchor-id="if-elif-else"><code>if</code> / <code>elif</code> / <code>else</code></h3>
+<p>With conditions understood, the branching itself is unremarkable:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">[</span> <span class="st">"</span><span class="va">$count</span><span class="st">"</span> <span class="ot">-eq</span> 0 <span class="bu">]</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"nothing found"</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="cf">elif</span> <span class="bu">[</span> <span class="st">"</span><span class="va">$count</span><span class="st">"</span> <span class="ot">-lt</span> 10 <span class="bu">]</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"a few"</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"lots"</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>then</code> can share a line with <code>if</code> if you separate them with a semicolon (<code>if ...; then</code>), which is the conventional style. <code>fi</code> closes the block (<code>if</code> spelled backwards, a 1970s flourish that also gives us <code>esac</code> for <code>case</code>).</p>
+</section>
+<section id="while-and-until" class="level3">
+<h3 class="anchored" data-anchor-id="while-and-until"><code>while</code> and <code>until</code></h3>
+<p><code>while</code> loops as long as a command keeps succeeding; <code>until</code> is its mirror, looping until a command succeeds:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Count down</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="va">n</span><span class="op">=</span>5</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="bu">[</span> <span class="st">"</span><span class="va">$n</span><span class="st">"</span> <span class="ot">-gt</span> 0 <span class="bu">]</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"</span><span class="va">$n</span><span class="st">"</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">n</span><span class="op">=</span><span class="va">$((n</span> <span class="op">-</span> <span class="dv">1</span><span class="va">))</span>        <span class="co"># $(( )) is arithmetic expansion</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Wait for a service to come up</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="cf">until</span> <span class="ex">curl</span> <span class="at">-sf</span> http://localhost:8080/health<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sleep</span> 1</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The most idiomatic <code>while</code> in the shell reads a stream line by line. This is the canonical way to process input that may contain spaces, and it leans on every concept so far:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">line</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"got: </span><span class="va">$line</span><span class="st">"</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span> <span class="op">&lt;</span> input.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>read</code> pulls one line into <code>line</code> and exits non-zero at end of file, ending the loop. <code>IFS=</code> prevents leading/trailing whitespace from being trimmed, and <code>-r</code> stops backslashes from being interpreted, so the line arrives exactly as written.</p>
+</section>
+<section id="for" class="level3">
+<h3 class="anchored" data-anchor-id="for"><code>for</code></h3>
+<p>The shell’s <code>for</code> is a <em>for-each</em> over a list of words, not a C-style counter. This is a direct consequence of the thesis: the shell deals in lists of text, so iterating over a glob or a command’s output is the natural shape.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Iterate over files (the glob expands to the list)</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> file <span class="kw">in</span> <span class="pp">*</span>.qmd<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"processing </span><span class="va">$file</span><span class="st">"</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Iterate over the words of a command's output</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> branch <span class="kw">in</span> <span class="va">$(</span><span class="fu">git</span> branch <span class="at">--format</span><span class="op">=</span><span class="st">'%(refname:short)'</span><span class="va">)</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"</span><span class="va">$branch</span><span class="st">"</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="co"># C-style counter, when you genuinely need numbers (bash/zsh)</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="kw">((</span><span class="va">i</span> <span class="op">=</span> <span class="dv">0</span><span class="kw">;</span> <span class="va">i</span> <span class="op">&lt;</span> <span class="dv">5</span><span class="kw">;</span> <span class="va">i</span><span class="op">++</span><span class="kw">));</span> <span class="cf">do</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"</span><span class="va">$i</span><span class="st">"</span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The first form is the one you will write most. <code>for file in *.qmd</code> reads as “for each file matching <code>*.qmd</code>,” and because the glob produces a proper list, filenames with spaces survive (unlike iterating over unquoted command output, which word-splits).</p>
+</section>
+<section id="case" class="level3">
+<h3 class="anchored" data-anchor-id="case"><code>case</code></h3>
+<div class="subheading">
+<p>the Shell’s <code>switch</code></p>
+</div>
+<p><code>case</code> matches a value against a series of <strong>glob patterns</strong> (not regexes, and not C’s exact-value <code>switch</code>), running the first branch that matches. It is the cleanest way to dispatch on a string, and it shows up constantly in argument parsing.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> <span class="st">"</span><span class="va">$1</span><span class="st">"</span> <span class="kw">in</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="ss">start</span><span class="kw">)</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">echo</span> <span class="st">"starting"</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">;;</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="ss">stop</span><span class="kw">|</span><span class="ss">halt</span><span class="kw">)</span>              <span class="co"># | separates alternative patterns</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>        <span class="bu">echo</span> <span class="st">"stopping"</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">;;</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    <span class="pp">*</span><span class="ss">.txt</span><span class="kw">)</span>                  <span class="co"># patterns are globs, so this matches any .txt arg</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>        <span class="bu">echo</span> <span class="st">"a text file"</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">;;</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    <span class="pp">*</span><span class="kw">)</span>                      <span class="co"># the default case: * matches anything</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>        <span class="bu">echo</span> <span class="st">"unknown: </span><span class="va">$1</span><span class="st">"</span></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">;;</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="cf">esac</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The anatomy: each branch is <code>pattern) commands ;;</code>. The <code>;;</code> terminates a branch (there is no fall-through by default, unlike C, so no <code>break</code> is needed). <code>|</code> offers alternative patterns, and <code>*</code> as the final pattern is the catch-all default, exactly like <code>default:</code> in a <code>switch</code>. Because the patterns are globs, <code>case</code> is genuinely more expressive than C’s <code>switch</code>: <code>*.txt</code>, <code>[0-9]*</code>, and <code>cur*</code> are all valid patterns.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Why `case` for argument parsing">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Why <code>case</code> for argument parsing
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <code>case "$1" in start) ... stop) ...</code> shape is the backbone of nearly every init script and CLI dispatcher you will read. When you see a script handling subcommands, it is almost always a <code>case</code> on <code>$1</code>. Recognizing the pattern makes a lot of “real world” shell instantly legible.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="searching" class="level2">
+<h2 class="anchored" data-anchor-id="searching">Searching</h2>
+<div class="subheading">
+<p><code>grep</code></p>
+</div>
+<p><code>grep</code> is the shell’s text search function. The name is an artifact of its lineage: in the old <code>ed</code> line editor, the command <code>g/re/p</code> meant “<strong>g</strong>lobally search for a <strong>r</strong>egular <strong>e</strong>xpression and <strong>p</strong>rint” the matching lines. That expansion also tells you exactly what <code>grep</code> is built around: it is <strong>line-oriented</strong> and <strong>regex-driven</strong>. It reads input one line at a time, tests each line against a pattern, and prints the lines that match. Almost every option is a variation on that one loop.</p>
+<p>Once you see <code>grep</code> as “filter lines by regex,” the design coheres. It is not a general text tool; it is one tightly-focused function, which is exactly why it composes so well in pipelines.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="pp">[</span><span class="ss">options</span><span class="pp">]</span> <span class="st">"pattern"</span> file<span class="er">(</span><span class="ex">s</span><span class="kw">)</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="pp">[</span><span class="ss">options</span><span class="pp">]</span> <span class="st">"pattern"</span> directory/<span class="pp">*</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="choosing-which-files-to-search" class="level3">
+<h3 class="anchored" data-anchor-id="choosing-which-files-to-search">Choosing Which Files to Search</h3>
+<p>There are two distinct ways to tell <code>grep</code> which files to look in, and they operate at different stages. Knowing which is which removes a lot of confusion.</p>
+<section id="shell-glob" class="level4">
+<h4 class="anchored" data-anchor-id="shell-glob">1. Shell Glob</h4>
+<div class="subheading">
+<p><code>*.qmd</code></p>
+</div>
+<p>The shell expands the glob <em>before</em> <code>grep</code> runs (this is just globbing from the previous section). <code>grep</code> never sees <code>*.qmd</code>; it receives the actual filenames the shell substituted in.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="st">"pattern"</span> <span class="pp">*</span>.qmd        <span class="co"># current directory only</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="st">"pattern"</span> <span class="pp">*</span>.txt <span class="pp">*</span>.md   <span class="co"># multiple types, current dir</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Because the <em>shell</em> does the expansion, this only reaches files in the current directory. It cannot recurse, because the glob is resolved before <code>grep</code> ever starts.</p>
+</section>
+<section id="greps-own---include" class="level4">
+<h4 class="anchored" data-anchor-id="greps-own---include">2. <code>grep</code>’s Own <code>--include</code></h4>
+<p>With recursive search (<code>-r</code>), <code>grep</code> walks the directory tree itself and decides which files to open. <code>--include</code> is a filter <em>grep</em> applies during that walk, so it works at any depth:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-r</span> <span class="st">"pattern"</span> . <span class="at">--include</span><span class="op">=</span><span class="st">"*.qmd"</span> <span class="kw">|</span> <span class="fu">wc</span> <span class="at">-l</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The distinction in one line: <strong>the glob is the shell choosing files for grep; <code>--include</code> is grep choosing files for itself.</strong> Use the glob for a quick search of one directory; use <code>-r --include</code> to sweep a whole tree.</p>
+</section>
+<section id="via-find" class="level4">
+<h4 class="anchored" data-anchor-id="via-find">3. Via <code>find</code></h4>
+<p>You can also let <code>find</code> locate the files and hand them to <code>grep</code>. Here <code>grep</code> is used as a <em>filter</em> rather than for its output: <code>find</code> asks <code>grep -l</code> “does this file contain the pattern?” and keeps the files for which the answer is yes.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> . <span class="at">-name</span> <span class="st">"*.qmd"</span> <span class="at">-exec</span> grep <span class="at">-l</span> <span class="st">"matrix"</span> {} <span class="dt">\;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="output-4" class="level5">
+<h5 class="anchored" data-anchor-id="output-4">Output</h5>
+<pre><code>./la-determinants.qmd
+./la-eigenspace.qmd
+./la-vspaces.qmd
+./pb-combinatorics.qmd
+./la-theorems.qmd
+./la-matrices.qmd
+./la-transformations.qmd
+...</code></pre>
+<p>The <code>{}</code> is a placeholder for each file <code>find</code> discovers, and <code>\;</code> ends the <code>-exec</code> command (escaped so the shell does not eat the semicolon). We will dig into <code>find</code> next.</p>
+</section>
+</section>
+</section>
+<section id="regular-expressions-briefly" class="level3">
+<h3 class="anchored" data-anchor-id="regular-expressions-briefly">Regular Expressions, Briefly</h3>
+<p>The “regular expression” in <code>grep</code>’s name is the pattern language it tests each line against. A full treatment is its own subject, but the operators you reach for daily are few:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Pattern</th>
+<th>Matches</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>.</code></td>
+<td>any single character</td>
+</tr>
+<tr class="even">
+<td><code>*</code></td>
+<td>zero or more of the previous item</td>
+</tr>
+<tr class="odd">
+<td><code>^</code></td>
+<td>start of line</td>
+</tr>
+<tr class="even">
+<td><code>$</code></td>
+<td>end of line</td>
+</tr>
+<tr class="odd">
+<td><code>[abc]</code></td>
+<td>one character from the set</td>
+</tr>
+<tr class="even">
+<td><code>\b</code></td>
+<td>a word boundary</td>
+</tr>
+<tr class="odd">
+<td><code>word1\|word2</code></td>
+<td>either alternative (with <code>-E</code>)</td>
+</tr>
+</tbody>
+</table>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-i</span> <span class="st">"matrix"</span> la-eigenspace.qmd <span class="kw">|</span> <span class="fu">head</span> <span class="at">-3</span>      <span class="co"># case-insensitive</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-E</span> <span class="st">"\bmatrix\b"</span> la-eigenspace.qmd <span class="kw">|</span> <span class="fu">head</span> <span class="at">-3</span>  <span class="co"># whole word only</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-note callout-titled" title="Basic vs. Extended regex (`-E`)">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Basic vs.&nbsp;Extended regex (<code>-E</code>)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>grep</code> has two regex dialects. In <em>basic</em> regex (the default), <code>+</code>, <code>?</code>, <code>|</code>, and <code>()</code> are literal characters, and you must backslash-escape them to get their special meaning. <em>Extended</em> regex (<code>grep -E</code>, historically <code>egrep</code>) makes them special without escaping. When a pattern is fighting you with backslashes, reach for <code>-E</code>; it is almost always what you actually want.</p>
+</div>
+</div>
+</section>
+<section id="the-cheat-sheet" class="level3">
+<h3 class="anchored" data-anchor-id="the-cheat-sheet">The Cheat Sheet</h3>
+<p>The flags below are the ones worth memorizing. Notice how each is a small variation on the core “filter lines by regex” loop, changing either <em>what</em> gets matched or <em>what</em> gets printed.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># What to match</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="st">"text"</span> file.txt        <span class="co"># lines containing "text"</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-i</span> <span class="st">"text"</span> file.txt     <span class="co"># case-insensitive</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-w</span> <span class="st">"text"</span> file.txt     <span class="co"># whole word only</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-E</span> <span class="st">"a|b"</span> file.txt      <span class="co"># extended regex: a OR b</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-v</span> <span class="st">"text"</span> file.txt     <span class="co"># invert: lines that DON'T match</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a><span class="co"># What to print</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-n</span> <span class="st">"text"</span> file.txt     <span class="co"># prefix each match with its line number</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-H</span> <span class="st">"text"</span> <span class="pp">*</span>.txt        <span class="co"># prefix each match with its filename</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-l</span> <span class="st">"text"</span> <span class="pp">*</span>.txt        <span class="co"># just the names of files that match</span></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-c</span> <span class="st">"text"</span> file.txt     <span class="co"># just the count of matching lines</span></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-o</span> <span class="st">"text"</span> file.txt     <span class="co"># print only the matched part, not the whole line</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Where to look</span></span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-r</span> <span class="st">"text"</span> .            <span class="co"># recurse through subdirectories</span></span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-r</span> <span class="st">"text"</span> . <span class="at">--include</span><span class="op">=</span><span class="st">"*.qmd"</span>   <span class="co"># recurse, but only certain files</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A useful mental split: the first group changes the <em>predicate</em> (which lines count as matches), the second changes the <em>projection</em> (what you see for each match), and the third changes the <em>scope</em> (which files are searched). Most real commands pick one from each group.</p>
+</section>
+</section>
+<section id="finding" class="level2">
+<h2 class="anchored" data-anchor-id="finding">Finding</h2>
+<div class="subheading">
+<p><code>find</code></p>
+</div>
+<p>If <code>grep</code> filters <em>lines by content</em>, <code>find</code> filters <em>files by metadata</em>: name, type, size, modification time, permissions. It is the shell’s other great search function, and the two are complementary. <code>grep</code> answers “which lines say X?”; <code>find</code> answers “which files are X?”</p>
+<p><code>find</code> walks a directory tree and, for every entry it encounters, tests it against the conditions you give and runs an action on the ones that pass. Its syntax looks alien at first because it is really a tiny expression language, but the shape is always the same:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> <span class="op">&lt;</span>where<span class="op">&gt;</span> <span class="op">&lt;</span>tests<span class="op">&gt;</span> <span class="op">&lt;</span>action<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> . <span class="at">-name</span> <span class="st">"*.qmd"</span>                  <span class="co"># by name, anywhere below here</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> . <span class="at">-type</span> f <span class="at">-name</span> <span class="st">"*.png"</span>          <span class="co"># regular files only (not directories)</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> . <span class="at">-type</span> d <span class="at">-name</span> <span class="st">"images"</span>         <span class="co"># directories named "images"</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> . <span class="at">-size</span> +1M                      <span class="co"># larger than 1 megabyte</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> . <span class="at">-mtime</span> <span class="at">-7</span>                      <span class="co"># modified in the last 7 days</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> . <span class="at">-name</span> <span class="st">"*.tmp"</span> <span class="at">-delete</span>          <span class="co"># find and delete, in one pass</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="the-two-ways-to-run-a-command-on-each-file" class="level3">
+<h3 class="anchored" data-anchor-id="the-two-ways-to-run-a-command-on-each-file">The Two Ways to Run a Command on Each File</h3>
+<p><code>find</code>’s superpower is handing every matching file to another program. There are two idioms, and the difference is performance.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># One grep process PER file. The {} is the current file; \; ends the command.</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> . <span class="at">-name</span> <span class="st">"*.qmd"</span> <span class="at">-exec</span> grep <span class="at">-l</span> <span class="st">"matrix"</span> {} <span class="dt">\;</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="co"># One grep process for MANY files. The + batches them into few invocations.</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="fu">find</span> . <span class="at">-name</span> <span class="st">"*.qmd"</span> <span class="at">-exec</span> grep <span class="at">-l</span> <span class="st">"matrix"</span> {} +</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>With <code>\;</code>, <code>find</code> runs the command once per file, which is simple but slow across thousands of files. With <code>+</code>, <code>find</code> collects many filenames and passes them to a single command invocation, the same way you would type <code>grep -l "matrix" a.qmd b.qmd c.qmd</code> by hand. Prefer <code>+</code> when the command accepts multiple files.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="find vs. glob: who recurses?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>find vs.&nbsp;glob: who recurses?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A shell glob like <code>*.qmd</code> only sees the current directory (and <code>**/*.qmd</code> in zsh for recursion). <code>find</code> recurses by default and works identically in every shell. When you need to reach into subdirectories portably, <code>find</code> is the dependable choice.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="editing-a-stream" class="level2">
+<h2 class="anchored" data-anchor-id="editing-a-stream">Editing a Stream</h2>
+<div class="subheading">
+<p><code>sed</code></p>
+</div>
+<p><code>grep</code> <em>selects</em> lines; <code>sed</code> <em>transforms</em> them. The name is short for <strong>s</strong>tream <strong>ed</strong>itor, and that is exactly what it is: it reads input one line at a time, applies an editing command to each, and writes the result out. Same line-at-a-time loop as <code>grep</code>, but instead of deciding whether to print a line, <code>sed</code> decides how to <em>rewrite</em> it. It edits a stream, not a file in place (unless you ask), which is what makes it a natural pipeline citizen.</p>
+<p>You will use <code>sed</code> for one thing far more than any other: search and replace. The substitute command, <code>s/old/new/</code>, is the 90% case.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="st">'s/old/new/'</span>           <span class="co"># replace FIRST match on each line</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="st">'s/old/new/g'</span>          <span class="co"># replace ALL matches on each line (g = global)</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="st">'s/old/new/gI'</span>         <span class="co"># global, case-Insensitive</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>s///</code> syntax is <code>s</code>, a delimiter, the pattern, the same delimiter, the replacement, the delimiter again, then optional flags. The delimiter is usually <code>/</code>, but it can be any character, which is the trick for editing paths without a thicket of backslashes:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Replacing a path: / as delimiter forces escaping every slash</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="st">'s/\/usr\/local/\/opt/g'</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Use | as the delimiter instead and it reads cleanly</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="st">'s|/usr/local|/opt|g'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="sed-in-a-pipe-vs.-in-place" class="level3">
+<h3 class="anchored" data-anchor-id="sed-in-a-pipe-vs.-in-place"><code>sed</code> in a Pipe vs.&nbsp;In Place</h3>
+<p>By default <code>sed</code> writes to stdout, so it drops straight into a pipeline and never touches your files:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-r</span> <span class="st">"TODO"</span> . <span class="kw">|</span> <span class="fu">sed</span> <span class="st">'s/TODO/DONE/'</span>    <span class="co"># transform the search output</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> config.txt <span class="kw">|</span> <span class="fu">sed</span> <span class="st">'s/debug/release/g'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>To edit files <em>in place</em>, use <code>-i</code>. This is where a real portability wrinkle bites, and it is worth calling out because it catches everyone on macOS:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="at">-i</span> <span class="st">'s/old/new/g'</span> file.txt        <span class="co"># GNU/Linux: edits file.txt in place</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="at">-i</span> <span class="st">''</span> <span class="st">'s/old/new/g'</span> file.txt     <span class="co"># BSD/macOS: -i REQUIRES an argument</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="co">#            ('' = no backup suffix)</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="at">-i.bak</span> <span class="st">'s/old/new/g'</span> file.txt    <span class="co"># both: edit in place, keep file.txt.bak</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-warning callout-titled" title="`sed -i` is not the same on macOS and Linux">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>sed -i</code> is not the same on macOS and Linux
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>GNU <code>sed</code> (Linux) treats <code>-i</code> as a standalone flag. BSD <code>sed</code> (macOS) requires an argument right after <code>-i</code>: the backup suffix, or <code>''</code> for none. A script written on Linux with bare <code>-i</code> will fail cryptically on a Mac, and vice versa. When in doubt, <code>sed -i.bak</code> works on both and leaves you a backup.</p>
+</div>
+</div>
+</section>
+<section id="a-few-other-sed-tricks" class="level3">
+<h3 class="anchored" data-anchor-id="a-few-other-sed-tricks">A Few Other <code>sed</code> Tricks</h3>
+<p>Substitution is the bulk of it, but three more commands round out the daily kit:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="at">-n</span> <span class="st">'5p'</span>             file.txt   <span class="co"># print ONLY line 5 (-n silences default printing)</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="at">-n</span> <span class="st">'10,20p'</span>         file.txt   <span class="co"># print lines 10 through 20</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="st">'/^#/d'</span>             file.txt   <span class="co"># delete comment lines (those starting with #)</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sed</span> <span class="st">'/^$/d'</span>             file.txt   <span class="co"># delete blank lines</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The pattern is consistent: an optional <em>address</em> (a line number, a range, or a <code>/regex/</code>) followed by a command (<code>p</code> print, <code>d</code> delete, <code>s</code> substitute). <code>sed</code> applies the command to every line the address matches. That is the whole mental model.</p>
+</section>
+</section>
+<section id="columns-and-computation" class="level2">
+<h2 class="anchored" data-anchor-id="columns-and-computation">Columns and Computation</h2>
+<div class="subheading">
+<p><code>awk</code></p>
+</div>
+<p>Where <code>sed</code> edits lines as text, <code>awk</code> understands them as <strong>records made of fields</strong>. By default it splits each line on whitespace into <code>$1</code>, <code>$2</code>, <code>$3</code>, and so on, with <code>$0</code> being the whole line. The instant your data has columns, <code>awk</code> is the right tool, and it is shockingly capable: it is a complete little programming language with variables, arithmetic, and conditionals, not just a one-trick filter.</p>
+<p>The grain of <code>awk</code> is <code>pattern { action }</code>: for each line, if the pattern matches, run the action. Omit the pattern and the action runs on every line; omit the action and matching lines are printed (so <code>awk '/foo/'</code> is a slower <code>grep foo</code>).</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Print the first column of each line (e.g. the PID from `ps`)</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ps</span> aux <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $1}'</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Print columns 1 and 5, in a different order</span></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-l</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $5, $1}'</span></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Only rows where column 5 (file size) exceeds 1000</span></span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-l</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'$5 &gt; 1000 {print $9}'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>That third example is the one that shows why <code>awk</code> earns its keep: <code>$5 &gt; 1000</code> is a real numeric comparison used as the pattern, and <code>{print $9}</code> is the action. You are filtering <em>and</em> projecting columns in a single expression, which would take a clumsier <code>grep</code>/<code>cut</code> combination otherwise.</p>
+<section id="field-separators-and-built-in-variables" class="level3">
+<h3 class="anchored" data-anchor-id="field-separators-and-built-in-variables">Field Separators and Built-in Variables</h3>
+<p>The default split is on whitespace, but <code>-F</code> sets any delimiter, which is how <code>awk</code> reads <code>/etc/passwd</code>, CSVs, and other delimited data:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="at">-F:</span> <span class="st">'{print $1}'</span> /etc/passwd     <span class="co"># usernames: split on : and take field 1</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="at">-F,</span> <span class="st">'{print $2}'</span> data.csv        <span class="co"># second column of a CSV</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A handful of built-in variables make <code>awk</code> feel like a language rather than a filter:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 21%">
+<col style="width: 78%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$0</code></td>
+<td>the entire current line</td>
+</tr>
+<tr class="even">
+<td><code>$1</code>, <code>$2</code>, …</td>
+<td>individual fields</td>
+</tr>
+<tr class="odd">
+<td><code>NF</code></td>
+<td><strong>N</strong>umber of <strong>F</strong>ields on this line</td>
+</tr>
+<tr class="even">
+<td><code>NR</code></td>
+<td><strong>N</strong>umber of the <strong>R</strong>ecord (the line number so far)</td>
+</tr>
+<tr class="odd">
+<td><code>FS</code></td>
+<td>the input <strong>F</strong>ield <strong>S</strong>eparator (what <code>-F</code> sets)</td>
+</tr>
+</tbody>
+</table>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="st">'{print NF}'</span>        file.txt   <span class="co"># how many fields on each line</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="st">'NR==1 {print}'</span>     file.txt   <span class="co"># print just the first line (a header)</span></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="st">'{print NR, $0}'</span>    file.txt   <span class="co"># number every line, like `grep -n`</span></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="st">'{print $NF}'</span>       file.txt   <span class="co"># $NF is the LAST field, however many there are</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>$NF</code> deserves a moment: <code>NF</code> is a number, so <code>$NF</code> is “the field whose index is NF,” i.e.&nbsp;the last field. It is the idiomatic way to grab the last column when you do not know how many there are.</p>
+</section>
+<section id="awk-can-accumulate" class="level3">
+<h3 class="anchored" data-anchor-id="awk-can-accumulate"><code>awk</code> Can Accumulate</h3>
+<p>Because <code>awk</code> has variables that persist across lines, it can compute running totals, and the <code>BEGIN</code>/<code>END</code> blocks let you run setup and teardown. This is the feature that lifts it above the line-at-a-time tools:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sum the file sizes reported by `ls -l`</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-l</span> <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{total += $5} END {print total}'</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Average of the numbers in column 3</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="st">'{sum += $3; count++} END {print sum / count}'</span> data.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>total += $5</code> runs on every line, quietly accumulating; the <code>END { }</code> block runs once, after the last line, and prints the result. (<code>BEGIN { }</code>, its mirror, runs once before the first line, handy for printing a header or setting <code>FS</code>.) At this point <code>awk</code> has stopped being a filter and become a tiny report generator, which is exactly when to reach for it instead of stitching together five smaller tools.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="grep, sed, awk: which one?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>grep, sed, awk: which one?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The three text tools divide cleanly along what they do to a line. <strong><code>grep</code></strong> decides whether to <em>keep</em> a line (select). <strong><code>sed</code></strong> <em>rewrites</em> a line (transform). <strong><code>awk</code></strong> treats a line as <em>columns</em> and can <em>compute</em> across them (analyze). When a task feels awkward in one, it is often because it belongs to another: filtering by a numeric column is <code>awk</code>, not <code>grep</code>; bulk find-and-replace is <code>sed</code>, not <code>awk</code>.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="composition-idioms" class="level2">
+<h2 class="anchored" data-anchor-id="composition-idioms">Composition Idioms</h2>
+<p>This is where the thesis pays off. None of the tools above is impressive alone. Their power is that they <em>compose</em>, and a handful of pipelines show up constantly once you start thinking in functions and streams. Read each one left to right as data flowing through transforms.</p>
+<section id="count-matches-across-a-project" class="level4">
+<h4 class="anchored" data-anchor-id="count-matches-across-a-project">Count matches across a project</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-r</span> <span class="st">"TODO"</span> . <span class="at">--include</span><span class="op">=</span><span class="st">"*.qmd"</span> <span class="kw">|</span> <span class="fu">wc</span> <span class="at">-l</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>grep</code> emits one line per match; <code>wc -l</code> counts lines. Composition turns “search” into “count” with no new tool.</p>
+</section>
+<section id="find-the-most-common-values" class="level4">
+<h4 class="anchored" data-anchor-id="find-the-most-common-values">Find the most common values</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-rho</span> <span class="st">"la-[a-z]*\.qmd"</span> . <span class="kw">|</span> <span class="fu">sort</span> <span class="kw">|</span> <span class="fu">uniq</span> <span class="at">-c</span> <span class="kw">|</span> <span class="fu">sort</span> <span class="at">-rn</span> <span class="kw">|</span> <span class="fu">head</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A classic four-stage idiom. <code>grep -o</code> extracts just the matched filenames, <code>sort</code> groups identical lines together, <code>uniq -c</code> collapses runs into counts, and the final <code>sort -rn</code> orders by count descending. This “sort | uniq -c | sort -rn” sequence is the shell’s <code>GROUP BY ... ORDER BY COUNT</code>.</p>
+</section>
+<section id="search-inside-a-programs-output-not-a-file" class="level4">
+<h4 class="anchored" data-anchor-id="search-inside-a-programs-output-not-a-file">Search inside a program’s output, not a file</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ps</span> aux <span class="kw">|</span> <span class="fu">grep</span> <span class="st">"[p]ython"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>grep</code> filtering <code>ps</code> is the canonical “is this running?” check. The <code>[p]</code> trick is a small joke that works: the regex <code>[p]ython</code> matches the text <code>python</code>, but the <em>grep process’s own command line</em> contains <code>[p]ython</code>, so grep does not match itself.</p>
+</section>
+<section id="edit-a-set-of-files-chosen-by-content" class="level4">
+<h4 class="anchored" data-anchor-id="edit-a-set-of-files-chosen-by-content">Edit a set of files chosen by content</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-rl</span> <span class="st">"old_name"</span> . <span class="at">--include</span><span class="op">=</span><span class="st">"*.qmd"</span> <span class="kw">|</span> <span class="fu">xargs</span> sed <span class="at">-i</span> <span class="st">''</span> <span class="st">'s/old_name/new_name/g'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>grep -rl</code> lists the files that contain the old name, and <code>xargs</code> feeds that list as arguments to <code>sed</code>, which does the replacement. <code>xargs</code> is the bridge that turns <em>a stream of filenames</em> (stdout) back into <em>command arguments</em>, the inverse of how a pipe normally works.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="The shape to internalize">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>The shape to internalize
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Almost every shell task decomposes the same way: <strong>produce</strong> a stream (<code>ls</code>, <code>find</code>, <code>grep</code>, a program’s output), <strong>transform</strong> it through filters (<code>grep</code>, <code>sort</code>, <code>uniq</code>, <code>cut</code>, <code>sed</code>), and <strong>consume</strong> the result (<code>wc</code>, <code>less</code>, a redirect to a file, or <code>xargs</code> into another command). When a task feels hard, you are usually missing one of those three stages, not a fancier tool.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="variables-and-the-environment" class="level2">
+<h2 class="anchored" data-anchor-id="variables-and-the-environment">Variables and the Environment</h2>
+<p>If the pipe passes text <em>across</em> programs, the environment passes text <em>down</em> into them. A shell variable is a named piece of text; the environment is the subset of those variables that the shell hands to every program it launches. Understanding the difference between the two, and it is exactly one keyword, clears up most of the confusion around configuration, <code>PATH</code>, and “why does my variable disappear?”</p>
+<section id="setting-and-reading-a-variable" class="level3">
+<h3 class="anchored" data-anchor-id="setting-and-reading-a-variable">Setting and Reading a Variable</h3>
+<p>Assignment has no <code>let</code> or <code>var</code> keyword and, critically, <strong>no spaces around the <code>=</code></strong>. This trips up everyone at least once:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="va">name</span><span class="op">=</span><span class="st">"curtis"</span>        <span class="co"># correct</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="ex">name</span> = <span class="st">"curtis"</span>      <span class="co"># WRONG: the shell reads this as running the command `name`</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>                     <span class="co">#        with arguments `=` and `curtis`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The no-spaces rule is a direct consequence of decision #4 (the shell splits on whitespace): <code>name = "curtis"</code> is three words, so the shell treats <code>name</code> as a command. With no spaces, <code>name="curtis"</code> is a single word the shell recognizes as an assignment.</p>
+<p>You read a variable back by prefixing it with <code>$</code>, which is just another expansion the shell performs before running the command:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"</span><span class="va">$name</span><span class="st">"</span>         <span class="co"># curtis</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"</span><span class="va">${name}</span><span class="st">"</span>       <span class="co"># same; braces let you disambiguate, e.g. "${name}_backup"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The braces matter when the variable name butts up against other text. <code>"$name_backup"</code> looks for a variable called <code>name_backup</code> (and finds nothing); <code>"${name}_backup"</code> reads <code>name</code> and appends the literal <code>_backup</code>.</p>
+</section>
+<section id="exported-vs.-non-exported" class="level3">
+<h3 class="anchored" data-anchor-id="exported-vs.-non-exported">Exported vs.&nbsp;Non-Exported</h3>
+<p>This is the heart of it. A plain assignment creates a variable that lives <strong>only in the current shell</strong>. Child processes never see it. <code>export</code> promotes a variable into the <em>environment</em>, the bundle of name/value pairs that every child process inherits.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="va">greeting</span><span class="op">=</span><span class="st">"hello"</span>            <span class="co"># shell variable: this shell only</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">visible</span><span class="op">=</span><span class="st">"seen"</span>       <span class="co"># environment variable: this shell AND its children</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The cleanest way to feel the difference is to launch a child shell and look:</p>
+<section id="command-executed-4" class="level5">
+<h5 class="anchored" data-anchor-id="command-executed-4">Command Executed</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="va">greeting</span><span class="op">=</span><span class="st">"hello"</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">visible</span><span class="op">=</span><span class="st">"seen"</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a><span class="fu">bash</span> <span class="at">-c</span> <span class="st">'echo "greeting=[$greeting] visible=[$visible]"'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="output-5" class="level5">
+<h5 class="anchored" data-anchor-id="output-5">Output</h5>
+<pre><code>greeting=[] visible=[seen]</code></pre>
+<p>The child shell inherited <code>visible</code> but not <code>greeting</code>. The non-exported variable was real and usable in the parent, but it stopped at the process boundary. This is the whole model:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 33%">
+<col style="width: 47%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Plain assignment</th>
+<th><code>export</code>ed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Visible in current shell</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr class="even">
+<td>Inherited by child processes</td>
+<td><strong>no</strong></td>
+<td><strong>yes</strong></td>
+</tr>
+<tr class="odd">
+<td>Lives in the environment</td>
+<td>no</td>
+<td>yes</td>
+</tr>
+<tr class="even">
+<td>Typical use</td>
+<td>scratch values, loop counters, script-local state</td>
+<td>config the programs you launch need to read (<code>PATH</code>, <code>EDITOR</code>, <code>LANG</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>A few mechanical notes that follow from the model:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">greeting</span>             <span class="co"># export an already-set variable</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">PATH</span><span class="op">=</span><span class="st">"</span><span class="va">$PATH</span><span class="st">:/opt/bin"</span>   <span class="co"># the common idiom: append, then re-export</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a><span class="va">FOO</span><span class="op">=</span>bar <span class="ex">mycommand</span>           <span class="co"># set FOO for ONE command's environment only,</span></span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>                            <span class="co"># without touching the current shell at all</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>That last form is worth keeping in your pocket. <code>FOO=bar mycommand</code> puts <code>FOO</code> in the environment of <code>mycommand</code> and nothing else, which is the tidy way to pass a one-off setting (<code>DEBUG=1 ./run.sh</code>) without leaving it lying around.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Inheritance is one-way and by-copy">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Inheritance is one-way and by-copy
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A child receives a <em>copy</em> of the parent’s environment. Nothing a child does to its own variables, not even exported ones, propagates back up to the parent. This is why you cannot write a normal script that changes your current shell’s directory or variables: it runs in a child, and its changes die with it. (The escape hatch is <code>source script.sh</code>, which runs the script in the <em>current</em> shell instead of a child. More on that below.)</p>
+</div>
+</div>
+</section>
+</section>
+<section id="source-vs.-executing" class="level3">
+<h3 class="anchored" data-anchor-id="source-vs.-executing"><code>source</code> vs.&nbsp;Executing</h3>
+<p>Running a script the usual way (<code>./script.sh</code>) launches a child shell, so per the note above, any variables or <code>cd</code>s it performs vanish when it exits. <code>source script.sh</code> (or its POSIX spelling <code>. script.sh</code>) instead runs the file’s commands in your <em>current</em> shell:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./setup.sh</span>        <span class="co"># runs in a child; its exports do NOT survive</span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> setup.sh   <span class="co"># runs here; its exports and cd DO survive</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is exactly why you <code>source ~/.zshrc</code> to reload your config rather than executing it, and why Python’s <code>venv</code> activation is <code>source venv/bin/activate</code>: it needs to modify your current shell’s <code>PATH</code>.</p>
+</section>
+<section id="the-standard-environment-variables" class="level3">
+<h3 class="anchored" data-anchor-id="the-standard-environment-variables">The Standard Environment Variables</h3>
+<p>A handful of environment variables are conventional across Unix systems. Programs read them to discover where things live and how you like to work. These are the <code>$x</code> names you will see constantly:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 24%">
+<col style="width: 75%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$PATH</code></td>
+<td>colon-separated list of directories searched for commands</td>
+</tr>
+<tr class="even">
+<td><code>$HOME</code></td>
+<td>your home directory (<code>~</code> expands to this)</td>
+</tr>
+<tr class="odd">
+<td><code>$USER</code></td>
+<td>your login name</td>
+</tr>
+<tr class="even">
+<td><code>$SHELL</code></td>
+<td>path to your login shell (e.g.&nbsp;<code>/bin/zsh</code>)</td>
+</tr>
+<tr class="odd">
+<td><code>$PWD</code></td>
+<td>the current working directory</td>
+</tr>
+<tr class="even">
+<td><code>$OLDPWD</code></td>
+<td>the previous directory (what <code>cd -</code> returns to)</td>
+</tr>
+<tr class="odd">
+<td><code>$LANG</code> / <code>$LC_*</code></td>
+<td>locale: language, character encoding, formatting</td>
+</tr>
+<tr class="even">
+<td><code>$EDITOR</code></td>
+<td>your preferred editor, used by <code>git</code>, <code>crontab</code>, etc.</td>
+</tr>
+<tr class="odd">
+<td><code>$TERM</code></td>
+<td>terminal type, used for colors and capabilities</td>
+</tr>
+<tr class="even">
+<td><code>$TMPDIR</code></td>
+<td>directory for temporary files</td>
+</tr>
+</tbody>
+</table>
+<p><code>$PATH</code> is the one to understand deeply, because it is <em>how the shell turns a command name into a program</em> (decision #3, programs are the standard library). When you type <code>grep</code>, the shell walks <code>$PATH</code> left to right and runs the first <code>grep</code> it finds:</p>
+<section id="command-executed-5" class="level5">
+<h5 class="anchored" data-anchor-id="command-executed-5">Command Executed</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"</span><span class="va">$PATH</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="output-6" class="level5">
+<h5 class="anchored" data-anchor-id="output-6">Output</h5>
+<pre><code>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</code></pre>
+<p>Order matters: a directory earlier in <code>$PATH</code> shadows the same-named command later. This is why <code>/usr/local/bin</code> usually comes first, so your installed tools win over the system defaults.</p>
+</section>
+</section>
+<section id="the-special-shell-parameters" class="level3">
+<h3 class="anchored" data-anchor-id="the-special-shell-parameters">The Special Shell Parameters</h3>
+<p>Distinct from the environment variables above, the shell maintains a set of <strong>special parameters</strong>: read-only <code>$x</code> values it sets for you, mostly about the running script and the last command. You met <code>$?</code> back in <a href="#flow-control">Flow Control</a>; here is the rest of the family:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Parameter</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>$?</code></td>
+<td>exit code of the last command (<code>0</code> = success)</td>
+</tr>
+<tr class="even">
+<td><code>$$</code></td>
+<td>process ID of the current shell</td>
+</tr>
+<tr class="odd">
+<td><code>$!</code></td>
+<td>process ID of the last backgrounded command</td>
+</tr>
+<tr class="even">
+<td><code>$0</code></td>
+<td>name of the script (or shell) itself</td>
+</tr>
+<tr class="odd">
+<td><code>$1</code>, <code>$2</code>, …</td>
+<td>positional arguments passed to the script</td>
+</tr>
+<tr class="even">
+<td><code>$#</code></td>
+<td>number of positional arguments</td>
+</tr>
+<tr class="odd">
+<td><code>$@</code></td>
+<td>all arguments, as separate quoted words (use <code>"$@"</code>)</td>
+</tr>
+<tr class="even">
+<td><code>$*</code></td>
+<td>all arguments, as one word</td>
+</tr>
+</tbody>
+</table>
+<p>The argument parameters are what make a script callable. A minimal example ties them to things you have already seen:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"script: </span><span class="va">$0</span><span class="st">"</span></span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"got </span><span class="va">$#</span><span class="st"> arguments"</span></span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> arg <span class="kw">in</span> <span class="st">"</span><span class="va">$@</span><span class="st">"</span><span class="kw">;</span> <span class="cf">do</span>        <span class="co"># "$@" expands to each argument as its own word</span></span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"  - </span><span class="va">$arg</span><span class="st">"</span></span>
+<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-warning callout-titled" title="`&quot;$@&quot;` vs `$@` vs `$*`">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>"$@"</code> vs <code>$@</code> vs <code>$*</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Always quote it: <code>"$@"</code> is the only form that preserves arguments exactly, each as a separate word even when it contains spaces. Bare <code>$@</code> and <code>$*</code> word-split, and unquoted <code>$*</code> collapses everything into one string. This is the same quoting hazard from the <a href="#quoting-and-expansion">Quoting</a> section, now applied to a script’s own inputs.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="where-to-go-next" class="level2">
+<h2 class="anchored" data-anchor-id="where-to-go-next">Where to Go Next</h2>
+<p>This notebook is deliberately a <em>core toolkit</em>, not a complete reference. It covers the shell as a language and the text-processing tools you reach for hourly. The natural next steps, when you need them:</p>
+<ul>
+<li><strong>Scripting proper</strong>: functions, <code>set -e</code>/<code>set -u</code> for safety, argument parsing beyond <code>$1</code>, and traps. You already have the building blocks (variables, conditions, loops, the environment); this is about assembling them into robust programs.</li>
+<li><strong><code>awk</code> as a language</strong>: this notebook covers the 90% (fields, patterns, <code>BEGIN</code>/<code>END</code>, accumulation), but <code>awk</code> has functions, arrays, and string operations that turn it into a genuine reporting tool when a one-liner outgrows itself.</li>
+<li><strong><code>xargs</code> in depth</strong>: the workhorse for turning streams back into arguments, with control over batching and parallelism.</li>
+</ul>
+<p>The one thing to carry out of here: <strong>think in streams of text and compositions of small functions.</strong> Every tool in this notebook is a function over text, and the pipe is how you wire them together.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

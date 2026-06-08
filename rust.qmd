@@ -4,6 +4,7 @@ subtitle: "A practical bridge to Rust's fundamentals"
 ---
 
 ## Why Rust Exists
+![](images/rust-00.png){width=2.25in style="float: left; padding: 0 1em"}
 Rust was created at Mozilla Research around 2010 and reached 1.0 in 2015. The motivation was straightforward and familiar to anyone who has debugged a segfault at 2am: systems programming is unsafe by default, and the traditional tools (C, C++) leave memory safety entirely to the programmer.
 
 The designers asked a pointed question: *can we have the performance of C with memory safety guaranteed at compile time, without a garbage collector?*
@@ -11,19 +12,19 @@ The designers asked a pointed question: *can we have the performance of C with m
 The answer is Rust.
 
 ### The Core Design Decisions
-###### 1. Ownership replaces manual memory management
+##### 1. Ownership replaces manual memory management
 Rather than `malloc`/`free` or smart pointers bolted on after the fact, Rust builds ownership into the type system. The compiler tracks who owns what, and memory is freed automatically when the owner goes out of scope. No GC, no runtime overhead.
 
-###### 2. Borrowing replaces raw pointers
+##### 2. Borrowing replaces raw pointers
 Instead of passing pointers around freely, Rust has a formal concept of *borrowing* — you can lend a reference to data without transferring ownership. The compiler (the *borrow checker*) enforces that references are always valid. No dangling pointers, no use-after-free.
 
-###### 3. Fearless concurrency
+##### 3. Fearless concurrency
 Data races are a compile error. The same ownership rules that prevent memory bugs also make entire classes of concurrency bugs impossible.
 
-###### 4. Zero-cost abstractions
+##### 4. Zero-cost abstractions
 Rust's high-level features ([iterators](#iterators), [generics](#generics-and-trait-bounds), [traits](#traits)) compile down to the same machine code you'd write by hand. You don't pay for what you don't use — the same guarantee C++ makes, but delivered more consistently.
 
-###### 5. Explicit over implicit
+##### 5. Explicit over implicit
 Rust rarely does things behind your back. Integer overflow is checked in debug builds and wraps in release (with explicit opt-in). Type coercions are almost never automatic. Mutability must be declared. This is intentionally more verbose than C++ in places, in exchange for fewer surprises.
 
 ## Five Questions Answered
@@ -145,41 +146,41 @@ Two kinds of crates:
 :::
 
 #### The Most Popular Crates
-The following list is a top 30 crates capture from [Most popular Rust Libraries](https://lib.rs/std). When I finish this document, I'm going to put it in a time-capsule bury it.
+The following list is a top 30 crates capture from [Most popular Rust Libraries](https://lib.rs/std){target="_blank"}. When I finish this document, I'm going to put it in a time-capsule bury it.
 
 > To whoever is reading this, the date is 4/8/2026. We drank too much Orange Crush and not enough Tang and we died. Follows is a list of the top 30 most popular Rust crates. I have also left some Tang in the capsule. Live long and prosper.
 
 | Library | Description |
 |---------|-------------|
-| [serde](https://lib.rs/crates/serde) | A generic serialization/deserialization framework |
-| [thiserror](https://lib.rs/crates/thiserror) | derive(Error) |
-| [serde_json](https://lib.rs/crates/serde_json) | A JSON serialization file format |
-| [rand](https://lib.rs/crates/rand) | Random number generators and other randomness functionality |
-| [tokio](https://lib.rs/crates/tokio) | An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications |
-| [clap](https://lib.rs/crates/clap) | efficient, and full-featured Command Line Argument Parser |
-| [anyhow](https://lib.rs/crates/anyhow) | Flexible concrete Error type built on std::error::Error |
-| [syn](https://lib.rs/crates/syn) | Parser for Rust source code |
-| [regex](https://lib.rs/crates/regex) | regular expressions for Rust. This implementation uses finite automata and guarantees linear time matching on all inputs. |
-| [base64](https://lib.rs/crates/base64) | encodes and decodes base64 as bytes or utf8 |
-| [log](https://lib.rs/crates/log) | A lightweight logging facade for Rust |
-| [tracing](https://lib.rs/crates/tracing) | Application-level tracing for Rust |
-| [tempfile](https://lib.rs/crates/tempfile) | managing temporary files and directories |
-| [chrono](https://lib.rs/crates/chrono) | Date and time library for Rust |
-| [quote](https://lib.rs/crates/quote) | Quasi-quoting macro quote!(...) |
-| [reqwest](https://lib.rs/crates/reqwest) | higher level HTTP client library |
-| [libc](https://lib.rs/crates/libc) | Raw FFI bindings to platform libraries like libc |
-| [proc-macro2](https://lib.rs/crates/proc-macro2) | A substitute implementation of the compiler’s proc_macro API to decouple token-based libraries from the procedural macro use case |
-| [toml](https://lib.rs/crates/toml) | A native Rust encoder and decoder of TOML-formatted files and streams. Provides implementations of the standard Serialize/Deserialize traits for TOML data to facilitate deserializing and serializing Rust structures. |
-| [sha2](https://lib.rs/crates/sha2) | Pure Rust implementation of the SHA-2 hash function family including SHA-224, SHA-256, SHA-384, and SHA-512 |
-| [futures](https://lib.rs/crates/futures) | streams featuring zero allocations, composability, and iterator-like interfaces |
-| [uuid](https://lib.rs/crates/uuid) | generate and parse UUIDs |
-| [tracing-subscriber](https://lib.rs/crates/tracing-subscriber) | implementing and composing tracing subscribers |
-| [bytes](https://lib.rs/crates/bytes) | Types and traits for working with bytes |
-| [url](https://lib.rs/crates/url) | based on the WHATWG URL Standard |
-| [itertools](https://lib.rs/crates/itertools) | Extra iterator adaptors, iterator methods, free functions, and macros |
-| [once_cell](https://lib.rs/crates/once_cell) | Single assignment cells and lazy values |
-| [getrandom](https://lib.rs/crates/getrandom) | A small cross-platform library for retrieving random data from system source |
-| [indexmap](https://lib.rs/crates/indexmap) | A hash table with consistent order and fast iteration |
+| [serde](https://lib.rs/crates/serde){target="_blank"} | A generic serialization/deserialization framework |
+| [thiserror](https://lib.rs/crates/thiserror){target="_blank"} | derive(Error) |
+| [serde_json](https://lib.rs/crates/serde_json){target="_blank"} | A JSON serialization file format |
+| [rand](https://lib.rs/crates/rand){target="_blank"} | Random number generators and other randomness functionality |
+| [tokio](https://lib.rs/crates/tokio){target="_blank"} | An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications |
+| [clap](https://lib.rs/crates/clap){target="_blank"} | efficient, and full-featured Command Line Argument Parser |
+| [anyhow](https://lib.rs/crates/anyhow){target="_blank"} | Flexible concrete Error type built on std::error::Error |
+| [syn](https://lib.rs/crates/syn){target="_blank"} | Parser for Rust source code |
+| [regex](https://lib.rs/crates/regex){target="_blank"} | regular expressions for Rust. This implementation uses finite automata and guarantees linear time matching on all inputs. |
+| [base64](https://lib.rs/crates/base64){target="_blank"} | encodes and decodes base64 as bytes or utf8 |
+| [log](https://lib.rs/crates/log){target="_blank"} | A lightweight logging facade for Rust |
+| [tracing](https://lib.rs/crates/tracing){target="_blank"} | Application-level tracing for Rust |
+| [tempfile](https://lib.rs/crates/tempfile){target="_blank"} | managing temporary files and directories |
+| [chrono](https://lib.rs/crates/chrono){target="_blank"} | Date and time library for Rust |
+| [quote](https://lib.rs/crates/quote){target="_blank"} | Quasi-quoting macro quote!(...) |
+| [reqwest](https://lib.rs/crates/reqwest){target="_blank"} | higher level HTTP client library |
+| [libc](https://lib.rs/crates/libc){target="_blank"} | Raw FFI bindings to platform libraries like libc |
+| [proc-macro2](https://lib.rs/crates/proc-macro2){target="_blank"} | A substitute implementation of the compiler’s proc_macro API to decouple token-based libraries from the procedural macro use case |
+| [toml](https://lib.rs/crates/toml){target="_blank"} | A native Rust encoder and decoder of TOML-formatted files and streams. Provides implementations of the standard Serialize/Deserialize traits for TOML data to facilitate deserializing and serializing Rust structures. |
+| [sha2](https://lib.rs/crates/sha2){target="_blank"} | Pure Rust implementation of the SHA-2 hash function family including SHA-224, SHA-256, SHA-384, and SHA-512 |
+| [futures](https://lib.rs/crates/futures){target="_blank"} | streams featuring zero allocations, composability, and iterator-like interfaces |
+| [uuid](https://lib.rs/crates/uuid){target="_blank"} | generate and parse UUIDs |
+| [tracing-subscriber](https://lib.rs/crates/tracing-subscriber){target="_blank"} | implementing and composing tracing subscribers |
+| [bytes](https://lib.rs/crates/bytes){target="_blank"} | Types and traits for working with bytes |
+| [url](https://lib.rs/crates/url){target="_blank"} | based on the WHATWG URL Standard |
+| [itertools](https://lib.rs/crates/itertools){target="_blank"} | Extra iterator adaptors, iterator methods, free functions, and macros |
+| [once_cell](https://lib.rs/crates/once_cell){target="_blank"} | Single assignment cells and lazy values |
+| [getrandom](https://lib.rs/crates/getrandom){target="_blank"} | A small cross-platform library for retrieving random data from system source |
+| [indexmap](https://lib.rs/crates/indexmap){target="_blank"} | A hash table with consistent order and fast iteration |
 
 ### Packages
 A **package** is what Cargo manages: a directory with a `Cargo.toml` manifest. A package contains at least one crate. Most projects you will work on are a single package with a single binary crate:
@@ -424,7 +425,7 @@ pub fn origin() -> Point { Point { x: 0.0, y: 0.0 } }
 `use` is your friend. Love him.
 :::
 
-`use` is an extremely useful and flexible keyword that was described to me to an "alias injector". [The Rust Reference](https://doc.rust-lang.org/reference/items/use-declarations.html) has the following to say about `use`:
+`use` is an extremely useful and flexible keyword that was described to me to an "alias injector". [The Rust Reference](https://doc.rust-lang.org/reference/items/use-declarations.html){target="_blank"} has the following to say about `use`:
 
 > A `use` declaration creates one or more local name bindings synonymous with some other path. Usually a `use` declaration is used to shorten the path required to refer to a module item. These declarations may appear in modules and blocks, usually at the top. A `use` declaration is also sometimes called an `import`, or, if it is public, a re-export.
 
@@ -477,7 +478,7 @@ crate
         └── client  (a submodule)
 ```
 
-###### Without `self`:
+##### Without `self`:
 
 ```rust
 use network::http::client;
@@ -489,7 +490,7 @@ network::http::get(...);    // ✅
 
 You have: `client`, but you don't have: `http`. You must write `network::http::` to reach anything in it.
 
-###### With `self`:
+##### With `self`:
 ```rust
 use network::http::{self, client};
 
@@ -682,7 +683,7 @@ These look like operators but are actually conventions or syntax:
 
 #### Operator Overloading
 
-Many operators can be overloaded by implementing traits from [`std::ops`](https://doc.rust-lang.org/std/ops/index.html). For example:
+Many operators can be overloaded by implementing traits from [`std::ops`](https://doc.rust-lang.org/std/ops/index.html){target="_blank"}. For example:
 
 ```rust
 use std::ops::Add;
@@ -705,19 +706,19 @@ let p2 = Point { x: 3, y: 4 };
 let p3 = p1 + p2;  // uses our Add implementation
 ```
 
-In the following table we include some of A listers and indicate the operator, the trait (in `std::ops`) and the method signature. For a complete list, see [`std::ops`](https://doc.rust-lang.org/std/ops/index.html#traits).
+In the following table we include some of A listers and indicate the operator, the trait (in `std::ops`) and the method signature. For a complete list, see [`std::ops`](https://doc.rust-lang.org/std/ops/index.html#traits){target="_blank"}.
 
 | Operator | Trait | Method |
 |----------|-------|--------|
-| `+` | [`Add`](https://doc.rust-lang.org/std/ops/trait.Add.html) | `add(self, rhs: Rhs) -> Self` |
-| `-` | [`Sub`](https://doc.rust-lang.org/std/ops/trait.Sub.html) | `sub(self, rhs: Rhs) -> Self` |
-| `*` | [`Mul`](https://doc.rust-lang.org/std/ops/trait.Mul.html) | `mul(self, rhs: Rhs) -> Self` |
-| `/` | [`Div`](https://doc.rust-lang.org/std/ops/trait.Div.html) | `div(self, rhs: Rhs) -> Self` |
-| `%` | [`Rem`](https://doc.rust-lang.org/std/ops/trait.Rem.html) | `rem(self, rhs: Rhs) -> Self` |
-| `==`, `!=` | [`PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html) | `eq(&self, other: &Rhs) -> bool`, `ne(&self, other: &Rhs) -> bool` |
-| `<`, `>`, `<=`, `>=` | [`PartialOrd`](https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html) | `partial_cmp(&self, rhs: &Rhs) -> Option<Ordering>` |
-| `[]` | [`Index`](https://doc.rust-lang.org/std/ops/trait.Index.html) | `index(&self, index: Idx) -> &Self::Output` |
-| `[]` (mut) | [`IndexMut`](https://doc.rust-lang.org/std/ops/trait.IndexMut.html) | `index_mut(&mut self, index: Idx) -> &mut Self::Output` |
+| `+` | [`Add`](https://doc.rust-lang.org/std/ops/trait.Add.html){target="_blank"} | `add(self, rhs: Rhs) -> Self` |
+| `-` | [`Sub`](https://doc.rust-lang.org/std/ops/trait.Sub.html){target="_blank"} | `sub(self, rhs: Rhs) -> Self` |
+| `*` | [`Mul`](https://doc.rust-lang.org/std/ops/trait.Mul.html){target="_blank"} | `mul(self, rhs: Rhs) -> Self` |
+| `/` | [`Div`](https://doc.rust-lang.org/std/ops/trait.Div.html){target="_blank"} | `div(self, rhs: Rhs) -> Self` |
+| `%` | [`Rem`](https://doc.rust-lang.org/std/ops/trait.Rem.html){target="_blank"} | `rem(self, rhs: Rhs) -> Self` |
+| `==`, `!=` | [`PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html){target="_blank"} | `eq(&self, other: &Rhs) -> bool`, `ne(&self, other: &Rhs) -> bool` |
+| `<`, `>`, `<=`, `>=` | [`PartialOrd`](https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html){target="_blank"} | `partial_cmp(&self, rhs: &Rhs) -> Option<Ordering>` |
+| `[]` | [`Index`](https://doc.rust-lang.org/std/ops/trait.Index.html){target="_blank"} | `index(&self, index: Idx) -> &Self::Output` |
+| `[]` (mut) | [`IndexMut`](https://doc.rust-lang.org/std/ops/trait.IndexMut.html){target="_blank"} | `index_mut(&mut self, index: Idx) -> &mut Self::Output` |
 
 ::: {.callout-note title="Why are some by Reference and others by Value?"}
 The reason comes down to **Copy semantics**. For `PartialEq`, the signature is:
@@ -733,7 +734,7 @@ For `Add`, the signature is:
 fn add(self, rhs: Self) -> Self::Output;
 ```
 
-The operands are taken *by value* because addition is modeled as **consumption and transformation** — you take the inputs and produce a new output. For types where this makes sense (like integers), the values are [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html), so "moving" them is a no-op anyway. The compiler just copies the bits and you never notice.
+The operands are taken *by value* because addition is modeled as **consumption and transformation** — you take the inputs and produce a new output. For types where this makes sense (like integers), the values are [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html){target="_blank"}, so "moving" them is a no-op anyway. The compiler just copies the bits and you never notice.
 
 The reason Rust doesn't default to references for `Add` is that it would be unnecessarily restrictive for *non-Copy* types. Consider a hypothetical big integer or a matrix type — you might genuinely want to consume both operands and reuse their memory in constructing the result, avoiding an extra allocation. If the trait required `&Self`, you'd lose that option.
 
@@ -874,7 +875,7 @@ let last = arr[4];           // 5
 println!("Length: {}", arr.len());  // 5
 ```
 
-###### Key characteristics
+##### Key characteristics
 - **Stack-allocated** — arrays live on the stack, not the heap
 - **Fixed size** — length cannot change after creation
 - **Type includes length** — `[i32; 3]` and `[i32; 5]` are different, incompatible types
@@ -905,8 +906,8 @@ Rust has two string types. The distinction maps directly onto [owned](#ownership
 
 | Type     | Owned? | Mutable? | Lives on  | Analogy                    |
 |----------|--------|----------|-----------|----------------------------|
-| [`String`](https://doc.rust-lang.org/std/string/struct.String.html) | Yes    | Yes      | Heap      | `std::string` in C++       |
-| [`&str`](https://doc.rust-lang.org/std/primitive.str.html)   | No     | No       | Anywhere  | `std::string_view` in C++  |
+| [`String`](https://doc.rust-lang.org/std/string/struct.String.html){target="_blank"} | Yes    | Yes      | Heap      | `std::string` in C++       |
+| [`&str`](https://doc.rust-lang.org/std/primitive.str.html){target="_blank"}   | No     | No       | Anywhere  | `std::string_view` in C++  |
 
 ##### Representation
 ::: {.definition data-label="Laurel and Hardy"}
@@ -921,9 +922,9 @@ Some common uses of *fat pointers* are:
 - **Memory Safety**: Some research implementations use fat pointers to store bounds (base and end address) to prevent buffer overflows or keys/locks for temporal memory safety.
 :::
 
-[`String`](https://doc.rust-lang.org/std/string/struct.String.html) stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is *not* null-terminated. The length field is what tells Rust where the string ends.
+[`String`](https://doc.rust-lang.org/std/string/struct.String.html){target="_blank"} stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is *not* null-terminated. The length field is what tells Rust where the string ends.
 
-[`&str`](https://doc.rust-lang.org/std/primitive.str.html) is a **fat pointer**: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.
+[`&str`](https://doc.rust-lang.org/std/primitive.str.html){target="_blank"} is a **fat pointer**: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.
 
 Both types are guaranteed to contain valid UTF-8. Rust will not let you construct an invalid string.
 
@@ -1134,7 +1135,7 @@ let b: u8  = 255i32 as u8;    // truncates if out of range — be careful
 
 #### `From` and `Into`
 ::: {.explanation}
-In the following you will see syntax that looks a little like inheritance in other languages: `A: From<B>`. But we know it's not inheritance, \`cuz Rust doesn't support inheritance. It is called a **trait bound**. It means "A implements the `From` trait for `B`." In other words, you can convert from `B` to `A` using the From trait's method. The following example is in [The Rust Reference](https://doc.rust-lang.org/reference/trait-bounds.html) (there is a wicked looking syntax diagram on that page):
+In the following you will see syntax that looks a little like inheritance in other languages: `A: From<B>`. But we know it's not inheritance, \`cuz Rust doesn't support inheritance. It is called a **trait bound**. It means "A implements the `From` trait for `B`." In other words, you can convert from `B` to `A` using the From trait's method. The following example is in [The Rust Reference](https://doc.rust-lang.org/reference/trait-bounds.html){target="_blank"} (there is a wicked looking syntax diagram on that page):
 
 ```rust
 trait Shape {
@@ -1247,7 +1248,7 @@ The `::<>` spelling looks strange but follows the same pattern as other generic 
 :::
 
 ### Functions
-Functions are beautiful, reusable blocks of logic. [Wikipedia](https://en.wikipedia.org/wiki/Function_(computer_programming)) describes a **function** as "a callable unit of software logic that has a well-formed interface and behavior and can be invoked multiple times... Their primary purpose is to allow for the decomposition of a large and/or complicated problem into chunks that have relatively low cognitive load and to assign the chunks meaningful names (unless they are anonymous). Judicious application can reduce the cost of developing and maintaining software, while increasing its quality and reliability." Where would any language be without them?
+Functions are beautiful, reusable blocks of logic. [Wikipedia](https://en.wikipedia.org/wiki/Function_(computer_programming){target="_blank"}) describes a **function** as "a callable unit of software logic that has a well-formed interface and behavior and can be invoked multiple times... Their primary purpose is to allow for the decomposition of a large and/or complicated problem into chunks that have relatively low cognitive load and to assign the chunks meaningful names (unless they are anonymous). Judicious application can reduce the cost of developing and maintaining software, while increasing its quality and reliability." Where would any language be without them?
 
 #### Common Type
 The most commonly used function type in rust is declared with `fn`:
@@ -1277,13 +1278,62 @@ let add = |a, b|                    { a + b }
 let add = |a: i32, b: i32| -> i32   { a + b}
 ```
 
-We cover [closures](https://doc.rust-lang.org/book/ch13-01-closures.html) in more detail [below](#closures).
+We cover [closures](https://doc.rust-lang.org/book/ch13-01-closures.html){target="_blank"} in more detail [below](#closures).
 
 ### Control Flow
+#### Conditional
+An `if` expression allows you to branch your code depending on conditions. We think we know him well, and no doubt we do, but he's got his own nuances in rust. The two that come to mind are:
+
+1. Rust's Python like *ternary* which isn't called a "ternary".
+2. `if` with `Some` is a little strange, unique and super handy.
+
+The "*ternary*" is a lot like Python's ternary: it's an if else squeezed that is typically squeezed into one line.
+
 ```rust
 // if is an expression
 let max = if a > b { a } else { b };
+```
 
+And `if Some(var)...` is a magical beast. I'm sure it does a lot more than I'm recalling, but right now the only use case I can think is how in one fell swoop it allows you to test an optional (`Option<>`) variable and if it has a value, then do something with it.
+
+```rust
+let cat: Option<String> = Some(String::from("George"));
+if let Some(name) = &cat {
+    println!("{}: fuzzy wuz he", name);
+}
+```
+
+We go deeper in the [Option\<T\>](#optiont) (next section).
+
+#### Looping
+As with most languages there are a number of ways to loop. I think the coolest one is via iteration of an object. I'm going to copy what Claude said about it. I was asking him about the following:
+
+```rust
+let body_lines: Vec<String> = [...];
+for line in &body_lines {
+    // do stuff with `line`
+}
+```
+
+A for loop calls `.into_iter()` on whatever you give it. If you write `for line in body_lines` (no &), the vector is moved into the loop and consumed. After the loop, `body_lines` is gone. Writing `for line in &body_lines` passes a reference to the loop instead. The compiler calls `.into_iter()` on `&Vec<String>`, which yields `&String` references. The vector stays alive and usable after the loop. `line` is `&String`, not `String`.
+
+**What trait makes this work?**
+
+Two traits are at play:
+
+1. `IntoIterator`
+    - `IntoIterator` is the trait that for loops depend on. A for loop is syntactic sugar for calling `.into_iter()` and then repeatedly calling `.next()` on the result. Any type that implements `IntoIterator` can appear in a for loop.
+    - `Vec<T>` implements `IntoIterator` three ways:
+        - `for x in vec` (consumes the vector, yields `T`)
+        - `for x in &vec` (borrows the vector, yields `&T`)
+        - `for x in &mut vec` (mutably borrows the vector, yields `&mut T`)
+2. `Iterator`
+    - This trait defines the actual sequence and the logic for traversing the items. It requires defining an Item type and implementing the `.next()` method, which returns `Some(item)` until the iteration is complete, at which point it returns `None.`
+
+The `&Vec<T>` case works because the standard library implements `IntoIterator` for `&Vec<T>`, which delegates to `Vec::iter()` under the hood and produces an iterator over `&T` values. So for line in `&body_lines` is exactly equivalent to `for line in body_lines.iter()`. The `&` form is just more concise and is what you will see in idiomatic Rust.
+
+
+```rust
 // loop
 loop {
     break;   // only way to exit a bare loop
@@ -1317,7 +1367,7 @@ I use this guy frequently, and I frequently forget how to use him.
 
 I described `Option<T>` as a pointer and AI got defensive. He's right, it's more than just a pointer. It's an impenetrable fortress built up around a pointer. In the late 90s, just when Java was becoming popular and .NET was a twinkle in Microsoft's eye, a commonly quoted statistic was floating around, "90% of C/C++ bugs have to do with memory management". I don't know how accurate it is, but having been a C/C++ developer for many years at the time, I have no doubt that memory management is the primary culprit of all C/C++ bugs.
 
-So what is it about Rust that makes him different? Rust does not have `null`s. It has `None` but no `NULL`. And he has a wicked enum - `Option<T>` - that can encode the concept of a value being present or absent. `Option<T>` is defined by the [standard library](https://doc.rust-lang.org/std/option/enum.Option.html) as follows:
+So what is it about Rust that makes him different? Rust does not have `null`s. It has `None` but no `NULL`. And he has a wicked enum - `Option<T>` - that can encode the concept of a value being present or absent. `Option<T>` is defined by the [standard library](https://doc.rust-lang.org/std/option/enum.Option.html){target="_blank"} as follows:
 
 ```rust
 enum Option<T> {
@@ -1355,6 +1405,39 @@ match name {
 }
 ```
 
+::: {.callout-important title="=> is unique to *match*"}
+For the longest while I thought `=>` was anonymous function syntax, and I couldn't understand why `return` caused the outer function to exit. Such as in the following:
+
+::: {.columns}
+
+::: {.column width=25%}
+![](images/rust-03.png){fig-align="center" height=4in style="margin-bottom: 0"}
+:::
+
+::: {.column width=72%}
+```rust
+fn embassy(config: &Config, lang_key: &str) -> Option<&String> {
+    let translator = match config.delegate.get(lang_key) {
+        Some(cmd) => cmd,
+        None => {
+            diag::warning(&format!(
+                "delegate: didn't find translator for '{}'", lang_key
+            ));
+            return None;
+        }
+    };
+    Some(translator)
+}
+```
+
+*"Why does `return None` exit `fn embassy()`?" *
+
+Well, silly me, it's just an arm boundary for `match`. It's not a function: it's a syntactical way of creating an arm.
+
+:::
+:::
+:::
+
 #### `if let`
 ::: {.u-subheading}
 handle only `Some`, ignore `None`
@@ -1390,7 +1473,7 @@ if name.is_none() {
 one or the other
 :::
 
-[or](https://doc.rust-lang.org/std/option/enum.Option.html#method.or): returns `self` if it is `Some`. Otherwise, returns other. Useful for providing a fallback `Option`.
+[or](https://doc.rust-lang.org/std/option/enum.Option.html#method.or){target="_blank"}: returns `self` if it is `Some`. Otherwise, returns other. Useful for providing a fallback `Option`.
 
 ```rust
 let x = Some(2);
@@ -1407,7 +1490,7 @@ assert_eq!(x.or(y), Some(100));
 less expensive `or`
 :::
 
-[or_else](https://doc.rust-lang.org/std/option/enum.Option.html#method.or_else): similar to `or`, but the fallback `Option` is computed by a closure f only if self is `None`. Useful for expensive fallback computations.
+[or_else](https://doc.rust-lang.org/std/option/enum.Option.html#method.or_else){target="_blank"}: similar to `or`, but the fallback `Option` is computed by a closure f only if self is `None`. Useful for expensive fallback computations.
 
 ```rust
 fn nobody() -> Option<&'static str> { None }
@@ -1423,7 +1506,7 @@ assert_eq!(None.or_else(nobody), None);
 provide a fallback value
 :::
 
-[unwrap_or](https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or): returns the contained `Some` value, or a provided default value if self is `None`. Use when `None` should produce a sensible default and the default is cheap.
+[unwrap_or](https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or){target="_blank"}: returns the contained `Some` value, or a provided default value if self is `None`. Use when `None` should produce a sensible default and the default is cheap.
 
 ```rust
 let name = user_name.unwrap_or("Guest");
@@ -1436,7 +1519,7 @@ let count = get_count().unwrap_or(0);
 compute a fallback lazily
 :::
 
-[unwrap_or_else](https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or_else): returns the contained `Some` value, or computes it from a closure f if self is `None`. Useful when the default value is expensive to compute. Use when the fallback is expensive or requires logic — the closure only runs if the value is `None`.
+[unwrap_or_else](https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or_else){target="_blank"}: returns the contained `Some` value, or computes it from a closure f if self is `None`. Useful when the default value is expensive to compute. Use when the fallback is expensive or requires logic — the closure only runs if the value is `None`.
 
 ```rust
 let name = user_name.unwrap_or_else(|| fetch_default_name());
@@ -1474,8 +1557,8 @@ fn first_word(text: &str) -> Option<&str> {
 ### Testing Without Extracting
 Sometimes you just need to know whether a value is present, without extracting it:
 
-- [is_some](https://doc.rust-lang.org/std/option/enum.Option.html#method.is_some): returns `true` if the `Option` is `Some`, `false` otherwise.
-- [is_none](https://doc.rust-lang.org/std/option/enum.Option.html#method.is_none): returns `true` if the `Option` is `None`, `false` otherwise.
+- [is_some](https://doc.rust-lang.org/std/option/enum.Option.html#method.is_some){target="_blank"}: returns `true` if the `Option` is `Some`, `false` otherwise.
+- [is_none](https://doc.rust-lang.org/std/option/enum.Option.html#method.is_none){target="_blank"}: returns `true` if the `Option` is `None`, `false` otherwise.
 
 
 ```rust
@@ -1494,7 +1577,7 @@ These methods let you work with the value inside an `Option` without pulling it 
 transform the inner value
 :::
 
-[map](https://doc.rust-lang.org/std/option/enum.Option.html#method.map): transforms the `Some` value into a new `Option` containing the result of applying a function `f`. If `self` is `None`, it remains `None`.
+[map](https://doc.rust-lang.org/std/option/enum.Option.html#method.map){target="_blank"}: transforms the `Some` value into a new `Option` containing the result of applying a function `f`. If `self` is `None`, it remains `None`.
 
 ```rust
 let length: Option<usize> = name.map(|n| n.len());
@@ -1507,7 +1590,7 @@ let length: Option<usize> = name.map(|n| n.len());
 chain operations that return `Option`
 :::
 
-[and_then](https://doc.rust-lang.org/std/option/enum.Option.html#method.and_then): chains operations that themselves return an `Option`. If self is `Some(v)`, applies f to v and returns the resulting `Option`. If self is `None`, returns `None`. Prevents `Option<Option<T>>` (nesting).
+[and_then](https://doc.rust-lang.org/std/option/enum.Option.html#method.and_then){target="_blank"}: chains operations that themselves return an `Option`. If self is `Some(v)`, applies f to v and returns the resulting `Option`. If self is `None`, returns `None`. Prevents `Option<Option<T>>` (nesting).
 
 Use when the transformation itself might fail (returns `Option`). Prevents `Option<Option<T>>` nesting.
 
@@ -1526,7 +1609,7 @@ let result = None.and_then(parse_number);         // None
 keep `Some` only if condition holds
 :::
 
-[filter](https://doc.rust-lang.org/std/option/enum.Option.html#method.filter): returns `None` if the option is `None`, otherwise calls `predicate` with the wrapped value and returns `Some(t)` if `predicate` returns `true` and `None` if `predicate` returns `false`.
+[filter](https://doc.rust-lang.org/std/option/enum.Option.html#method.filter){target="_blank"}: returns `None` if the option is `None`, otherwise calls `predicate` with the wrapped value and returns `Some(t)` if `predicate` returns `true` and `None` if `predicate` returns `false`.
 
 ```rust
 let age: Option<u32> = Some(15);
@@ -1538,7 +1621,7 @@ let adult = age.filter(|&a| a >= 18);   // None — 15 fails the predicate
 convert `Option` to `Result`
 :::
 
-[ok_or](https://doc.rust-lang.org/std/option/enum.Option.html#method.ok_or): converts `Option<T>` into a `Result<T, E>`. If self is `Some(v)`, returns `Ok(v)`. If self is `None`, returns `Err(err)`. When you need to treat `None` as an error:
+[ok_or](https://doc.rust-lang.org/std/option/enum.Option.html#method.ok_or){target="_blank"}: converts `Option<T>` into a `Result<T, E>`. If self is `Some(v)`, returns `Ok(v)`. If self is `None`, returns `Err(err)`. When you need to treat `None` as an error:
 
 ```rust
 let val: Result<i32, &str> = Some(42).ok_or("missing value");   // Ok(42)
@@ -1943,18 +2026,18 @@ The fundamental difference is that C macros are based on string substitution (te
 - **Hygienic**: variables defined inside a macro do not accidentally clash with variables in the surrounding code.
 - **Unhygienic**: variables can unintentionally shadow or overwrite local variables.
 
-###### Input Handling
+##### Input Handling
 - **C Macros**: Treat inputs as raw text. This can lead to operator precedence bugs (e.g.,  becoming  instead of ) unless you manually add parentheses.
 - **Rust Macros**: Match against specific syntax categories like  (expression),  (identifier), or . This ensures the input is syntactically valid before expansion.
 
-###### Types of Macros
+##### Types of Macros
 - **C**: Has only one type — the `#define` preprocessor directive.
 - **Rust**: Has two systems (declarative and procedural) with four distinct subtypes. See the Types of Macros section above for the full breakdown.
 
-###### Compilation Stage
+##### Compilation Stage
 C macros are handled by a separate preprocessor before the compiler sees the code. Rust macros are expanded during the early stages of compilation, meaning the compiler "understands" the structure of the expanded code.
 
-###### Visual Distinction
+##### Visual Distinction
 In Rust, function-like macros are called with a trailing `!` (e.g., `println!`, `vec!`), making them instantly distinguishable from standard functions for better readability. C macros look identical to function calls.
 
 :::{.see-more}
@@ -2080,7 +2163,7 @@ These are all flags altering the behavior of the formatter.
     - `#b`: precedes the argument with a `0b`
     - `#o`: precedes the argument with a `0o`
 
-    See  [Formatting traits](https://doc.rust-lang.org/std/fmt/#formatting-traits) for a description of what the `?`, `x`, `X`, `b`, and `o` flags do.
+    See  [Formatting traits](https://doc.rust-lang.org/std/fmt/#formatting-traits){target="_blank"} for a description of what the `?`, `x`, `X`, `b`, and `o` flags do.
 
 - `0` - This is used to indicate for integer formats that the padding to width should both be done with a 0 character as well as be sign-aware. A format like `{:08}` would yield `00000001` for the integer `1`, while the same format would yield `-0000001` for the integer `-1`. Notice that the negative version has one fewer zero than the positive version. Note that padding zeros are always placed after the sign (if any) and before the digits. When used together with the `#` flag, a similar rule applies: padding zeros are inserted after the prefix but before the digits. The prefix is included in the total width. This flag overrides the fill character and alignment flag.
 
@@ -2154,7 +2237,7 @@ Would return:
 1.236e4<br/>
 :::
 
-For more information, see [Module fmt](https://doc.rust-lang.org/std/fmt/).
+For more information, see [Module fmt](https://doc.rust-lang.org/std/fmt/){target="_blank"}.
 
 ## Memory Management
 This is the heart of Rust. If you understand this section, you understand Rust.
@@ -2299,7 +2382,7 @@ The `<'a>` declares a lifetime parameter (like a generic type parameter). The `&
 
 This tells the compiler: "The returned reference is valid for as long as both inputs are valid."
 
-###### Why it matters
+##### Why it matters
 ```rust
 let result;
 {
@@ -2313,14 +2396,14 @@ println!("{}", result);  // compile error: s1 and s2 are out of scope
 The compiler prevents the dangling reference at compile time, not runtime.
 
 #### Comprehensive Lifetime Syntax Reference
-###### Single lifetime parameter
+##### Single lifetime parameter
 ```rust
 fn first_word<'a>(s: &'a str) -> &'a str {
     s.split_whitespace().next().unwrap_or("")
 }
 ```
 
-###### Multiple independent lifetimes
+##### Multiple independent lifetimes
 ```rust
 fn announce<'a, 'b>(x: &'a str, y: &'b str) -> &'a str {
     println!("Announcement: {}", y);  // y can have a different lifetime
@@ -2328,7 +2411,7 @@ fn announce<'a, 'b>(x: &'a str, y: &'b str) -> &'a str {
 }
 ```
 
-###### Lifetime bounds
+##### Lifetime bounds
 ::: {.subheading}
 `'b: 'a` means `'b` outlives `'a`**
 :::
@@ -2340,7 +2423,7 @@ fn choose<'a, 'b: 'a>(x: &'a str, y: &'b str) -> &'a str {
 }
 ```
 
-###### Structs with lifetimes
+##### Structs with lifetimes
 ```rust
 struct Excerpt<'a> {
     text: &'a str,  // this struct holds a reference that lives 'a
@@ -2353,7 +2436,7 @@ impl<'a> Excerpt<'a> {
 }
 ```
 
-###### Multiple lifetimes in structs
+##### Multiple lifetimes in structs
 ```rust
 struct Context<'a, 'b> {
     config: &'a str,
@@ -2361,7 +2444,7 @@ struct Context<'a, 'b> {
 }
 ```
 
-###### Static lifetime
+##### Static lifetime
 ::: {.subheading}
 `'static` lives for entire program
 :::
@@ -2374,7 +2457,7 @@ fn leak_value() -> &'static str {
 }
 ```
 
-###### Lifetime elision
+##### Lifetime elision
 ::: {.subheading}
 When the compiler infers lifetimes
 :::
@@ -2393,7 +2476,7 @@ fn first(s: &str) -> &str { s }
 fn first<'a>(s: &'a str) -> &'a str { s }
 ```
 
-###### Trait bounds with lifetimes
+##### Trait bounds with lifetimes
 ```rust
 fn print_ref<'a, T>(value: &'a T)
 where
@@ -2403,7 +2486,7 @@ where
 }
 ```
 
-###### Higher-Rank Trait Bounds
+##### Higher-Rank Trait Bounds
 ::: {.subheading}
 HRTB: `for<'a>`
 :::
@@ -2421,7 +2504,7 @@ where
 ```
 
 #### Common Lifetime Patterns
-###### Returning references from methods
+##### Returning references from methods
 ```rust
 impl<'a> MyStruct<'a> {
     fn get_field(&self) -> &'a str {
@@ -2430,14 +2513,14 @@ impl<'a> MyStruct<'a> {
 }
 ```
 
-###### Mutable and immutable references with different lifetimes
+##### Mutable and immutable references with different lifetimes
 ```rust
 fn split_at<'a>(s: &'a mut str, mid: usize) -> (&'a mut str, &'a mut str) {
     // ... splits s into two mutable references
 }
 ```
 
-###### Anonymous lifetime
+##### Anonymous lifetime
 ::: {.subheading}
 `'_`
 :::
@@ -2522,7 +2605,7 @@ How structs are created and where they live
 
 Rust doesn't have constructors in the C++/Java sense. There's no special `new` keyword or automatic initialization. Instead, you create structs explicitly, and by convention provide a `new()` associated function (a static method in C++ terms).
 
-###### The `new()` Convention
+##### The `new()` Convention
 ```rust
 struct Config {
     host: String,
@@ -2555,7 +2638,7 @@ let config = Config::new(String::from("example.com"), 443);
 
 `new()` is not special — it's just a regular function you write yourself. You can name it anything (`create()`, `make()`, `build()`), but `new()` is the convention.
 
-###### The `Default` Trait
+##### The `Default` Trait
 For types with sensible defaults, implement the `Default` trait:
 
 ```rust
@@ -2587,7 +2670,7 @@ struct Stats {
 }
 ```
 
-###### Stack vs Heap
+##### Stack vs Heap
 ::: {.subheading}
 Where Does Your Struct Live?
 :::
@@ -2647,7 +2730,7 @@ Stack:                    Heap:
 └─────────────┘
 ```
 
-###### Vector Allocation in Detail
+##### Vector Allocation in Detail
 Since your question was about `Vec`, here are all the ways to create one:
 
 ```rust
@@ -2672,7 +2755,7 @@ let v = arr.to_vec();
 let v2 = v.clone();
 ```
 
-###### Applying This to Your `Exs24` Struct
+##### Applying This to Your `Exs24` Struct
 ```rust
 pub struct Exs24 {
     chunks: Vec<Chunk>,
@@ -2713,7 +2796,7 @@ exs.chunks.push(chunk1);  // grows heap allocation as needed
 let mut exs = Box::new(Exs24::new());
 ```
 
-###### When to Use Box
+##### When to Use Box
 ::: {.subheading}
 Heap-Allocate the Struct
 ::::
@@ -2733,7 +2816,7 @@ struct HugeBuffer {
 let buffer = Box::new(HugeBuffer { data: [0; 1024 * 1024] });
 ```
 
-###### Value vs Reference Semantics
+##### Value vs Reference Semantics
 In C, you choose value or reference explicitly:
 
 ```c
@@ -2830,7 +2913,7 @@ This is more powerful than C unions because:
 2. The compiler ensures you can't access the wrong variant's data
 3. Each variant can have completely different types
 
-###### Real-world example
+##### Real-world example
 ```rust
 enum Shape {
     Circle(f64),                              // radius
@@ -2855,7 +2938,7 @@ println!("Area: {}", circle.area());  // 78.54
 #### Standard Library Enums
 Two enums you'll use constantly:
 
-###### `Option<T>`
+##### `Option<T>`
 ::: {.subheading}
 replaces null pointers
 :::
@@ -2949,7 +3032,7 @@ let text: Option<String> = Some(s);     // Same enum, different T
 | Methods                   | ✗                      | ✓                                         |
 
 #### When to Use Each Style
-###### C-style
+##### C-style
 ::: {.subheading}
 no data
 :::
@@ -2958,7 +3041,7 @@ no data
 - Status codes with explicit discriminants
 - Simple categorization
 
-###### Algebraic data types
+##### Algebraic data types
 ::: {.subheading}
 with data
 :::
@@ -3042,7 +3125,7 @@ fn main() {
 }
 ```
 
-For more information, see [Appendix C: Derivable Traits](https://doc.rust-lang.org/book/appendix-03-derivable-traits.html) in *The Rust Programming Language*.
+For more information, see [Appendix C: Derivable Traits](https://doc.rust-lang.org/book/appendix-03-derivable-traits.html){target="_blank"} in *The Rust Programming Language*.
 :::
 
 #### Implementing `Display` and `Debug`
@@ -3551,7 +3634,7 @@ Every error type must implement both:
 
 This separation lets you choose the right representation for the context. In production logs you might want `Debug` to see all the details. When showing an error to a user, you want `Display` to give them a clear message without internal noise.
 
-###### 2. The `source()` method
+##### 2. The `source()` method
 Errors can be chained. If parsing a config file fails because of an I/O error, the parse error can *wrap* the I/O error. `source()` returns the underlying cause, letting you walk the error chain:
 
 ```rust
@@ -3906,7 +3989,7 @@ A growable, heap-allocated array
 
 `Vec<T>` is the most-used collection in Rust. It owns its elements, stores them contiguously in memory, and grows automatically as you push to it.
 
-###### Creating and populating
+##### Creating and populating
 ```rust
 // With an explicit type annotation
 let mut v: Vec<i32> = Vec::new();
@@ -3921,7 +4004,7 @@ let mut scores = vec![95, 87, 72, 100, 68];
 let mut big: Vec<String> = Vec::with_capacity(1000);
 ```
 
-###### Indexing
+##### Indexing
 Indexing a `Vec` with `[]` requires the index type to be `usize`, not a general integer. Using `i32`, `u32`, or any other integer type directly will not compile; you must cast explicitly with `as usize`.
 
 ```rust
@@ -3942,7 +4025,7 @@ let found = v.get(0);       // Some(&10)
 
 The `[]` operator is implemented via the `Index` trait. When you define your own struct and want it to be indexable, you implement `Index<usize>` for it. The compiler error you saw ("need to implement something") is exactly that trait being required.
 
-###### Iterating
+##### Iterating
 ```rust
 let v = vec![1, 2, 3];
 
@@ -3965,7 +4048,7 @@ for x in v {
 // v is moved; it cannot be used here
 ```
 
-###### Cloning
+##### Cloning
 Because `Vec<T>` owns its data, assignment moves it rather than copying it. Use `.clone()` when you need an independent copy.
 
 ```rust
@@ -3986,7 +4069,7 @@ println!("{:?}", nums);      // still accessible
 
 `.clone()` on a `Vec<T>` is a deep clone: it clones the vector and every element inside it. For large vecs of heap-allocated types (like `String`), this is not free.
 
-###### Sorting
+##### Sorting
 `Vec<T>` provides several `sort*` methods, including stable and unstable variants. The right choice depends on whether your element type implements `Ord`, whether you need a custom comparison, and whether you need stability.
 
 ```rust
@@ -4035,7 +4118,7 @@ students.sort_by_key(|s| s.grade);
 students.sort_by(|a, b| a.name.cmp(&b.name));
 ```
 
-###### Working methods
+##### Working methods
 
 The methods you will reach for most in everyday code:
 
@@ -4330,24 +4413,31 @@ println!("{:?}", result);   // [4, 16, 36]
 
 The first decision for any iterator chain is which of the three entry points to use:
 
-| Method         | Yields   | Effect on collection | Use when                        |
-|----------------|----------|----------------------|---------------------------------|
-| `.iter()`      | `&T`     | Borrows              | Reading without consuming       |
-| `.iter_mut()`  | `&mut T` | Mutably borrows      | Modifying elements in place     |
-| `.into_iter()` | `T`      | Consumes             | You no longer need the original |
+| Method / form      | Yields   | Effect on collection | Use when                        |
+|--------------------|----------|----------------------|---------------------------------|
+| `.iter()`          | `&T`     | Borrows              | Reading without consuming       |
+| `&collection`      | `&T`     | Borrows              | Shorthand for `.iter()` in `for` loops |
+| `.iter_mut()`      | `&mut T` | Mutably borrows      | Modifying elements in place     |
+| `&mut collection`  | `&mut T` | Mutably borrows      | Shorthand for `.iter_mut()` in `for` loops |
+| `.into_iter()`     | `T`      | Consumes             | You no longer need the original |
+
+The `&v` and `&mut v` forms work because `Vec<T>` implements `IntoIterator` for `&Vec<T>` and `&mut Vec<T>`. A `for` loop calls `.into_iter()` on whatever expression you give it, so `for x in &v` is exactly equivalent to `for x in v.iter()`.
 
 ```rust
 let mut v = vec![1, 2, 3];
 
-// Borrow — v still usable after
+// Borrow — v still usable after (two equivalent forms)
 for x in v.iter() { print!("{} ", x); }
+for x in &v      { print!("{} ", x); }  // same thing
 
-// Mutably borrow — modify in place
+// Mutably borrow — modify in place (two equivalent forms)
 for x in v.iter_mut() { *x *= 2; }
-println!("{:?}", v);   // [2, 4, 6]
+for x in &mut v       { *x *= 2; }  // same thing
+println!("{:?}", v);   // [2, 4, 6] then [4, 8, 12]
 
 // Consume — v is moved, no longer accessible
 for x in v.into_iter() { print!("{} ", x); }
+// equivalently: for x in v { ... }
 ```
 
 #### Adapter chain
@@ -4601,7 +4691,7 @@ File I/O in Rust is built around the [`std::fs`](https://doc.rust-lang.org/std/f
 
 
 ### Basic File Operations
-###### Opening and creating files
+##### Opening and creating files
 ```rust
 use std::fs::File;
 use std::io::{self, Read, Write};
@@ -4625,7 +4715,7 @@ let file = OpenOptions::new()
 The `?` operator propagates `io::Error` to the caller. All file operations return `Result<T, io::Error>`.
 
 ### Unbuffered I/O
-###### Reading directly from `File`
+##### Reading directly from `File`
 ```rust
 use std::fs::File;
 use std::io::Read;
@@ -4646,7 +4736,7 @@ let mut exact = [0u8; 16];
 file.read_exact(&mut exact)?;
 ```
 
-###### Writing directly to `File`
+##### Writing directly to `File`
 ```rust
 use std::fs::File;
 use std::io::Write;
@@ -4663,7 +4753,7 @@ file.flush()?;
 Unbuffered I/O makes a system call for every read/write operation. This is fine for large transfers, but inefficient for many small operations.
 
 ### Buffered I/O
-###### Buffered reading with `BufReader`
+##### Buffered reading with `BufReader`
 ```rust
 use std::fs::File;
 use std::io::{BufReader, BufRead};
@@ -4693,7 +4783,7 @@ let mut content = String::new();
 reader.read_to_string(&mut content)?;
 ```
 
-###### Buffered writing with `BufWriter`
+##### Buffered writing with `BufWriter`
 ```rust
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -4735,7 +4825,7 @@ These are buffered internally and handle open/close automatically. Perfect for s
 ### Binary I/O and Byte Order
 When reading binary formats, you often need to handle multi-byte integers with specific endianness.
 
-###### Reading primitives with byte order
+##### Reading primitives with byte order
 Rust provides methods on primitive types to read/write with explicit endianness:
 
 ```rust
@@ -4758,7 +4848,7 @@ file.read_exact(&mut buf)?;
 let value = u32::from_ne_bytes(buf);
 ```
 
-###### Writing primitives with byte order
+##### Writing primitives with byte order
 ```rust
 let mut file = File::create("output.dat")?;
 
@@ -4774,7 +4864,7 @@ file.write_all(&value.to_be_bytes())?;
 file.write_all(&value.to_ne_bytes())?;
 ```
 
-###### Reading/writing multiple values
+##### Reading/writing multiple values
 ```rust
 use std::io::{BufReader, BufWriter, Read, Write};
 
@@ -4872,7 +4962,7 @@ let file = File::open("data.txt")
 ```
 
 ### Common Patterns
-###### Reading a binary header
+##### Reading a binary header
 ```rust
 use std::fs::File;
 use std::io::Read;
@@ -4897,7 +4987,7 @@ fn read_header(path: &str) -> io::Result<Header> {
 }
 ```
 
-###### Processing a large file line by line
+##### Processing a large file line by line
 ```rust
 use std::fs::File;
 use std::io::{BufReader, BufRead};
@@ -4916,7 +5006,7 @@ fn process_log_file(path: &str) -> io::Result<()> {
 }
 ```
 
-###### Writing CSV-like data
+##### Writing CSV-like data
 ```rust
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -5262,7 +5352,7 @@ Cargo manages a well-known list of [environment variables](https://doc.rust-lang
 ##### `env` the Function
 Rust includes the [`env`](https://doc.rust-lang.org/stable/std/env/){target="_blank"} module as part of the standard library. It includes functions to read and write environment variables.
 
-###### Examples
+##### Examples
 ```rust
 use std::env;
 
@@ -5289,7 +5379,7 @@ But the *super-cool* way of reading an environment variable is the `env!` macro.
 
 `env!` inspects an environment variable at *compile time*. This macro will expand to the value of the named environment variable at compile time, yielding an expression of type `&'static str`. If the environment variable is not defined, then a compilation error will be emitted. To not emit a compile error, use the `option_env!` macro instead.
 
-###### Examples
+##### Examples
 ```rust
 let path: &'static str = env!("PATH");
 println!("the $PATH variable at the time of compiling was: {path}");
@@ -5503,7 +5593,7 @@ struct Cli {
 Usage: prog <FILE>
 ```
 
-###### What does `name = "FILE"` mean?
+##### What does `name = "FILE"` mean?
 The `name` attribute in `#[arg(...)]` sets the argument's internal **ID** and, for positional arguments, its **metavar** — the placeholder text shown in usage and help output. The uppercase `FILE` in `<FILE>` is a Unix convention: metavars are written in ALL_CAPS to visually distinguish the placeholder from the flags around it, and to make the type of input obvious at a glance.
 
 ```

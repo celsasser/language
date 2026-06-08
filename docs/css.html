@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-04-11">
+<meta name="dcterms.date" content="2026-06-08">
 
 <title>CSS – Computer Language Notebook</title>
 <style>
@@ -194,6 +194,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="./css.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">The CSS Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./matlab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The MATLAB Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shell.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Shell Scripting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./git.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Git Version Control</span></a>
   </div>
 </li>
       </ul>
@@ -388,7 +406,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 11, 2026</p>
+      <p class="date">June 8, 2026</p>
     </div>
   </div>
   
@@ -404,6 +422,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
 <section id="the-design-of-css" class="level3">
 <h3 class="anchored" data-anchor-id="the-design-of-css">The Design of CSS</h3>
+<p><img src="images/css-00.png" class="img-fluid" style="float: left; padding: 0 1.5em 0 0.5em;width:2.25in"></p>
 <p><strong>CSS</strong> (Cascading Style Sheets) is the language that governs the visual presentation of documents written in HTML and XML. Where HTML defines <em>what</em> content is, CSS defines <em>how</em> it looks: its colors, typefaces, spacing, and layout. This separation of structure from presentation is the foundational design principle behind CSS, and it matters in practice. A single HTML document can be paired with multiple stylesheets to produce entirely different visual results, making it possible to redesign a site without touching its content, or to serve different layouts to different devices from the same markup.</p>
 <p>CSS is a <strong>declarative language</strong>. You describe the desired visual state of an element rather than writing instructions for how to compute it. The browser’s rendering engine resolves those descriptions into pixels. Because rules can come from many sources, can conflict, and can apply partially, the engine follows well-defined resolution rules to produce a deterministic result.</p>
 </section>
@@ -1139,7 +1158,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="margin-collapse" class="level4">
 <h4 class="anchored" data-anchor-id="margin-collapse">Margin Collapse</h4>
-<p>Adjacent <strong>vertical</strong> margins between block elements collapse into a single margin equal to the larger of the two values. This does not apply to horizontal margins, flexbox children, or grid items.</p>
+<p>Adjacent <strong>vertical</strong> margins between block elements collapse into a single margin equal to the larger of the two values. This does not apply to horizontal margins, flexbox children, grid items, or elements with <code>display: inline-block</code>.</p>
+<p>Margin collapse is a design feature intended to make text spacing consistent. If every paragraph had a <code>1em</code> top and bottom margin, the gap between paragraphs would be <code>2em</code>, while the gap at the top of the page would only be <code>1em</code>. Collapsing ensures the gap remains consistent at <code>1em</code> everywhere.</p>
+<p>Common scenarios where margins do <strong>not</strong> collapse:</p>
+<ul>
+<li><strong>Horizontal margins</strong> never collapse.</li>
+<li><strong>Flexbox and Grid items</strong> do not collapse.</li>
+<li><strong>Inline-block</strong> elements do not collapse margins with siblings or parents.</li>
+<li><strong>Absolutely positioned</strong> or <strong>floated</strong> elements.</li>
+<li><strong>Elements with overflow</strong> other than <code>visible</code> (which create a new Block Formatting Context).</li>
+</ul>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode css code-with-copy"><code class="sourceCode css"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>p {</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">margin-top</span><span class="ch">:</span> <span class="dv">1</span><span class="dt">em</span><span class="op">;</span></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">margin-bottom</span><span class="ch">:</span> <span class="dv">1</span><span class="dt">em</span><span class="op">;</span></span>
@@ -1236,8 +1264,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h4 class="anchored" data-anchor-id="container-properties">Container Properties</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 15%">
-<col style="width: 52%">
+<col style="width: 12%">
+<col style="width: 56%">
 <col style="width: 31%">
 </colgroup>
 <thead>

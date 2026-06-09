@@ -35,9 +35,271 @@ This is the decision that surprises people coming from C. Before the shell runs 
 ##### 5. Exit codes are the boolean type
 Every program returns an integer when it finishes: `0` for success, non-zero for failure. The shell treats `0` as *true* (note: the opposite of C). This is what makes `&&`, `||`, and `if` work without a separate boolean type. `grep` returning "found nothing" is just `grep` returning `1`, and that integer is enough to drive control flow.
 
-::: {.callout-note title="zsh"}
+::: {.note data-label="zsh"}
 This guide is general, but it focuses on `zsh` (the Z shell), the default on macOS and many Linux distros. If you use `bash` or another shell, almost all of this applies; differences are noted where they bite.
 :::
+
+## Variables and the Environment
+If the pipe passes text *across* programs, the environment passes text *down* into them. A shell variable is a named piece of text; the environment is the subset of those variables that the shell hands to every program it launches. Understanding the difference between the two, and it is exactly one keyword, clears up most of the confusion around configuration, `PATH`, and "why does my variable disappear?"
+
+### Setting and Reading a Variable
+Assignment has no `let` or `var` keyword and, critically, **no spaces around the `=`**. This trips up everyone at least once:
+
+```bash
+name="curtis"        # correct
+name = "curtis"      # WRONG: the shell reads this as running the command `name`
+                     #        with arguments `=` and `curtis`
+```
+
+The no-spaces rule is a direct consequence of decision #4 (the shell splits on whitespace): `name = "curtis"` is three words, so the shell treats `name` as a command. With no spaces, `name="curtis"` is a single word the shell recognizes as an assignment.
+
+You read a variable back by prefixing it with `$`, which is just another expansion the shell performs before running the command:
+
+```bash
+echo "$name"         # curtis
+echo "${name}"       # same; braces let you disambiguate, e.g. "${name}_backup"
+```
+
+The braces matter when the variable name butts up against other text. `"$name_backup"` looks for a variable called `name_backup` (and finds nothing); `"${name}_backup"` reads `name` and appends the literal `_backup`.
+
+### Exported vs. Non-Exported
+This is the heart of it. A plain assignment creates a variable that lives **only in the current shell**. Child processes never see it. `export` promotes a variable into the *environment*, the bundle of name/value pairs that every child process inherits.
+
+```bash
+greeting="hello"            # shell variable: this shell only
+export visible="seen"       # environment variable: this shell AND its children
+```
+
+The cleanest way to feel the difference is to launch a child shell and look:
+
+##### Command Executed
+```bash
+greeting="hello"
+export visible="seen"
+bash -c 'echo "greeting=[$greeting] visible=[$visible]"'
+```
+
+##### Output
+```
+greeting=[] visible=[seen]
+```
+
+The child shell inherited `visible` but not `greeting`. The non-exported variable was real and usable in the parent, but it stopped at the process boundary. This is the whole model:
+
+|                              | Plain assignment                                  | `export`ed                                                             |
+|------------------------------|---------------------------------------------------|------------------------------------------------------------------------|
+| Visible in current shell     | yes                                               | yes                                                                    |
+| Inherited by child processes | **no**                                            | **yes**                                                                |
+| Lives in the environment     | no                                                | yes                                                                    |
+| Typical use                  | scratch values, loop counters, script-local state | config the programs you launch need to read (`PATH`, `EDITOR`, `LANG`) |
+
+A few mechanical notes that follow from the model:
+
+```bash
+export greeting             # export an already-set variable
+export PATH="$PATH:/opt/bin"   # the common idiom: append, then re-export
+
+FOO=bar mycommand           # set FOO for ONE command's environment only,
+                            # without touching the current shell at all
+```
+
+That last form is worth keeping in your pocket. `FOO=bar mycommand` puts `FOO` in the environment of `mycommand` and nothing else, which is the tidy way to pass a one-off setting (`DEBUG=1 ./run.sh`) without leaving it lying around.
+
+::: {.callout-note title="Inheritance is one-way and by-copy"}
+A child receives a *copy* of the parent's environment. Nothing a child does to its own variables, not even exported ones, propagates back up to the parent. This is why you cannot write a normal script that changes your current shell's directory or variables: it runs in a child, and its changes die with it. (The escape hatch is `source script.sh`, which runs the script in the *current* shell instead of a child. More on that below.)
+:::
+
+### `source` vs. Executing
+Running a script the usual way (`./script.sh`) launches a child shell, so per the note above, any variables or `cd`s it performs vanish when it exits. `source script.sh` (or its POSIX spelling `. script.sh`) instead runs the file's commands in your *current* shell:
+
+```bash
+./setup.sh        # runs in a child; its exports do NOT survive
+source setup.sh   # runs here; its exports and cd DO survive
+```
+
+This is exactly why you `source ~/.zshrc` to reload your config rather than executing it, and why Python's `venv` activation is `source venv/bin/activate`: it needs to modify your current shell's `PATH`.
+
+### The Standard Environment Variables
+A handful of environment variables are conventional across Unix systems. Programs read them to discover where things live and how you like to work. These are the `$x` names you will see constantly:
+
+| Variable          | Holds                                                     |
+|-------------------|-----------------------------------------------------------|
+| `$PATH`           | colon-separated list of directories searched for commands. |
+| `$HOME`           | your home directory (`~` expands to this).                |
+| `$USER`           | your login name.                                          |
+| `$SHELL`          | path to your login shell (e.g. `/bin/zsh`).               |
+| `$PWD`            | the current working directory.                            |
+| `$OLDPWD`         | the previous directory (what `cd -` returns to).          |
+| `$LANG` / `$LC_*` | locale: language, character encoding, formatting.         |
+| `$EDITOR`         | your preferred editor, used by `git`, `crontab`, etc.     |
+| `$TERM`           | terminal type, used for colors and capabilities.          |
+| `$TMPDIR`         | directory for temporary files.                            |
+| `$PROMPT` / `$PS1` | prompt [specification](https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html){target="_blank"} expanded by the shell. The same expansion is available using the `-P` option to the `print` builtin. |
+
+`$PATH` is the one to understand deeply, because it is *how the shell turns a command name into a program* (decision #3, programs are the standard library). When you type `grep`, the shell walks `$PATH` left to right and runs the first `grep` it finds:
+
+##### Command Executed
+```bash
+echo "$PATH"
+```
+
+##### Output
+```
+/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+```
+
+Order matters: a directory earlier in `$PATH` shadows the same-named command later. This is why `/usr/local/bin` usually comes first, so your installed tools win over the system defaults.
+
+### The Special Shell Parameters
+Distinct from the environment variables above, the shell maintains a set of **special parameters**: read-only `$x` values it sets for you, mostly about the running script and the last command. You met `$?` back in [Flow Control](#flow-control); here is the rest of the family:
+
+| Parameter     | Holds                                                |
+|---------------|------------------------------------------------------|
+| `$?`          | exit code of the last command (`0` = success)        |
+| `$$`          | process ID of the current shell                      |
+| `$!`          | process ID of the last backgrounded command          |
+| `$0`          | name of the script (or shell) itself                 |
+| `$1`, `$2`, … | positional arguments passed to the script            |
+| `$#`          | number of positional arguments                       |
+| `$@`          | all arguments, as separate quoted words (use `"$@"`) |
+| `$*`          | all arguments, as one word                           |
+
+The argument parameters are what make a script callable. A minimal example ties them to things you have already seen:
+
+```bash
+#!/usr/bin/env bash
+echo "script: $0"
+echo "got $# arguments"
+
+for arg in "$@"; do        # "$@" expands to each argument as its own word
+    echo "  - $arg"
+done
+```
+
+::: {.callout-warning title="`\"$@\"` vs `$@` vs `$*`"}
+Always quote it: `"$@"` is the only form that preserves arguments exactly, each as a separate word even when it contains spaces. Bare `$@` and `$*` word-split, and unquoted `$*` collapses everything into one string. This is the same quoting hazard from the [Quoting](#quoting-and-expansion) section, now applied to a script's own inputs.
+:::
+
+## Running Commands and Capturing Output
+::: {.subheading}
+Every command hands back two separate things, and confusing them is the root of most "why didn't that work?" moments.
+:::
+
+When a command finishes, it gives you two distinct things: a *stream of text* (its output) and a single *integer* (its exit status). These travel on different channels and serve different jobs. The text is the *data* the command produced; the integer is a *verdict* on whether it succeeded. The whole secret to this section is keeping them apart in your head.
+
+If you come from C, you already know this shape. A function like `int fputs(const char *s, FILE *stream)` does two things at once: it *writes* characters to a stream (a side effect on `stdout`) and it *returns* an `int` (a status). A shell command is the same: it writes text to `stdout` and returns an integer status. The text is not "the return value" in the C sense; it is the side effect on the stream. The return value is the integer. Tangling those two is exactly what trips people up.
+
+### The Three Standard Streams
+Every command is born with three streams already wired up. The rest of this section, and later all of [pipes and redirection](#pipes-and-redirection), is about what you connect them to.
+
+| Stream     | Number | Default  | Purpose                                         |
+|------------|--------|----------|-------------------------------------------------|
+| **stdin**  | `0`    | keyboard | where the program reads input                   |
+| **stdout** | `1`    | terminal | where the program writes normal output          |
+| **stderr** | `2`    | terminal | where the program writes errors and diagnostics |
+
+The separation of `stdout` from `stderr` is deliberate and important: it lets you capture a program's *results* while still seeing its *errors* on screen (or route them somewhere else entirely). A program that mixes errors into stdout is considered poorly behaved precisely because it pollutes the data stream that the next program in the pipe is trying to read.
+
+The two channels a command hands back map onto this picture cleanly: the text you can capture is **stdout** (stream 1), and the integer verdict is the exit status (not a stream at all, a separate value we get to below).
+
+### Capturing stdout: Command Substitution
+This is the answer to the question that started this section: yes, you can take what a command sends to stdout and assign it to a variable. The mechanism is **command substitution**, written `$(...)`. The shell runs the command inside the parentheses, captures everything it wrote to stdout, and substitutes that text in place.
+
+::: {.note data-label="Two syntaxes for command substitution?"}
+Yes, indeed. There are two methods of specifying command substitution: `$(...)` and `` `...` ``.
+
+```bash
+result=$(date)     # modern form, preferred
+result=`date`      # legacy backtick form, same effect
+```
+
+But they did battle at Thunderdome. Two syntaxes entered, one syntax left. Guess which one left. Yes, the super-syntax flying the dollar-sign cape. They do the same thing, but `$(...)` is better in every case that matters. The decisive difference is **nesting**. With `$(...)` you simply nest:
+
+```bash
+newest=$(basename $(ls -t | head -1))
+```
+
+With backticks you cannot nest directly; the inner ones must be escaped, and it gets ugly fast:
+
+```bash
+newest=`basename \`ls -t | head -1\``
+```
+
+Backticks also collide visually with single quotes and are easy to misread. They survive only in old scripts and quick one-liners. Reach for `$(...)` and never look back.
+:::
+
+A one-line reminder on assignment first (the full story is in [Variables and the Environment](#variables-and-the-environment)): you assign with `name=value` and **no spaces** around the `=`. With that in hand:
+
+```bash
+result=$(date)          # run date, capture its stdout into result
+echo "$result"          # Mon Jun  9 11:04:21 PDT 2026
+export today=$(date +%F)   # same idea, but placed into the environment
+```
+
+`$(...)` is not limited to assignment. Because the shell replaces it with text *before* running the outer command, you can drop a command's output anywhere a word is expected:
+
+```bash
+echo "Today is $(date +%A)"   # Today is Monday
+kill $(pgrep firefox)         # pgrep prints PIDs; kill receives them as arguments
+mkdir "backup-$(date +%F)"    # backup-2026-06-09
+```
+
+That captured text is exactly what people mean by "the returned result." There is no separate text-return channel hiding behind the command; it *is* stdout, grabbed and pasted in.
+
+One small surprise for C programmers expecting raw bytes: command substitution **strips trailing newlines**. `date` prints a line ending in `\n`, but `result=$(date)` holds the text without it. This is almost always what you want (it keeps `"backup-$(date +%F)"` from breaking across a line), but it means `$(...)` is not a byte-exact copy of the stream.
+
+::: {.callout-warning title="stderr is not captured"}
+`$(cmd)` captures **stdout only**. Anything `cmd` writes to stderr sails straight past the capture and onto your terminal. So `out=$(grep foo missing.txt)` leaves `out` empty *and* still prints `grep: missing.txt: No such file or directory` to the screen. To fold stderr into the captured text, redirect it into stdout first:
+
+`out=$(grep foo missing.txt 2>&1)`
+
+That `2>&1` idiom is covered under [Redirection](#redirection).
+:::
+
+### Exit Status: the Other Return Value
+The second thing a command hands back is its **exit status**: an integer from 0 to 255, where `0` means success and any non-zero value means some kind of failure. This is the shell's boolean type ([decision #5](#why-the-shell-exists)), and it is what `if`, `&&`, and `||` actually test. The special variable `$?` holds the exit status of the most recent command:
+
+```bash
+grep -q "thesis" shell.qmd
+echo $?        # 0 if the word was found, 1 if not
+```
+
+Here is the crux of the confusion. **You cannot capture the exit status with `$(...)`.** Command substitution captures *text from stdout*; the exit status is a separate integer that lives in `$?`. They answer different questions:
+
+| You want…                         | Use…                          |
+|-----------------------------------|-------------------------------|
+| the command's **output** (text)   | `var=$(cmd)`                  |
+| whether it **succeeded** (yes/no) | test `cmd` directly, or read `$?` |
+
+A useful detail ties them together: assigning a command substitution does *not* clobber `$?` with the assignment's own status, so `$?` afterward still reflects the inner command. That lets you grab both in two lines:
+
+```bash
+output=$(some-command)   # capture the text
+status=$?                # capture the verdict, before any other command runs
+```
+
+The "before any other command runs" matters: `$?` is overwritten by the *next* command, so read it immediately.
+
+### A Look-alike: Arithmetic Substitution `$(( ))`
+One construct looks almost identical to command substitution but does something entirely different. `$(( ... ))`, with **doubled** parentheses, is **arithmetic substitution**: it evaluates a math expression and substitutes the numeric result. It does not run a command.
+
+```bash
+count=$(( count + 1 ))    # increment count
+area=$(( width * height ))
+echo "$(( 7 % 3 ))"       # 1
+```
+
+It is worth pointing out only because `$(cmd)` and `$(( expr ))` are one keystroke apart on the page and easy to confuse. The single-paren form runs a command and captures its stdout; the double-paren form does arithmetic. Different jobs, similar costume.
+
+### Quick Reference
+| Goal                                  | Syntax                  |
+|---------------------------------------|-------------------------|
+| Capture a command's stdout            | `var=$(command)`        |
+| Same, legacy form (avoid)             | `` var=`command` ``     |
+| Capture stdout **and** stderr         | `var=$(command 2>&1)`   |
+| Read the last command's exit status   | `$?`                    |
+| Capture output and status together    | `out=$(cmd); st=$?`     |
+| Evaluate arithmetic                   | `$(( expression ))`     |
 
 ## Quoting and Expansion
 Quoting is not decoration. It is how you *control the shell's rewriting of your command line* (decision #4 above). Get quoting wrong and the shell hands your program a mangled set of arguments; get it right and you have exact control over what every program receives.
@@ -231,14 +493,8 @@ zsh's behavior is safer (it refuses to run a command built from a broken assumpt
 ## Pipes and Redirection
 Here is decision #2 made concrete. Every program starts life with three open streams, and the shell lets you rewire them.
 
-### The Three Standard Streams
-| Stream     | Number | Default  | Purpose                                         |
-|------------|--------|----------|-------------------------------------------------|
-| **stdin**  | `0`    | keyboard | where the program reads input                   |
-| **stdout** | `1`    | terminal | where the program writes normal output          |
-| **stderr** | `2`    | terminal | where the program writes errors and diagnostics |
-
-The separation of `stdout` from `stderr` is deliberate and important: it lets you capture a program's *results* while still seeing its *errors* on screen (or route them somewhere else entirely). A program that mixes errors into stdout is considered poorly behaved precisely because it pollutes the data stream that the next program in the pipe is trying to read.
+### Rewiring the Three Streams
+Recall the [three standard streams](#the-three-standard-streams) every command is born with: stdin (0), stdout (1), and stderr (2). The pipe and redirection are the two tools for rewiring them, the first connecting a program to another program, the second connecting a program to a file.
 
 ### The Pipe `|`
 The pipe connects one program's stdout to the next program's stdin:
@@ -767,146 +1023,6 @@ grep -rl "old_name" . --include="*.qmd" | xargs sed -i '' 's/old_name/new_name/g
 
 ::: {.callout-tip title="The shape to internalize"}
 Almost every shell task decomposes the same way: **produce** a stream (`ls`, `find`, `grep`, a program's output), **transform** it through filters (`grep`, `sort`, `uniq`, `cut`, `sed`), and **consume** the result (`wc`, `less`, a redirect to a file, or `xargs` into another command). When a task feels hard, you are usually missing one of those three stages, not a fancier tool.
-:::
-
-## Variables and the Environment
-If the pipe passes text *across* programs, the environment passes text *down* into them. A shell variable is a named piece of text; the environment is the subset of those variables that the shell hands to every program it launches. Understanding the difference between the two, and it is exactly one keyword, clears up most of the confusion around configuration, `PATH`, and "why does my variable disappear?"
-
-### Setting and Reading a Variable
-Assignment has no `let` or `var` keyword and, critically, **no spaces around the `=`**. This trips up everyone at least once:
-
-```bash
-name="curtis"        # correct
-name = "curtis"      # WRONG: the shell reads this as running the command `name`
-                     #        with arguments `=` and `curtis`
-```
-
-The no-spaces rule is a direct consequence of decision #4 (the shell splits on whitespace): `name = "curtis"` is three words, so the shell treats `name` as a command. With no spaces, `name="curtis"` is a single word the shell recognizes as an assignment.
-
-You read a variable back by prefixing it with `$`, which is just another expansion the shell performs before running the command:
-
-```bash
-echo "$name"         # curtis
-echo "${name}"       # same; braces let you disambiguate, e.g. "${name}_backup"
-```
-
-The braces matter when the variable name butts up against other text. `"$name_backup"` looks for a variable called `name_backup` (and finds nothing); `"${name}_backup"` reads `name` and appends the literal `_backup`.
-
-### Exported vs. Non-Exported
-This is the heart of it. A plain assignment creates a variable that lives **only in the current shell**. Child processes never see it. `export` promotes a variable into the *environment*, the bundle of name/value pairs that every child process inherits.
-
-```bash
-greeting="hello"            # shell variable: this shell only
-export visible="seen"       # environment variable: this shell AND its children
-```
-
-The cleanest way to feel the difference is to launch a child shell and look:
-
-##### Command Executed
-```bash
-greeting="hello"
-export visible="seen"
-bash -c 'echo "greeting=[$greeting] visible=[$visible]"'
-```
-
-##### Output
-```
-greeting=[] visible=[seen]
-```
-
-The child shell inherited `visible` but not `greeting`. The non-exported variable was real and usable in the parent, but it stopped at the process boundary. This is the whole model:
-
-|                              | Plain assignment                                  | `export`ed                                                             |
-|------------------------------|---------------------------------------------------|------------------------------------------------------------------------|
-| Visible in current shell     | yes                                               | yes                                                                    |
-| Inherited by child processes | **no**                                            | **yes**                                                                |
-| Lives in the environment     | no                                                | yes                                                                    |
-| Typical use                  | scratch values, loop counters, script-local state | config the programs you launch need to read (`PATH`, `EDITOR`, `LANG`) |
-
-A few mechanical notes that follow from the model:
-
-```bash
-export greeting             # export an already-set variable
-export PATH="$PATH:/opt/bin"   # the common idiom: append, then re-export
-
-FOO=bar mycommand           # set FOO for ONE command's environment only,
-                            # without touching the current shell at all
-```
-
-That last form is worth keeping in your pocket. `FOO=bar mycommand` puts `FOO` in the environment of `mycommand` and nothing else, which is the tidy way to pass a one-off setting (`DEBUG=1 ./run.sh`) without leaving it lying around.
-
-::: {.callout-note title="Inheritance is one-way and by-copy"}
-A child receives a *copy* of the parent's environment. Nothing a child does to its own variables, not even exported ones, propagates back up to the parent. This is why you cannot write a normal script that changes your current shell's directory or variables: it runs in a child, and its changes die with it. (The escape hatch is `source script.sh`, which runs the script in the *current* shell instead of a child. More on that below.)
-:::
-
-### `source` vs. Executing
-Running a script the usual way (`./script.sh`) launches a child shell, so per the note above, any variables or `cd`s it performs vanish when it exits. `source script.sh` (or its POSIX spelling `. script.sh`) instead runs the file's commands in your *current* shell:
-
-```bash
-./setup.sh        # runs in a child; its exports do NOT survive
-source setup.sh   # runs here; its exports and cd DO survive
-```
-
-This is exactly why you `source ~/.zshrc` to reload your config rather than executing it, and why Python's `venv` activation is `source venv/bin/activate`: it needs to modify your current shell's `PATH`.
-
-### The Standard Environment Variables
-A handful of environment variables are conventional across Unix systems. Programs read them to discover where things live and how you like to work. These are the `$x` names you will see constantly:
-
-| Variable          | Holds                                                     |
-|-------------------|-----------------------------------------------------------|
-| `$PATH`           | colon-separated list of directories searched for commands |
-| `$HOME`           | your home directory (`~` expands to this)                 |
-| `$USER`           | your login name                                           |
-| `$SHELL`          | path to your login shell (e.g. `/bin/zsh`)                |
-| `$PWD`            | the current working directory                             |
-| `$OLDPWD`         | the previous directory (what `cd -` returns to)           |
-| `$LANG` / `$LC_*` | locale: language, character encoding, formatting          |
-| `$EDITOR`         | your preferred editor, used by `git`, `crontab`, etc.     |
-| `$TERM`           | terminal type, used for colors and capabilities           |
-| `$TMPDIR`         | directory for temporary files                             |
-
-`$PATH` is the one to understand deeply, because it is *how the shell turns a command name into a program* (decision #3, programs are the standard library). When you type `grep`, the shell walks `$PATH` left to right and runs the first `grep` it finds:
-
-##### Command Executed
-```bash
-echo "$PATH"
-```
-
-##### Output
-```
-/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-```
-
-Order matters: a directory earlier in `$PATH` shadows the same-named command later. This is why `/usr/local/bin` usually comes first, so your installed tools win over the system defaults.
-
-### The Special Shell Parameters
-Distinct from the environment variables above, the shell maintains a set of **special parameters**: read-only `$x` values it sets for you, mostly about the running script and the last command. You met `$?` back in [Flow Control](#flow-control); here is the rest of the family:
-
-| Parameter     | Holds                                                |
-|---------------|------------------------------------------------------|
-| `$?`          | exit code of the last command (`0` = success)        |
-| `$$`          | process ID of the current shell                      |
-| `$!`          | process ID of the last backgrounded command          |
-| `$0`          | name of the script (or shell) itself                 |
-| `$1`, `$2`, … | positional arguments passed to the script            |
-| `$#`          | number of positional arguments                       |
-| `$@`          | all arguments, as separate quoted words (use `"$@"`) |
-| `$*`          | all arguments, as one word                           |
-
-The argument parameters are what make a script callable. A minimal example ties them to things you have already seen:
-
-```bash
-#!/usr/bin/env bash
-echo "script: $0"
-echo "got $# arguments"
-
-for arg in "$@"; do        # "$@" expands to each argument as its own word
-    echo "  - $arg"
-done
-```
-
-::: {.callout-warning title="`\"$@\"` vs `$@` vs `$*`"}
-Always quote it: `"$@"` is the only form that preserves arguments exactly, each as a separate word even when it contains spaces. Bare `$@` and `$*` word-split, and unquoted `$*` collapses everything into one string. This is the same quoting hazard from the [Quoting](#quoting-and-expansion) section, now applied to a script's own inputs.
 :::
 
 ## Where to Go Next

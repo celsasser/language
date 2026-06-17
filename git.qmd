@@ -5,6 +5,7 @@ subtitle: "Advanced Workflow Tutorial & Cheat Sheet"
 
 ## Overview
 ![](images/git-00.svg){width=2.25in style="float: left; padding: 0 1em"}
+
 The name "Git" was coined by its creator, Linus Torvalds, "I'm an egotistical bastard, and I name all my projects after myself. First 'Linux', now 'git'". In British English slang, a "git" is an unpleasant, silly, or incompetent person.
 
 This document bridges the gap between surface-level Git usage and a deeper understanding of Git's internal models. It serves as both an immediate command reference and an explanatory guide for complex operations including history tracking, branch synchronization, interactive rebasing, and submodule management.
@@ -30,7 +31,6 @@ The Three Trees and the Object Database
 To understand how Git tracks changes, you must look past your visible project files. Git manages your project using three internal conceptual areas (often called the **Three Trees**) backed by a simple key-value object database inside the hidden `.git` folder.
 
 ### The Three Trees
-
 ![](images/git-01.png){fig-align="center" width=8in}
 
 Efficient Git usage relies on knowing which "tree" you are currently manipulating.
@@ -39,12 +39,12 @@ Efficient Git usage relies on knowing which "tree" you are currently manipulatin
 2. **The Staging Area / Index (The Blueprint):** A single, binary file located at `.git/index`. It acts as a preparation area that calculates exactly what the next snapshot will look like. When you run `git add`, you are taking a snapshot of your files at that exact moment and staging them.
 3. **The Commit History / HEAD (The Vault):** This is the permanent record. When you run `git commit`, Git takes the blueprint from the Staging Area and permanently writes it into the local database as a commit object. `HEAD` is simply a pointer showing which commit in the vault your Working Directory is currently reflecting.
 
-| Action | Source Tree | Target Tree | Command |
-| --- | --- | --- | --- |
-| **Stage Changes** | Working Directory | Staging Area | `git add <file>` |
-| **Commit Changes** | Staging Area | Local Repository | `git commit` |
-| **Unstage Changes** | Local Repository / HEAD | Staging Area | `git reset <file>` |
-| **Discard Local Changes** | Staging Area | Working Directory | `git checkout -- <file>` |
+| Action                    | Source Tree             | Target Tree       | Command                  |
+|---------------------------|-------------------------|-------------------|--------------------------|
+| **Stage Changes**         | Working Directory       | Staging Area      | `git add <file>`         |
+| **Commit Changes**        | Staging Area            | Local Repository  | `git commit`             |
+| **Unstage Changes**       | Local Repository / HEAD | Staging Area      | `git reset <file>`       |
+| **Discard Local Changes** | Staging Area            | Working Directory | `git checkout -- <file>` |
 
 ### The Content-Addressable Storage
 ::: {.subheading}
@@ -61,7 +61,6 @@ Inside `.git/objects`, Git breaks data down into four primary object types:
 .git/objects/
 ├── [First 2 chars of hash]/
 │   └── [Remaining 38 chars of hash]  --> (A zipped Blob, Tree, or Commit)
-
 ```
 
 #### 1. Blobs
@@ -69,19 +68,15 @@ Inside `.git/objects`, Git breaks data down into four primary object types:
 Binary Large Objects
 :::
 
-
 A **blob** stores raw file data. It contains only the text or data of a file, completely stripped of metadata. A blob does not know its own filename, its folder structure, or its modification date. It only knows its content.
 
 #### 2. Trees
-
 A **tree** object solves the mystery of the missing filenames. A tree represents a directory. It is a simple text manifest that maps the SHA-1 hashes of blobs back to their actual filenames, permissions, and directory locations. Trees can also point to other trees to represent nested subdirectories.
 
 #### 3. Commits {#commit-objects}
-
 A **commit** object is a small text file pointing to a specific top-level tree object (the snapshot of the project root at that moment). It contains metadata: the author, the committer, the timestamp, the commit log message, and a pointer to one or more **parent commits** (the hashes of the commits that came immediately before it). This chain of parent pointers forms your history graph.
 
 #### 4. Annotated Tags
-
 A tag is an explicit, unchanging pointer containing a commit hash, a tagger name, a message, and a timestamp, used to flag release points like `v1.0.0`.
 
 ### Putting It All Together
@@ -98,7 +93,6 @@ When you make a single commit changing one file in a subfolder:
 5. Git updates your current branch pointer (which is just a text file inside `.git/refs/heads/`) to point to the hash of this new commit object.
 
 ## Search & Investigation
-
 Investigation in Git falls into two fundamentally different activities, and confusing them is the source of most frustration. The first is **searching a single snapshot**: "where, in the code as it exists *right now*, does this function live?" The second is **searching across history**: "*when*, across the thousands of snapshots in my object database, did this line appear, change, or vanish?" The working tree is a single point in time; history is the entire DAG of commits behind it. Different questions, different tools. The subsections below are ordered from the gentlest (walking the timeline) to the most surgical (binary-searching the graph for a regression).
 
 ### Basic Navigation & History
@@ -108,14 +102,14 @@ Exploring the Timeline
 
 Everything here is built on a single command, `git log`, which is simply a walk over the parent pointers introduced earlier. Recall that each commit object stores a hash of its parent ([Commits](#commit-objects)); `git log` starts at `HEAD` and follows those pointers backwards, printing each commit it visits. That is the entire mechanism. Every flag below is just a filter applied to that walk: `--author` discards commits whose author field doesn't match, `--since` discards commits outside a time window, and `-- <file_path>` discards commits whose snapshot didn't touch that path. Because it is a graph walk and not a flat list, `--graph` can draw the branch and merge topology directly, and `--all` tells the walk to start from *every* branch tip rather than just your current `HEAD`.
 
-| Objective                          | Command                                         | Purpose / Context                                                                          |
-|:-----------------------------------|:------------------------------------------------|:-------------------------------------------------------------------------------------------|
-| **Visual History**                 | `git log --oneline --graph --all`               | Displays a compact, visual representation of all branches, merges, and commits.            |
-| **Filter by Author**               | `git log --author="Name"`                       | Restricts the history to commits made by a specific person.                                |
-| **Filter by Date**                 | `git log --since="2 weeks ago"`                 | Restricts the history to a specific timeframe (e.g., `--since`, `--until`).                |
-| **Filter by File**                 | `git log -- <file_path>`                        | Shows only the commits that modified a specific file or directory.                         |
-| **Search Commit Messages**         | `git log --grep="fix memory leak"`              | Filters the walk to commits whose *log message* matches the pattern.                       |
-| **Inspect a Commit**               | `git show <hash>`                               | Displays the log message and full diff of exactly what changed in that commit.             |
+| Objective                  | Command                            | Purpose / Context                                                               |
+|:---------------------------|:-----------------------------------|:--------------------------------------------------------------------------------|
+| **Visual History**         | `git log --oneline --graph --all`  | Displays a compact, visual representation of all branches, merges, and commits. |
+| **Filter by Author**       | `git log --author="Name"`          | Restricts the history to commits made by a specific person.                     |
+| **Filter by Date**         | `git log --since="2 weeks ago"`    | Restricts the history to a specific timeframe (e.g., `--since`, `--until`).     |
+| **Filter by File**         | `git log -- <file_path>`           | Shows only the commits that modified a specific file or directory.              |
+| **Search Commit Messages** | `git log --grep="fix memory leak"` | Filters the walk to commits whose *log message* matches the pattern.            |
+| **Inspect a Commit**       | `git show <hash>`                  | Displays the log message and full diff of exactly what changed in that commit.  |
 
 ::: {.callout-note}
 `--grep` searches the commit *message*, the human prose you wrote. This is a different axis entirely from `-S` and `-G` in the [Advanced Code Tracing](#advanced-code-tracing) table below, which search the *content of the diff* (the code itself). "Find the commit where someone mentioned the leak" versus "find the commit where the leaking line actually changed" are distinct questions, and Git gives you a distinct flag for each.
@@ -128,12 +122,12 @@ Everything here is built on a single command, `git log`, which is simply a walk 
 
 This is the "single snapshot" half of investigation, and it is worth being explicit about why a dedicated tool exists. You could run the ordinary system `grep -r` over your project folder, but it has no idea what Git is tracking: it will descend into `node_modules`, dredge up build artifacts, and search files you have told Git to ignore. `git grep` searches only the contents Git knows about, which makes it both faster (it consults the index rather than stat-ing every file on disk) and cleaner (it honors `.gitignore`). Critically, it can also search any *past* snapshot without touching your working directory: by naming a commit or tag, you ask Git to decompress that historical tree and search it in place, then hand you the results while your checked-out files stay exactly as they are.
 
-| Objective                          | Command                                         | Purpose / Context                                                                          |
-|:-----------------------------------|:------------------------------------------------|:-------------------------------------------------------------------------------------------|
-| **Search Current Code**            | `git grep "pattern"`                            | Searches all tracked files in the working tree; respects `.gitignore`.                     |
-| **Show Line Numbers**              | `git grep -n "pattern"`                          | Prepends the line number to each match for direct navigation.                              |
-| **Search a Past Snapshot**         | `git grep "pattern" <commit_or_tag>`            | Searches the content of any historical commit or tag without checking it out.              |
-| **Count Matches per File**         | `git grep -c "pattern"`                          | Reports how many times the pattern appears in each file rather than the lines themselves.  |
+| Objective                  | Command                              | Purpose / Context                                                                         |
+|:---------------------------|:-------------------------------------|:------------------------------------------------------------------------------------------|
+| **Search Current Code**    | `git grep "pattern"`                 | Searches all tracked files in the working tree; respects `.gitignore`.                    |
+| **Show Line Numbers**      | `git grep -n "pattern"`              | Prepends the line number to each match for direct navigation.                             |
+| **Search a Past Snapshot** | `git grep "pattern" <commit_or_tag>` | Searches the content of any historical commit or tag without checking it out.             |
+| **Count Matches per File** | `git grep -c "pattern"`              | Reports how many times the pattern appears in each file rather than the lines themselves. |
 
 ### Working with Tags
 ::: {.subheading}
@@ -144,12 +138,12 @@ It is worth clearing up exactly where tags live, because it explains why their s
 
 This is why `git tag` lists *every* tag in the repository rather than "the tags on this branch", the concept of "tags on a branch" doesn't exist. When you genuinely want the branch relationship, you have to ask the inverse question with `git branch --contains`: given this tagged commit, which branches have it somewhere in their ancestry?
 
-| Objective                          | Command                                         | Purpose / Context                                                                          |
-|:-----------------------------------|:------------------------------------------------|:-------------------------------------------------------------------------------------------|
-| **List All Tags**                  | `git tag`                                       | Outputs a list of all tags in the repository (tags are global, not per-branch).            |
-| **Search Tags by Pattern**         | `git tag -l "v2.0*"`                            | Filters the tag list using wildcard patterns to find specific versions.                    |
-| **Inspect a Tag**                  | `git show <tag_name>`                           | Displays the tag's metadata (annotated message, tagger) and the commit it points to.       |
-| **Find Branches with Tag**         | `git branch --contains <tag_name>`              | Lists all branches that have this tag's commit in their ancestry line.                     |
+| Objective                  | Command                            | Purpose / Context                                                                    |
+|:---------------------------|:-----------------------------------|:-------------------------------------------------------------------------------------|
+| **List All Tags**          | `git tag`                          | Outputs a list of all tags in the repository (tags are global, not per-branch).      |
+| **Search Tags by Pattern** | `git tag -l "v2.0*"`               | Filters the tag list using wildcard patterns to find specific versions.              |
+| **Inspect a Tag**          | `git show <tag_name>`              | Displays the tag's metadata (annotated message, tagger) and the commit it points to. |
+| **Find Branches with Tag** | `git branch --contains <tag_name>` | Lists all branches that have this tag's commit in their ancestry line.               |
 
 ### Advanced Code Tracing {#advanced-code-tracing}
 ::: {.subheading}
@@ -176,13 +170,13 @@ The two pickaxe variants are easy to confuse, so the distinction is worth statin
 
 The tools above find *where code lives*; `git bisect` finds *which commit broke something*, and it is the most powerful investigation tool Git offers. The insight is that your history is a sorted sequence: somewhere along the chain of commits there is a transition from "working" to "broken", and you want the single commit where that flip happened. Checking every commit one by one is linear, but because the commits are ordered, you can binary-search them instead. Tell Git one commit that is known **good** and one that is known **bad**, and it checks out the commit halfway between them. You test it and report `good` or `bad`; Git discards the half that cannot contain the transition and bisects again. A history of a thousand commits collapses to roughly ten tests.
 
-| Objective                | Command                          | Purpose / Context                                                                  |
-|:-------------------------|:---------------------------------|:-----------------------------------------------------------------------------------|
-| **Begin a Hunt**         | `git bisect start`               | Enters bisect mode, ready to receive the boundary commits.                         |
-| **Mark the Boundaries**  | `git bisect bad` <br> `git bisect good <hash>` | Declares the current commit broken and an older commit known to work.  |
-| **Report a Test Result** | `git bisect good` / `git bisect bad` | Reports the checked-out midpoint, prompting Git to narrow the range further.    |
-| **Automate the Search**  | `git bisect run <test_command>`  | Runs a script at each step, using its exit code to mark commits automatically.     |
-| **End the Hunt**         | `git bisect reset`               | Restores `HEAD` to where you started before the bisect began.                      |
+| Objective                | Command                                        | Purpose / Context                                                              |
+|:-------------------------|:-----------------------------------------------|:-------------------------------------------------------------------------------|
+| **Begin a Hunt**         | `git bisect start`                             | Enters bisect mode, ready to receive the boundary commits.                     |
+| **Mark the Boundaries**  | `git bisect bad` <br> `git bisect good <hash>` | Declares the current commit broken and an older commit known to work.          |
+| **Report a Test Result** | `git bisect good` / `git bisect bad`           | Reports the checked-out midpoint, prompting Git to narrow the range further.   |
+| **Automate the Search**  | `git bisect run <test_command>`                | Runs a script at each step, using its exit code to mark commits automatically. |
+| **End the Hunt**         | `git bisect reset`                             | Restores `HEAD` to where you started before the bisect began.                  |
 
 ### Recovering Lost Work
 ::: {.subheading}
@@ -191,12 +185,12 @@ The tools above find *where code lives*; `git bisect` finds *which commit broke 
 
 Not all investigation is about other people's code; sometimes you need to investigate your own recent past, usually after a rebase or reset that seems to have eaten your commits. Here is the reassuring truth: those commits are almost never gone. When a branch ref moves off a commit, the commit object still sits in the database; it has merely become *unreachable*, with no ref pointing at it. The **reflog** is Git's private journal of everywhere `HEAD` and your branch tips have pointed, recorded every time they moved. It is purely local and never pushed. Because it remembers the hash a ref held *before* your destructive command, it gives you the address of the "lost" commit so you can point a branch back at it and bring it back to life.
 
-| Objective                  | Command                              | Purpose / Context                                                                       |
-|:---------------------------|:-------------------------------------|:----------------------------------------------------------------------------------------|
-| **View HEAD Movements**    | `git reflog`                         | Lists recent positions of `HEAD` with their hashes and the action that moved them.      |
-| **Inspect a Lost Commit**  | `git show HEAD@{2}`                  | Shows the commit `HEAD` pointed to two moves ago, using reflog's positional syntax.     |
-| **Recover to a Prior State** | `git reset --hard HEAD@{1}`        | Moves your branch back to where it was one action ago, undoing a bad reset or rebase.   |
-| **Rescue an Orphaned Commit** | `git branch rescue <lost_hash>`   | Anchors a new branch to a commit found in the reflog, making it reachable again.        |
+| Objective                     | Command                         | Purpose / Context                                                                     |
+|:------------------------------|:--------------------------------|:--------------------------------------------------------------------------------------|
+| **View HEAD Movements**       | `git reflog`                    | Lists recent positions of `HEAD` with their hashes and the action that moved them.    |
+| **Inspect a Lost Commit**     | `git show HEAD@{2}`             | Shows the commit `HEAD` pointed to two moves ago, using reflog's positional syntax.   |
+| **Recover to a Prior State**  | `git reset --hard HEAD@{1}`     | Moves your branch back to where it was one action ago, undoing a bad reset or rebase. |
+| **Rescue an Orphaned Commit** | `git branch rescue <lost_hash>` | Anchors a new branch to a commit found in the reflog, making it reachable again.      |
 
 ### Tutorial
 ::: {.subheading}
@@ -207,14 +201,14 @@ When a standard `git blame` shows a generic "Refactor formatting" commit instead
 
 1. **Locate the line range** of interest in your file (e.g., lines 45 through 60 in `analysis.qmd`).
 2. **Execute the line-log search** to filter the DAG down to only modifications affecting those lines:
-   ```bash
-   git log -L 45,60:analysis.qmd --oneline
-   ```
+	```bash
+	git log -L 45,60:analysis.qmd --oneline
+	```
 3. **Identify the root commit** at the bottom of this generated log.
 4. If the code was introduced from another file entirely, run a **pickaxe search** using a signature keyword or definition from that snippet across the whole history:
-   ```bash
-   git log -S "void calculate_weights" -p --raw
-   ```
+	```bash
+	git log -S "void calculate_weights" -p --raw
+	```
 
 If `git blame` keeps stopping at the same formatting commit, blame its parent instead to step past the noise and find the commit that actually wrote the logic:
 
@@ -267,23 +261,23 @@ Resolving Divergence with Minimal Friction
 When your local branch cannot be pushed because the remote tracking branch has new work, use a rebase-driven alignment to avoid creating unnecessary merge loops.
 
 1. **Fetch current upstream state** without shifting your HEAD pointer:
-   ```bash
-   git fetch origin
-   ```
+	```bash
+	git fetch origin
+	```
 2. **Initiate the rebase** on top of the updated remote branch (e.g., `main`):
-   ```bash
-   git rebase origin/main
-   ```
+	```bash
+	git rebase origin/main
+	```
 3. **Handle Conflicts Immediatley:** If Git pauses due to conflicting edits, it will leave the markers (`<<<<<<<`, `=======`, `>>>>>>>`) directly in your source files.
-   - Open the affected file.
-   - The top block (between `HEAD` and `=======`) represents the upstream state from `main`.
-   - The bottom block (between `=======` and your commit hash) represents your local changes.
-   - Edit the file to unify the logic, removing all conflict markers.
+	- Open the affected file.
+	- The top block (between `HEAD` and `=======`) represents the upstream state from `main`.
+	- The bottom block (between `=======` and your commit hash) represents your local changes.
+	- Edit the file to unify the logic, removing all conflict markers.
 4. **Stage and Progress:** Do *not* run a new commit command. Stage the resolved assets and instruct the rebase engine to proceed to your next commit:
-   ```bash
-   git add path/to/resolved_file.qmd
-   git rebase --continue
-   ```
+	```bash
+	git add path/to/resolved_file.qmd
+	git rebase --continue
+	```
 
 ## Interactive Rebasing
 ::: {.subheading}
@@ -317,23 +311,23 @@ Cleaning Up Your Local Commits
 Assume you have made 4 commits locally, but the middle two are intermediate fixes that clutter the project log.
 
 1. **Launch the interactive editor** targetting the last 4 commits on your current branch:
-   ```bash
-   git rebase -i HEAD~4
-   ```
+	```bash
+	git rebase -i HEAD~4
+	```
 2. **Analyze the instruction list:** An editor window will open showing your commits chronologically from top to bottom (the reverse of `git log`).
-   ```text
-   pick a1b2c3d Initial data ingestion script
-   pick e5f6g7h Fix broken file path handling
-   pick i9j0k1l Typo correction in headers
-   pick m3n4o5p Complete visualization pipeline
-   ```
+	```text
+	pick a1b2c3d Initial data ingestion script
+	pick e5f6g7h Fix broken file path handling
+	pick i9j0k1l Typo correction in headers
+	pick m3n4o5p Complete visualization pipeline
+	```
 3. **Modify the operations:** Change the instructions to consolidate the intermediate commits into the primary ingestion script.
-   ```text
-   pick a1b2c3d Initial data ingestion script
-   fixup e5f6g7h Fix broken file path handling
-   fixup i9j0k1l Typo correction in headers
-   pick m3n4o5p Complete visualization pipeline
-   ```
+	```text
+	pick a1b2c3d Initial data ingestion script
+	fixup e5f6g7h Fix broken file path handling
+	fixup i9j0k1l Typo correction in headers
+	pick m3n4o5p Complete visualization pipeline
+	```
 4. **Save and Close** the editor. Git will sequentially apply `a1b2c3d`, merge the structural changes of the next two commits directly into it without changing its intent, and then apply `m3n4o5p`. Your history is now condensed into two pristine commits.
 
 ## Git Submodules
@@ -363,19 +357,19 @@ Resolving Out-of-Sync Submodules
 A common point of failure occurs when a collaborator updates a submodule reference on a remote branch, and your local workspace falls out of sync after a pull, resulting in modified dirty working directories.
 
 1. **Pull the latest parent commits:**
-   ```bash
-   git pull origin main
-   ```
+	```bash
+	git pull origin main
+	```
 2. Running `git status` may show the submodule directory as modified or untracked because your local pointer has moved in history, but the physical files in that directory haven't shifted yet.
 3. **Synchronize the physical files** to match the precise commit hash expected by the parent project:
-   ```bash
-   git submodule update --init --recursive
-   ```
+	```bash
+	git submodule update --init --recursive
+	```
 4. **Making edits inside a submodule:** If you need to make changes to the submodule library itself:
-   - Change into the submodule directory: `cd path/to/submodule`.
-   - Check out an active branch (submodules default to a "detached HEAD" state): `git checkout main`.
-   - Stage, commit, and push your changes *within* the submodule repository first.
-   - Return to the parent repository (`cd ..`) and commit the new submodule pointer change so the superproject links to your new work.
+	- Change into the submodule directory: `cd path/to/submodule`.
+	- Check out an active branch (submodules default to a "detached HEAD" state): `git checkout main`.
+	- Stage, commit, and push your changes *within* the submodule repository first.
+	- Return to the parent repository (`cd ..`) and commit the new submodule pointer change so the superproject links to your new work.
 
 ## Emergency Recovery Options
 ### The Concept
@@ -401,20 +395,20 @@ Recovering from a Destructive Rebase
 If you run a rebase that goes completely wrong, corrupts your code, or deletes crucial commits, you can use the reflog to time-travel back to the moment before the rebase started.
 
 1. **Query the local reference log:**
-   ```bash
-   git reflog
-   ```
+	```bash
+	git reflog
+	```
 2. **Analyze the output log** from top to bottom (most recent actions are at the top):
-   ```text
-   7a8b9c0 HEAD@{0}: rebase (continue): Finished rebase onto origin/main
-   3d4e5f6 HEAD@{1}: rebase (step): Applied commit "Fixed typo"
-   1a2b3c4 HEAD@{2}: rebase (start): checkout origin/main
-   987f65e HEAD@{3}: commit: Ready for production architecture
-   ```
+	```text
+	7a8b9c0 HEAD@{0}: rebase (continue): Finished rebase onto origin/main
+	3d4e5f6 HEAD@{1}: rebase (step): Applied commit "Fixed typo"
+	1a2b3c4 HEAD@{2}: rebase (start): checkout origin/main
+	987f65e HEAD@{3}: commit: Ready for production architecture
+	```
 3. **Locate the entry** right before the rebase mechanics began. In this case, `HEAD@{3}` represents your pristine local state before the rebase started.
 4. **Hard-reset your branch** back to that safe coordinate:
-   ```bash
-   git reset --hard HEAD@{3}
-   ```
+	```bash
+	git reset --hard HEAD@{3}
+	```
 
 Your working directory and commit history are now restored exactly as they existed before the operation.

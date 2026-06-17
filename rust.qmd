@@ -5,6 +5,7 @@ subtitle: "A practical bridge to Rust's fundamentals"
 
 ## Why Rust Exists
 ![](images/rust-00.png){width=2.25in style="float: left; padding: 0 1em"}
+
 Rust was created at Mozilla Research around 2010 and reached 1.0 in 2015. The motivation was straightforward and familiar to anyone who has debugged a segfault at 2am: systems programming is unsafe by default, and the traditional tools (C, C++) leave memory safety entirely to the programmer.
 
 The designers asked a pointed question: *can we have the performance of C with memory safety guaranteed at compile time, without a garbage collector?*
@@ -31,7 +32,6 @@ Rust rarely does things behind your back. Integer overflow is checked in debug b
 When the Tangerine and Passion Fruit Kombucha Genie popped out of my bottle, he said to me: "Five Questions from ye, I shall answer truthfully. But on Rust, from ye, they must be."
 
 ##### 1. Does Rust support Inheritance? If not, then why?
-
 No. Rust deliberately omits implementation inheritance, and the omission is a design choice, not an oversight.
 
 Inheritance bundles two distinct things: *code reuse* (sharing implementation) and *subtype polymorphism* (treating a derived type as its base). Object-oriented languages couple them; you inherit the implementation to get the polymorphism. Decades of experience showed that this coupling causes problems: fragile base class syndrome, deep hierarchies that are hard to reason about, and the pressure to contort a design to fit a tree when the real relationships form a graph.
@@ -40,9 +40,7 @@ Rust separates the two concerns cleanly. For code reuse, you use *traits with de
 
 The payoff is that Rust's type system is simpler to reason about. There is no implicit behavior coming from somewhere up the hierarchy, and the borrow checker doesn't have to contend with inherited mutable state. If you miss inheritance, you usually find that a trait with default methods plus composition covers the real need without the baggage.
 
-
 ##### 2. Is Rust as efficient and fast as C?
-
 Yes, with one honest qualification.
 
 On the machine-code level, Rust and C compile to essentially identical output. Both use LLVM (Clang also uses LLVM), both have no runtime or garbage collector, and Rust's abstractions — iterators, generics, closures — are zero-cost: they disappear at compile time. Benchmarks between idiomatic Rust and idiomatic C are routinely within a percent or two of each other, and Rust sometimes wins because the compiler can apply optimizations that would be illegal in C due to aliasing rules (`restrict` in C is opt-in; Rust's ownership model gives the compiler that guarantee automatically).
@@ -50,7 +48,6 @@ On the machine-code level, Rust and C compile to essentially identical output. B
 The qualification: Rust has bounds-checked array indexing in debug builds. In optimized builds, those checks are often eliminated when the compiler can prove an access is in range, and idiomatic safe Rust often uses iterators or slice methods that compile down without per-access bounds checks. In tight inner loops over arrays this can still matter in some cases, and C has no such checks by default. If you truly need manual unchecked indexing, Rust gives you the escape hatch via [`unsafe`](https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword){target=_blank}, but you have to ask for it deliberately. In practice, for most systems code, the difference does not appear outside of microbenchmarks.
 
 ##### 3. Is it possible for a Rust app to experience a segfault?
-
 Yes, but it requires deliberate effort.
 
 In safe Rust, a segfault is essentially impossible by construction. The borrow checker prevents dangling pointers, use-after-free, and out-of-bounds memory access at compile time. What you get instead of a segfault is a compile error. The few things that could cause memory problems at runtime (like out-of-bounds slice indexing) are caught and turned into a controlled [`panic`](https://doc.rust-lang.org/reference/panic.html){target=_blank} rather than undefined behavior.
@@ -59,9 +56,7 @@ However, Rust has [`unsafe`](https://doc.rust-lang.org/reference/unsafe-keyword.
 
 So: pure safe Rust, no segfaults. Unsafe Rust, yes — but you opted in, and the surface area is small and visible.
 
-
 ##### 4. What makes Rust good for systems development?
-
 Systems code has two requirements that historically have been in tension: it must be fast and it must be correct. C and C++ solved the first problem and left the second largely to the programmer. Garbage-collected languages solved much of the second problem and compromised on the first. Rust's central achievement is that it solves both at the same time, and it does it through the type system rather than through a runtime.
 
 More concretely, the properties that matter for systems work:
@@ -75,20 +70,18 @@ More concretely, the properties that matter for systems work:
 
 The result is a language that can do everything C can do, on the same hardware, with the same performance characteristics, while ruling out at compile time the bugs that make systems code notoriously hard to ship safely.
 
-
 ##### 5. Could you please compare Rust to Go, listing the pros and cons of each?
-
 Rust and Go are both modern systems-adjacent languages that improve on C in terms of tooling and safety, but they aim at different targets and make very different tradeoffs.
 
-| | **Rust** | **Go** |
-|---|---|---|
-| **Memory model** | Ownership; no GC | Garbage collected |
-| **Performance** | C-level; fully predictable | Very fast; occasional GC pauses |
-| **Concurrency** | Ownership enforces data-race freedom at compile time | CSP-style goroutines; runtime scheduler |
-| **Compilation** | Slower (borrow checking, monomorphization) | Extremely fast |
-| **Learning curve** | Steep; borrow checker requires a new mental model | Shallow; designed to be learnable in a day |
-| **Abstraction cost** | Zero-cost (generics, iterators compile away) | Small runtime overhead (interfaces use dynamic dispatch) |
-| **Error handling** | `Result<T, E>`; explicit, composable | Multiple return values; convention-based |
+|                      | **Rust**                                                           | **Go**                                                       |
+|----------------------|--------------------------------------------------------------------|--------------------------------------------------------------|
+| **Memory model**     | Ownership; no GC                                                   | Garbage collected                                            |
+| **Performance**      | C-level; fully predictable                                         | Very fast; occasional GC pauses                              |
+| **Concurrency**      | Ownership enforces data-race freedom at compile time               | CSP-style goroutines; runtime scheduler                      |
+| **Compilation**      | Slower (borrow checking, monomorphization)                         | Extremely fast                                               |
+| **Learning curve**   | Steep; borrow checker requires a new mental model                  | Shallow; designed to be learnable in a day                   |
+| **Abstraction cost** | Zero-cost (generics, iterators compile away)                       | Small runtime overhead (interfaces use dynamic dispatch)     |
+| **Error handling**   | `Result<T, E>`; explicit, composable                               | Multiple return values; convention-based                     |
 | **Target use cases** | Systems programming, embedded, WebAssembly, security-critical code | Network services, DevOps tooling, CLIs, cloud infrastructure |
 
 **Rust pros:** maximum performance, no GC, memory and thread safety by construction, rich type system (enums, traits, generics), excellent for safety-critical or resource-constrained environments.
@@ -100,7 +93,6 @@ Rust and Go are both modern systems-adjacent languages that improve on C in term
 **Go cons:** garbage collector rules out hard real-time and most embedded targets, GC pauses are real (though small in modern Go), generics arrived late and are still maturing, less expressive type system, no way to enforce data-race freedom at compile time.
 
 The practical heuristic: if you are writing a web service, a CLI tool, or infrastructure software where developer velocity matters more than squeezing every nanosecond, Go is faster to ship. If you are writing a database engine, an OS component, a codec, an embedded runtime, or anything where performance predictability or memory safety guarantees are non-negotiable, Rust is the better tool.
-
 
 ## Cheat Sheet
 I looked over here, and I looked over there. Then I found the cheat sheet I was looking for. He's all squished together and highly 2 dimensional. I edited him a little to get him to fit on a single page, but otherwise it's all [RefMint](https://refmint.com/topics/rust/){target=_blank}.
@@ -123,7 +115,6 @@ This used to be at the end of the *Project Anatomy* chapter. But by the time you
 | Import                | `#include`               | `import`            | `use`             |
 | Package manager       | (none built in)          | pip                 | cargo             |
 
-
 ### Crates
 Before we define what a crate is, it's important to understand what a *fundamental unit of compilation* is in Rust.
 
@@ -142,7 +133,8 @@ Two kinds of crates:
 - **Binary crate** — has a `main()` entry point, produces an executable. Root file is `src/main.rs`.
 - **Library crate** — no `main()`, produces a library for other code to use. Root file is `src/lib.rs`.
 
-:::{style="clear: both;"}
+::: {style="clear: both;"}
+
 :::
 
 #### The Most Popular Crates
@@ -150,37 +142,37 @@ The following list is a top 30 crates capture from [Most popular Rust Libraries]
 
 > To whoever is reading this, the date is 4/8/2026. We drank too much Orange Crush and not enough Tang and we died. Follows is a list of the top 30 most popular Rust crates. I have also left some Tang in the capsule. Live long and prosper.
 
-| Library | Description |
-|---------|-------------|
-| [serde](https://lib.rs/crates/serde){target="_blank"} | A generic serialization/deserialization framework |
-| [thiserror](https://lib.rs/crates/thiserror){target="_blank"} | derive(Error) |
-| [serde_json](https://lib.rs/crates/serde_json){target="_blank"} | A JSON serialization file format |
-| [rand](https://lib.rs/crates/rand){target="_blank"} | Random number generators and other randomness functionality |
-| [tokio](https://lib.rs/crates/tokio){target="_blank"} | An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications |
-| [clap](https://lib.rs/crates/clap){target="_blank"} | efficient, and full-featured Command Line Argument Parser |
-| [anyhow](https://lib.rs/crates/anyhow){target="_blank"} | Flexible concrete Error type built on std::error::Error |
-| [syn](https://lib.rs/crates/syn){target="_blank"} | Parser for Rust source code |
-| [regex](https://lib.rs/crates/regex){target="_blank"} | regular expressions for Rust. This implementation uses finite automata and guarantees linear time matching on all inputs. |
-| [base64](https://lib.rs/crates/base64){target="_blank"} | encodes and decodes base64 as bytes or utf8 |
-| [log](https://lib.rs/crates/log){target="_blank"} | A lightweight logging facade for Rust |
-| [tracing](https://lib.rs/crates/tracing){target="_blank"} | Application-level tracing for Rust |
-| [tempfile](https://lib.rs/crates/tempfile){target="_blank"} | managing temporary files and directories |
-| [chrono](https://lib.rs/crates/chrono){target="_blank"} | Date and time library for Rust |
-| [quote](https://lib.rs/crates/quote){target="_blank"} | Quasi-quoting macro quote!(...) |
-| [reqwest](https://lib.rs/crates/reqwest){target="_blank"} | higher level HTTP client library |
-| [libc](https://lib.rs/crates/libc){target="_blank"} | Raw FFI bindings to platform libraries like libc |
-| [proc-macro2](https://lib.rs/crates/proc-macro2){target="_blank"} | A substitute implementation of the compiler’s proc_macro API to decouple token-based libraries from the procedural macro use case |
-| [toml](https://lib.rs/crates/toml){target="_blank"} | A native Rust encoder and decoder of TOML-formatted files and streams. Provides implementations of the standard Serialize/Deserialize traits for TOML data to facilitate deserializing and serializing Rust structures. |
-| [sha2](https://lib.rs/crates/sha2){target="_blank"} | Pure Rust implementation of the SHA-2 hash function family including SHA-224, SHA-256, SHA-384, and SHA-512 |
-| [futures](https://lib.rs/crates/futures){target="_blank"} | streams featuring zero allocations, composability, and iterator-like interfaces |
-| [uuid](https://lib.rs/crates/uuid){target="_blank"} | generate and parse UUIDs |
-| [tracing-subscriber](https://lib.rs/crates/tracing-subscriber){target="_blank"} | implementing and composing tracing subscribers |
-| [bytes](https://lib.rs/crates/bytes){target="_blank"} | Types and traits for working with bytes |
-| [url](https://lib.rs/crates/url){target="_blank"} | based on the WHATWG URL Standard |
-| [itertools](https://lib.rs/crates/itertools){target="_blank"} | Extra iterator adaptors, iterator methods, free functions, and macros |
-| [once_cell](https://lib.rs/crates/once_cell){target="_blank"} | Single assignment cells and lazy values |
-| [getrandom](https://lib.rs/crates/getrandom){target="_blank"} | A small cross-platform library for retrieving random data from system source |
-| [indexmap](https://lib.rs/crates/indexmap){target="_blank"} | A hash table with consistent order and fast iteration |
+| Library                                                                         | Description                                                                                                                                                                                                             |
+|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [serde](https://lib.rs/crates/serde){target="_blank"}                           | A generic serialization/deserialization framework                                                                                                                                                                       |
+| [thiserror](https://lib.rs/crates/thiserror){target="_blank"}                   | derive(Error)                                                                                                                                                                                                           |
+| [serde_json](https://lib.rs/crates/serde_json){target="_blank"}                 | A JSON serialization file format                                                                                                                                                                                        |
+| [rand](https://lib.rs/crates/rand){target="_blank"}                             | Random number generators and other randomness functionality                                                                                                                                                             |
+| [tokio](https://lib.rs/crates/tokio){target="_blank"}                           | An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications                                                                                                                             |
+| [clap](https://lib.rs/crates/clap){target="_blank"}                             | efficient, and full-featured Command Line Argument Parser                                                                                                                                                               |
+| [anyhow](https://lib.rs/crates/anyhow){target="_blank"}                         | Flexible concrete Error type built on std::error::Error                                                                                                                                                                 |
+| [syn](https://lib.rs/crates/syn){target="_blank"}                               | Parser for Rust source code                                                                                                                                                                                             |
+| [regex](https://lib.rs/crates/regex){target="_blank"}                           | regular expressions for Rust. This implementation uses finite automata and guarantees linear time matching on all inputs.                                                                                               |
+| [base64](https://lib.rs/crates/base64){target="_blank"}                         | encodes and decodes base64 as bytes or utf8                                                                                                                                                                             |
+| [log](https://lib.rs/crates/log){target="_blank"}                               | A lightweight logging facade for Rust                                                                                                                                                                                   |
+| [tracing](https://lib.rs/crates/tracing){target="_blank"}                       | Application-level tracing for Rust                                                                                                                                                                                      |
+| [tempfile](https://lib.rs/crates/tempfile){target="_blank"}                     | managing temporary files and directories                                                                                                                                                                                |
+| [chrono](https://lib.rs/crates/chrono){target="_blank"}                         | Date and time library for Rust                                                                                                                                                                                          |
+| [quote](https://lib.rs/crates/quote){target="_blank"}                           | Quasi-quoting macro quote!(...)                                                                                                                                                                                         |
+| [reqwest](https://lib.rs/crates/reqwest){target="_blank"}                       | higher level HTTP client library                                                                                                                                                                                        |
+| [libc](https://lib.rs/crates/libc){target="_blank"}                             | Raw FFI bindings to platform libraries like libc                                                                                                                                                                        |
+| [proc-macro2](https://lib.rs/crates/proc-macro2){target="_blank"}               | A substitute implementation of the compiler’s proc_macro API to decouple token-based libraries from the procedural macro use case                                                                                       |
+| [toml](https://lib.rs/crates/toml){target="_blank"}                             | A native Rust encoder and decoder of TOML-formatted files and streams. Provides implementations of the standard Serialize/Deserialize traits for TOML data to facilitate deserializing and serializing Rust structures. |
+| [sha2](https://lib.rs/crates/sha2){target="_blank"}                             | Pure Rust implementation of the SHA-2 hash function family including SHA-224, SHA-256, SHA-384, and SHA-512                                                                                                             |
+| [futures](https://lib.rs/crates/futures){target="_blank"}                       | streams featuring zero allocations, composability, and iterator-like interfaces                                                                                                                                         |
+| [uuid](https://lib.rs/crates/uuid){target="_blank"}                             | generate and parse UUIDs                                                                                                                                                                                                |
+| [tracing-subscriber](https://lib.rs/crates/tracing-subscriber){target="_blank"} | implementing and composing tracing subscribers                                                                                                                                                                          |
+| [bytes](https://lib.rs/crates/bytes){target="_blank"}                           | Types and traits for working with bytes                                                                                                                                                                                 |
+| [url](https://lib.rs/crates/url){target="_blank"}                               | based on the WHATWG URL Standard                                                                                                                                                                                        |
+| [itertools](https://lib.rs/crates/itertools){target="_blank"}                   | Extra iterator adaptors, iterator methods, free functions, and macros                                                                                                                                                   |
+| [once_cell](https://lib.rs/crates/once_cell){target="_blank"}                   | Single assignment cells and lazy values                                                                                                                                                                                 |
+| [getrandom](https://lib.rs/crates/getrandom){target="_blank"}                   | A small cross-platform library for retrieving random data from system source                                                                                                                                            |
+| [indexmap](https://lib.rs/crates/indexmap){target="_blank"}                     | A hash table with consistent order and fast iteration                                                                                                                                                                   |
 
 ### Packages
 A **package** is what Cargo manages: a directory with a `Cargo.toml` manifest. A package contains at least one crate. Most projects you will work on are a single package with a single binary crate:
@@ -479,7 +471,6 @@ crate
 ```
 
 ##### Without `self`:
-
 ```rust
 use network::http::client;
 
@@ -508,55 +499,53 @@ use network::http::client;
 ##### Superpowers and Conveniences
 Finally, follows are some of the superpowers and conveniences built into `use`:
 
-* You can rename with `as`:
+- You can rename with `as`:
+	```rust
+	use A::B::C::something as do_the_thing;
+	do_the_thing()
+	```
 
-    ```rust
-    use A::B::C::something as do_the_thing;
-    do_the_thing()
-    ```
+- You can pull in multiple items from the same path with braces:
+	```rust
+	use A::B::C::{something, another_thing};
+	```
 
-* You can pull in multiple items from the same path with braces:
+- You can combine both of the above:
+	```rust
+	use A::B::C::{something, another_thing as other};
+	```
 
-    ```rust
-    use A::B::C::{something, another_thing};
-    ```
+- You can use `self` inside braces to bring in the module itself alongside its children:
+	```rust
+	use A::B::{self, C};  // binds both B and B::C
+	```
 
-* You can combine both of the above:
+- You can glob-import everything public from a path:
+	```rust
+	use A::B::C::*;  // everything public in C lands in the current scope
+	```
 
-    ```rust
-    use A::B::C::{something, another_thing as other};
-    ```
+- Simultaneously binding a list of paths with a common prefix, using the brace syntax:
+	```rust
+	use a::b::{c, d, e::f, g::h::i};
+	```
 
-* You can use `self` inside braces to bring in the module itself alongside its children:
+- Rebinding the target name as a new local name, using the syntax
+	```rust
+	use p::q::r as x;
+	```
 
-    ```rust
-    use A::B::{self, C};  // binds both B and B::C
-    ```
+	This can also be used with the last two features:
 
-* You can glob-import everything public from a path:
+	```rust
+	use a::b::{self as ab, c as abc}
+	```
 
-    ```rust
-    use A::B::C::*;  // everything public in C lands in the current scope
-    ```
+##### Inline Modules
+::: {.subheading}
+`mod Name { }`
+:::
 
-* Simultaneously binding a list of paths with a common prefix, using the brace syntax:
-
-    ```rust
-    use a::b::{c, d, e::f, g::h::i};
-    ```
-
-* Rebinding the target name as a new local name, using the syntax
-
-    ```rust
-    use p::q::r as x;
-    ```
-
-    This can also be used with the last two features:
-    ```rust
-    use a::b::{self as ab, c as abc}
-    ```
-
-##### Inline Modules: `mod Name { }`
 You can declare and define a module in one place, without a separate file:
 
 ```rust
@@ -614,75 +603,72 @@ Complete reference ordered by precedence
 
 Rust operators are listed here from highest to lowest precedence. Higher precedence operators bind more tightly (are evaluated first).
 
-| Precedence | Operator | Description | Example |
-|:----:|:----:|-------------|-------------|
-| **Highest** | | | |
-| 1 | `::` | Path separator (namespace) | `std::io::Read`, `Vec::<i32>::new()` |
-| 2 | `.` | Method call or field access | `obj.method()`, `point.x` |
-| 2 | `[]` | Array/slice indexing | `arr[0]`, `vec[i]` |
-| 2 | `()` | Function call | `foo()`, `add(1, 2)` |
-| 2 | `?` | Error propagation | `file.read()?` (early return on `Err`) |
-| 3 | `-expr` | Negation (arithmetic) | `-5`, `-x` |
-| 3 | `!expr` | Logical/bitwise NOT | `!true`, `!0b1010` |
-| 3 | `*expr` | Dereference | `*ptr`, `*boxed_value` |
-| 3 | `&expr` | Borrow (immutable reference) | `&x`, `&y` |
-| 3 | `&mut expr` | Mutable borrow | `&mut y`, `&mut vec` |
-| 4 | `as` | Type cast | `x as f64`, `5 as u8` |
-| 5 | `*` | Multiplication | `3 * 4` |
-| 5 | `/` | Division | `10 / 2` |
-| 5 | `%` | Remainder (modulo) | `10 % 3` |
-| 6 | `+` | Addition | `1 + 2` |
-| 6 | `-` | Subtraction | `5 - 3` |
-| 7 | `<<` | Left shift | `1 << 3` (8) |
-| 7 | `>>` | Right shift | `8 >> 2` (2) |
-| 8 | `&` | Bitwise AND | `0b1100 & 0b1010` |
-| 9 | `^` | Bitwise XOR | `0b1100 ^ 0b1010` |
-| 10 | `\|` | Bitwise OR | `0b1100 \| 0b1010` |
-| 11 | `==` | Equality | `x == y` |
-| 11 | `!=` | Inequality | `x != y` |
-| 11 | `<` | Less than | `x < y` |
-| 11 | `>` | Greater than | `x > y` |
-| 11 | `<=` | Less than or equal | `x <= y` |
-| 11 | `>=` | Greater than or equal | `x >= y` |
-| 12 | `&&` | Logical AND (short-circuit) | `a && b` |
-| 13 | `\|\|` | Logical OR (short-circuit) | `a \|\| b` |
-| 14 | `..` | Range (exclusive end) | `0..10` (0 to 9) |
-| 14 | `..=` | Range (inclusive end) | `0..=10` (0 to 10) |
-| 15 | `=` | Assignment | `x = 5` |
-| 15 | `+=` | Add and assign | `x += 1` |
-| 15 | `-=` | Subtract and assign | `x -= 1` |
-| 15 | `*=` | Multiply and assign | `x *= 2` |
-| 15 | `/=` | Divide and assign | `x /= 2` |
-| 15 | `%=` | Remainder and assign | `x %= 3` |
-| 15 | `&=` | Bitwise AND and assign | `x &= 0xFF` |
-| 15 | `\|=` | Bitwise OR and assign | `x \|= 0x80` |
-| 15 | `^=` | Bitwise XOR and assign | `x ^= mask` |
-| 15 | `<<=` | Left shift and assign | `x <<= 2` |
-| 15 | `>>=` | Right shift and assign | `x >>= 2` |
-| **Lowest** | | | |
+| Precedence  | Operator    | Description                  | Example                                |
+|:-----------:|:-----------:|------------------------------|----------------------------------------|
+| **Highest** |             |                              |                                        |
+| 1           | `::`        | Path separator (namespace)   | `std::io::Read`, `Vec::<i32>::new()`   |
+| 2           | `.`         | Method call or field access  | `obj.method()`, `point.x`              |
+| 2           | `[]`        | Array/slice indexing         | `arr[0]`, `vec[i]`                     |
+| 2           | `()`        | Function call                | `foo()`, `add(1, 2)`                   |
+| 2           | `?`         | Error propagation            | `file.read()?` (early return on `Err`) |
+| 3           | `-expr`     | Negation (arithmetic)        | `-5`, `-x`                             |
+| 3           | `!expr`     | Logical/bitwise NOT          | `!true`, `!0b1010`                     |
+| 3           | `*expr`     | Dereference                  | `*ptr`, `*boxed_value`                 |
+| 3           | `&expr`     | Borrow (immutable reference) | `&x`, `&y`                             |
+| 3           | `&mut expr` | Mutable borrow               | `&mut y`, `&mut vec`                   |
+| 4           | `as`        | Type cast                    | `x as f64`, `5 as u8`                  |
+| 5           | `*`         | Multiplication               | `3 * 4`                                |
+| 5           | `/`         | Division                     | `10 / 2`                               |
+| 5           | `%`         | Remainder (modulo)           | `10 % 3`                               |
+| 6           | `+`         | Addition                     | `1 + 2`                                |
+| 6           | `-`         | Subtraction                  | `5 - 3`                                |
+| 7           | `<<`        | Left shift                   | `1 << 3` (8)                           |
+| 7           | `>>`        | Right shift                  | `8 >> 2` (2)                           |
+| 8           | `&`         | Bitwise AND                  | `0b1100 & 0b1010`                      |
+| 9           | `^`         | Bitwise XOR                  | `0b1100 ^ 0b1010`                      |
+| 10          | `\|`        | Bitwise OR                   | `0b1100 \| 0b1010`                     |
+| 11          | `==`        | Equality                     | `x == y`                               |
+| 11          | `!=`        | Inequality                   | `x != y`                               |
+| 11          | `<`         | Less than                    | `x < y`                                |
+| 11          | `>`         | Greater than                 | `x > y`                                |
+| 11          | `<=`        | Less than or equal           | `x <= y`                               |
+| 11          | `>=`        | Greater than or equal        | `x >= y`                               |
+| 12          | `&&`        | Logical AND (short-circuit)  | `a && b`                               |
+| 13          | `\|\|`      | Logical OR (short-circuit)   | `a \|\| b`                             |
+| 14          | `..`        | Range (exclusive end)        | `0..10` (0 to 9)                       |
+| 14          | `..=`       | Range (inclusive end)        | `0..=10` (0 to 10)                     |
+| 15          | `=`         | Assignment                   | `x = 5`                                |
+| 15          | `+=`        | Add and assign               | `x += 1`                               |
+| 15          | `-=`        | Subtract and assign          | `x -= 1`                               |
+| 15          | `*=`        | Multiply and assign          | `x *= 2`                               |
+| 15          | `/=`        | Divide and assign            | `x /= 2`                               |
+| 15          | `%=`        | Remainder and assign         | `x %= 3`                               |
+| 15          | `&=`        | Bitwise AND and assign       | `x &= 0xFF`                            |
+| 15          | `\|=`       | Bitwise OR and assign        | `x \|= 0x80`                           |
+| 15          | `^=`        | Bitwise XOR and assign       | `x ^= mask`                            |
+| 15          | `<<=`       | Left shift and assign        | `x <<= 2`                              |
+| 15          | `>>=`       | Right shift and assign       | `x >>= 2`                              |
+| **Lowest**  |             |                              |                                        |
 
-**Special Operators and Constructs**
-
-| Syntax | Description | Example |
-|--------|-------------|---------|
-| `_` | Wildcard pattern (match anything) | `match x { _ => {} }` |
-| `..` | Pattern: ignore remaining fields | `Point { x, .. }` |
-| `@` | Pattern binding | `match x { val @ 1..=5 => {} }` |
-| `\|` | Pattern alternatives | `match x { 1 \| 2 \| 3 => {} }` |
+##### Special Operators and Constructs
+| Syntax | Description                          | Example                               |
+|--------|--------------------------------------|---------------------------------------|
+| `_`    | Wildcard pattern (match anything)    | `match x { _ => {} }`                 |
+| `..`   | Pattern: ignore remaining fields     | `Point { x, .. }`                     |
+| `@`    | Pattern binding                      | `match x { val @ 1..=5 => {} }`       |
+| `\|`   | Pattern alternatives                 | `match x { 1 \| 2 \| 3 => {} }`       |
 | `::<>` | Turbofish (explicit type parameters) | `Vec::<i32>::new()`, `parse::<i32>()` |
 
-**Not Operators**
-
+##### Not Operators
 These look like operators but are actually conventions or syntax:
 
-| Syntax | What It Is | Example |
-|--------|------------|---------|
-| `::new()` | Convention for constructors (associated function) | `String::new()`, `Vec::new()` |
-| `?` | Error propagation (actually IS an operator, see above) | `file.read()?` |
-| `.await` | Async/await syntax (postfix keyword) | `future.await` |
+| Syntax    | What It Is                                             | Example                       |
+|-----------|--------------------------------------------------------|-------------------------------|
+| `::new()` | Convention for constructors (associated function)      | `String::new()`, `Vec::new()` |
+| `?`       | Error propagation (actually IS an operator, see above) | `file.read()?`                |
+| `.await`  | Async/await syntax (postfix keyword)                   | `future.await`                |
 
 #### Operator Overloading
-
 Many operators can be overloaded by implementing traits from [`std::ops`](https://doc.rust-lang.org/std/ops/index.html){target="_blank"}. For example:
 
 ```rust
@@ -708,17 +694,17 @@ let p3 = p1 + p2;  // uses our Add implementation
 
 In the following table we include some of A listers and indicate the operator, the trait (in `std::ops`) and the method signature. For a complete list, see [`std::ops`](https://doc.rust-lang.org/std/ops/index.html#traits){target="_blank"}.
 
-| Operator | Trait | Method |
-|----------|-------|--------|
-| `+` | [`Add`](https://doc.rust-lang.org/std/ops/trait.Add.html){target="_blank"} | `add(self, rhs: Rhs) -> Self` |
-| `-` | [`Sub`](https://doc.rust-lang.org/std/ops/trait.Sub.html){target="_blank"} | `sub(self, rhs: Rhs) -> Self` |
-| `*` | [`Mul`](https://doc.rust-lang.org/std/ops/trait.Mul.html){target="_blank"} | `mul(self, rhs: Rhs) -> Self` |
-| `/` | [`Div`](https://doc.rust-lang.org/std/ops/trait.Div.html){target="_blank"} | `div(self, rhs: Rhs) -> Self` |
-| `%` | [`Rem`](https://doc.rust-lang.org/std/ops/trait.Rem.html){target="_blank"} | `rem(self, rhs: Rhs) -> Self` |
-| `==`, `!=` | [`PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html){target="_blank"} | `eq(&self, other: &Rhs) -> bool`, `ne(&self, other: &Rhs) -> bool` |
-| `<`, `>`, `<=`, `>=` | [`PartialOrd`](https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html){target="_blank"} | `partial_cmp(&self, rhs: &Rhs) -> Option<Ordering>` |
-| `[]` | [`Index`](https://doc.rust-lang.org/std/ops/trait.Index.html){target="_blank"} | `index(&self, index: Idx) -> &Self::Output` |
-| `[]` (mut) | [`IndexMut`](https://doc.rust-lang.org/std/ops/trait.IndexMut.html){target="_blank"} | `index_mut(&mut self, index: Idx) -> &mut Self::Output` |
+| Operator             | Trait                                                                                    | Method                                                             |
+|----------------------|------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
+| `+`                  | [`Add`](https://doc.rust-lang.org/std/ops/trait.Add.html){target="_blank"}               | `add(self, rhs: Rhs) -> Self`                                      |
+| `-`                  | [`Sub`](https://doc.rust-lang.org/std/ops/trait.Sub.html){target="_blank"}               | `sub(self, rhs: Rhs) -> Self`                                      |
+| `*`                  | [`Mul`](https://doc.rust-lang.org/std/ops/trait.Mul.html){target="_blank"}               | `mul(self, rhs: Rhs) -> Self`                                      |
+| `/`                  | [`Div`](https://doc.rust-lang.org/std/ops/trait.Div.html){target="_blank"}               | `div(self, rhs: Rhs) -> Self`                                      |
+| `%`                  | [`Rem`](https://doc.rust-lang.org/std/ops/trait.Rem.html){target="_blank"}               | `rem(self, rhs: Rhs) -> Self`                                      |
+| `==`, `!=`           | [`PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html){target="_blank"}   | `eq(&self, other: &Rhs) -> bool`, `ne(&self, other: &Rhs) -> bool` |
+| `<`, `>`, `<=`, `>=` | [`PartialOrd`](https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html){target="_blank"} | `partial_cmp(&self, rhs: &Rhs) -> Option<Ordering>`                |
+| `[]`                 | [`Index`](https://doc.rust-lang.org/std/ops/trait.Index.html){target="_blank"}           | `index(&self, index: Idx) -> &Self::Output`                        |
+| `[]` (mut)           | [`IndexMut`](https://doc.rust-lang.org/std/ops/trait.IndexMut.html){target="_blank"}     | `index_mut(&mut self, index: Idx) -> &mut Self::Output`            |
 
 ::: {.callout-note title="Why are some by Reference and others by Value?"}
 The reason comes down to **Copy semantics**. For `PartialEq`, the signature is:
@@ -730,6 +716,7 @@ fn eq(&self, other: &Self) -> bool;
 Both sides take references because equality is a *read-only inspection* — you just need to look at both values, and you're done. Neither side is consumed. Taking references here is the obvious choice regardless of whether the type is Copy or not.
 
 For `Add`, the signature is:
+
 ```rust
 fn add(self, rhs: Self) -> Self::Output;
 ```
@@ -760,7 +747,7 @@ Any type that doesn't explicitly derive or implement `Copy` is automatically mov
 And there are rules about when you're even allowed to do that — the compiler will reject it if your type contains any non-Copy fields (like a `String` or a `Vec`). The idea being that Copy is a promise that "bitwise copying this value is always safe and correct," and the compiler enforces that the whole type tree is consistent with that promise.
 :::
 
-:::{.see-more}
+::: {.see-more}
 See [Appendix B: Operators](https://doc.rust-lang.org/book/appendix-02-operators.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for the complete reference.
 :::
 
@@ -904,10 +891,10 @@ fn sum(arr: &[i32; 5]) -> i32 {
 
 Rust has two string types. The distinction maps directly onto [owned](#ownership) vs. [borrowed](#borrowing):
 
-| Type     | Owned? | Mutable? | Lives on  | Analogy                    |
-|----------|--------|----------|-----------|----------------------------|
-| [`String`](https://doc.rust-lang.org/std/string/struct.String.html){target="_blank"} | Yes    | Yes      | Heap      | `std::string` in C++       |
-| [`&str`](https://doc.rust-lang.org/std/primitive.str.html){target="_blank"}   | No     | No       | Anywhere  | `std::string_view` in C++  |
+| Type                                                                                 | Owned? | Mutable? | Lives on | Analogy                   |
+|--------------------------------------------------------------------------------------|--------|----------|----------|---------------------------|
+| [`String`](https://doc.rust-lang.org/std/string/struct.String.html){target="_blank"} | Yes    | Yes      | Heap     | `std::string` in C++      |
+| [`&str`](https://doc.rust-lang.org/std/primitive.str.html){target="_blank"}          | No     | No       | Anywhere | `std::string_view` in C++ |
 
 ##### Representation
 ::: {.definition data-label="Laurel and Hardy"}
@@ -929,7 +916,6 @@ Some common uses of *fat pointers* are:
 Both types are guaranteed to contain valid UTF-8. Rust will not let you construct an invalid string.
 
 ##### Creating a `String`
-
 ```rust
 let a = String::from("hello");       // from a literal
 let b = "hello".to_string();         // same, alternate spelling
@@ -941,34 +927,31 @@ e.push_str(" world");                // append a &str
 ```
 
 ##### String literals are `&str`
-
 ```rust
 let s: &str = "hello";               // stored in the binary, 'static lifetime
 let t: &str = &a[0..3];             // slice of an existing String
 ```
 
 ##### Common methods
-
 Most string methods are defined on `&str` and are therefore available on both `String` and `&str`. Methods that produce a new owned string return `String`; methods that just inspect or slice return `&str` or a primitive.
 
-| Method                   | Returns         | What it does                              |
-|--------------------------|-----------------|-------------------------------------------|
-| `.len()`                 | `usize`         | Byte length which is not the same as character count |
-| `.is_empty()`            | `bool`          | True if length = zero bytes               |
-| `.contains(pat)`         | `bool`          | True if pattern is present                |
-| `.starts_with(pat)`      | `bool`          | Prefix check                              |
-| `.ends_with(pat)`        | `bool`          | Suffix check                              |
-| `.find(pat)`             | `Option<usize>` | Byte offset of first match                |
-| `.trim()`                | `&str`          | Strip leading and trailing whitespace     |
-| `.to_lowercase()`        | `String`        | New lowercased string                     |
-| `.to_uppercase()`        | `String`        | New uppercased string                     |
-| `.replace(from, to)`     | `String`        | Replace all occurrences                   |
-| `.split(pat)`            | [iterator](#iterators) | Split on pattern                   |
-| `.split_whitespace()`    | [iterator](#iterators) | Split on any whitespace, skipping empties |
-| `.lines()`               | [iterator](#iterators) | Split on line endings              |
-| `.chars()`               | [iterator](#iterators) | Unicode scalar values (not bytes)  |
-| `.repeat(n)`             | `String`        | Concatenate `n` copies                    |
-
+| Method                | Returns                | What it does                                         |
+|-----------------------|------------------------|------------------------------------------------------|
+| `.len()`              | `usize`                | Byte length which is not the same as character count |
+| `.is_empty()`         | `bool`                 | True if length = zero bytes                          |
+| `.contains(pat)`      | `bool`                 | True if pattern is present                           |
+| `.starts_with(pat)`   | `bool`                 | Prefix check                                         |
+| `.ends_with(pat)`     | `bool`                 | Suffix check                                         |
+| `.find(pat)`          | `Option<usize>`        | Byte offset of first match                           |
+| `.trim()`             | `&str`                 | Strip leading and trailing whitespace                |
+| `.to_lowercase()`     | `String`               | New lowercased string                                |
+| `.to_uppercase()`     | `String`               | New uppercased string                                |
+| `.replace(from, to)`  | `String`               | Replace all occurrences                              |
+| `.split(pat)`         | [iterator](#iterators) | Split on pattern                                     |
+| `.split_whitespace()` | [iterator](#iterators) | Split on any whitespace, skipping empties            |
+| `.lines()`            | [iterator](#iterators) | Split on line endings                                |
+| `.chars()`            | [iterator](#iterators) | Unicode scalar values (not bytes)                    |
+| `.repeat(n)`          | `String`               | Concatenate `n` copies                               |
 
 ```rust
 let s = String::from("  Hello, World!  ");
@@ -1006,7 +989,6 @@ let lines: Vec<&str> = "one\ntwo\nthree".lines().collect();
 ```
 
 ##### When to use which
-
 Use `&str` for function parameters whenever you only need to read the text. It accepts both `String` and literals without any conversion:
 
 ```rust
@@ -1050,7 +1032,6 @@ enum Option<T> {
 We will learn more about [Option\<T\>](#option-t) and how to use it in the chapter on [Enums](#enums). For now, know that `Option<T>` is how Rust represents a value that can either be something (`Some`) or nothing (`None`).
 
 ##### Why this is better?
-
 1. **The Compiler Forces You to Handle It**: If you have an `Option<String>`, you cannot call methods like `.len()` on it directly. You must use a match statement or an if let to "unwrap" the value first.
 2. **Type Safety**: You can never accidentally treat a "null" value as a real one. If a variable is just a `String`, it is guaranteed to be a valid string. If it's an `Option<String>`, you know it might be empty.
 3. **Efficiency**: Rust uses a "null-pointer optimization." For types like references or Box, an `Option<T>` takes up the same amount of memory as a regular `T`. The None case is represented by a literal null pointer under the hood, but the language makes it impossible for you to interact with that pointer unsafely.
@@ -1068,7 +1049,6 @@ In Rust, `()` is called the **unit type** (and also the **unit value**). It is e
 
 In short, `()` is Rust's way to say "no meaningful value," whether as a function's return type or as the success payload in types like `Result<(), E>`.
 
-
 ### Slices
 ::: {.subheading}
 A view into a sequence, without copying
@@ -1076,14 +1056,13 @@ A view into a sequence, without copying
 
 A slice is a reference to a contiguous subsequence of an array or string. It is a *fat pointer*: two (machine) words wide, carrying both a pointer to the first element and a length. No heap allocation, no copy. Follows is a table of slice syntax and what it means:
 
-| Syntax    | Meaning                          |
-|---------|----------------------------------|
-| `[..]`    | Entire sequence                  |
+| Syntax    | Meaning                                  |
+|-----------|------------------------------------------|
+| `[..]`    | Entire sequence                          |
 | `[a..b]`  | From index `a` up to (not including) `b` |
 | `[a..=b]` | From index `a` through `b` (inclusive)   |
-| `[a..]`   | From index `a` to the end        |
+| `[a..]`   | From index `a` to the end                |
 | `[..b]`   | From the start up to (not including) `b` |
-
 
 ```rust
 let a = [10, 20, 30, 40, 50];
@@ -1096,7 +1075,6 @@ let incl  = &a[1..=3];   // [20, 30, 40]           — inclusive end with ..=
 ```
 
 #### No negative indices
-
 Unlike Python, Rust slices do not accept negative indices. To index relative to the end, use `len()`:
 
 ```rust
@@ -1108,11 +1086,10 @@ let all_but_last = &a[..a.len()-1]; // [10,20,30,40] — Python's [:-1]
 ```
 
 #### Slice types
-
-| Type    | Meaning                              |
-|---------|--------------------------------------|
-| `&[T]`  | Shared slice of any array or `Vec<T>` |
-| `&str`  | String slice (a view into UTF-8 text) |
+| Type   | Meaning                               |
+|--------|---------------------------------------|
+| `&[T]` | Shared slice of any array or `Vec<T>` |
+| `&str` | String slice (a view into UTF-8 text) |
 
 These are the idiomatic types for function parameters that only need to read a sequence. A function accepting `&[i32]` works with arrays, `Vec<i32>`, and slices of either. A function accepting `&str` works with `String`, string literals, and string slices.
 
@@ -1124,7 +1101,6 @@ Look at the target type, not the source
 Rust's conversions are deliberate and explicit. The key mental shift from languages like Python: think about what type you want to end up with, then find the method or trait that produces it.
 
 #### Numeric casts with `as`
-
 `as` performs primitive numeric casts. It is explicit and never implicit:
 
 ```rust
@@ -1179,7 +1155,6 @@ let n: i64    = i64::from(42i32);        // i32 → i64
 `From`/`Into` conversions are infallible by definition. If the conversion can fail, use `TryFrom`/`TryInto` instead, which return `Result`.
 
 #### Parsing strings with `.parse()`
-
 `.parse()` converts a `&str` to any type that implements `FromStr`. The target type is inferred from context:
 
 ```rust
@@ -1191,12 +1166,11 @@ let b: bool = "true".parse().unwrap();
 Because `.parse()` returns `Result`, you handle failure explicitly. In real code use `?` or match rather than `.unwrap()`.
 
 #### `String` and `&str`
-
-| From      | To       | How                        |
-|-----------|----------|----------------------------|
-| `&str`    | `String` | `String::from(s)` or `s.to_string()` or `s.into()` |
-| `String`  | `&str`   | `&s` or `s.as_str()` (coercion, no copy) |
-| `String`  | `&str`   | `&s[..]` — explicit slice  |
+| From     | To       | How                                                |
+|----------|----------|----------------------------------------------------|
+| `&str`   | `String` | `String::from(s)` or `s.to_string()` or `s.into()` |
+| `String` | `&str`   | `&s` or `s.as_str()` (coercion, no copy)           |
+| `String` | `&str`   | `&s[..]` — explicit slice                          |
 
 The `String` → `&str` direction is free: it is just taking a reference to the existing buffer.
 
@@ -1222,16 +1196,14 @@ fn parse<F: FromStr>(&self) -> Result<F, F::Err>
 The `F` is a generic parameter. Rust needs to know what type F is before it can do anything. There are two ways to tell it:
 
 1. Turbofish on the method:
-
-    ```rust
-    "3.14".parse::<f32>()
-    ```
+	```rust
+	"3.14".parse::<f32>()
+	```
 
 2. Type annotation on the binding:
-
-    ```rust
-    let seconds: f32 = seconds_text.parse()...
-    ```
+	```rust
+	let seconds: f32 = seconds_text.parse()...
+	```
 
 In your code, both are present at the same time, which is why removing the *turbofish* is fine. The `: f32` annotation on seconds gives the compiler enough information to infer `F = f32` without being told explicitly on the `.parse()` call. The *turbofish* becomes necessary when there is no annotation for the compiler to infer from, or when the inference is ambiguous. For example:
 
@@ -1244,7 +1216,6 @@ let n: i32 = "42".parse().unwrap();
 ```
 
 The `::<>` spelling looks strange but follows the same pattern as other generic syntax. The extra `::` is there because `<` alone would be ambiguous with a less-than operator at the call site.
-
 :::
 
 ### Functions
@@ -1317,21 +1288,19 @@ for line in &body_lines {
 
 A for loop calls `.into_iter()` on whatever you give it. If you write `for line in body_lines` (no &), the vector is moved into the loop and consumed. After the loop, `body_lines` is gone. Writing `for line in &body_lines` passes a reference to the loop instead. The compiler calls `.into_iter()` on `&Vec<String>`, which yields `&String` references. The vector stays alive and usable after the loop. `line` is `&String`, not `String`.
 
-**What trait makes this work?**
-
+##### What trait makes this work?
 Two traits are at play:
 
 1. `IntoIterator`
-    - `IntoIterator` is the trait that for loops depend on. A for loop is syntactic sugar for calling `.into_iter()` and then repeatedly calling `.next()` on the result. Any type that implements `IntoIterator` can appear in a for loop.
-    - `Vec<T>` implements `IntoIterator` three ways:
-        - `for x in vec` (consumes the vector, yields `T`)
-        - `for x in &vec` (borrows the vector, yields `&T`)
-        - `for x in &mut vec` (mutably borrows the vector, yields `&mut T`)
+	- `IntoIterator` is the trait that for loops depend on. A for loop is syntactic sugar for calling `.into_iter()` and then repeatedly calling `.next()` on the result. Any type that implements `IntoIterator` can appear in a for loop.
+	- `Vec<T>` implements `IntoIterator` three ways:
+		- `for x in vec` (consumes the vector, yields `T`)
+		- `for x in &vec` (borrows the vector, yields `&T`)
+		- `for x in &mut vec` (mutably borrows the vector, yields `&mut T`)
 2. `Iterator`
-    - This trait defines the actual sequence and the logic for traversing the items. It requires defining an Item type and implementing the `.next()` method, which returns `Some(item)` until the iteration is complete, at which point it returns `None.`
+	- This trait defines the actual sequence and the logic for traversing the items. It requires defining an Item type and implementing the `.next()` method, which returns `Some(item)` until the iteration is complete, at which point it returns `None.`
 
 The `&Vec<T>` case works because the standard library implements `IntoIterator` for `&Vec<T>`, which delegates to `Vec::iter()` under the hood and produces an iterator over `&T` values. So for line in `&body_lines` is exactly equivalent to `for line in body_lines.iter()`. The `&` form is just more concise and is what you will see in idiomatic Rust.
-
 
 ```rust
 // loop
@@ -1356,7 +1325,7 @@ for n in &nums {
 }
 ```
 
-:::{.see-more}
+::: {.see-more}
 See [Common Programming Concepts](https://doc.rust-lang.org/book/ch03-00-common-programming-concepts.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -1386,7 +1355,6 @@ Because `Option<T>` is an enum, you can never accidentally use a value that migh
 :::
 
 ### Getting the Value Out
-
 The central question with `Option<T>` is always: how do I get it out of there? It all depends on what your ambition is and to what length of out you want to go. In the following sections we identify the most frequently used methods and `impl` functions for performing just about anything you might want to do with a pointer.
 
 ##### `match`
@@ -1409,7 +1377,6 @@ match name {
 For the longest while I thought `=>` was anonymous function syntax, and I couldn't understand why `return` caused the outer function to exit. Such as in the following:
 
 ::: {.columns}
-
 ::: {.column width=25%}
 ![](images/rust-03.png){fig-align="center" height=4in style="margin-bottom: 0"}
 :::
@@ -1433,7 +1400,6 @@ fn embassy(config: &Config, lang_key: &str) -> Option<&String> {
 *"Why does `return None` exit `fn embassy()`?" *
 
 Well, silly me, it's just an arm boundary for `match`. It's not a function: it's a syntactical way of creating an arm.
-
 :::
 :::
 :::
@@ -1513,7 +1479,6 @@ let name = user_name.unwrap_or("Guest");
 let count = get_count().unwrap_or(0);
 ```
 
-
 #### `unwrap_or_else`
 ::: {.u-subheading}
 compute a fallback lazily
@@ -1560,7 +1525,6 @@ Sometimes you just need to know whether a value is present, without extracting i
 - [is_some](https://doc.rust-lang.org/std/option/enum.Option.html#method.is_some){target="_blank"}: returns `true` if the `Option` is `Some`, `false` otherwise.
 - [is_none](https://doc.rust-lang.org/std/option/enum.Option.html#method.is_none){target="_blank"}: returns `true` if the `Option` is `None`, `false` otherwise.
 
-
 ```rust
 let val: Option<i32> = Some(42);
 
@@ -1569,7 +1533,6 @@ val.is_none();   // false
 ```
 
 ### Transforming Without Extracting
-
 These methods let you work with the value inside an `Option` without pulling it out first. They all preserve the `Option` wrapper — `None` passes through unchanged.
 
 #### `.map(f)`
@@ -1629,7 +1592,6 @@ let val: Result<i32, &str> = None.ok_or("missing value");       // Err("missing 
 ```
 
 ### Dereferencing and `as_deref()`
-
 This is the `Option` equivalent of C's `*` operator, and the source of some of the most confusing compiler errors you will encounter early on.
 
 **The problem: `Option<String>` vs `Option<&str>`**
@@ -1667,8 +1629,7 @@ let name: Option<String> = Some(String::from("Alice"));
 greet(name.as_deref());   // Option<String> → Option<&str>
 ```
 
-**Pattern dereferencing with `&`**
-
+##### Pattern dereferencing with `&`
 When you pattern match on an `Option<&T>`, you can dereference inside the pattern itself using `&` to strip the reference layer and get the value directly:
 
 ```rust
@@ -1695,23 +1656,21 @@ println!("{:?}", label);   // Some("HELLO")
 ```
 
 ### Quick Reference
-
-| Goal | Pattern |
-|------|---------|
-| Handle both cases | `match opt { Some(v) => ..., None => ... }` |
-| Act only on `Some` | `if let Some(v) = opt { ... }` |
-| Default value | `opt.unwrap_or(default)` |
-| Computed default | `opt.unwrap_or_else(\|\| expr)` |
-| Crash if `None` (dev/test) | `opt.expect("msg")` |
-| Propagate `None` upward | `opt?` |
-| Check presence | `opt.is_some()` / `opt.is_none()` |
-| Transform inner value | `opt.map(\|v\| ...)` |
-| Chain fallible operations | `opt.and_then(\|v\| ...)` |
-| Conditional keep | `opt.filter(\|v\| ...)` |
-| Convert to `Result` | `opt.ok_or(err)` |
-| `Option<String>` → `Option<&str>` | `opt.as_deref()` |
-| Mutably borrow inner string | `opt.as_deref_mut()` |
-
+| Goal                              | Pattern                                     |
+|-----------------------------------|---------------------------------------------|
+| Handle both cases                 | `match opt { Some(v) => ..., None => ... }` |
+| Act only on `Some`                | `if let Some(v) = opt { ... }`              |
+| Default value                     | `opt.unwrap_or(default)`                    |
+| Computed default                  | `opt.unwrap_or_else(\|\| expr)`             |
+| Crash if `None` (dev/test)        | `opt.expect("msg")`                         |
+| Propagate `None` upward           | `opt?`                                      |
+| Check presence                    | `opt.is_some()` / `opt.is_none()`           |
+| Transform inner value             | `opt.map(\|v\| ...)`                        |
+| Chain fallible operations         | `opt.and_then(\|v\| ...)`                   |
+| Conditional keep                  | `opt.filter(\|v\| ...)`                     |
+| Convert to `Result`               | `opt.ok_or(err)`                            |
+| `Option<String>` → `Option<&str>` | `opt.as_deref()`                            |
+| Mutably borrow inner string       | `opt.as_deref_mut()`                        |
 
 ## Macros
 Throughout this chapter you have seen `println!`, `vec!`, `format!`, and `panic!`. The `!` signals a *macro call*, not a function call. **Macros** in Rust are code that writes code at compile time, before the compiler type-checks anything.
@@ -1725,10 +1684,12 @@ println!("{} and {}", x, y);          // two arguments, different types fine
 ```
 
 ### Types of Macros
-
 Rust has two macro systems, and within the procedural system there are three distinct subtypes — five kinds in total.
 
-#### Declarative Macros (`macro_rules!`)
+#### Declarative Macros
+::: {.subheading}
+`macro_rules!`
+:::
 
 The original macro system. You define patterns that match against syntax and specify what code to expand into. The `!` suffix is the giveaway.
 
@@ -1749,7 +1710,6 @@ say_hello!("Alice");      // Hello, Alice!
 All the macros in the common reference table below (`vec!`, `println!`, `assert!`, etc.) are declarative macros defined with `macro_rules!` in the standard library. They are the right tool for variadic patterns and syntactic shorthand.
 
 #### Procedural Macros
-
 Procedural macros are Rust functions that receive a stream of tokens and return a transformed stream of tokens. They live in their own crate (a library crate with `proc-macro = true` in `Cargo.toml`) and run at compile time. There are three subtypes:
 
 **Derive macros** — the most common. Placed with `#[derive(...)]`, they generate trait implementations for a struct or enum. You cannot write a derive macro inline; it must come from a crate.
@@ -1783,7 +1743,6 @@ fn debug_only_check() { }
 
 **Function-like macros** — look like declarative macros (called with `!`) but are implemented as procedural code. Used when the pattern-matching of `macro_rules!` is not expressive enough. The `sql!` macro from the `sqlx` crate is a well-known example: it parses and validates a SQL query string against your actual database schema at compile time, turning a runtime error into a compile error.
 
-
 ```rust
 let query = sql!(SELECT * FROM users WHERE id = 1);
 // sql! can parse and validate the SQL at compile time
@@ -1792,13 +1751,12 @@ let query = sql!(SELECT * FROM users WHERE id = 1);
 You are unlikely to write function-like macros early on, but you will use them from crates.
 
 #### Summary
-
-| Type | Syntax | Defined with | Common examples |
-|------|--------|--------------|-----------------|
-| Declarative | `name!(...)` | `macro_rules!` | `vec!`, `println!`, `assert!` |
-| Derive | `#[derive(Name)]` | procedural crate | `Debug`, `Clone`, `Parser` |
-| Attribute | `#[name]` or `#[name(...)]` | procedural crate | `#[test]`, `#[cfg(...)]`, `#[tokio::main]` |
-| Function-like (procedural) | `name!(...)` | procedural crate | `sql!::query!`, `html!` |
+| Type                       | Syntax                      | Defined with     | Common examples                            |
+|----------------------------|-----------------------------|------------------|--------------------------------------------|
+| Declarative                | `name!(...)`                | `macro_rules!`   | `vec!`, `println!`, `assert!`              |
+| Derive                     | `#[derive(Name)]`           | procedural crate | `Debug`, `Clone`, `Parser`                 |
+| Attribute                  | `#[name]` or `#[name(...)]` | procedural crate | `#[test]`, `#[cfg(...)]`, `#[tokio::main]` |
+| Function-like (procedural) | `name!(...)`                | procedural crate | `sql!::query!`, `html!`                    |
 
 ### Conditional Compilation
 ::: {.subheading}
@@ -1819,7 +1777,6 @@ struct DebugStats {
 
 means `DebugStats` does not exist in a release build. Any code that references it would also need to be gated the same way, or you'll get a compile error in release because the type is unknown.
 
-
 `#[cfg(...)]` only applies to the single item immediately following it. For example, in the following:
 
 ```rust
@@ -1831,6 +1788,7 @@ cmd.stderr(Stdio::null());
 `cmd.stdout(Stdio::null())` is conditionally compiled, but `cmd.stderr(Stdio::null())` is always compiled regardless of the cfg condition. If you want both lines conditional, you have two options:
 
 1. Repeat the attribute:
+
 ```rust
 #[cfg(not(debug_assertions))]
 cmd.stdout(Stdio::null());
@@ -1839,6 +1797,7 @@ cmd.stderr(Stdio::null());
 ```
 
 2. Wrap in a block:
+
 ```rust
 #[cfg(not(debug_assertions))]
 {
@@ -1876,9 +1835,7 @@ assert_eq!(p, p2);      // PartialEq
 ```
 
 ### Homemade Macros
-
 #### Declarative Macros with `macro_rules!`
-
 Declarative macros are the practical everyday kind. You define one or more pattern arms — each arm matches a particular shape of input and expands to corresponding output code. The syntax looks like `match`, but the patterns match *syntax tokens*, not values.
 
 ```rust
@@ -1898,20 +1855,18 @@ greet!("Alice");     // Hello, Alice!
 Each arm is `(pattern) => { expansion };`. The `$name:expr` syntax means "capture whatever expression the caller provides and bind it to the name `$name`". Inside the expansion, `$name` is substituted with that captured value.
 
 ##### Fragment specifiers
-
 The `:expr` part is a **fragment specifier** — it tells the macro what kind of syntax to expect. Common ones:
 
-| Specifier | Matches |
-|-----------|---------|
-| `expr`    | Any expression (`1 + 2`, `foo()`, `"hello"`) |
-| `ident`   | An identifier (variable name, function name) |
-| `ty`      | A type (`i32`, `Vec<String>`) |
-| `stmt`    | A statement |
-| `block`   | A `{ ... }` block |
+| Specifier | Matches                                                            |
+|-----------|--------------------------------------------------------------------|
+| `expr`    | Any expression (`1 + 2`, `foo()`, `"hello"`)                       |
+| `ident`   | An identifier (variable name, function name)                       |
+| `ty`      | A type (`i32`, `Vec<String>`)                                      |
+| `stmt`    | A statement                                                        |
+| `block`   | A `{ ... }` block                                                  |
 | `tt`      | A single token tree — the most permissive, matches almost anything |
 
 ##### Repetition
-
 Macros can match and repeat over a variable number of arguments using `$(...)*` (zero or more) or `$(...)+` (one or more):
 
 ```rust
@@ -1932,7 +1887,10 @@ The `$($x:expr),+` pattern means "one or more expressions separated by commas." 
 
 This is how `vec![1, 2, 3]` works internally — it matches a comma-separated list and expands to a series of `.push()` calls.
 
-##### A practical example: a custom assert macro
+##### A practical example
+::: {.subheading}
+a custom assert macro
+:::
 
 ```rust
 macro_rules! assert_between {
@@ -1951,7 +1909,6 @@ assert_between!(200, 0, 100);   // panics with a clear message
 ```
 
 ##### When to write a declarative macro
-
 Reach for `macro_rules!` when:
 
 - You need a variadic interface (variable number of arguments of varying types)
@@ -1961,7 +1918,6 @@ Reach for `macro_rules!` when:
 For most programs, `macro_rules!` is the only macro system you will ever write. The standard library's `vec!`, `println!`, `assert_eq!`, and friends are all `macro_rules!` macros.
 
 #### Procedural Macros
-
 Procedural macros are a different beast. Instead of pattern matching on syntax, you write a Rust function that receives a stream of tokens, manipulates it programmatically, and returns a new token stream. They live in a dedicated crate (a separate library with `proc-macro = true` in `Cargo.toml`) and are compiled before the crates that use them.
 
 Writing a procedural macro from scratch involves the `proc-macro`, `syn` (for parsing token streams into a syntax tree), and `quote` (for generating token streams from templates) crates. It is a non-trivial undertaking.
@@ -2040,7 +1996,7 @@ C macros are handled by a separate preprocessor before the compiler sees the cod
 ##### Visual Distinction
 In Rust, function-like macros are called with a trailing `!` (e.g., `println!`, `vec!`), making them instantly distinguishable from standard functions for better readability. C macros look identical to function calls.
 
-:::{.see-more}
+::: {.see-more}
 See  [Macros](https://doc.rust-lang.org/book/ch20-05-macros.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -2048,6 +2004,7 @@ See  [Macros](https://doc.rust-lang.org/book/ch20-05-macros.html){target="_blank
 I am a prehistoric man. I assumed that `eprint!`, `eprintln!`, `format!`, `println!` would all live together and essentially use the same formatting code. But, if they do, it's not immediately apparent from looking at the source. Let's compare `format!` and `println!`:
 
 `format!`'s location: `/lib/rustlib/src/rust/library/alloc/src/macros.rs`
+
 ```rust
 #[macro_export]
 #[stable(feature = "rust1", since = "1.0.0")]
@@ -2063,6 +2020,7 @@ macro_rules! format {
 ```
 
 `println`'s location: `./lib/rustlib/src/rust/library/std/src/macros.rs`
+
 ```rust
 #[macro_export]
 #[stable(feature = "rust1", since = "1.0.0")]
@@ -2154,16 +2112,17 @@ assert_eq!(format!("{:#010x}!", 27), "0x0000001b!");
 These are all flags altering the behavior of the formatter.
 
 - `+`: This is intended for numeric types and indicates that the sign should always be printed. By default only the negative sign of signed values is printed, and the sign of positive or unsigned values is omitted. This flag indicates that the correct sign (+ or -) should always be printed.
+
 - `-`: Currently not used
 
 - `#`: This flag indicates that the “alternate” form of printing should be used. The alternate forms are:
-    - `#?`: pretty-print the Debug formatting (adds linebreaks and indentation)
-    - `#x`: precedes the argument with a `0x`
-    - `#X`: precedes the argument with a `0x`
-    - `#b`: precedes the argument with a `0b`
-    - `#o`: precedes the argument with a `0o`
+	- `#?`: pretty-print the Debug formatting (adds linebreaks and indentation)
+	- `#x`: precedes the argument with a `0x`
+	- `#X`: precedes the argument with a `0x`
+	- `#b`: precedes the argument with a `0b`
+	- `#o`: precedes the argument with a `0o`
 
-    See  [Formatting traits](https://doc.rust-lang.org/std/fmt/#formatting-traits){target="_blank"} for a description of what the `?`, `x`, `X`, `b`, and `o` flags do.
+	See  [Formatting traits](https://doc.rust-lang.org/std/fmt/#formatting-traits){target="_blank"} for a description of what the `?`, `x`, `X`, `b`, and `o` flags do.
 
 - `0` - This is used to indicate for integer formats that the padding to width should both be done with a 0 character as well as be sign-aware. A format like `{:08}` would yield `00000001` for the integer `1`, while the same format would yield `-0000001` for the integer `-1`. Notice that the negative version has one fewer zero than the positive version. Note that padding zeros are always placed after the sign (if any) and before the digits. When used together with the `#` flag, a similar rule applies: padding zeros are inserted after the prefix but before the digits. The prefix is included in the total width. This flag overrides the fill character and alignment flag.
 
@@ -2177,9 +2136,9 @@ There are three possible ways to specify the desired precision:
 1. An integer `.N`: the integer `N` itself is the precision.
 2. An integer or name followed by dollar sign `.N$`: use the value of format argument `N` (which must be a usize) as the precision. An integer refers to a positional argument, and a name refers to a named argument.
 3. An asterisk
-    - `.*`: `.*` means that this `{...}` is associated with two format inputs rather than one:
-        - If a format string in the fashion of `{:<spec>.*}` is used, then the first input holds the usize precision, and the second holds the value to print.
-        - If a format string in the fashion of `{<arg>:<spec>.*}` is used, then the `<arg>` part refers to the value to print, and the precision is taken like it was specified with an omitted positional parameter (`{}` instead of `{<arg>:}`).
+	- `.*`: `.*` means that this `{...}` is associated with two format inputs rather than one:
+		- If a format string in the fashion of `{:<spec>.*}` is used, then the first input holds the usize precision, and the second holds the value to print.
+		- If a format string in the fashion of `{<arg>:<spec>.*}` is used, then the `<arg>` part refers to the value to print, and the precision is taken like it was specified with an omitted positional parameter (`{}` instead of `{<arg>:}`).
 
 For example, the following calls all print the same thing `Hello x is 0.01000`:
 
@@ -2300,11 +2259,11 @@ Enforced at compile time
 :::
 
 1. You can have *either* one mutable reference *or* any number of immutable references — never both at the same time. The following spells it out:
-    - We can create a single mutable reference to it: `let s = String::from("🙂"); let rm1 = &mut s`.
-    - We cannot create two mutable references to it: `let s = String::from("😡"); let rm1 = &mut s; let rm2 = &mut s;` ❌. Will fail with compilation error.
-    - We cannot create a single mutable reference and an immutable reference: `let s = String::from("😡"); let rm1 = &mut s; let ri1 = &mut s;` ❌. Will fail with compilation error.
-    - We can create one or more immutable references: `let s = String::from("🙂"); let ri1 = &s; let ri2 = &s; let ri3 = &s;`
-    - Note: reference tracking transcends function boundaries; meaning, it doesn't matter that two references exist to the same object in different functions. It's still two references to the same object.
+	- We can create a single mutable reference to it: `let s = String::from("🙂"); let rm1 = &mut s`.
+	- We cannot create two mutable references to it: `let s = String::from("😡"); let rm1 = &mut s; let rm2 = &mut s;` ❌. Will fail with compilation error.
+	- We cannot create a single mutable reference and an immutable reference: `let s = String::from("😡"); let rm1 = &mut s; let ri1 = &mut s;` ❌. Will fail with compilation error.
+	- We can create one or more immutable references: `let s = String::from("🙂"); let ri1 = &s; let ri2 = &s; let ri3 = &s;`
+	- Note: reference tracking transcends function boundaries; meaning, it doesn't matter that two references exist to the same object in different functions. It's still two references to the same object.
 2. References must always be valid (no dangling references).
 
 ```rust
@@ -2335,7 +2294,6 @@ The practical upshot: you rarely need to introduce extra scopes (`{ }`) just to 
 If you think about how the stack works, this becomes intuitive. When a function runs, local variables are pushed onto the stack frame. A variable is "live" as long as some future instruction needs its value. Once no instruction downstream references it, it is effectively dead — even if the stack frame hasn't been torn down yet. NLL applies exactly that reasoning to borrows: the compiler walks forward through the code and asks "does anything after this point use `r1`?" If not, the borrow is over. The `}` is just the latest possible point a borrow can end, not the only one.
 :::
 
-
 ### Lifetimes
 ::: {.subheading}
 Ensuring references don't outlive their data
@@ -2355,17 +2313,17 @@ fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
 struct Important<'a> { content: &'a str }
 ```
 
-| Syntax      | Meaning                                                       | Example                                          |
-|-------------|---------------------------------------------------------------|--------------------------------------------------|
-| `'a`        | A lifetime parameter named `'a`                               | `fn f<'a>(...)`                                  |
-| `&'a T`     | Reference to `T` that lives at least `'a`                     | `fn f<'a>(x: &'a str) -> &'a str`                |
-| `&'a mut T` | Mutable reference to `T` that lives at least `'a`             | `fn fill<'a>(buf: &'a mut Vec<u8>)`              |
-| `<'a, 'b>`  | Function/struct has two independent lifetimes                 | `fn f<'a, 'b>(x: &'a str, y: &'b str) -> &'a str` |
+| Syntax      | Meaning                                                       | Example                                               |
+|-------------|---------------------------------------------------------------|-------------------------------------------------------|
+| `'a`        | A lifetime parameter named `'a`                               | `fn f<'a>(...)`                                       |
+| `&'a T`     | Reference to `T` that lives at least `'a`                     | `fn f<'a>(x: &'a str) -> &'a str`                     |
+| `&'a mut T` | Mutable reference to `T` that lives at least `'a`             | `fn fill<'a>(buf: &'a mut Vec<u8>)`                   |
+| `<'a, 'b>`  | Function/struct has two independent lifetimes                 | `fn f<'a, 'b>(x: &'a str, y: &'b str) -> &'a str`     |
 | `'b: 'a`    | Lifetime `'b` outlives lifetime `'a`                          | `fn f<'a, 'b: 'a>(x: &'a str, y: &'b str) -> &'a str` |
-| `T: 'a`     | All references in `T` must outlive `'a`                       | `fn print<'a, T: 'a + std::fmt::Debug>(v: &'a T)` |
-| `'static`   | Lives for the entire program (string literals, leaked values) | `let s: &'static str = "hello";`                 |
-| `'_`        | Anonymous lifetime (placeholder, let compiler infer)          | `fn first(s: &'_ str) -> &'_ str`               |
-| `for<'a>`   | Higher-rank trait bound — works for *any* lifetime            | `where F: for<'a> Fn(&'a str) -> &'a str`       |
+| `T: 'a`     | All references in `T` must outlive `'a`                       | `fn print<'a, T: 'a + std::fmt::Debug>(v: &'a T)`     |
+| `'static`   | Lives for the entire program (string literals, leaked values) | `let s: &'static str = "hello";`                      |
+| `'_`        | Anonymous lifetime (placeholder, let compiler infer)          | `fn first(s: &'_ str) -> &'_ str`                     |
+| `for<'a>`   | Higher-rank trait bound — works for *any* lifetime            | `where F: for<'a> Fn(&'a str) -> &'a str`             |
 
 #### Basic Lifetime Syntax
 ```rust
@@ -2557,7 +2515,7 @@ Don't worry if this feels overwhelming. In practice:
 Start simple, let the compiler guide you, and the syntax will become natural over time.
 :::
 
-:::{.see-more}
+::: {.see-more}
 See [Validating References with Lifetimes](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -2571,7 +2529,6 @@ See [Validating References with Lifetimes](https://doc.rust-lang.org/book/ch10-0
 | Create populated Vec   | `vec![1, 2, 3]`                                  | Heap                |
 | Constructor convention | `impl MyStruct { pub fn new() -> Self { ... } }` | N/A                 |
 | Default initialization | `impl Default for MyStruct { ... }`              | N/A                 |
-
 
 ### Structs
 ```rust
@@ -2799,8 +2756,8 @@ let mut exs = Box::new(Exs24::new());
 ##### When to Use Box
 ::: {.subheading}
 Heap-Allocate the Struct
-::::
 
+::::
 Most of the time, stack allocation is fine. Use `Box::new()` when:
 
 1. **The struct is very large** (megabytes) and might overflow the stack
@@ -2976,7 +2933,7 @@ fn divide(a: i32, b: i32) -> Result<i32, String> {
 }
 ```
 
-:::{.see-more}
+::: {.see-more}
 See the [Errors as Values](#errors-as-values) section for comprehensive coverage of `Result`.
 :::
 
@@ -3051,7 +3008,7 @@ with data
 - Results with success/error variants (`Result<T, E>`)
 - Abstract syntax trees, parsers, state with payloads
 
-:::{.see-more}
+::: {.see-more}
 See [Enums and Pattern Matching](https://doc.rust-lang.org/book/ch06-00-enums.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -3129,7 +3086,6 @@ For more information, see [Appendix C: Derivable Traits](https://doc.rust-lang.o
 :::
 
 #### Implementing `Display` and `Debug`
-
 `Debug` and `Display` are the two formatting traits you will implement most often.
 
 **`Debug`** is for developer output — `{:?}` and `{:#?}`. It is almost always derived automatically:
@@ -3196,12 +3152,12 @@ println!("{:?}", c);  // Color { red: 255, green: 128, blue: 0 } — Debug
 
 Implementing `Display` automatically gives your type `.to_string()` via a blanket impl in the standard library — no extra work required.
 
-| Trait     | Format spec | Derived? | Audience   | Also provides   |
-|-----------|-------------|----------|------------|-----------------|
-| `Debug`   | `{:?}`      | Yes      | Developer  | `{:#?}` pretty-print |
-| `Display` | `{}`        | No       | User       | `.to_string()`  |
+| Trait     | Format spec | Derived? | Audience  | Also provides        |
+|-----------|-------------|----------|-----------|----------------------|
+| `Debug`   | `{:?}`      | Yes      | Developer | `{:#?}` pretty-print |
+| `Display` | `{}`        | No       | User      | `.to_string()`       |
 
-:::{.see-more}
+::: {.see-more}
 See [Structs](https://doc.rust-lang.org/book/ch05-00-structs.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -3266,7 +3222,7 @@ fn make_sounds(animals: &[Box<dyn Animal>]) {
 
 This is the Rust equivalent of virtual methods in C++. The analogy is direct: `Box<dyn Trait>` is roughly what a pointer-to-base class with a vtable is in C++. Prefer `impl Trait` when the type is known at compile time; reach for `dyn Trait` when you need runtime polymorphism or heterogeneous collections.
 
-:::{.see-more}
+::: {.see-more}
 See [Generic Types, Traits, and Lifetimes](https://doc.rust-lang.org/book/ch10-00-generics.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -3487,7 +3443,7 @@ match dir {
 
 Adding a new variant to an enum breaks every exhaustive match in the codebase at compile time. You cannot silently miss a case. This is one of the most powerful refactoring guarantees Rust offers.
 
-:::{.see-more}
+::: {.see-more}
 See [Pattern Matching](https://doc.rust-lang.org/book/ch19-00-patterns.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -3847,27 +3803,26 @@ The `?` operator can only be used in functions whose return type is compatible w
 1. **Exact error type match.** The simplest case: both the caller and callee use the same error type, so no conversion is needed.
 
 2. **`From` trait conversion.** The caller's error type `E1` does not have to match the callee's error type `E2` exactly. It only needs `E1: From<E2>`. When that impl exists, `?` automatically calls `E1::from(e2)` before performing the early return. This is why you can mix calls to different libraries inside one function as long as you use an error type (like a custom enum or `Box<dyn Error>`) that knows how to absorb all of them.
+	```rust
+	use std::num::ParseIntError;
+	use std::fmt;
 
-    ```rust
-    use std::num::ParseIntError;
-    use std::fmt;
+	#[derive(Debug)]
+	enum AppError {
+	Parse(ParseIntError),
+	TooBig,
+	}
 
-    #[derive(Debug)]
-    enum AppError {
-        Parse(ParseIntError),
-        TooBig,
-    }
+	impl From<ParseIntError> for AppError {
+	fn from(e: ParseIntError) -> Self { AppError::Parse(e) }
+	}
 
-    impl From<ParseIntError> for AppError {
-        fn from(e: ParseIntError) -> Self { AppError::Parse(e) }
-    }
-
-    fn parse_and_check(s: &str) -> Result<i32, AppError> {
-        let n: i32 = s.parse()?;   // ParseIntError → AppError via From, automatically
-        if n > 100 { return Err(AppError::TooBig); }
-        Ok(n)
-    }
-    ```
+	fn parse_and_check(s: &str) -> Result<i32, AppError> {
+	let n: i32 = s.parse()?;   // ParseIntError → AppError via From, automatically
+	if n > 100 { return Err(AppError::TooBig); }
+	Ok(n)
+	}
+	```
 
 3. **`Option` in a function returning `Option`.** `?` is not limited to `Result`. Inside a function that returns `Option<T>`, you can use `?` on any `Option` value. It returns `None` immediately if the value is `None`, otherwise it unwraps and continues. You cannot mix the two: `?` on an `Option` inside a function returning `Result` is a compile error.
 :::
@@ -3900,20 +3855,19 @@ let ok: Result<i32, &str> = Ok(42);
 let err: Result<i32, &str> = Err("overflow");
 ```
 
-| Method                    | Absent/error case               | Typical use                               | Example                                          |
-|---------------------------|---------------------------------|-------------------------------------------|--------------------------------------------------|
-| `.unwrap()`               | Panic with generic message      | Prototyping; values that cannot be absent | `found.unwrap()` → `42`                          |
-| `.expect("msg")`          | Panic with your message         | Same, but with a useful crash message     | `found.expect("must exist")` → `42`              |
-| `.unwrap_or(val)`         | Return `val`                    | Literal fallback is cheap and obvious     | `missing.unwrap_or(0)` → `0`                     |
-| `.unwrap_or_else(\|\| ...)` | Call closure, return result   | Fallback requires computation             | `missing.unwrap_or_else(\|\| expensive())` → `T` |
-| `.unwrap_or_default()`    | Return `T::default()`           | Zero/empty is a sensible fallback         | `missing.unwrap_or_default()` → `0`              |
-| `.unwrap_err()`           | Panic if it was `Ok`            | Tests asserting failure                   | `err.unwrap_err()` → `"overflow"`                |
-| `.expect_err("msg")`      | Panic with your message if `Ok` | Same, with a useful message               | `err.expect_err("should fail")` → `"overflow"`   |
+| Method                      | Absent/error case               | Typical use                               | Example                                          |
+|-----------------------------|---------------------------------|-------------------------------------------|--------------------------------------------------|
+| `.unwrap()`                 | Panic with generic message      | Prototyping; values that cannot be absent | `found.unwrap()` → `42`                          |
+| `.expect("msg")`            | Panic with your message         | Same, but with a useful crash message     | `found.expect("must exist")` → `42`              |
+| `.unwrap_or(val)`           | Return `val`                    | Literal fallback is cheap and obvious     | `missing.unwrap_or(0)` → `0`                     |
+| `.unwrap_or_else(\|\| ...)` | Call closure, return result     | Fallback requires computation             | `missing.unwrap_or_else(\|\| expensive())` → `T` |
+| `.unwrap_or_default()`      | Return `T::default()`           | Zero/empty is a sensible fallback         | `missing.unwrap_or_default()` → `0`              |
+| `.unwrap_err()`             | Panic if it was `Ok`            | Tests asserting failure                   | `err.unwrap_err()` → `"overflow"`                |
+| `.expect_err("msg")`        | Panic with your message if `Ok` | Same, with a useful message               | `err.expect_err("should fail")` → `"overflow"`   |
 
 ::: {.callout-warning title="Panics in production code"}
 `.unwrap()` and `.expect()` are appropriate in tests and prototypes. In production code, a panic is a crash with no recovery. Prefer `?`, `match`, `if let`, or the `unwrap_or` variants, which give callers a chance to handle the failure.
 :::
-
 
 #### `.unwrap()` and `.expect()`
 `.unwrap()` returns the inner value if it is present, and **panics** if it is not:
@@ -3971,7 +3925,7 @@ fn rejects_negative_input() {
 }
 ```
 
-:::{.see-more}
+::: {.see-more}
 See [Error Handling](https://doc.rust-lang.org/book/ch09-00-error-handling.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -4119,7 +4073,6 @@ students.sort_by(|a, b| a.name.cmp(&b.name));
 ```
 
 ##### Working methods
-
 The methods you will reach for most in everyday code:
 
 ```rust
@@ -4158,22 +4111,22 @@ let mut a = vec![1, 2, 3];
 a.extend([4, 5, 6]);            // append elements from any iterable
 ```
 
-| Method                    | What it does                                      |
-|---------------------------|---------------------------------------------------|
-| `.push(x)`                | Append `x` to the end                            |
-| `.pop()`                  | Remove and return the last element as `Option<T>` |
-| `.insert(i, x)`           | Insert `x` at index `i`, shifting right          |
-| `.remove(i)`              | Remove element at index `i`, shifting left       |
-| `.len()` / `.is_empty()`  | Length query                                      |
-| `.contains(&x)`           | Linear search for `x`                            |
-| `.retain(\|x\| pred)`      | Keep only elements matching predicate             |
-| `.dedup()`                | Remove consecutive duplicates (sort first)       |
-| `.windows(n)`             | Iterator of overlapping slices of length `n`     |
-| `.chunks(n)`              | Iterator of non-overlapping slices of up to `n`  |
-| `.extend(iter)`           | Append all elements from an iterator             |
-| `.truncate(n)`            | Shorten to at most `n` elements                  |
-| `.clear()`                | Remove all elements (keeps allocation)           |
-| `.drain(range)`           | Remove and yield elements in a range             |
+| Method                   | What it does                                      |
+|--------------------------|---------------------------------------------------|
+| `.push(x)`               | Append `x` to the end                             |
+| `.pop()`                 | Remove and return the last element as `Option<T>` |
+| `.insert(i, x)`          | Insert `x` at index `i`, shifting right           |
+| `.remove(i)`             | Remove element at index `i`, shifting left        |
+| `.len()` / `.is_empty()` | Length query                                      |
+| `.contains(&x)`          | Linear search for `x`                             |
+| `.retain(\|x\| pred)`    | Keep only elements matching predicate             |
+| `.dedup()`               | Remove consecutive duplicates (sort first)        |
+| `.windows(n)`            | Iterator of overlapping slices of length `n`      |
+| `.chunks(n)`             | Iterator of non-overlapping slices of up to `n`   |
+| `.extend(iter)`          | Append all elements from an iterator              |
+| `.truncate(n)`           | Shorten to at most `n` elements                   |
+| `.clear()`               | Remove all elements (keeps allocation)            |
+| `.drain(range)`          | Remove and yield elements in a range              |
 
 ### HashMap\<K, V\>
 ::: {.subheading}
@@ -4222,7 +4175,6 @@ println!("{}", set.contains(&2)); // false
 ```
 
 #### Building from a collection
-
 The most common way to construct a `HashSet` is from an existing iterator via `.collect()`:
 
 ```rust
@@ -4232,7 +4184,6 @@ let set: HashSet<i32> = v.into_iter().collect();
 ```
 
 #### Set operations
-
 `HashSet` implements the standard set operations. All return iterators, so chain `.collect()` to get a new set:
 
 ```rust
@@ -4257,7 +4208,6 @@ a.is_superset(&b);  // false
 ```
 
 #### Iterating
-
 ```rust
 let set: HashSet<&str> = ["apple", "banana", "cherry"].iter().copied().collect();
 
@@ -4267,16 +4217,15 @@ for item in &set {
 ```
 
 #### When to use `HashSet` vs `Vec`
-
-| Need                              | Use         |
-|-----------------------------------|-------------|
-| Ordered sequence, duplicates ok   | `Vec<T>`    |
-| Fast membership test, no duplicates | `HashSet<T>` |
-| Key-value association             | `HashMap<K,V>` |
+| Need                                | Use            |
+|-------------------------------------|----------------|
+| Ordered sequence, duplicates ok     | `Vec<T>`       |
+| Fast membership test, no duplicates | `HashSet<T>`   |
+| Key-value association               | `HashMap<K,V>` |
 
 The membership test `set.contains(&x)` is O(1). The equivalent `vec.contains(&x)` is O(n) — it scans every element. For large collections where you repeatedly check presence, `HashSet` is the right tool.
 
-:::{.see-more}
+::: {.see-more}
 See [Common Collections](https://doc.rust-lang.org/book/ch08-00-common-collections.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -4317,14 +4266,13 @@ greet();
 ```
 
 #### Closure Traits
-
 Every closure implements one or more of three traits: `Fn`, `FnMut`, and `FnOnce`. The compiler assigns them automatically based on what the closure does with its captured values. You rarely name these traits when writing closures, but you must understand them when writing functions that *accept* closures as parameters.
 
-| Trait     | Can be called | Captures         | When the compiler assigns it                        |
-|-----------|---------------|------------------|-----------------------------------------------------|
-| `FnOnce`  | Once only     | By value (moves) | Closure consumes a captured value                   |
-| `FnMut`   | Many times    | By mutable ref   | Closure mutates a captured value                    |
-| `Fn`      | Many times    | By shared ref    | Closure only reads captured values (or captures none) |
+| Trait    | Can be called | Captures         | When the compiler assigns it                          |
+|----------|---------------|------------------|-------------------------------------------------------|
+| `FnOnce` | Once only     | By value (moves) | Closure consumes a captured value                     |
+| `FnMut`  | Many times    | By mutable ref   | Closure mutates a captured value                      |
+| `Fn`     | Many times    | By shared ref    | Closure only reads captured values (or captures none) |
 
 They form a hierarchy: every `Fn` is also `FnMut`, and every `FnMut` is also `FnOnce`. So `FnOnce` is the most permissive bound (accepts all closures) and `Fn` is the most restrictive (only accepts closures that don't mutate or consume captures).
 
@@ -4391,7 +4339,7 @@ Use the most permissive bound that satisfies your needs. If you only call the cl
 
 Standard library functions follow this pattern. `.map()` takes `FnMut` (called once per element, may mutate state). `thread::spawn` takes `FnOnce + Send` (runs once on a new thread, must own its captures).
 
-:::{.see-more}
+::: {.see-more}
 See [Closures](https://doc.rust-lang.org/book/ch13-01-closures.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -4410,16 +4358,15 @@ println!("{:?}", result);   // [4, 16, 36]
 ```
 
 #### `.iter()` vs `.into_iter()` vs `.iter_mut()`
-
 The first decision for any iterator chain is which of the three entry points to use:
 
-| Method / form      | Yields   | Effect on collection | Use when                        |
-|--------------------|----------|----------------------|---------------------------------|
-| `.iter()`          | `&T`     | Borrows              | Reading without consuming       |
-| `&collection`      | `&T`     | Borrows              | Shorthand for `.iter()` in `for` loops |
-| `.iter_mut()`      | `&mut T` | Mutably borrows      | Modifying elements in place     |
-| `&mut collection`  | `&mut T` | Mutably borrows      | Shorthand for `.iter_mut()` in `for` loops |
-| `.into_iter()`     | `T`      | Consumes             | You no longer need the original |
+| Method / form     | Yields   | Effect on collection | Use when                                   |
+|-------------------|----------|----------------------|--------------------------------------------|
+| `.iter()`         | `&T`     | Borrows              | Reading without consuming                  |
+| `&collection`     | `&T`     | Borrows              | Shorthand for `.iter()` in `for` loops     |
+| `.iter_mut()`     | `&mut T` | Mutably borrows      | Modifying elements in place                |
+| `&mut collection` | `&mut T` | Mutably borrows      | Shorthand for `.iter_mut()` in `for` loops |
+| `.into_iter()`    | `T`      | Consumes             | You no longer need the original            |
 
 The `&v` and `&mut v` forms work because `Vec<T>` implements `IntoIterator` for `&Vec<T>` and `&mut Vec<T>`. A `for` loop calls `.into_iter()` on whatever expression you give it, so `for x in &v` is exactly equivalent to `for x in v.iter()`.
 
@@ -4441,7 +4388,6 @@ for x in v.into_iter() { print!("{} ", x); }
 ```
 
 #### Adapter chain
-
 Adapters transform the iterator without running it. They are chained together and only evaluated when a terminal operation is called.
 
 **`.map(f)`** — transform each element:
@@ -4535,7 +4481,6 @@ v.iter().any(|&x| x > 5);        // true — at least one > 5
 ```
 
 #### Terminal operations
-
 Terminal operations consume the iterator and produce a result.
 
 ```rust
@@ -4551,24 +4496,24 @@ let min             = v.iter().min();                           // Some(&1)
 let collected: Vec<i32> = v.iter().copied().collect();
 ```
 
-| Terminal           | Returns           | What it does                            |
-|--------------------|-------------------|-----------------------------------------|
-| `.collect()`       | collection        | Drive the chain into a `Vec`, `HashMap`, etc. |
-| `.count()`         | `usize`           | Count remaining elements                |
-| `.sum()`           | `T`               | Sum all elements                        |
-| `.product()`       | `T`               | Multiply all elements                   |
-| `.max()` / `.min()`| `Option<&T>`      | Largest or smallest element             |
-| `.find(p)`         | `Option<&T>`      | First element matching predicate        |
-| `.position(p)`     | `Option<usize>`   | Index of first element matching predicate |
-| `.any(p)`          | `bool`            | True if any element matches             |
-| `.all(p)`          | `bool`            | True if all elements match              |
-| `.for_each(f)`     | `()`              | Run a closure on each element           |
+| Terminal            | Returns         | What it does                                  |
+|---------------------|-----------------|-----------------------------------------------|
+| `.collect()`        | collection      | Drive the chain into a `Vec`, `HashMap`, etc. |
+| `.count()`          | `usize`         | Count remaining elements                      |
+| `.sum()`            | `T`             | Sum all elements                              |
+| `.product()`        | `T`             | Multiply all elements                         |
+| `.max()` / `.min()` | `Option<&T>`    | Largest or smallest element                   |
+| `.find(p)`          | `Option<&T>`    | First element matching predicate              |
+| `.position(p)`      | `Option<usize>` | Index of first element matching predicate     |
+| `.any(p)`           | `bool`          | True if any element matches                   |
+| `.all(p)`           | `bool`          | True if all elements match                    |
+| `.for_each(f)`      | `()`            | Run a closure on each element                 |
 
 ::: {.callout-tip}
 The compiler optimizes iterator chains aggressively. A `.filter().map().collect()` chain typically compiles to the same machine code as an equivalent hand-written loop. You pay nothing for the abstraction.
 :::
 
-:::{.see-more}
+::: {.see-more}
 See [Iterators](https://doc.rust-lang.org/book/ch13-02-iterators.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -4584,10 +4529,10 @@ use std::sync::Arc;
 let data = String::from("hello");
 ```
 
-| Type     | Ownership | Thread-safe | C++ analogy                           | Example                                       |
-|----------|-----------|-------------|---------------------------------------|-----------------------------------------------|
-| `Box<T>` | Single    | Yes         | `unique_ptr<T>`                       | `let b = Box::new(data);`                     |
-| `Rc<T>`  | Shared    | No          | `shared_ptr<T>` (single-threaded)     | `let a = Rc::new(5); let b = Rc::clone(&a);`  |
+| Type     | Ownership | Thread-safe | C++ analogy                           | Example                                        |
+|----------|-----------|-------------|---------------------------------------|------------------------------------------------|
+| `Box<T>` | Single    | Yes         | `unique_ptr<T>`                       | `let b = Box::new(data);`                      |
+| `Rc<T>`  | Shared    | No          | `shared_ptr<T>` (single-threaded)     | `let a = Rc::new(5); let b = Rc::clone(&a);`   |
 | `Arc<T>` | Shared    | Yes         | `shared_ptr<T>` with atomic ref count | `let a = Arc::new(5); let b = Arc::clone(&a);` |
 
 ### `Box<T>`
@@ -4665,7 +4610,7 @@ use std::sync::{Arc, Mutex};
 let counter = Arc::new(Mutex::new(0));
 ```
 
-:::{.see-more}
+::: {.see-more}
 See [Smart Pointers](https://doc.rust-lang.org/book/ch15-00-smart-pointers.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -4688,7 +4633,6 @@ File I/O in Rust is built around the [`std::fs`](https://doc.rust-lang.org/std/f
 | Buffered text reading       | `BufReader::new(File::open()?)`                        |
 | Buffered text writing       | `BufWriter::new(File::create()?)`                      |
 | Binary I/O with endianness  | `byteorder` crate or `to_le_bytes()`/`from_be_bytes()` |
-
 
 ### Basic File Operations
 ##### Opening and creating files
@@ -5025,7 +4969,7 @@ fn write_csv(path: &str, data: &[(u32, f64)]) -> io::Result<()> {
 }
 ```
 
-:::{.see-more}
+::: {.see-more}
 See [Reading a File](https://doc.rust-lang.org/book/ch12-02-reading-a-file.html){target="_blank" rel="noopener noreferrer"} and the [`std::io` module documentation](https://doc.rust-lang.org/std/io/index.html){target="_blank" rel="noopener noreferrer"} for more information.
 :::
 
@@ -5042,7 +4986,6 @@ Rust's ownership and type system make data races a compile-time error, not a run
 The compiler enforces these automatically. If you try to share a non-thread-safe type across threads, it will not compile.
 
 ### Threads
-
 `std::thread::spawn` starts a new OS thread. It takes a closure that captures the values it needs. The `move` keyword transfers ownership of captured values into the thread — required because the spawned thread may outlive the calling scope.
 
 ```rust
@@ -5058,7 +5001,6 @@ handle.join().unwrap();   // wait for the thread to finish
 `spawn` returns a `JoinHandle<T>` where `T` is whatever the closure returns. `.join()` blocks until the thread finishes and returns `Result<T, _>`.
 
 #### Spawning multiple threads
-
 ```rust
 use std::thread;
 
@@ -5074,7 +5016,6 @@ for handle in handles {
 ```
 
 ### Shared State with `Mutex<T>`
-
 A `Mutex<T>` (mutual exclusion lock) protects a value so only one thread can access it at a time. You access the value by calling `.lock()`, which blocks until the lock is available and returns a `MutexGuard<T>`. The guard releases the lock automatically when it goes out of scope.
 
 ```rust
@@ -5090,7 +5031,10 @@ let m = Mutex::new(0);
 
 `.lock()` returns `Result` because it can fail if the previous lock holder panicked while holding it (a "poisoned" mutex). `.unwrap()` is common in practice — a poisoned mutex usually means something has gone badly wrong already.
 
-### `Arc<Mutex<T>>`: Shared Mutable State Across Threads
+### `Arc<Mutex<T>>`
+::: {.subheading}
+Shared Mutable State Across Threads
+:::
 
 To share mutable state across multiple threads you need both:
 
@@ -5123,7 +5067,6 @@ println!("final count: {}", *counter.lock().unwrap());  // 10
 Each thread gets its own `Arc` clone (cheap: just increments a reference count). Each clone points to the same `Mutex`. Only one thread can hold the lock at a time, so the increments are safe.
 
 ### Message Passing with Channels
-
 An alternative to shared state: send values between threads via a channel. `std::sync::mpsc` provides a **multi-producer, single-consumer** channel.
 
 ```rust
@@ -5149,25 +5092,23 @@ let sender2 = sender.clone();
 ```
 
 ### Quick Reference
-
-| Need                              | Tool                              |
-|-----------------------------------|-----------------------------------|
+| Need                              | Tool                               |
+|-----------------------------------|------------------------------------|
 | Run code on a new thread          | `thread::spawn(move \|\| { ... })` |
-| Wait for a thread to finish       | `handle.join()`                   |
-| Protect shared data               | `Mutex<T>`                        |
-| Share data across threads         | `Arc<T>`                          |
-| Share mutable data across threads | `Arc<Mutex<T>>`                   |
-| Send values between threads       | `mpsc::channel()`                 |
-| Send values, multiple producers   | Clone the `Sender`                |
+| Wait for a thread to finish       | `handle.join()`                    |
+| Protect shared data               | `Mutex<T>`                         |
+| Share data across threads         | `Arc<T>`                           |
+| Share mutable data across threads | `Arc<Mutex<T>>`                    |
+| Send values between threads       | `mpsc::channel()`                  |
+| Send values, multiple producers   | Clone the `Sender`                 |
 
 ::: {.callout-tip}
 Prefer message passing over shared state when the design allows it. Channels make data flow explicit and eliminate the need for locks entirely. Reach for `Arc<Mutex<T>>` when multiple threads genuinely need to read and write the same value.
 :::
 
-:::{.see-more}
+::: {.see-more}
 See [Fearless Concurrency](https://doc.rust-lang.org/book/ch16-00-concurrency.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
-
 
 ## Cargo
 ::: {.subheading}
@@ -5245,12 +5186,12 @@ The key insight is that *editions are per-crate, and all editions can link toget
 
 What changes between editions is language syntax and a small number of semantic rules, not the standard library. The standard library API is versioned by the Rust release channel separately. An example: in edition 2015 you had to write `extern crate serde;` at the top of `main.rs` to bring an external crate into scope. In 2018 that was removed entirely. Both editions call the same `serde` functions at runtime.
 
-| Edition | Notable changes                                                                                                                                     |
-|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| 2015    | Original Rust. `extern crate` required. Old module path rules.                                                                                      |
-| 2018    | `extern crate` no longer needed. Clearer `use` paths (`crate::`, `super::`). `async`/`await` syntax. `?` usable in `main`. [Non-lexical lifetimes](#NLL).   |
-| 2021    | More precise closure captures (captures only what it uses, not the whole struct). `IntoIterator` implemented for arrays. Cargo feature resolver v2. |
-| 2024    | `gen` blocks and coroutines. `impl Trait` lifetime improvements. Stricter `unsafe` requirements.                                                    |
+| Edition | Notable changes                                                                                                                                           |
+|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2015    | Original Rust. `extern crate` required. Old module path rules.                                                                                            |
+| 2018    | `extern crate` no longer needed. Clearer `use` paths (`crate::`, `super::`). `async`/`await` syntax. `?` usable in `main`. [Non-lexical lifetimes](#NLL). |
+| 2021    | More precise closure captures (captures only what it uses, not the whole struct). `IntoIterator` implemented for arrays. Cargo feature resolver v2.       |
+| 2024    | `gen` blocks and coroutines. `impl Trait` lifetime improvements. Stricter `unsafe` requirements.                                                          |
 
 Migrating is low-friction. Running `cargo fix --edition` rewrites the parts of your code that need updating automatically, then you change the `edition` field in `Cargo.toml`. Most migrations take a few minutes.
 
@@ -5376,7 +5317,6 @@ assert_eq!(env::var(key), Ok("VALUE".to_string()));
 But the *super-cool* way of reading an environment variable is the `env!` macro.
 
 ##### `env!` the Macro
-
 `env!` inspects an environment variable at *compile time*. This macro will expand to the value of the named environment variable at compile time, yielding an expression of type `&'static str`. If the environment variable is not defined, then a compilation error will be emitted. To not emit a compile error, use the `option_env!` macro instead.
 
 ##### Examples
@@ -5392,65 +5332,61 @@ let doc: &'static str = env!("documentation", "what's that?!");
 ```
 :::
 
-
 Cargo's environment variable list is very long, so we've picked out some fan favorites as a sampler platter. See the official documentation (which I think is): [The Cargo Book](https://doc.rust-lang.org/cargo/reference/environment-variables.html){target="_blank"}.
 
 #### Cargo Sets
-
-| Variable Name | Type | Description |
-|---|:---:|------------------------|
-| `CARGO` | Information | Path to the cargo binary performing the build. |
-| `CARGO_MANIFEST_DIR` | Information | The directory containing the manifest of your package. |
-| `CARGO_MANIFEST_PATH` | Information | The path to the manifest of your package. |
-| `CARGO_PKG_VERSION` | Information | The full version of your package. |
-| `CARGO_PKG_VERSION_MAJOR` | Information | The major version of your package. |
-| `CARGO_PKG_VERSION_MINOR` | Information | The minor version of your package. |
-| `CARGO_PKG_VERSION_PATCH` | Information | The patch version of your package. |
-| `CARGO_PKG_VERSION_PRE` | Information | The pre-release version of your package. |
-| `CARGO_PKG_AUTHORS` | Information | Colon separated list of authors from the manifest of your package. |
-| `CARGO_PKG_NAME` | Information | The name of your package. |
-| `CARGO_PKG_DESCRIPTION` | Information | The description from the manifest of your package. |
-| `CARGO_PKG_HOMEPAGE` | Information | The home page from the manifest of your package. |
-| `CARGO_PKG_REPOSITORY` | Information | The repository from the manifest of your package. |
-| `CARGO_PKG_LICENSE` | Information | The license from the manifest of your package. |
-| `CARGO_PKG_LICENSE_FILE` | Information | The license file from the manifest of your package. |
-| `CARGO_PKG_RUST_VERSION` | Information | The Rust version from the manifest of your package. Note that this is the minimum Rust version supported by the package, not the current Rust version. |
-| `CARGO_PKG_README` | Information | Path to the README file of your package. |
-| `CARGO_CRATE_NAME` | Information | The name of the crate that is currently being compiled. It is the name of the Cargo target with - converted to _, such as the name of the library, binary, example, integration test, or benchmark. |
-| `CARGO_BIN_NAME` | Information | The name of the binary that is currently being compiled. Only set for binaries or binary examples. This name does not include any file extension, such as .exe. |
-| `OUT_DIR` | Information | If the package has a build script, this is set to the folder where the build script should place its output. See below for more information. (Only set during compilation.) Cargo does not guarantee that this directory is empty, and it is not cleaned between builds. |
-| `CARGO_BIN_EXE_<name>` | Information | The absolute path to a binary target’s executable. This is only set when building an integration test or benchmark. This may be used with the env macro to find the executable to run for testing purposes. The `<name>` is the name of the binary target, exactly as-is. For example, `CARGO_BIN_EXE_my-program` for a binary named my-program. Binaries are automatically built when the test is built, unless the binary has required features that are not enabled. |
-| `CARGO_PRIMARY_PACKAGE` | Information | This environment variable will be set if the package being built is primary. Primary packages are the ones the user selected on the command-line, either with -p flags or the defaults based on the current directory and the default workspace members. This variable will not be set when building dependencies, unless a dependency is also a workspace member that was also selected on the command-line. This is only set when compiling the package (not when running binaries or tests). |
-| `CARGO_TARGET_TMPDIR` | Information | Only set when building integration test or benchmark code. This is a path to a directory inside the target directory where integration tests or benchmarks are free to put any data needed by the tests/benches. Cargo initially creates this directory but doesn’t manage its content in any way, this is the responsibility of the test code. |
-| `CARGO` | Scripting | Path to the cargo binary performing the build. |
-| `CARGO_MANIFEST_DIR` | Scripting | The directory containing the manifest for the package being built (the package containing the build script). Also note that this is the value of the current working directory of the build script when it starts. |
-| `CARGO_MANIFEST_PATH` | Scripting | The path to the manifest of your package. |
-| `CARGO_MANIFEST_LINKS` | Scripting | the manifest links value. |
-| `CARGO_MAKEFLAGS` | Scripting | Contains parameters needed for Cargo’s jobserver implementation to parallelize subprocesses. Rustc or cargo invocations from `build.rs` can already read `CARGO_MAKEFLAGS`, but GNU Make requires the flags to be specified either directly as arguments, or through the `MAKEFLAGS` environment variable. Currently Cargo doesn’t set the `MAKEFLAGS` variable, but it’s free for build scripts invoking GNU Make to set it to the contents of `CARGO_MAKEFLAGS`. |
-| `CARGO_FEATURE_<name>` | Scripting | For each activated feature of the package being built, this environment variable will be present where `<name>` is the name of the feature uppercased and having - translated to `_`. |
+| Variable Name             | Type        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+|---------------------------|:-----------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `CARGO`                   | Information | Path to the cargo binary performing the build.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `CARGO_MANIFEST_DIR`      | Information | The directory containing the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `CARGO_MANIFEST_PATH`     | Information | The path to the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `CARGO_PKG_VERSION`       | Information | The full version of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `CARGO_PKG_VERSION_MAJOR` | Information | The major version of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `CARGO_PKG_VERSION_MINOR` | Information | The minor version of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `CARGO_PKG_VERSION_PATCH` | Information | The patch version of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `CARGO_PKG_VERSION_PRE`   | Information | The pre-release version of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `CARGO_PKG_AUTHORS`       | Information | Colon separated list of authors from the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `CARGO_PKG_NAME`          | Information | The name of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `CARGO_PKG_DESCRIPTION`   | Information | The description from the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `CARGO_PKG_HOMEPAGE`      | Information | The home page from the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `CARGO_PKG_REPOSITORY`    | Information | The repository from the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `CARGO_PKG_LICENSE`       | Information | The license from the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `CARGO_PKG_LICENSE_FILE`  | Information | The license file from the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `CARGO_PKG_RUST_VERSION`  | Information | The Rust version from the manifest of your package. Note that this is the minimum Rust version supported by the package, not the current Rust version.                                                                                                                                                                                                                                                                                                                                          |
+| `CARGO_PKG_README`        | Information | Path to the README file of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `CARGO_CRATE_NAME`        | Information | The name of the crate that is currently being compiled. It is the name of the Cargo target with - converted to _, such as the name of the library, binary, example, integration test, or benchmark.                                                                                                                                                                                                                                                                                             |
+| `CARGO_BIN_NAME`          | Information | The name of the binary that is currently being compiled. Only set for binaries or binary examples. This name does not include any file extension, such as .exe.                                                                                                                                                                                                                                                                                                                                 |
+| `OUT_DIR`                 | Information | If the package has a build script, this is set to the folder where the build script should place its output. See below for more information. (Only set during compilation.) Cargo does not guarantee that this directory is empty, and it is not cleaned between builds.                                                                                                                                                                                                                        |
+| `CARGO_BIN_EXE_<name>`    | Information | The absolute path to a binary target’s executable. This is only set when building an integration test or benchmark. This may be used with the env macro to find the executable to run for testing purposes. The `<name>` is the name of the binary target, exactly as-is. For example, `CARGO_BIN_EXE_my-program` for a binary named my-program. Binaries are automatically built when the test is built, unless the binary has required features that are not enabled.                         |
+| `CARGO_PRIMARY_PACKAGE`   | Information | This environment variable will be set if the package being built is primary. Primary packages are the ones the user selected on the command-line, either with -p flags or the defaults based on the current directory and the default workspace members. This variable will not be set when building dependencies, unless a dependency is also a workspace member that was also selected on the command-line. This is only set when compiling the package (not when running binaries or tests). |
+| `CARGO_TARGET_TMPDIR`     | Information | Only set when building integration test or benchmark code. This is a path to a directory inside the target directory where integration tests or benchmarks are free to put any data needed by the tests/benches. Cargo initially creates this directory but doesn’t manage its content in any way, this is the responsibility of the test code.                                                                                                                                                 |
+| `CARGO`                   | Scripting   | Path to the cargo binary performing the build.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `CARGO_MANIFEST_DIR`      | Scripting   | The directory containing the manifest for the package being built (the package containing the build script). Also note that this is the value of the current working directory of the build script when it starts.                                                                                                                                                                                                                                                                              |
+| `CARGO_MANIFEST_PATH`     | Scripting   | The path to the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `CARGO_MANIFEST_LINKS`    | Scripting   | the manifest links value.                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `CARGO_MAKEFLAGS`         | Scripting   | Contains parameters needed for Cargo’s jobserver implementation to parallelize subprocesses. Rustc or cargo invocations from `build.rs` can already read `CARGO_MAKEFLAGS`, but GNU Make requires the flags to be specified either directly as arguments, or through the `MAKEFLAGS` environment variable. Currently Cargo doesn’t set the `MAKEFLAGS` variable, but it’s free for build scripts invoking GNU Make to set it to the contents of `CARGO_MAKEFLAGS`.                              |
+| `CARGO_FEATURE_<name>`    | Scripting   | For each activated feature of the package being built, this environment variable will be present where `<name>` is the name of the feature uppercased and having - translated to `_`.                                                                                                                                                                                                                                                                                                           |
 
 #### Cargo Reads
+| Variable Name                         | Type          | Description                                                                                                                                                                                                                                                                                                                                              |
+|---------------------------------------|:-------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `CARGO_LOG`                           | Configuration | Cargo uses the tracing crate to display debug log messages. The `CARGO_LOG` environment variable can be set to enable debug logging, with a value such as trace, debug, or warn. Usually it is only used during debugging. For more details refer to the Debug logging.                                                                                  |
+| `CARGO_HOME`                          | Configuration | Cargo maintains a local cache of the registry index and of git checkouts of crates. By default these are stored under `$HOME/.cargo` (`%USERPROFILE%\.cargo` on Windows), but this variable overrides the location of this directory. Once a crate is cached it is not removed by the clean command. For more details refer to the guide.                |
+| `CARGO_TARGET_DIR`                    | Configuration | Location of where to place all generated artifacts, relative to the current working directory. See [`build.target-dir`](https://doc.rust-lang.org/cargo/reference/config.html#buildtarget-dir){target="_blank"} to set via config.                                                                                                                       |
+| `CARGO`                               | Configuration | If set, Cargo will forward this value instead of setting it to its own auto-detected path when it builds crates and when it executes build scripts and external subcommands. This value is not directly executed by Cargo, and should always point at a command that behaves exactly like cargo, as that’s what users of the variable will be expecting. |
+| `RUSTC`                               | Configuration | Instead of running rustc, Cargo will execute this specified compiler instead. See build.rustc to set via config.                                                                                                                                                                                                                                         |
+| `CARGO_ALIAS_<name>`                  | Information   | Command aliases, see [`alias`](https://doc.rust-lang.org/cargo/reference/config.html#alias){target="_blank"}.                                                                                                                                                                                                                                            |
+| `CARGO_BUILD_JOBS`                    | Information   | Number of parallel jobs, see [`build.jobs`](https://doc.rust-lang.org/cargo/reference/config.html#buildjobs){target="_blank"}.                                                                                                                                                                                                                           |
+| `CARGO_BUILD_RUSTC`                   | Information   | The rustc executable, see [`build.rustc`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustc){target="_blank"}.                                                                                                                                                                                                                            |
+| `CARGO_BUILD_RUSTC_WRAPPER`           | Information   | The `rustc` wrapper, see [`build.rustc-wrapper`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustc-wrapper){target="_blank"}.                                                                                                                                                                                                             |
+| `CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER` | Information   | The rustc wrapper for workspace members only, see [`build.rustc-workspace-wrapper`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustc-workspace-wrapper){target="_blank"}.                                                                                                                                                                |
+| `CARGO_BUILD_RUSTDOC`                 | Information   | The rustdoc executable, see [`build.rustdoc`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustdoc){target="_blank"}.                                                                                                                                                                                                                      |
+| `CARGO_BUILD_TARGET`                  | Information   | The default target platform, see [`build.target`](https://doc.rust-lang.org/cargo/reference/config.html#buildtarget){target="_blank"}.                                                                                                                                                                                                                   |
+| `CARGO_BUILD_TARGET_DIR`              | Information   | The default output directory, see [`build.target-dir`](https://doc.rust-lang.org/cargo/reference/config.html#buildtarget-dir){target="_blank"}.                                                                                                                                                                                                          |
+| `CARGO_BUILD_BUILD_DIR`               | Information   | The default build directory, see [`build.build-dir`](https://doc.rust-lang.org/cargo/reference/config.html#buildbuild-dir){target="_blank"}.                                                                                                                                                                                                             |
+| `CARGO_BUILD_RUSTFLAGS`               | Information   | Extra rustc flags, see [`build.rustflags`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustflags){target="_blank"}.                                                                                                                                                                                                                       |
 
-| Variable Name | Type | Description |
-|---|:---:|------------------------|
-| `CARGO_LOG` | Configuration | Cargo uses the tracing crate to display debug log messages. The `CARGO_LOG` environment variable can be set to enable debug logging, with a value such as trace, debug, or warn. Usually it is only used during debugging. For more details refer to the Debug logging. |
-| `CARGO_HOME` | Configuration | Cargo maintains a local cache of the registry index and of git checkouts of crates. By default these are stored under `$HOME/.cargo` (`%USERPROFILE%\.cargo` on Windows), but this variable overrides the location of this directory. Once a crate is cached it is not removed by the clean command. For more details refer to the guide. |
-| `CARGO_TARGET_DIR` | Configuration | Location of where to place all generated artifacts, relative to the current working directory. See [`build.target-dir`](https://doc.rust-lang.org/cargo/reference/config.html#buildtarget-dir){target="_blank"} to set via config. |
-| `CARGO` | Configuration | If set, Cargo will forward this value instead of setting it to its own auto-detected path when it builds crates and when it executes build scripts and external subcommands. This value is not directly executed by Cargo, and should always point at a command that behaves exactly like cargo, as that’s what users of the variable will be expecting. |
-| `RUSTC` | Configuration | Instead of running rustc, Cargo will execute this specified compiler instead. See build.rustc to set via config. |
-| `CARGO_ALIAS_<name>` | Information | Command aliases, see [`alias`](https://doc.rust-lang.org/cargo/reference/config.html#alias){target="_blank"}. |
-| `CARGO_BUILD_JOBS` | Information | Number of parallel jobs, see [`build.jobs`](https://doc.rust-lang.org/cargo/reference/config.html#buildjobs){target="_blank"}. |
-| `CARGO_BUILD_RUSTC` | Information | The rustc executable, see [`build.rustc`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustc){target="_blank"}. |
-| `CARGO_BUILD_RUSTC_WRAPPER` | Information | The `rustc` wrapper, see [`build.rustc-wrapper`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustc-wrapper){target="_blank"}. |
-| `CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER` | Information | The rustc wrapper for workspace members only, see [`build.rustc-workspace-wrapper`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustc-workspace-wrapper){target="_blank"}. |
-| `CARGO_BUILD_RUSTDOC` | Information | The rustdoc executable, see [`build.rustdoc`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustdoc){target="_blank"}. |
-| `CARGO_BUILD_TARGET` | Information | The default target platform, see [`build.target`](https://doc.rust-lang.org/cargo/reference/config.html#buildtarget){target="_blank"}. |
-| `CARGO_BUILD_TARGET_DIR` | Information | The default output directory, see [`build.target-dir`](https://doc.rust-lang.org/cargo/reference/config.html#buildtarget-dir){target="_blank"}. |
-| `CARGO_BUILD_BUILD_DIR` | Information | The default build directory, see [`build.build-dir`](https://doc.rust-lang.org/cargo/reference/config.html#buildbuild-dir){target="_blank"}. |
-| `CARGO_BUILD_RUSTFLAGS` | Information | Extra rustc flags, see [`build.rustflags`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustflags){target="_blank"}. |
-
-
-:::{.see-more}
+::: {.see-more}
 See [Packages, Crates, and Modules](https://doc.rust-lang.org/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
 :::
 
@@ -5661,20 +5597,20 @@ struct Cli {
 `Option<T>` fields are **optional arguments** — omitting them produces `None`; passing them produces `Some(value)`.
 
 ##### Common `#[arg(...)]` Attributes
-| Attribute                | Effect                                                                                                                                            |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| `short`                  | Add a short flag derived from the field name (`-v`)                                                                                               |
-| `short = 'x'`            | Add a specific short flag (`-x`)                                                                                                                  |
-| `long`                   | Add a long flag derived from the field name (`--verbose`)                                                                                         |
-| `long = "my-flag"`       | Add a specific long flag                                                                                                                          |
-| `value_name = "FILE"`    | Set the metavar shown in help text                                                                                                                |
-| `name = "FILE"`          | Set the argument's internal ID (and metavar for positionals)                                                                                      |
-| `default_value = "8080"` | String default, parsed into the field's type                                                                                                      |
-| `default_value_t = 8080` | Typed default — no parsing, must match the field type                                                                                             |
-| `required = true`        | Force the argument to be provided (overrides `Option<T>`)                                                                                         |
-| `num_args = 1..`         | Accept multiple values into a `Vec<T>`                                                                                                            |
+| Attribute                | Effect                                                                                                                                                                        |
+|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `short`                  | Add a short flag derived from the field name (`-v`)                                                                                                                           |
+| `short = 'x'`            | Add a specific short flag (`-x`)                                                                                                                                              |
+| `long`                   | Add a long flag derived from the field name (`--verbose`)                                                                                                                     |
+| `long = "my-flag"`       | Add a specific long flag                                                                                                                                                      |
+| `value_name = "FILE"`    | Set the metavar shown in help text                                                                                                                                            |
+| `name = "FILE"`          | Set the argument's internal ID (and metavar for positionals)                                                                                                                  |
+| `default_value = "8080"` | String default, parsed into the field's type                                                                                                                                  |
+| `default_value_t = 8080` | Typed default — no parsing, must match the field type                                                                                                                         |
+| `required = true`        | Force the argument to be provided (overrides `Option<T>`)                                                                                                                     |
+| `num_args = 1..`         | Accept multiple values into a `Vec<T>`                                                                                                                                        |
 | `env = "MY_VAR"`         | Fall back to an [environment variable](https://doc.rust-lang.org/cargo/reference/environment-variables.html){target="_blank" rel="noopener noreferrer"} if the flag is absent |
-| `hide = true`            | Omit the argument from help output                                                                                                                |
+| `hide = true`            | Omit the argument from help output                                                                                                                                            |
 
 Doc comments (`/// ...`) above a field become the help text for that argument. Clap reads them directly — no separate `help = "..."` attribute needed.
 
@@ -5709,7 +5645,6 @@ Subcommands model tools like `git commit` or `cargo build` where the first argum
 If a command option should work in either position, mark it `global = true`.
 
 Define an enum with `#[derive(Subcommand)]` and embed it in your top-level `Parser` struct. By convention this struct is named `Cli`, but any name works — clap derives from the struct name you call `.parse()` on:
-
 
 ```rust
 use clap::{Parser, Subcommand};
@@ -5893,7 +5828,7 @@ $ pexs24 --version
 pexs24 0.3.1
 ```
 
-:::{.see-more}
+::: {.see-more}
 See [clap documentation](https://docs.rs/clap/latest/clap/){target="_blank" rel="noopener noreferrer"} and the [clap derive reference](https://docs.rs/clap/latest/clap/_derive/index.html){target="_blank" rel="noopener noreferrer"} for the full attribute catalog.
 :::
 
@@ -5915,7 +5850,7 @@ Quick Reference
 | `#include`                     | `use`                                  |
 | Header files                   | No headers — modules handle visibility |
 | Manual `free` / `delete`       | Automatic via ownership                |
-| Undefined behavior on misuse  | Compile error on misuse                |
+| Undefined behavior on misuse   | Compile error on misuse                |
 | `printf`                       | `println!("{}",  val)`                 |
 
 ## Where to Go Next
@@ -5935,7 +5870,7 @@ The compiler error messages are unusually good. Read them carefully — they usu
 - The [Rust Book](https://doc.rust-lang.org/book/){target="_blank" rel="noopener noreferrer"} is free online and excellent.
 - [Rust by Example](https://doc.rust-lang.org/rust-by-example/){target="_blank" rel="noopener noreferrer"} is terse.
 - [The Cargo Book](https://doc.rust-lang.org/cargo/){target="_blank" rel="noopener noreferrer"} Cargo inside out.
-   - [Environment Variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html){target="_blank" rel="noopener noreferrer"}
+	- [Environment Variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html){target="_blank" rel="noopener noreferrer"}
 
 ### Practice
 - [Rustlings](https://github.com/rust-lang/rustlings){target="_blank" rel="noopener noreferrer"} is a set of small exercises that build muscle memory quickly.

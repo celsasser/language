@@ -11,6 +11,7 @@ The *shell* is the oldest interactive programming language most of us use daily,
 :::
 
 ::: {style="clear: both"}
+
 :::
 
 The thesis of this notebook is one sentence:
@@ -90,10 +91,10 @@ child: sh_var=[] env_var=[dong]
 
 The child shell inherited `env_var` but not `sh_var`. The non-exported variable was real and usable in the parent, but it stopped at the process boundary. This is the whole model:
 
-|                              | Plain assignment                                  | Exported                                                             |
+|                              | Plain assignment                                  | Exported                                                               |
 |------------------------------|---------------------------------------------------|------------------------------------------------------------------------|
 | Visible in current shell     | yes                                               | yes                                                                    |
-| Inherited by child processes | no                                            | yes                                                                |
+| Inherited by child processes | no                                                | yes                                                                    |
 | Lives in the environment     | no                                                | yes                                                                    |
 | Typical use                  | scratch values, loop counters, script-local state | config the programs you launch need to read (`PATH`, `EDITOR`, `LANG`) |
 
@@ -126,24 +127,23 @@ This is exactly why you `source ~/.zshrc` to reload your config rather than exec
 ### The Standard Environment Variables
 A handful of environment variables are conventional across Unix systems. Programs read them to discover where things live and how you like to work. These are the `$x` names you will see constantly:
 
-| Variable          | Holds                                                     |
-|-------------------|-----------------------------------------------------------|
-| `$PATH`           | colon-separated list of directories searched for commands. |
-| `$HOME`           | your home directory (`~` expands to this).                |
-| `$USER`           | your login name.                                          |
-| `$SHELL`          | path to your login shell (e.g. `/bin/zsh`).               |
-| `$PWD`            | the current working directory.                            |
-| `$OLDPWD`         | the previous directory (what `cd -` returns to).          |
-| `$LANG` / `$LC_*` | locale: language, character encoding, formatting.         |
-| `$EDITOR`         | your preferred editor, used by `git`, `crontab`, etc.     |
-| `$TERM`           | terminal type, used for colors and capabilities.          |
-| `$TMPDIR`         | directory for temporary files.                            |
+| Variable           | Holds                                                                                                                                                                                                      |
+|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `$PATH`            | colon-separated list of directories searched for commands.                                                                                                                                                 |
+| `$HOME`            | your home directory (`~` expands to this).                                                                                                                                                                 |
+| `$USER`            | your login name.                                                                                                                                                                                           |
+| `$SHELL`           | path to your login shell (e.g. `/bin/zsh`).                                                                                                                                                                |
+| `$PWD`             | the current working directory.                                                                                                                                                                             |
+| `$OLDPWD`          | the previous directory (what `cd -` returns to).                                                                                                                                                           |
+| `$LANG` / `$LC_*`  | locale: language, character encoding, formatting.                                                                                                                                                          |
+| `$EDITOR`          | your preferred editor, used by `git`, `crontab`, etc.                                                                                                                                                      |
+| `$TERM`            | terminal type, used for colors and capabilities.                                                                                                                                                           |
+| `$TMPDIR`          | directory for temporary files.                                                                                                                                                                             |
 | `$PROMPT` / `$PS1` | prompt [specification](https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html){target="_blank"} expanded by the shell. The same expansion is available using the `-P` option to the `print` builtin. |
 
 Let's take a closer look at a couple of these fellas.
 
 #### `$PATH`
-
 `$PATH` is the one to understand deeply, because it is *how the shell turns a command name into a program* (decision #3, programs are the standard library). When you type `grep`, the shell walks `$PATH` left to right and runs the first `grep` it finds:
 
 ##### Command Executed
@@ -163,16 +163,16 @@ A prompt sequence is a combination of literal text and *escape sequences*. An es
 
 My `$PROMPT` is defined as: `%{(language) %n@%m %1~ %# %}`. Using the prompt expansion reference, we shall break it down.
 
-| Literal/Sequence | Data |
-|-----------------|-----------------------------------------------------|
-| `%{` | Opens a *zero-width* span. Everything up to the matching `%}` is sent to the terminal verbatim but counted as occupying **no columns**. Its normal job is to wrap color/escape codes so the shell's idea of the cursor position stays correct. See the note below; an empty-looking pair around the whole prompt is unusual. |
-| `(language)` | Not a zsh escape sequence at all, just literal text the shell prints as-is. It is the active Python virtual environment's name, inserted by a *different* mechanism than prompt expansion. We break this down under [Pulling the virtual environment into the prompt](#pulling-the-virtual-environment-into-the-prompt) below. |
-| `%n` | The username (`$USERNAME`). |
-| `@` | Literal `@`. |
-| `%m` | The hostname up to the first `.` |
-| `%1~` | The current working directory, with `~` substituted for `$HOME` where it applies. The integer limits how many trailing path components to show: `%1~` shows just the last one, `%~` (or `%0~`) shows the whole path. A negative integer counts leading components instead, so `%-1~` shows the first. |
-| `%#` | A `#` if the shell is running with privileges (root), a `%` if not. |
-| `%}` | Closes the zero-width span opened by `%{`. |
+| Literal/Sequence | Data                                                                                                                                                                                                                                                                                                                           |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `%{`             | Opens a *zero-width* span. Everything up to the matching `%}` is sent to the terminal verbatim but counted as occupying **no columns**. Its normal job is to wrap color/escape codes so the shell's idea of the cursor position stays correct. See the note below; an empty-looking pair around the whole prompt is unusual.   |
+| `(language)`     | Not a zsh escape sequence at all, just literal text the shell prints as-is. It is the active Python virtual environment's name, inserted by a *different* mechanism than prompt expansion. We break this down under [Pulling the virtual environment into the prompt](#pulling-the-virtual-environment-into-the-prompt) below. |
+| `%n`             | The username (`$USERNAME`).                                                                                                                                                                                                                                                                                                    |
+| `@`              | Literal `@`.                                                                                                                                                                                                                                                                                                                   |
+| `%m`             | The hostname up to the first `.`                                                                                                                                                                                                                                                                                               |
+| `%1~`            | The current working directory, with `~` substituted for `$HOME` where it applies. The integer limits how many trailing path components to show: `%1~` shows just the last one, `%~` (or `%0~`) shows the whole path. A negative integer counts leading components instead, so `%-1~` shows the first.                          |
+| `%#`             | A `#` if the shell is running with privileges (root), a `%` if not.                                                                                                                                                                                                                                                            |
+| `%}`             | Closes the zero-width span opened by `%{`.                                                                                                                                                                                                                                                                                     |
 
 ::: {.callout-note title="That outer `%{ ... %}` is doing nothing useful here"}
 Read literally, your prompt wraps *everything* in a single zero-width span: `%{` ... `%}` with no escape codes inside. That tells zsh "none of this text occupies any columns," which is wrong, the text plainly takes up space. If zsh were actually rendering this prompt, the cursor math would be off and line editing would smear. The reason you don't see that breakage is that **Warp does not use `$PROMPT` to draw the prompt.** Warp renders its own prompt UI and only inspects `$PROMPT` to scrape a few facts out of it (the venv name, the directory). The stray `%{ %}` is almost certainly Warp's own wrapper, not something you would write by hand. On a terminal that honors `$PROMPT` literally (Ghostty, iTerm2, Terminal.app, a plain tty), drop the outer `%{ %}` and you would write the prompt as `(language) %n@%m %1~ %# `.
@@ -272,7 +272,11 @@ The separation of `stdout` from `stderr` is deliberate and important: it lets yo
 
 The two channels a command hands back map onto this picture cleanly: the text you can capture is *stdout* (stream 1), and the integer verdict is the exit status (not a stream at all, a separate value we get to below).
 
-### Capturing stdout: Command Substitution
+### Capturing stdout
+::: {.subheading}
+Command Substitution
+:::
+
 This is the answer to the question that started this section: yes, you can take what a command sends to stdout and assign it to a variable. The mechanism is **command substitution**, written `$(...)`. The shell runs the command inside the parentheses, captures everything it wrote to stdout, and substitutes that text in place.
 
 ::: {.note data-label="Two syntaxes for command substitution?"}
@@ -326,7 +330,11 @@ One small surprise for C programmers expecting raw bytes: command substitution *
 That `2>&1` idiom is covered under [Redirection](#redirection).
 :::
 
-### Exit Status: the Other Return Value
+### Exit Status
+::: {.subheading}
+the Other Return Value
+:::
+
 The second thing a command hands back is its *exit status*: an integer from 0 to 255, where `0` means success and any non-zero value means some kind of failure. This is the shell's boolean type ([decision #5](#why-the-shell-exists)), and it is what `if`, `&&`, and `||` actually test. The special variable `$?` holds the exit status of the most recent command:
 
 ```bash
@@ -336,9 +344,9 @@ echo $?        # 0 if the word was found, 1 if not
 
 Here is the crux of the confusion. You cannot capture the exit status with `$(...)`. Command substitution captures *text from stdout*; the exit status is a separate integer that lives in `$?`. They answer different questions:
 
-| You want…                         | Use…                          |
-|-----------------------------------|-------------------------------|
-| the command's *output* (text)   | `var=$(cmd)`                  |
+| You want…                     | Use…                              |
+|-------------------------------|-----------------------------------|
+| the command's *output* (text) | `var=$(cmd)`                      |
 | whether it succeeded (yes/no) | test `cmd` directly, or read `$?` |
 
 A useful detail ties them together: assigning a command substitution does *not* clobber `$?` with the assignment's own status, so `$?` afterward still reflects the inner command. That lets you grab both in two lines:
@@ -350,7 +358,11 @@ status=$?                # capture the verdict, before any other command runs
 
 The "before any other command runs" matters: `$?` is overwritten by the *next* command, so read it immediately.
 
-### A Look-alike: Arithmetic Substitution `$(( ))`
+### A Look-alike
+::: {.subheading}
+Arithmetic Substitution `$(( ))`
+:::
+
 One construct looks almost identical to command substitution but does something entirely different. `$(( ... ))`, with *doubled* parentheses, is **arithmetic substitution**: it evaluates a math expression and substitutes the numeric result. It does not run a command.
 
 ```bash
@@ -362,14 +374,14 @@ echo "$(( 7 % 3 ))"       # 1
 It is worth pointing out only because `$(cmd)` and `$(( expr ))` are one keystroke apart on the page and easy to confuse. The single-paren form runs a command and captures its stdout; the double-paren form does arithmetic. Different jobs, similar costume.
 
 ### Quick Reference
-| Goal                                  | Syntax                  |
-|---------------------------------------|-------------------------|
-| Capture a command's stdout            | `var=$(command)`        |
-| Same, legacy form (avoid)             | `` var=`command` ``     |
-| Capture stdout *and* stderr         | `var=$(command 2>&1)`   |
-| Read the last command's exit status   | `$?`                    |
-| Capture output and status together    | `out=$(cmd); st=$?`     |
-| Evaluate arithmetic                   | `$(( expression ))`     |
+| Goal                                | Syntax                |
+|-------------------------------------|-----------------------|
+| Capture a command's stdout          | `var=$(command)`      |
+| Same, legacy form (avoid)           | `` var=`command` ``   |
+| Capture stdout *and* stderr         | `var=$(command 2>&1)` |
+| Read the last command's exit status | `$?`                  |
+| Capture output and status together  | `out=$(cmd); st=$?`   |
+| Evaluate arithmetic                 | `$(( expression ))`   |
 
 ## Quoting and Expansion
 Quoting is not decoration. It is how you *control the shell's rewriting of your command line* (decision #4 above). Get quoting wrong and the shell hands your program a mangled set of arguments; get it right and you have exact control over what every program receives.

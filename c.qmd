@@ -62,8 +62,8 @@ The preprocessor provides directives that instruct the compiler to perform speci
 - **`#define`**: Creates a **macro**, which is a fragment of code which has been given a name. Whenever the name is used, it is replaced by the contents of the macro.
 - **`#undef`**: Removes a macro definition.
 - **`#pragma`**: Provides the compiler with special instructions (e.g., configuring optimization levels or hardware-specific settings like configuration bits on the dsPIC). For example:
-   - `#pragma config FOSC = INTOSC` sets the oscillator configuration.
-   - `#pragma GCC optimize ("O2")` sets the optimization level.
+	- `#pragma config FOSC = INTOSC` sets the oscillator configuration.
+	- `#pragma GCC optimize ("O2")` sets the optimization level.
 - **`#error`**: Aborts the compilation process and displays a specified error message. This is often used to ensure correct configuration options are selected.
 - **`__FILE__`**: A predefined macro that expands to the name of the current input file as a string literal. It is useful for logging and debugging.
 
@@ -1145,16 +1145,16 @@ void __attribute__((interrupt, auto_psv)) _T1Interrupt(void)
 
 ##### Key elements
 1. **`__attribute__((interrupt, auto_psv))`**: Tells compiler this is an ISR
-   - Automatically saves/restores registers
-   - `auto_psv` handles program space visibility for dsPIC
+	- Automatically saves/restores registers
+	- `auto_psv` handles program space visibility for dsPIC
 
 2. **ISR name**: Must match the vector name (e.g., `_T1Interrupt` for Timer 1)
-   - See device datasheet for all vector names
-   - Common ones: `_T1Interrupt`, `_T2Interrupt`, `_ADC1Interrupt`, `_INT0Interrupt`
+	- See device datasheet for all vector names
+	- Common ones: `_T1Interrupt`, `_T2Interrupt`, `_ADC1Interrupt`, `_INT0Interrupt`
 
 3. **Clear the interrupt flag**: `IFS0bits.T1IF = 0;`
-   - If you forget this, the ISR will immediately trigger again!
-   - Each interrupt source has a flag bit
+	- If you forget this, the ISR will immediately trigger again!
+	- Each interrupt source has a flag bit
 
 4. **No return type, no parameters**: ISRs are called by hardware, not by your code
 

@@ -34,7 +34,6 @@ Tim Peters wrote nineteen aphorisms that capture Python's design philosophy. You
 
 ```{python}
 #| code-fold: true
-
 # The following is a little more involved because once `this` is loaded into
 # sys.modules cache, it won't render upon import. To make sure it renders
 # every time we remove it from sys's module cache.
@@ -47,7 +46,6 @@ except:
 
 import this
 ```
-
 :::
 
 ## How a Python Project Is Structured
@@ -68,12 +66,15 @@ Every `.py` file is a module. Its name is the filename without the extension. Yo
 def add(a, b):
     return a + b
 
+
 # main.py
 import math_utils
+
 print(math_utils.add(2, 3))
 
 # or import specific names directly
 from math_utils import add
+
 print(add(2, 3))
 ```
 
@@ -107,20 +108,20 @@ Dependencies are recorded in `pyproject.toml` or `requirements.txt`. Always use 
 Python variables are not declarations: they are name bindings. A name comes into existence the moment you assign to it, and its type is determined by the object it is bound to:
 
 ```python
-x = 42          # x is bound to an int object
-x = "hello"     # x is now bound to a str object — no error
-x = [1, 2, 3]   # x is now bound to a list object
+x = 42  # x is bound to an int object
+x = "hello"  # x is now bound to a str object — no error
+x = [1, 2, 3]  # x is now bound to a list object
 ```
 
 The built-in scalar types:
 
 ```python
-i = 42              # int (arbitrary precision: no overflow ever)
-f = 3.14            # float (64-bit IEEE 754)
-c = 2 + 3j          # complex
-b = True            # bool (subclass of int: True == 1, False == 0)
-s = "hello"         # str (immutable Unicode sequence)
-n = None            # NoneType: the absence of a value (Python's null)
+i = 42  # int (arbitrary precision: no overflow ever)
+f = 3.14  # float (64-bit IEEE 754)
+c = 2 + 3j  # complex
+b = True  # bool (subclass of int: True == 1, False == 0)
+s = "hello"  # str (immutable Unicode sequence)
+n = None  # NoneType: the absence of a value (Python's null)
 ```
 
 No integer overflow. Python integers are arbitrary precision — they grow as large as memory allows. This is convenient and occasionally surprising in performance-sensitive code.
@@ -139,10 +140,12 @@ Variables and function signatures are annotated with `:` for values and paramete
 name: str = "alice"
 count: int = 0
 
+
 def add(a: int, b: int) -> int:
     return a + b
 
-def greet(name: str) -> None:   # None means the function returns nothing
+
+def greet(name: str) -> None:  # None means the function returns nothing
     print(f"hello, {name}")
 ```
 
@@ -153,8 +156,10 @@ Built-in containers are generic as of Python 3.9. Use lowercase directly:
 def total(numbers: list[int]) -> int:
     return sum(numbers)
 
+
 def lookup(data: dict[str, int], key: str) -> int:
     return data[key]
+
 
 coords: tuple[float, float] = (3.0, 4.0)
 unique: set[str] = {"a", "b", "c"}
@@ -190,6 +195,7 @@ Older code writes `Union[int, str]` from `typing`. Same meaning.
 ```python
 from typing import Any
 
+
 def log(value: Any) -> None:
     print(value)
 ```
@@ -202,10 +208,12 @@ Functions passed as arguments can be typed:
 ```python
 from typing import Callable
 
+
 def apply(func: Callable[[int], int], value: int) -> int:
     return func(value)
 
-apply(lambda x: x * 2, 5)   # 10
+
+apply(lambda x: x * 2, 5)  # 10
 ```
 
 `Callable[[ArgType, ...], ReturnType]` — the list contains parameter types, the second argument is the return type.
@@ -218,10 +226,12 @@ from typing import TypeVar
 
 T = TypeVar("T")
 
+
 def first(items: list[T]) -> T:
     return items[0]
 
-first([1, 2, 3])         # return type inferred as int
+
+first([1, 2, 3])  # return type inferred as int
 first(["a", "b", "c"])  # return type inferred as str
 ```
 
@@ -237,22 +247,27 @@ Structural Subtyping
 ```python
 from typing import Protocol
 
+
 class Drawable(Protocol):
     def draw(self) -> None: ...
+
 
 class Circle:
     def draw(self) -> None:
         print("drawing circle")
 
+
 class Square:
     def draw(self) -> None:
         print("drawing square")
 
-def render(shape: Drawable) -> None:   # accepts anything with a draw() method
+
+def render(shape: Drawable) -> None:  # accepts anything with a draw() method
     shape.draw()
 
-render(Circle())   # fine
-render(Square())   # fine
+
+render(Circle())  # fine
+render(Square())  # fine
 ```
 
 Neither `Circle` nor `Square` inherits from `Drawable`. The type checker verifies structural compatibility at the call site. This is duck typing formalized: if it has the right methods, it qualifies.
@@ -271,10 +286,11 @@ MAX_RETRIES: Final = 3
 ```python
 from typing import Literal
 
-def set_direction(d: Literal["north", "south", "east", "west"]) -> None:
-    ...
 
-set_direction("up")   # type checker error
+def set_direction(d: Literal["north", "south", "east", "west"]) -> None: ...
+
+
+set_direction("up")  # type checker error
 ```
 
 ::: {.callout-warning title="Annotations do not run at runtime"}
@@ -284,24 +300,29 @@ None of this affects execution. If you pass the wrong type at runtime, Python wi
 ### Functions
 ```python
 def greet(name):
-    print(f"Hello, {name}!")        # f-string: embed expressions in strings
+    print(f"Hello, {name}!")  # f-string: embed expressions in strings
+
 
 def add(a, b):
     return a + b
 
+
 # default arguments
-def connect(host, port=8080, timeout=30):
-    ...
+def connect(host, port=8080, timeout=30): ...
+
 
 # variable positional arguments
 def total(*numbers):
     return sum(numbers)
 
-total(1, 2, 3, 4)   # 10
+
+total(1, 2, 3, 4)  # 10
+
 
 # variable keyword arguments
 def create_user(**fields):
-    print(fields)   # {'name': 'alice', 'role': 'admin'}
+    print(fields)  # {'name': 'alice', 'role': 'admin'}
+
 
 create_user(name="alice", role="admin")
 ```
@@ -322,11 +343,11 @@ else:
 for item in [1, 2, 3]:
     print(item)
 
-for i in range(10):                     # 0 to 9
+for i in range(10):  # 0 to 9
     print(i)
 
 for i, item in enumerate(["a", "b", "c"]):
-    print(i, item)                      # 0 a, 1 b, 2 c
+    print(i, item)  # 0 a, 1 b, 2 c
 
 # while
 while x > 0:
@@ -346,14 +367,14 @@ Comprehensions are a concise syntax for building a new collection by transformin
 The foundation. `[expression for item in iterable]`:
 
 ```python
-squares = [x ** 2 for x in range(10)]
+squares = [x**2 for x in range(10)]
 # [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
 ```
 
 Add an `if` clause to filter:
 
 ```python
-even_squares = [x ** 2 for x in range(10) if x % 2 == 0]
+even_squares = [x**2 for x in range(10) if x % 2 == 0]
 # [0, 4, 16, 36, 64]
 ```
 
@@ -370,7 +391,7 @@ let even_squares: Vec<i32> = (0..10)
 `{key_expr: value_expr for item in iterable}`:
 
 ```python
-words   = ["hello", "world", "python"]
+words = ["hello", "world", "python"]
 lengths = {word: len(word) for word in words}
 # {'hello': 5, 'world': 5, 'python': 6}
 
@@ -384,7 +405,7 @@ inverted = {v: k for k, v in original.items()}
 `{expression for item in iterable}` — curly braces without a colon:
 
 ```python
-names        = ["Alice", "Bob", "alice", "ALICE"]
+names = ["Alice", "Bob", "alice", "ALICE"]
 unique_lower = {name.lower() for name in names}
 # {'alice', 'bob'}
 ```
@@ -394,16 +415,16 @@ Generator expressions look like list comprehensions but use parentheses. They ar
 
 ```python
 # list comprehension: entire list built in memory immediately
-squares_list = [x ** 2 for x in range(1_000_000)]
+squares_list = [x**2 for x in range(1_000_000)]
 
 # generator expression: one value computed at a time
-squares_gen = (x ** 2 for x in range(1_000_000))
+squares_gen = (x**2 for x in range(1_000_000))
 ```
 
 Use a generator expression when you only need to iterate once, or when you are passing the result directly to a function that consumes it:
 
 ```python
-total   = sum(x ** 2 for x in range(1_000_000))     # sum drives the generator
+total = sum(x**2 for x in range(1_000_000))  # sum drives the generator
 largest = max(len(word) for word in word_list)
 ```
 
@@ -414,7 +435,7 @@ A comprehension can contain multiple `for` clauses, flattening nested structure:
 
 ```python
 matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-flat   = [n for row in matrix for n in row]
+flat = [n for row in matrix for n in row]
 # [1, 2, 3, 4, 5, 6, 7, 8, 9]
 ```
 
@@ -453,7 +474,7 @@ Any iterable on the right-hand side can be unpacked into names on the left:
 ```python
 x, y = (3, 4)
 a, b, c = [1, 2, 3]
-p, q = "hi"             # strings are iterable too: p = 'h', q = 'i'
+p, q = "hi"  # strings are iterable too: p = 'h', q = 'i'
 ```
 
 The count of names must match the count of values, or you get a `ValueError`.
@@ -463,7 +484,7 @@ Unpacking makes the classic swap a one-liner — no temporary variable needed:
 
 ```python
 a, b = 1, 2
-a, b = b, a     # a = 2, b = 1
+a, b = b, a  # a = 2, b = 1
 ```
 
 Python evaluates the entire right-hand side first (producing a tuple `(2, 1)`), then assigns. There is no aliasing hazard.
@@ -472,15 +493,15 @@ Python evaluates the entire right-hand side first (producing a tuple `(2, 1)`), 
 A starred name captures the remaining elements into a list. It can appear at the start, middle, or end:
 
 ```python
-first, *rest        = [1, 2, 3, 4, 5]   # first=1,  rest=[2, 3, 4, 5]
-*init,  last        = [1, 2, 3, 4, 5]   # init=[1, 2, 3, 4],  last=5
-a,     *middle, b   = [1, 2, 3, 4, 5]   # a=1,  middle=[2, 3, 4],  b=5
+first, *rest = [1, 2, 3, 4, 5]  # first=1,  rest=[2, 3, 4, 5]
+*init, last = [1, 2, 3, 4, 5]  # init=[1, 2, 3, 4],  last=5
+a, *middle, b = [1, 2, 3, 4, 5]  # a=1,  middle=[2, 3, 4],  b=5
 ```
 
 The starred name always receives a list, even when zero elements match:
 
 ```python
-first, *rest = [42]   # first=42, rest=[]
+first, *rest = [42]  # first=42, rest=[]
 ```
 
 #### Unpacking in `for` Loops
@@ -506,10 +527,10 @@ This is also why `enumerate` and `zip` feel so natural — their output is a seq
 
 ```python
 for i, item in enumerate(["a", "b", "c"]):
-    print(i, item)                          # 0 a, 1 b, 2 c
+    print(i, item)  # 0 a, 1 b, 2 c
 
 for left, right in zip([1, 2, 3], ["x", "y", "z"]):
-    print(left, right)                      # 1 x, 2 y, 3 z
+    print(left, right)  # 1 x, 2 y, 3 z
 ```
 
 #### Nested Unpacking
@@ -531,20 +552,21 @@ for (x1, y1), (x2, y2) in segments:
 def add(a, b, c):
     return a + b + c
 
-args   = [1, 2, 3]
+
+args = [1, 2, 3]
 kwargs = {"a": 1, "b": 2, "c": 3}
 
-add(*args)     # same as add(1, 2, 3)
+add(*args)  # same as add(1, 2, 3)
 add(**kwargs)  # same as add(a=1, b=2, c=3)
 ```
 
 Both can be mixed with literal arguments:
 
 ```python
-def f(a, b, c, d):
-    ...
+def f(a, b, c, d): ...
 
-f(1, *[2, 3], d=4)   # a=1, b=2, c=3, d=4
+
+f(1, *[2, 3], d=4)  # a=1, b=2, c=3, d=4
 ```
 
 This is useful when arguments are built programmatically — for example, when forwarding arguments from one function to another, or constructing a call from a config dict.
@@ -589,10 +611,10 @@ The variable `x` is not a box containing a value. It is a name in a namespace di
 ### Assignment Copies the Reference, Not the Object
 ```python
 a = [1, 2, 3]
-b = a           # b points to the SAME list object
+b = a  # b points to the SAME list object
 b.append(4)
 
-print(a)        # [1, 2, 3, 4] — a is affected
+print(a)  # [1, 2, 3, 4] — a is affected
 ```
 
 This is not a copy. Both `a` and `b` are names bound to the same list. The list has one identity and two names. Modifying the list through either name modifies the one shared object.
@@ -604,9 +626,9 @@ You can inspect identity with `id()` and the `is` operator:
 ```python
 a = [1, 2, 3]
 b = a
-print(id(a) == id(b))   # True: same object in memory
-print(a is b)           # True: `is` checks identity, not equality
-print(a == b)           # True: `==` checks value equality
+print(id(a) == id(b))  # True: same object in memory
+print(a is b)  # True: `is` checks identity, not equality
+print(a == b)  # True: `==` checks value equality
 ```
 
 ### Mutable vs Immutable Types
@@ -617,9 +639,9 @@ The behavior of assignment depends on whether the type is mutable or immutable.
 ```python
 x = "hello"
 y = x
-x += " world"   # x is now bound to a NEW str object
+x += " world"  # x is now bound to a NEW str object
 
-print(y)        # "hello": y still points to the original
+print(y)  # "hello": y still points to the original
 ```
 
 **Mutable types**: `list`, `dict`, `set`, `bytearray`, and most user-defined objects. The object can be modified in place, and all references see the change:
@@ -629,7 +651,7 @@ a = {"key": 1}
 b = a
 a["key"] = 99
 
-print(b)        # {"key": 99}: same dict, one change visible through both names
+print(b)  # {"key": 99}: same dict, one change visible through both names
 ```
 
 This asymmetry is one of the most common sources of bugs for programmers new to Python. The rule to remember: assignment always copies the reference. For immutable types, this is safe because the object cannot change. For mutable types, it creates an alias.
@@ -646,13 +668,13 @@ original = [[1, 2], [3, 4]]
 alias = original
 
 # 2. Shallow copy: new container, same inner objects
-shallow = original.copy()         # or list(original) or original[:]
-shallow.append([5, 6])            # original unaffected: new container
-shallow[0].append(99)             # original[0] IS affected: inner list is shared
+shallow = original.copy()  # or list(original) or original[:]
+shallow.append([5, 6])  # original unaffected: new container
+shallow[0].append(99)  # original[0] IS affected: inner list is shared
 
 # 3. Deep copy: new everything, recursively
 deep = copy.deepcopy(original)
-deep[0].append(99)                # original unaffected at every level
+deep[0].append(99)  # original unaffected at every level
 ```
 
 A shallow copy creates a new container but does not copy the objects inside it. If those objects are themselves mutable, the shallow copy shares them with the original. Deep copy recurses through the entire structure. For nested mutable data, the difference matters.
@@ -664,8 +686,8 @@ A shallow copy creates a new container but does not copy the objects inside it. 
 a = [1, 2, 3]
 b = [1, 2, 3]
 
-print(a == b)   # True: equal values
-print(a is b)   # False: two distinct list objects
+print(a == b)  # True: equal values
+print(a is b)  # False: two distinct list objects
 ```
 
 One exception worth knowing: CPython caches small integers (typically -5 through 256) and short strings that look like identifiers. These objects are reused rather than re-created, so `is` may return `True` even for separately created values in that range:
@@ -673,11 +695,11 @@ One exception worth knowing: CPython caches small integers (typically -5 through
 ```python
 x = 42
 y = 42
-print(x is y)   # True in CPython: the integer 42 is cached
+print(x is y)  # True in CPython: the integer 42 is cached
 
 x = 1000
 y = 1000
-print(x is y)   # False: large integers are not cached
+print(x is y)  # False: large integers are not cached
 ```
 
 Never rely on this caching behavior. Use `==` to compare values and `is` only when you specifically mean to test object identity (most commonly: `if x is None`).
@@ -726,11 +748,11 @@ CPython tracks a **reference count** on every object: the number of names and da
 import sys
 
 a = [1, 2, 3]
-b = a                       # reference count is now 2
-print(sys.getrefcount(a))   # 3 (getrefcount itself adds one temporarily)
+b = a  # reference count is now 2
+print(sys.getrefcount(a))  # 3 (getrefcount itself adds one temporarily)
 
-del a                       # count drops to 1: not freed yet
-del b                       # count drops to 0: freed immediately
+del a  # count drops to 1: not freed yet
+del b  # count drops to 0: freed immediately
 ```
 
 Reference counting has one weakness: cycles. If object A holds a reference to object B, and B holds a reference back to A, neither count ever reaches zero, even if nothing else refers to them. CPython includes a separate **cycle garbage collector** that periodically detects and clears these cycles. It runs automatically; you rarely need to think about it.
@@ -767,13 +789,15 @@ big_list = [x * 2 for x in range(10_000_000)]
 # generator expression: allocates one integer at a time
 big_gen = (x * 2 for x in range(10_000_000))
 
+
 # generator function: same behavior, more control
 def doubled(n):
     for i in range(n):
-        yield i * 2         # suspends here, resumes on next iteration
+        yield i * 2  # suspends here, resumes on next iteration
+
 
 for value in doubled(10_000_000):
-    process(value)          # only one integer in memory at a time
+    process(value)  # only one integer in memory at a time
 ```
 
 The `yield` keyword turns a function into a generator. Its local state is suspended between calls and resumed on the next iteration. Generators are the idiomatic way to handle large data streams, infinite sequences, and processing pipelines without holding everything in memory.
@@ -786,13 +810,13 @@ Dynamic Array
 
 ```python
 a = [1, 2, 3]
-a.append(4)         # O(1) amortized
-a.insert(0, 0)      # O(n): shifts all elements
-a.pop()             # O(1): remove last element
-a.pop(0)            # O(n): remove first (use collections.deque if you need this often)
-a[1:3]              # [2, 3]: slice — creates a shallow copy of that range
-len(a)              # O(1)
-3 in a              # O(n): linear scan
+a.append(4)  # O(1) amortized
+a.insert(0, 0)  # O(n): shifts all elements
+a.pop()  # O(1): remove last element
+a.pop(0)  # O(n): remove first (use collections.deque if you need this often)
+a[1:3]  # [2, 3]: slice — creates a shallow copy of that range
+len(a)  # O(1)
+3 in a  # O(n): linear scan
 ```
 
 Lists are heterogeneous: they can hold objects of different types, including other lists. In practice, homogeneous lists (all the same type) are far more common and perform better with libraries like NumPy.
@@ -804,7 +828,7 @@ Immutable Sequence
 
 ```python
 t = (1, 2, 3)
-t[0]                # 1
+t[0]  # 1
 # t[0] = 99        # TypeError: tuples do not support assignment
 ```
 
@@ -817,10 +841,10 @@ Hash Map
 
 ```python
 d = {"name": "alice", "age": 30}
-d["name"]                       # "alice"
-d.get("missing", "default")     # "default": no KeyError
-d["new_key"] = 42               # insert or update
-"name" in d                     # True: O(1) membership test
+d["name"]  # "alice"
+d.get("missing", "default")  # "default": no KeyError
+d["new_key"] = 42  # insert or update
+"name" in d  # True: O(1) membership test
 del d["age"]
 
 for key, value in d.items():
@@ -835,13 +859,13 @@ Hash Set
 ```python
 s = {1, 2, 3}
 s.add(4)
-s.discard(10)       # no error if missing (remove() raises KeyError)
-3 in s              # True: O(1)
+s.discard(10)  # no error if missing (remove() raises KeyError)
+3 in s  # True: O(1)
 
-a | b               # union
-a & b               # intersection
-a - b               # difference
-a ^ b               # symmetric difference
+a | b  # union
+a & b  # intersection
+a - b  # difference
+a ^ b  # symmetric difference
 ```
 
 ### str
@@ -851,11 +875,11 @@ Immutable Unicode Sequence
 
 ```python
 s = "hello"
-s.upper()                       # "HELLO": returns a new string
-s.split(" ")                    # ["hello"]
-s.startswith("hel")             # True
-f"value is {x:.2f}"            # f-strings for inline formatting
-", ".join(["a", "b", "c"])     # "a, b, c"
+s.upper()  # "HELLO": returns a new string
+s.split(" ")  # ["hello"]
+s.startswith("hel")  # True
+f"value is {x:.2f}"  # f-strings for inline formatting
+", ".join(["a", "b", "c"])  # "a, b, c"
 ```
 
 Strings are immutable. Concatenating in a loop (`s += x`) allocates a new string on every iteration. For building strings from many parts, collect into a list and join at the end:
@@ -864,7 +888,7 @@ Strings are immutable. Concatenating in a loop (`s += x`) allocates a new string
 parts = []
 for item in data:
     parts.append(str(item))
-result = ", ".join(parts)       # one allocation
+result = ", ".join(parts)  # one allocation
 ```
 
 ## Functions and Closures
@@ -875,10 +899,12 @@ Functions are objects. They can be passed, returned, and stored:
 def apply(func, value):
     return func(value)
 
+
 def double(x):
     return x * 2
 
-apply(double, 5)            # 10
+
+apply(double, 5)  # 10
 apply(lambda x: x * 3, 5)  # 15: anonymous function
 ```
 
@@ -888,11 +914,13 @@ A nested function can capture variables from its enclosing scope:
 ```python
 def make_multiplier(n):
     def multiply(x):
-        return x * n   # captures n from the enclosing scope
+        return x * n  # captures n from the enclosing scope
+
     return multiply
 
+
 triple = make_multiplier(3)
-triple(7)   # 21
+triple(7)  # 21
 ```
 
 This is the same concept as Rust closures or C++ lambdas with captures. Unlike Rust, Python does not distinguish capture by reference from capture by value: closures always capture a reference to the enclosing scope's variable binding.
@@ -905,14 +933,17 @@ def log_calls(func):
     def wrapper(*args, **kwargs):
         print(f"calling {func.__name__}")
         return func(*args, **kwargs)
+
     return wrapper
+
 
 @log_calls
 def add(a, b):
     return a + b
 
+
 # equivalent to: add = log_calls(add)
-add(2, 3)   # prints "calling add", returns 5
+add(2, 3)  # prints "calling add", returns 5
 ```
 
 Decorators are used throughout web frameworks, testing libraries, and the [standard library](https://docs.python.org/3/library/index.html){target="_blank" rel="noopener noreferrer"} (`@staticmethod`, `@classmethod`, `@property`).
@@ -920,22 +951,23 @@ Decorators are used throughout web frameworks, testing libraries, and the [stand
 ## Classes and Objects
 ```python
 class Point:
-    def __init__(self, x, y):           # constructor
-        self.x = x                      # instance attributes
+    def __init__(self, x, y):  # constructor
+        self.x = x  # instance attributes
         self.y = y
 
     def distance_from_origin(self):
         return (self.x**2 + self.y**2) ** 0.5
 
-    def __repr__(self):                 # string representation for debugging
+    def __repr__(self):  # string representation for debugging
         return f"Point({self.x}, {self.y})"
 
-    def __eq__(self, other):            # equality operator
+    def __eq__(self, other):  # equality operator
         return self.x == other.x and self.y == other.y
 
+
 p = Point(3, 4)
-print(p.distance_from_origin())   # 5.0
-print(p)                          # Point(3, 4)
+print(p.distance_from_origin())  # 5.0
+print(p)  # Point(3, 4)
 ```
 
 `self` is explicit: Python does not inject it invisibly. Every instance method takes `self` as its first parameter, giving you a clear signal that the method operates on the object.
@@ -964,14 +996,15 @@ class Point:
         self.y = y
 
     def __repr__(self):
-        return f"Point({self.x}, {self.y})"   # looks like a constructor call
+        return f"Point({self.x}, {self.y})"  # looks like a constructor call
 
     def __str__(self):
-        return f"({self.x}, {self.y})"         # friendlier display
+        return f"({self.x}, {self.y})"  # friendlier display
+
 
 p = Point(3, 4)
-print(repr(p))   # Point(3, 4)
-print(p)         # (3, 4)  — print calls __str__
+print(repr(p))  # Point(3, 4)
+print(p)  # (3, 4)  — print calls __str__
 ```
 
 If you only implement one, implement `__repr__`. Python falls back to it when `__str__` is absent.
@@ -992,7 +1025,7 @@ class Vector:
         return Vector(self.x * scalar, self.y * scalar)
 
     def __rmul__(self, scalar):
-        return self.__mul__(scalar)   # makes 3 * v work, not just v * 3
+        return self.__mul__(scalar)  # makes 3 * v work, not just v * 3
 
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
@@ -1000,10 +1033,11 @@ class Vector:
     def __repr__(self):
         return f"Vector({self.x}, {self.y})"
 
+
 v = Vector(1, 2)
-print(v + Vector(3, 4))   # Vector(4, 6)
-print(v * 3)              # Vector(3, 6)
-print(3 * v)              # Vector(3, 6) — via __rmul__
+print(v + Vector(3, 4))  # Vector(4, 6)
+print(v * 3)  # Vector(3, 6)
+print(3 * v)  # Vector(3, 6) — via __rmul__
 ```
 
 When Python evaluates `a + b` it first tries `a.__add__(b)`. If that returns `NotImplemented`, it tries `b.__radd__(a)`. The reflected methods (`__radd__`, `__rmul__`, etc.) are how you make your type work on either side of the operator.
@@ -1036,18 +1070,19 @@ class Countdown:
         self.data = list(range(start, -1, -1))
 
     def __len__(self):
-        return len(self.data)       # len(obj)
+        return len(self.data)  # len(obj)
 
     def __getitem__(self, index):
-        return self.data[index]     # obj[i] and slicing
+        return self.data[index]  # obj[i] and slicing
 
     def __contains__(self, value):
-        return value in self.data   # `in` operator
+        return value in self.data  # `in` operator
+
 
 c = Countdown(5)
-print(len(c))     # 6
-print(c[0])       # 5
-print(3 in c)     # True
+print(len(c))  # 6
+print(c[0])  # 5
+print(3 in c)  # True
 ```
 
 If you implement `__getitem__` with integer indices starting at 0, Python will allow `for x in obj` to work automatically by repeatedly calling `__getitem__` with increasing indices. It is cleaner to implement `__iter__` explicitly.
@@ -1073,7 +1108,8 @@ class CountUp:
         self.current += 1
         return value
 
-list(CountUp(4))   # [0, 1, 2, 3]
+
+list(CountUp(4))  # [0, 1, 2, 3]
 ```
 
 The downside: iterating the same object twice picks up where the first left off. The state is shared.
@@ -1087,7 +1123,7 @@ class NumberRange:
         self.stop = stop
 
     def __iter__(self):
-        return iter(range(self.start, self.stop))   # fresh iterator each time
+        return iter(range(self.start, self.stop))  # fresh iterator each time
 ```
 
 For complex iteration logic, a generator inside `__iter__` is the most readable approach:
@@ -1099,7 +1135,7 @@ class EvenNumbers:
 
     def __iter__(self):
         for n in range(0, self.limit, 2):
-            yield n   # __iter__ becomes a generator; no __next__ needed
+            yield n  # __iter__ becomes a generator; no __next__ needed
 ```
 
 #### `__call__`
@@ -1113,8 +1149,9 @@ class Multiplier:
     def __call__(self, x):
         return x * self.factor
 
+
 triple = Multiplier(3)
-triple(7)   # 21 — called like a function
+triple(7)  # 21 — called like a function
 ```
 
 #### `__bool__` and Truthiness
@@ -1128,8 +1165,9 @@ class Bag:
     def __len__(self):
         return len(self.items)
 
+
 if not Bag([]):
-    print("empty")   # prints: empty
+    print("empty")  # prints: empty
 ```
 
 #### Context Managers from the Inside
@@ -1138,15 +1176,17 @@ if not Bag([]):
 ```python
 import time
 
+
 class Timer:
     def __enter__(self):
         self.start = time.perf_counter()
-        return self                         # this is what `as t` receives
+        return self  # this is what `as t` receives
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         elapsed = time.perf_counter() - self.start
         print(f"elapsed: {elapsed:.4f}s")
-        return False                        # False: let exceptions propagate
+        return False  # False: let exceptions propagate
+
 
 with Timer():
     sum(range(1_000_000))
@@ -1160,11 +1200,13 @@ For simpler cases, `contextlib.contextmanager` turns a generator into a context 
 ```python
 from contextlib import contextmanager
 
+
 @contextmanager
 def timer():
     start = time.perf_counter()
-    yield                                   # body of the with block runs here
+    yield  # body of the with block runs here
     print(f"elapsed: {time.perf_counter() - start:.4f}s")
+
 
 with timer():
     sum(range(1_000_000))
@@ -1197,16 +1239,18 @@ These three decorators control how a method relates to its class and instances.
 ```python
 import math
 
+
 class Circle:
     def __init__(self, radius):
         self.radius = radius
 
     @property
     def area(self):
-        return math.pi * self.radius ** 2
+        return math.pi * self.radius**2
+
 
 c = Circle(5)
-print(c.area)   # 78.54... — no parentheses; looks like an attribute, runs a method
+print(c.area)  # 78.54... — no parentheses; looks like an attribute, runs a method
 ```
 
 No parentheses on the call side. This is more than cosmetic: you can start with a plain attribute and later replace it with a computed property without changing any code that uses it. Callers never know the difference.
@@ -1216,7 +1260,7 @@ To allow setting and deleting, add a setter with the same name:
 ```python
 class Temperature:
     def __init__(self, celsius):
-        self._celsius = celsius         # _celsius is the private backing attribute
+        self._celsius = celsius  # _celsius is the private backing attribute
 
     @property
     def celsius(self):
@@ -1229,14 +1273,15 @@ class Temperature:
         self._celsius = value
 
     @property
-    def fahrenheit(self):               # read-only: no setter defined
+    def fahrenheit(self):  # read-only: no setter defined
         return self._celsius * 9 / 5 + 32
 
+
 t = Temperature(25)
-print(t.fahrenheit)   # 77.0
-t.celsius = 100       # calls the setter
-t.celsius = -300      # ValueError
-t.fahrenheit = 50     # AttributeError: no setter defined
+print(t.fahrenheit)  # 77.0
+t.celsius = 100  # calls the setter
+t.celsius = -300  # ValueError
+t.fahrenheit = 50  # AttributeError: no setter defined
 ```
 
 A read-only property (getter but no setter) raises `AttributeError` on assignment. This is a clean way to expose a computed value that callers should never set directly.
@@ -1252,7 +1297,9 @@ class Point:
 
     @classmethod
     def from_tuple(cls, t):
-        return cls(t[0], t[1])          # cls(...) instead of Point(...) — important for subclasses
+        return cls(
+            t[0], t[1]
+        )  # cls(...) instead of Point(...) — important for subclasses
 
     @classmethod
     def origin(cls):
@@ -1261,8 +1308,9 @@ class Point:
     def __repr__(self):
         return f"Point({self.x}, {self.y})"
 
-p1 = Point.from_tuple((3, 4))   # Point(3, 4)
-p2 = Point.origin()             # Point(0, 0)
+
+p1 = Point.from_tuple((3, 4))  # Point(3, 4)
+p2 = Point.origin()  # Point(0, 0)
 ```
 
 Using `cls(...)` rather than `Point(...)` matters for inheritance: if `ColorPoint` subclasses `Point`, then `ColorPoint.from_tuple(...)` correctly returns a `ColorPoint`, not a `Point`.
@@ -1276,7 +1324,8 @@ class MathUtils:
     def clamp(value, lo, hi):
         return max(lo, min(hi, value))
 
-MathUtils.clamp(15, 0, 10)   # 10
+
+MathUtils.clamp(15, 0, 10)  # 10
 ```
 
 A static method could equally be a module-level function. You put it in the class when it is logically part of the class's responsibility but does not need to read or modify any instance or class state.
@@ -1295,13 +1344,15 @@ class Shape:
     def area(self):
         raise NotImplementedError
 
+
 class Circle(Shape):
     def __init__(self, radius):
         self.radius = radius
 
     def area(self):
         import math
-        return math.pi * self.radius ** 2
+
+        return math.pi * self.radius**2
 ```
 
 Python supports multiple inheritance. Unlike C++, there is no `virtual` keyword: all method calls are dynamically dispatched by default.
@@ -1318,16 +1369,18 @@ class Animal:
     def describe(self):
         return f"I am {self.name}"
 
+
 class Dog(Animal):
     def __init__(self, name, breed):
-        super().__init__(name)      # run Animal.__init__ first
-        self.breed = breed          # then add Dog-specific state
+        super().__init__(name)  # run Animal.__init__ first
+        self.breed = breed  # then add Dog-specific state
 
     def describe(self):
         return f"{super().describe()}, a {self.breed}"
 
+
 d = Dog("Rex", "Labrador")
-print(d.describe())   # I am Rex, a Labrador
+print(d.describe())  # I am Rex, a Labrador
 ```
 
 You could call `Animal.__init__(self, name)` directly, but `super()` is better for two reasons: it automatically follows the correct chain if the hierarchy changes, and it is required for correct behavior in multiple inheritance.
@@ -1356,13 +1409,16 @@ class A:
     def greet(self):
         return "A"
 
+
 class B(A):
     def greet(self):
         return f"B, {super().greet()}"
 
+
 class C(A):
     def greet(self):
         return f"C, {super().greet()}"
+
 
 class D(B, C):
     def greet(self):
@@ -1394,10 +1450,12 @@ For `super()` to work correctly across the full MRO, every class in the chain mu
 class LoggingMixin:
     def __init__(self, *args, **kwargs):
         print(f"creating {self.__class__.__name__}")
-        super().__init__(*args, **kwargs)   # pass everything up the chain
+        super().__init__(*args, **kwargs)  # pass everything up the chain
+
 
 class TrackedDog(LoggingMixin, Dog):
     pass
+
 
 d = TrackedDog("Spot", "Beagle")
 # creating TrackedDog
@@ -1416,8 +1474,8 @@ Python has no `private` or `protected` keywords. Convention uses a leading under
 ```python
 class Cache:
     def __init__(self):
-        self._data = {}         # by convention, internal
-        self.__secret = "x"    # name-mangled to _Cache__secret: harder to reach
+        self._data = {}  # by convention, internal
+        self.__secret = "x"  # name-mangled to _Cache__secret: harder to reach
 ```
 
 The language does not enforce these conventions. "We are all adults here" is the cultural attitude.
@@ -1428,13 +1486,15 @@ For classes that are primarily data containers, `@dataclass` generates `__init__
 ```python
 from dataclasses import dataclass
 
+
 @dataclass
 class Point:
     x: float
     y: float
 
+
 p = Point(3.0, 4.0)
-print(p)            # Point(x=3.0, y=4.0)
+print(p)  # Point(x=3.0, y=4.0)
 ```
 
 This is the Python equivalent of `#[derive(Debug, PartialEq)]` in Rust.
@@ -1448,6 +1508,7 @@ def divide(a, b):
         raise ValueError("cannot divide by zero")
     return a / b
 
+
 try:
     result = divide(10, 0)
 except ValueError as e:
@@ -1457,7 +1518,7 @@ except ZeroDivisionError:
 else:
     print(f"result: {result}")  # runs only if no exception was raised
 finally:
-    print("always runs")        # cleanup: always executes, exception or not
+    print("always runs")  # cleanup: always executes, exception or not
 ```
 
 Exceptions are classes. The [standard library](https://docs.python.org/3/library/index.html){target="_blank" rel="noopener noreferrer"} defines a hierarchy; catching a base class catches all its subclasses:
@@ -1465,7 +1526,7 @@ Exceptions are classes. The [standard library](https://docs.python.org/3/library
 ```python
 try:
     f = open("data.txt")
-except OSError as e:            # catches FileNotFoundError, PermissionError, etc.
+except OSError as e:  # catches FileNotFoundError, PermissionError, etc.
     print(e)
 ```
 
@@ -1514,17 +1575,20 @@ If you have written async Rust, the mental model is identical. The practical dif
 ```python
 import asyncio
 
+
 async def fetch_data(name: str) -> str:
     print(f"starting: {name}")
-    await asyncio.sleep(1)          # simulates a network call; suspends here
+    await asyncio.sleep(1)  # simulates a network call; suspends here
     print(f"finished: {name}")
     return f"data from {name}"
+
 
 async def main():
     result = await fetch_data("example")
     print(result)
 
-asyncio.run(main())                 # creates the event loop, runs main, closes loop
+
+asyncio.run(main())  # creates the event loop, runs main, closes loop
 ```
 
 `async def` defines a coroutine function. Calling it does not execute it — it returns a coroutine object. `await` runs it and suspends the caller until it completes. `asyncio.run()` is the program's entry point into async: it creates the event loop, runs the top-level coroutine to completion, then tears down the loop.
@@ -1535,9 +1599,11 @@ Awaiting coroutines one at a time is sequential, not concurrent. To run multiple
 ```python
 import asyncio
 
+
 async def fetch(name: str, delay: float) -> str:
     await asyncio.sleep(delay)
     return f"{name} done"
+
 
 async def main():
     # all three run concurrently: total time ~2s, not ~4s
@@ -1546,7 +1612,8 @@ async def main():
         fetch("b", 1.5),
         fetch("c", 0.5),
     )
-    print(results)   # ['a done', 'b done', 'c done']
+    print(results)  # ['a done', 'b done', 'c done']
+
 
 asyncio.run(main())
 ```
@@ -1564,7 +1631,7 @@ async def main():
     await asyncio.sleep(0.5)
     print("did other work")
 
-    result = await task     # now wait for the background task to finish
+    result = await task  # now wait for the background task to finish
     print(result)
 ```
 
@@ -1591,10 +1658,11 @@ You cannot `await` inside a regular (non-async) function. Async calls can only c
 
 ```python
 def regular():
-    await something()   # SyntaxError
+    await something()  # SyntaxError
+
 
 async def async_fn():
-    await something()   # fine
+    await something()  # fine
 ```
 
 This creates a hard boundary: once you use `async` in one part of a program, it tends to propagate upward through every caller. Plan for this before adopting async in a large codebase.
@@ -1610,14 +1678,18 @@ For I/O-bound code that uses libraries without async support, threads are the pr
 import threading
 import requests
 
+
 def fetch(url):
-    response = requests.get(url)    # blocking — fine in a thread
+    response = requests.get(url)  # blocking — fine in a thread
     print(response.status_code)
+
 
 urls = ["http://example.com", "http://example.org", "http://example.net"]
 threads = [threading.Thread(target=fetch, args=(url,)) for url in urls]
-for t in threads: t.start()
-for t in threads: t.join()          # wait for all to complete
+for t in threads:
+    t.start()
+for t in threads:
+    t.join()  # wait for all to complete
 ```
 
 Threads share memory, so shared mutable state requires locks (`threading.Lock`). This is the classic hazard: threads are easy to start and easy to get wrong.
@@ -1628,11 +1700,13 @@ For CPU-bound work, separate processes bypass the GIL entirely. Each process has
 ```python
 from multiprocessing import Pool
 
+
 def compute(x):
     return x * x
 
+
 with Pool(processes=4) as pool:
-    results = pool.map(compute, range(100))   # distributed across 4 processes
+    results = pool.map(compute, range(100))  # distributed across 4 processes
 ```
 
 `Pool.map` distributes work across processes and collects results. The overhead of spawning processes and serializing data between them is real. This pays off only when the per-item computation is substantial.
@@ -1710,10 +1784,11 @@ If you are doing heavy math, do not iterate at all. Use **NumPy**.
 ```python
 import numpy as np
 
+
 def double_elements(my_list: list[float]) -> np.ndarray:
-  """Vectorized doubling of list elements."""
-  arr: np.ndarray = np.array(my_list)
-  return arr * 2
+    """Vectorized doubling of list elements."""
+    arr: np.ndarray = np.array(my_list)
+    return arr * 2
 ```
 
 Vectorized operations apply a single instruction to multiple data points (**SIMD**) at the C level, bypassing the Python interpreter entirely for the bulk of the work.
@@ -1738,16 +1813,16 @@ Rust programmers will recognize the conceptual split between `Path` (a borrowed 
 ```python
 from pathlib import Path
 
-p = Path("/usr/local/bin")      # absolute path
-p = Path("data/output.csv")    # relative path
-p = Path.cwd()                  # current working directory
-p = Path.home()                 # home directory: /Users/alice or similar
+p = Path("/usr/local/bin")  # absolute path
+p = Path("data/output.csv")  # relative path
+p = Path.cwd()  # current working directory
+p = Path.home()  # home directory: /Users/alice or similar
 ```
 
 The `/` operator joins path components. It is clean, readable, and cross-platform:
 
 ```python
-base   = Path("/home/alice")
+base = Path("/home/alice")
 config = base / ".config" / "app" / "settings.toml"
 # /home/alice/.config/app/settings.toml
 ```
@@ -1756,22 +1831,22 @@ config = base / ".config" / "app" / "settings.toml"
 ```python
 p = Path("/home/alice/data/report.final.csv")
 
-p.name      # "report.final.csv"    — filename with all extensions
-p.stem      # "report.final"        — filename without last extension
-p.suffix    # ".csv"                — last extension only
+p.name  # "report.final.csv"    — filename with all extensions
+p.stem  # "report.final"        — filename without last extension
+p.suffix  # ".csv"                — last extension only
 p.suffixes  # [".final", ".csv"]    — all extensions
-p.parent    # /home/alice/data      — containing directory
-p.parts     # ('/', 'home', 'alice', 'data', 'report.final.csv')
+p.parent  # /home/alice/data      — containing directory
+p.parts  # ('/', 'home', 'alice', 'data', 'report.final.csv')
 ```
 
 #### Checking What Exists
 ```python
 p = Path("data/report.csv")
 
-p.exists()    # True if the path exists as anything
-p.is_file()   # True if it exists and is a regular file
-p.is_dir()    # True if it exists and is a directory
-p.stat()      # os.stat_result: size, mtime, permissions, etc.
+p.exists()  # True if the path exists as anything
+p.is_file()  # True if it exists and is a regular file
+p.is_dir()  # True if it exists and is a directory
+p.stat()  # os.stat_result: size, mtime, permissions, etc.
 ```
 
 #### Reading and Writing
@@ -1801,20 +1876,20 @@ Path("output/results").mkdir(parents=True, exist_ok=True)
 # parents=True:  creates any missing parent directories (like mkdir -p)
 # exist_ok=True: does not raise an error if the directory already exists
 
-Path("output/results/data.csv").touch()   # create empty file or update timestamp
+Path("output/results/data.csv").touch()  # create empty file or update timestamp
 ```
 
 #### Listing and Globbing
 ```python
 src = Path("src")
 
-for item in src.iterdir():       # immediate contents
+for item in src.iterdir():  # immediate contents
     print(item)
 
-for f in src.glob("*.py"):       # pattern match in this directory
+for f in src.glob("*.py"):  # pattern match in this directory
     print(f)
 
-for f in src.rglob("*.py"):     # recursive: all .py files in the entire tree
+for f in src.rglob("*.py"):  # recursive: all .py files in the entire tree
     print(f)
 ```
 
@@ -1825,12 +1900,12 @@ absolute = Path("../data/report.csv").resolve()
 
 # relative_to: express one path relative to another
 full = Path("/home/alice/project/src/main.py")
-rel  = full.relative_to(Path("/home/alice/project"))   # src/main.py
+rel = full.relative_to(Path("/home/alice/project"))  # src/main.py
 
 # with_suffix / with_name: derive a modified path without mutating
-p       = Path("archive.tar.gz")
-p.with_suffix(".bz2")             # archive.tar.bz2
-p.with_name("backup.tar.gz")      # backup.tar.gz
+p = Path("archive.tar.gz")
+p.with_suffix(".bz2")  # archive.tar.bz2
+p.with_name("backup.tar.gz")  # backup.tar.gz
 ```
 
 ::: {.callout-note title="`os.path` vs `pathlib`"}
@@ -1854,8 +1929,8 @@ words = ["apple", "banana", "apple", "cherry", "banana", "apple"]
 c = Counter(words)
 # Counter({'apple': 3, 'banana': 2, 'cherry': 1})
 
-c["apple"]        # 3
-c["missing"]      # 0 — no KeyError for absent keys
+c["apple"]  # 3
+c["missing"]  # 0 — no KeyError for absent keys
 
 c.most_common(2)  # [('apple', 3), ('banana', 2)] — top n by count
 ```
@@ -1866,10 +1941,10 @@ Counters support arithmetic, which makes them useful for comparing or combining 
 a = Counter(["x", "x", "y"])
 b = Counter(["x", "z"])
 
-a + b   # Counter({'x': 3, 'y': 1, 'z': 1})  — add counts
-a - b   # Counter({'x': 1, 'y': 1})           — subtract, drop zeros and negatives
-a & b   # Counter({'x': 1})                    — minimum of each count
-a | b   # Counter({'x': 2, 'y': 1, 'z': 1})  — maximum of each count
+a + b  # Counter({'x': 3, 'y': 1, 'z': 1})  — add counts
+a - b  # Counter({'x': 1, 'y': 1})           — subtract, drop zeros and negatives
+a & b  # Counter({'x': 1})                    — minimum of each count
+a | b  # Counter({'x': 2, 'y': 1, 'z': 1})  — maximum of each count
 ```
 
 Rust equivalent: a `HashMap<T, usize>` built manually with `.entry().and_modify().or_insert(0)`.
@@ -1880,10 +1955,10 @@ Rust equivalent: a `HashMap<T, usize>` built manually with `.entry().and_modify(
 ```python
 from collections import defaultdict
 
-groups = defaultdict(list)   # factory is any zero-argument callable
+groups = defaultdict(list)  # factory is any zero-argument callable
 
 for word in ["apple", "banana", "avocado", "blueberry", "apricot"]:
-    groups[word[0]].append(word)   # no KeyError on first access for a new key
+    groups[word[0]].append(word)  # no KeyError on first access for a new key
 
 # {'a': ['apple', 'avocado', 'apricot'], 'b': ['banana', 'blueberry']}
 ```
@@ -1909,12 +1984,12 @@ from collections import namedtuple
 Point = namedtuple("Point", ["x", "y"])
 
 p = Point(3.0, 4.0)
-print(p.x, p.y)   # 3.0 4.0  — attribute access
-print(p[0])       # 3.0       — index access still works
-x, y = p          # unpacking works too
+print(p.x, p.y)  # 3.0 4.0  — attribute access
+print(p[0])  # 3.0       — index access still works
+x, y = p  # unpacking works too
 
 p._replace(x=10)  # Point(10.0, 4.0) — returns a new instance; original unchanged
-p._asdict()       # {'x': 3.0, 'y': 4.0}
+p._asdict()  # {'x': 3.0, 'y': 4.0}
 ```
 
 For new code, `@dataclass(frozen=True)` is often more flexible. `namedtuple` remains common in older codebases and in performance-sensitive code where its tuple memory layout matters.
@@ -1926,13 +2001,13 @@ For new code, `@dataclass(frozen=True)` is often more flexible. `namedtuple` rem
 from collections import deque
 
 d = deque([1, 2, 3])
-d.append(4)       # right end: [1, 2, 3, 4]
-d.appendleft(0)   # left end:  [0, 1, 2, 3, 4]
-d.pop()           # remove from right: returns 4
-d.popleft()       # remove from left:  returns 0
+d.append(4)  # right end: [1, 2, 3, 4]
+d.appendleft(0)  # left end:  [0, 1, 2, 3, 4]
+d.pop()  # remove from right: returns 4
+d.popleft()  # remove from left:  returns 0
 
-d.rotate(1)       # shift right by 1: [3, 1, 2]
-d.rotate(-1)      # shift left by 1:  [1, 2, 3]
+d.rotate(1)  # shift right by 1: [3, 1, 2]
+d.rotate(-1)  # shift left by 1:  [1, 2, 3]
 ```
 
 `deque` accepts a `maxlen` argument. When the deque is full, appending to one end automatically drops from the other — a fixed-size sliding window:
@@ -1940,7 +2015,7 @@ d.rotate(-1)      # shift left by 1:  [1, 2, 3]
 ```python
 recent = deque(maxlen=5)
 for event in stream:
-    recent.append(event)   # always holds the last 5 events
+    recent.append(event)  # always holds the last 5 events
 ```
 
 Rust equivalent: `std::collections::VecDeque<T>`.
@@ -1958,21 +2033,24 @@ Higher-order function utilities
 ```python
 from functools import lru_cache
 
+
 @lru_cache(maxsize=128)
 def fibonacci(n):
     if n < 2:
         return n
     return fibonacci(n - 1) + fibonacci(n - 2)
 
-fibonacci(35)              # fast: each subproblem is computed only once
-fibonacci.cache_info()     # CacheInfo(hits=33, misses=36, maxsize=128, currsize=36)
-fibonacci.cache_clear()    # evict all cached entries
+
+fibonacci(35)  # fast: each subproblem is computed only once
+fibonacci.cache_info()  # CacheInfo(hits=33, misses=36, maxsize=128, currsize=36)
+fibonacci.cache_clear()  # evict all cached entries
 ```
 
 `@cache` (Python 3.9+) is the same with no size limit — equivalent to `@lru_cache(maxsize=None)`:
 
 ```python
 from functools import cache
+
 
 @cache
 def factorial(n):
@@ -1987,14 +2065,16 @@ Both require that all arguments be **hashable**. Lists and dicts cannot be passe
 ```python
 from functools import partial
 
+
 def power(base, exponent):
-    return base ** exponent
+    return base**exponent
+
 
 square = partial(power, exponent=2)
-cube   = partial(power, exponent=3)
+cube = partial(power, exponent=3)
 
-square(5)   # 25
-cube(3)     # 27
+square(5)  # 25
+cube(3)  # 27
 ```
 
 This is useful when an API expects a specific signature but you have a more general function you want to specialize:
@@ -2005,7 +2085,7 @@ from pathlib import Path
 
 # pre-fill the base directory so callers only supply the relative part
 data_path = partial(Path("/data").joinpath)
-data_path("reports", "q4.csv")   # /data/reports/q4.csv
+data_path("reports", "q4.csv")  # /data/reports/q4.csv
 ```
 
 Rust equivalent: a closure that captures some arguments — `let square = |x| power(x, 2);`.
@@ -2018,8 +2098,8 @@ from functools import reduce
 
 numbers = [1, 2, 3, 4, 5]
 
-product = reduce(lambda acc, x: acc * x, numbers)       # 120
-product = reduce(lambda acc, x: acc * x, numbers, 1)    # 120 — explicit start value
+product = reduce(lambda acc, x: acc * x, numbers)  # 120
+product = reduce(lambda acc, x: acc * x, numbers, 1)  # 120 — explicit start value
 ```
 
 The optional third argument seeds the accumulator. Without it the first element is used as the start.
@@ -2042,6 +2122,7 @@ In practice `reduce` is rarely the clearest choice. Most common reductions have 
 ```python
 from functools import total_ordering
 
+
 @total_ordering
 class Version:
     def __init__(self, major, minor):
@@ -2054,13 +2135,14 @@ class Version:
     def __lt__(self, other):
         return (self.major, self.minor) < (other.major, other.minor)
 
+
 v1 = Version(1, 9)
 v2 = Version(2, 0)
 
-v1 < v2    # True  — defined directly
-v1 > v2    # False — derived by @total_ordering
-v1 <= v2   # True  — derived
-v1 >= v2   # False — derived
+v1 < v2  # True  — defined directly
+v1 > v2  # False — derived by @total_ordering
+v1 <= v2  # True  — derived
+v1 >= v2  # False — derived
 ```
 
 Rust equivalent: `#[derive(PartialEq, PartialOrd)]` — define equality and one ordering method, derive the rest.
@@ -2071,20 +2153,24 @@ When you write a decorator, the wrapper replaces the original function. Without 
 ```python
 from functools import wraps
 
+
 def log_calls(func):
-    @wraps(func)              # copies __name__, __doc__, __module__, etc.
+    @wraps(func)  # copies __name__, __doc__, __module__, etc.
     def wrapper(*args, **kwargs):
         print(f"calling {func.__name__}")
         return func(*args, **kwargs)
+
     return wrapper
+
 
 @log_calls
 def add(a, b):
     """Add two numbers."""
     return a + b
 
-add.__name__   # "add"              — correct, thanks to @wraps
-add.__doc__    # "Add two numbers." — preserved
+
+add.__name__  # "add"              — correct, thanks to @wraps
+add.__doc__  # "Add two numbers." — preserved
 ```
 
 Without `@wraps` both would show `"wrapper"` and `None`. Always apply `@wraps` when writing decorators.

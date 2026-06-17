@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-06-09">
+<meta name="dcterms.date" content="2026-06-17">
 
 <title>The Shell – Computer Language Notebook</title>
 <style>
@@ -309,9 +309,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#running-commands-and-capturing-output" id="toc-running-commands-and-capturing-output" class="nav-link" data-scroll-target="#running-commands-and-capturing-output">Running Commands and Capturing Output</a>
   <ul>
   <li><a href="#the-three-standard-streams" id="toc-the-three-standard-streams" class="nav-link" data-scroll-target="#the-three-standard-streams">The Three Standard Streams</a></li>
-  <li><a href="#capturing-stdout-command-substitution" id="toc-capturing-stdout-command-substitution" class="nav-link" data-scroll-target="#capturing-stdout-command-substitution">Capturing stdout: Command Substitution</a></li>
-  <li><a href="#exit-status-the-other-return-value" id="toc-exit-status-the-other-return-value" class="nav-link" data-scroll-target="#exit-status-the-other-return-value">Exit Status: the Other Return Value</a></li>
-  <li><a href="#a-look-alike-arithmetic-substitution" id="toc-a-look-alike-arithmetic-substitution" class="nav-link" data-scroll-target="#a-look-alike-arithmetic-substitution">A Look-alike: Arithmetic Substitution <code>$(( ))</code></a></li>
+  <li><a href="#capturing-stdout" id="toc-capturing-stdout" class="nav-link" data-scroll-target="#capturing-stdout">Capturing stdout</a></li>
+  <li><a href="#exit-status" id="toc-exit-status" class="nav-link" data-scroll-target="#exit-status">Exit Status</a></li>
+  <li><a href="#a-look-alike" id="toc-a-look-alike" class="nav-link" data-scroll-target="#a-look-alike">A Look-alike</a></li>
   <li><a href="#quick-reference" id="toc-quick-reference" class="nav-link" data-scroll-target="#quick-reference">Quick Reference</a></li>
   </ul></li>
   <li><a href="#quoting-and-expansion" id="toc-quoting-and-expansion" class="nav-link" data-scroll-target="#quoting-and-expansion">Quoting and Expansion</a>
@@ -409,7 +409,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">June 9, 2026</p>
+      <p class="date">June 17, 2026</p>
     </div>
   </div>
   
@@ -854,8 +854,11 @@ child: sh_var=[] env_var=[dong]</code></pre>
 <p>The separation of <code>stdout</code> from <code>stderr</code> is deliberate and important: it lets you capture a program’s <em>results</em> while still seeing its <em>errors</em> on screen (or route them somewhere else entirely). A program that mixes errors into stdout is considered poorly behaved precisely because it pollutes the data stream that the next program in the pipe is trying to read.</p>
 <p>The two channels a command hands back map onto this picture cleanly: the text you can capture is <em>stdout</em> (stream 1), and the integer verdict is the exit status (not a stream at all, a separate value we get to below).</p>
 </section>
-<section id="capturing-stdout-command-substitution" class="level3">
-<h3 class="anchored" data-anchor-id="capturing-stdout-command-substitution">Capturing stdout: Command Substitution</h3>
+<section id="capturing-stdout" class="level3">
+<h3 class="anchored" data-anchor-id="capturing-stdout">Capturing stdout</h3>
+<div class="subheading">
+<p>Command Substitution</p>
+</div>
 <p>This is the answer to the question that started this section: yes, you can take what a command sends to stdout and assign it to a variable. The mechanism is <strong>command substitution</strong>, written <code>$(...)</code>. The shell runs the command inside the parentheses, captures everything it wrote to stdout, and substitutes that text in place.</p>
 <div class="note" data-label="Two syntaxes for command substitution?">
 <p>Yes, indeed. There are two methods of specifying command substitution: <code>$(...)</code> and <code>`...`</code>.</p>
@@ -893,8 +896,11 @@ child: sh_var=[] env_var=[dong]</code></pre>
 </div>
 </div>
 </section>
-<section id="exit-status-the-other-return-value" class="level3">
-<h3 class="anchored" data-anchor-id="exit-status-the-other-return-value">Exit Status: the Other Return Value</h3>
+<section id="exit-status" class="level3">
+<h3 class="anchored" data-anchor-id="exit-status">Exit Status</h3>
+<div class="subheading">
+<p>the Other Return Value</p>
+</div>
 <p>The second thing a command hands back is its <em>exit status</em>: an integer from 0 to 255, where <code>0</code> means success and any non-zero value means some kind of failure. This is the shell’s boolean type (<a href="#why-the-shell-exists">decision #5</a>), and it is what <code>if</code>, <code>&amp;&amp;</code>, and <code>||</code> actually test. The special variable <code>$?</code> holds the exit status of the most recent command:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-q</span> <span class="st">"thesis"</span> shell.qmd</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="va">$?</span>        <span class="co"># 0 if the word was found, 1 if not</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -922,8 +928,11 @@ child: sh_var=[] env_var=[dong]</code></pre>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="va">status</span><span class="op">=</span><span class="va">$?</span>                <span class="co"># capture the verdict, before any other command runs</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The “before any other command runs” matters: <code>$?</code> is overwritten by the <em>next</em> command, so read it immediately.</p>
 </section>
-<section id="a-look-alike-arithmetic-substitution" class="level3">
-<h3 class="anchored" data-anchor-id="a-look-alike-arithmetic-substitution">A Look-alike: Arithmetic Substitution <code>$(( ))</code></h3>
+<section id="a-look-alike" class="level3">
+<h3 class="anchored" data-anchor-id="a-look-alike">A Look-alike</h3>
+<div class="subheading">
+<p>Arithmetic Substitution <code>$(( ))</code></p>
+</div>
 <p>One construct looks almost identical to command substitution but does something entirely different. <code>$(( ... ))</code>, with <em>doubled</em> parentheses, is <strong>arithmetic substitution</strong>: it evaluates a math expression and substitutes the numeric result. It does not run a command.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="va">count</span><span class="op">=</span><span class="va">$((</span> <span class="va">count</span> <span class="op">+</span> <span class="dv">1</span> <span class="va">))</span>    <span class="co"># increment count</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="va">area</span><span class="op">=</span><span class="va">$((</span> <span class="va">width</span> <span class="op">*</span> <span class="va">height</span> <span class="va">))</span></span>

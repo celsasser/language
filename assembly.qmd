@@ -5,6 +5,7 @@ subtitle: "Direct Hardware Control for DSP Applications"
 
 ## Overview
 ![](images/asm-00.webp){width=2.25in style="float: left; padding: 0 1em"}
+
 Assembly language is the closest humans have ever come to speaking directly to a machine. Before we get to the dsPIC specifics, it helps to understand where assembly sits in the history of programming languages — because that context explains *why* assembly works the way it does and why it still matters.
 
 In the earliest days of computing (1940s–1950s), programmers wrote in **machine code** — raw binary or hexadecimal opcodes entered by hand, switch by switch. `0x778210` is a MOV instruction. Good luck remembering that. This was first-generation programming. Assembly language arrived as the **second-generation language**: instead of writing `0x778210`, you write `MOV W0, W1`. The assembler — a program — translates those human-readable mnemonics one-for-one into the binary opcodes the processor actually executes. One mnemonic, one machine instruction. That 1:1 relationship is the defining characteristic of assembly. There is no abstraction, no compilation strategy, no runtime. What you write is what the CPU runs.
@@ -52,19 +53,19 @@ The **8 guard bits** are 8 additional high-order bits sitting above the 32-bit a
 
 Without guard bits, you would have to scale your coefficients down to prevent overflow, sacrificing precision. With them, you accumulate at full precision throughout the entire summation and only convert ([saturate](glossary.qmd#saturate) and round) to 16 bits at the very end with `SAC.R`. This is not a minor optimization — it is the difference between a filter that sounds correct and one that clips on loud audio transients.
 
-:::{.callout-note title="Why exactly 8 guard bits?"}
+::: {.callout-note title="Why exactly 8 guard bits?"}
 Eight guard bits give $2^8 = 256\times$ overflow headroom. A practical FIR filter rarely exceeds 256 taps at full scale, so 8 bits covers virtually all real-world cases. Fewer bits would require coefficient scaling on large filters; more bits would waste silicon area on a constraint that never binds.
 :::
 
 ### Program Counter
-:::{.subheading}
+::: {.subheading}
 PC
 :::
 
 A 24-bit register holding the address of the next instruction. Branch and jump instructions modify this register to change execution flow.
 
 ### Status Register
-:::{.subheading}
+::: {.subheading}
 SR
 :::
 
@@ -106,7 +107,7 @@ Notice something important about this grammar: it is much simpler than the gramm
 One practical consequence: **assembler error messages are usually about the tokens on a single line**, not about multi-line logic. If you mistype an operand, the assembler tells you exactly which line is wrong. There is no "undefined behavior at runtime" in assembly — either the instruction is valid and the processor executes it, or it is not and the assembler rejects it.
 
 ### Operands
-:::{.subheading}
+::: {.subheading}
 Destination Order
 :::
 
@@ -140,7 +141,7 @@ The bottom line: every line in your assembly source is either a **CPU instructio
 | `.set`     | Set symbol value        | `count  .set  0`       |
 
 ### Example
-:::{.subheading}
+::: {.subheading}
 Defining Constants
 :::
 
@@ -154,7 +155,7 @@ MOV     #BUFFER_SIZE, W0     ; Load 128 into W0
 ```
 
 ### Example
-:::{.subheading}
+::: {.subheading}
 Data Section
 :::
 
@@ -189,7 +190,7 @@ The kinds of moves you will encounter are:
 There is no direct memory-to-memory move in a single instruction on the dsPIC — to copy a block of data from one RAM location to another, you load into a register first, then store. This is the load-store architecture philosophy, and it is shared by most RISC processors.
 
 ### MOV
-:::{.subheading}
+::: {.subheading}
 Copy Data
 :::
 
@@ -216,7 +217,7 @@ MOV  [W1], W0        ; W0 = Memory[W1]
 ```
 
 ### PUSH/POP
-:::{.subheading}
+::: {.subheading}
 Stack Operations
 :::
 
@@ -232,9 +233,7 @@ POP   W0             ; Read from [W15], store to W0, increment W15
 ```
 
 ## Arithmetic and Logical Instructions
-
 ### Basic Arithmetic
-
 ##### Syntax
 - `ADD source, destination`: Add source to destination
 - `ADD source1, source2, destination`: Add source1 + source2, store in destination
@@ -258,7 +257,6 @@ MUL.SS  W0, W1, W2   ; Signed × Signed
 ```
 
 ### Bitwise Operations
-
 ##### Syntax
 - `AND source, destination`: Bitwise AND, store in destination
 - `OR source, destination`: Bitwise OR, store in destination
@@ -310,7 +308,6 @@ BRA   NZ, not_equal_label    ; Branch if Not Zero
 ```
 
 ## Control Flow Instructions
-
 ### Unconditional Branch
 Branch to label (jump unconditionally)
 
@@ -338,7 +335,7 @@ BRA   LE,  label_le      ; Branch if Less or Equal
 BRA   LT,  label_lt      ; Branch if Less Than
 ```
 
-:::{.callout-note title="Conditions Flags"}
+::: {.callout-note title="Conditions Flags"}
 All conditions depend on flags set by the previous arithmetic/comparison operation. For example:
 
 ```asm
@@ -363,7 +360,7 @@ The subroutine then runs. When it reaches `RETURN`, the hardware does the revers
 
 A **stack frame** is the collection of data a subroutine pushes onto the stack for its own use: saved registers, local variables, and sometimes a saved frame pointer (W14). The C compiler builds and tears down stack frames automatically for every C function. In hand-written assembly, you are responsible for this yourself — if you push registers at the start of your subroutine, you must pop them in the same order (reversed) before returning, or the stack will be unbalanced and `RETURN` will jump to garbage.
 
-:::{.callout-note title="The Golden Rule of Subroutines"}
+::: {.callout-note title="The Golden Rule of Subroutines"}
 Every `PUSH` must have a matching `POP` before `RETURN`. If you push four registers entering a subroutine and only pop three before returning, `RETURN` will pop your fourth register's data as the return address and jump to a random location. This is one of the most common bugs in hand-written assembly.
 :::
 
@@ -397,7 +394,6 @@ lookup_table:
 ```
 
 ## Loops in Assembly
-
 ### Manual Counter Loop
 The explicit way, manually managing a counter:
 
@@ -415,7 +411,7 @@ sum_loop:
 ```
 
 ### Hardware Loop
-:::{.subheading}
+::: {.subheading}
 DO
 :::
 
@@ -444,7 +440,7 @@ end_loop:
 - Loop executes in `N × cycle_count` time
 
 ### REPEAT
-:::{.subheading}
+::: {.subheading}
 Single-Instruction Loop
 :::
 
@@ -459,7 +455,7 @@ REPEAT #N-1              ; Repeat next instruction N times
 ADD   [W2++], W0, W0    ; Executed N times, zero overhead
 ```
 
-:::{.callout-note title="Note: DEC and INC"}
+::: {.callout-note title="Note: DEC and INC"}
 ##### Syntax
 - `DEC register, destination`: Decrement register, store in destination
 - `INC register, destination`: Increment register, store in destination
@@ -539,7 +535,7 @@ MOV   #__builtin_modoffset(buffer, size), W0
 The dsPIC includes instructions optimized for signal processing algorithms.
 
 ### MAC
-:::{.subheading}
+::: {.subheading}
 Multiply-Accumulate
 :::
 
@@ -571,7 +567,7 @@ MAC   W0*W1, A, [W2]+=2, [W3]+=2
 4. Increment W3 by 2 (post-increment)
 5. All in **one clock cycle**!
 
-:::{.callout-note title="MAC in a FIR Convolution Loop"}
+::: {.callout-note title="MAC in a FIR Convolution Loop"}
 Here is the essence of what the complete FIR example below computes, distilled to its inner loop:
 
 ```asm
@@ -590,7 +586,7 @@ Each `MAC` handles one term of the convolution sum. After N iterations, accumula
 :::
 
 ### Extended Precision
-:::{.subheading}
+::: {.subheading}
 ED
 :::
 
@@ -603,7 +599,6 @@ ED.AC    A, [W2++]      ; Extended access to accumulator A
 ```
 
 ### DSP Accumulator Instructions
-
 ##### Syntax
 - `SAC accumulator, destination`: Store accumulator ([saturate](glossary.qmd#saturate) to 16-bit)
 - `SAC.R accumulator, destination`: Store accumulator with rounding
@@ -624,7 +619,7 @@ ZAP    A, [W2++]       ; Clear accumulator and increment
 ```
 
 ## Complete Example
-:::{.subheading}
+::: {.subheading}
 FIR Filter Inner Loop
 :::
 
@@ -635,7 +630,7 @@ y[n] = \sum_{k=0}^{N-1} a_k \cdot x[n-k]
 $$
 
 ### C Version
-:::{.subheading}
+::: {.subheading}
 For Reference
 :::
 
@@ -651,7 +646,7 @@ int16_t fir_filter(int16_t *x, int16_t *a, int n) {
 ```
 
 ### Assembly Version
-:::{.subheading}
+::: {.subheading}
 Optimized
 :::
 
@@ -750,14 +745,14 @@ RETURN                      ; Return to caller
 ```
 
 ## C vs. Assembly
-:::{.subheading}
+::: {.subheading}
 Side-by-Side Comparison
 :::
 
 Here's a simple operation shown both ways:
 
 ### Task
-:::{.subheading}
+::: {.subheading}
 Sum an Array of 10 Elements
 :::
 
@@ -795,14 +790,14 @@ sum_loop:
 - Understanding assembly helps you read compiler output
 
 ## Calling Convention
-:::{.subheading}
+::: {.subheading}
 How Functions Communicate
 :::
 
 When C calls assembly (or vice versa), both sides must agree on where to find arguments and return values.
 
 ### dsPIC C Calling Convention
-:::{.subheading}
+::: {.subheading}
 ABI
 :::
 
@@ -817,7 +812,7 @@ ABI
 | **Scratch registers**   | W0-W3 (caller-save) |
 
 ### Example
-:::{.subheading}
+::: {.subheading}
 C Calling Assembly
 :::
 
@@ -846,7 +841,7 @@ add_values:
 ```
 
 ### Example
-:::{.subheading}
+::: {.subheading}
 Assembly Calling C
 :::
 
@@ -864,7 +859,6 @@ asm_caller:
 ```
 
 ## Common Assembly Patterns
-
 ### Delay Loop
 ```asm
 delay:
@@ -920,7 +914,7 @@ int add_five(int x) {
 ```
 
 ##### Compiler output
-:::{.subheading}
+::: {.subheading}
 simplified
 :::
 
@@ -1034,7 +1028,6 @@ plt.show()
 3. **Linker**: Takes all object files, assigns final memory addresses, resolves labels, and produces the final executable.
 
 ## Summary
-
 ##### Assembly fundamentals
 - **Explicit control**: You manage every register, memory access, and branch
 - **Registers first**: Arithmetic happens in registers; memory requires load/store

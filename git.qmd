@@ -76,7 +76,7 @@ A **blob** stores raw file data. It contains only the text or data of a file, co
 
 A **tree** object solves the mystery of the missing filenames. A tree represents a directory. It is a simple text manifest that maps the SHA-1 hashes of blobs back to their actual filenames, permissions, and directory locations. Trees can also point to other trees to represent nested subdirectories.
 
-#### 3. Commits
+#### 3. Commits {#commit-objects}
 
 A **commit** object is a small text file pointing to a specific top-level tree object (the snapshot of the project root at that moment). It contains metadata: the author, the committer, the timestamp, the commit log message, and a pointer to one or more **parent commits** (the hashes of the commits that came immediately before it). This chain of parent pointers forms your history graph.
 
@@ -97,26 +97,106 @@ When you make a single commit changing one file in a subfolder:
 4. Git writes a **commit object** pointing to the new root tree and listing the previous commit hash as its parent.
 5. Git updates your current branch pointer (which is just a text file inside `.git/refs/heads/`) to point to the hash of this new commit object.
 
-## Advanced Search & Investigation
+## Search & Investigation
+
+Investigation in Git falls into two fundamentally different activities, and confusing them is the source of most frustration. The first is **searching a single snapshot**: "where, in the code as it exists *right now*, does this function live?" The second is **searching across history**: "*when*, across the thousands of snapshots in my object database, did this line appear, change, or vanish?" The working tree is a single point in time; history is the entire DAG of commits behind it. Different questions, different tools. The subsections below are ordered from the gentlest (walking the timeline) to the most surgical (binary-searching the graph for a regression).
+
+### Basic Navigation & History
 ::: {.subheading}
-`git log` & `blame`
+Exploring the Timeline
 :::
 
-### The Concept
+Everything here is built on a single command, `git log`, which is simply a walk over the parent pointers introduced earlier. Recall that each commit object stores a hash of its parent ([Commits](#commit-objects)); `git log` starts at `HEAD` and follows those pointers backwards, printing each commit it visits. That is the entire mechanism. Every flag below is just a filter applied to that walk: `--author` discards commits whose author field doesn't match, `--since` discards commits outside a time window, and `-- <file_path>` discards commits whose snapshot didn't touch that path. Because it is a graph walk and not a flat list, `--graph` can draw the branch and merge topology directly, and `--all` tells the walk to start from *every* branch tip rather than just your current `HEAD`.
+
+| Objective                          | Command                                         | Purpose / Context                                                                          |
+|:-----------------------------------|:------------------------------------------------|:-------------------------------------------------------------------------------------------|
+| **Visual History**                 | `git log --oneline --graph --all`               | Displays a compact, visual representation of all branches, merges, and commits.            |
+| **Filter by Author**               | `git log --author="Name"`                       | Restricts the history to commits made by a specific person.                                |
+| **Filter by Date**                 | `git log --since="2 weeks ago"`                 | Restricts the history to a specific timeframe (e.g., `--since`, `--until`).                |
+| **Filter by File**                 | `git log -- <file_path>`                        | Shows only the commits that modified a specific file or directory.                         |
+| **Search Commit Messages**         | `git log --grep="fix memory leak"`              | Filters the walk to commits whose *log message* matches the pattern.                       |
+| **Inspect a Commit**               | `git show <hash>`                               | Displays the log message and full diff of exactly what changed in that commit.             |
+
+::: {.callout-note}
+`--grep` searches the commit *message*, the human prose you wrote. This is a different axis entirely from `-S` and `-G` in the [Advanced Code Tracing](#advanced-code-tracing) table below, which search the *content of the diff* (the code itself). "Find the commit where someone mentioned the leak" versus "find the commit where the leaking line actually changed" are distinct questions, and Git gives you a distinct flag for each.
+:::
+
+### Searching the Working Tree
+::: {.subheading}
+`git grep` vs. the System `grep`
+:::
+
+This is the "single snapshot" half of investigation, and it is worth being explicit about why a dedicated tool exists. You could run the ordinary system `grep -r` over your project folder, but it has no idea what Git is tracking: it will descend into `node_modules`, dredge up build artifacts, and search files you have told Git to ignore. `git grep` searches only the contents Git knows about, which makes it both faster (it consults the index rather than stat-ing every file on disk) and cleaner (it honors `.gitignore`). Critically, it can also search any *past* snapshot without touching your working directory: by naming a commit or tag, you ask Git to decompress that historical tree and search it in place, then hand you the results while your checked-out files stay exactly as they are.
+
+| Objective                          | Command                                         | Purpose / Context                                                                          |
+|:-----------------------------------|:------------------------------------------------|:-------------------------------------------------------------------------------------------|
+| **Search Current Code**            | `git grep "pattern"`                            | Searches all tracked files in the working tree; respects `.gitignore`.                     |
+| **Show Line Numbers**              | `git grep -n "pattern"`                          | Prepends the line number to each match for direct navigation.                              |
+| **Search a Past Snapshot**         | `git grep "pattern" <commit_or_tag>`            | Searches the content of any historical commit or tag without checking it out.              |
+| **Count Matches per File**         | `git grep -c "pattern"`                          | Reports how many times the pattern appears in each file rather than the lines themselves.  |
+
+### Working with Tags
+::: {.subheading}
+Locating and Understanding Releases
+:::
+
+It is worth clearing up exactly where tags live, because it explains why their search commands behave the way they do. A tag is **not** part of any branch. Branches and tags are both just *refs*, named pointers to a commit hash, but they sit in different drawers: branches in `.git/refs/heads/`, tags in `.git/refs/tags/`. The difference is behavioral. A branch ref moves forward automatically every time you commit on it; a tag ref never moves on its own once created. So a tag isn't anchored to a branch at all, it is anchored directly to a single commit. That commit may happen to be reachable from several branches, or from none (if every branch that once contained it has since moved on), and the tag will sit there pointing at it regardless.
+
+This is why `git tag` lists *every* tag in the repository rather than "the tags on this branch", the concept of "tags on a branch" doesn't exist. When you genuinely want the branch relationship, you have to ask the inverse question with `git branch --contains`: given this tagged commit, which branches have it somewhere in their ancestry?
+
+| Objective                          | Command                                         | Purpose / Context                                                                          |
+|:-----------------------------------|:------------------------------------------------|:-------------------------------------------------------------------------------------------|
+| **List All Tags**                  | `git tag`                                       | Outputs a list of all tags in the repository (tags are global, not per-branch).            |
+| **Search Tags by Pattern**         | `git tag -l "v2.0*"`                            | Filters the tag list using wildcard patterns to find specific versions.                    |
+| **Inspect a Tag**                  | `git show <tag_name>`                           | Displays the tag's metadata (annotated message, tagger) and the commit it points to.       |
+| **Find Branches with Tag**         | `git branch --contains <tag_name>`              | Lists all branches that have this tag's commit in their ancestry line.                     |
+
+### Advanced Code Tracing {#advanced-code-tracing}
 ::: {.subheading}
 Git as a Directed Acyclic Graph (DAG)
 :::
 
-Git does not store changes as incremental diffs; it stores snapshots of your staging area as **commits**. Each commit points to its parent(s). When searching history, you are traversing a Directed Acyclic Graph (DAG). Tools like `git log` and `git blame` allow you to query this graph based on content transformations rather than just chronological order.
+This is the "across history" half of investigation, and it leans entirely on the structure built in [The Anatomy of a Git Repository](#the-anatomy-of-a-git-repository). Because Git stores full snapshots linked by parent pointers ([Commits](#commit-objects)) rather than a flat changelog, you are not searching a list, you are traversing a Directed Acyclic Graph: directed because parent pointers run one way (backwards in time), acyclic because a commit can never be its own ancestor. The tools below query that graph by *content transformation*. Rather than asking "what is in this commit", they ask "between a commit and its parent, did this string's count change, did this regex appear in the diff, did this specific line get rewritten?" That comparison against the parent is what lets you pinpoint the exact moment a piece of code came into being.
 
-### Reference & Commands
+The two pickaxe variants are easy to confuse, so the distinction is worth stating plainly. `-S` is a *counting* search: it flags a commit only when the number of occurrences of your string differs from the parent, which answers "where was this added or removed?" `-G` is a *content* search: it flags any commit whose diff has an added or removed line matching your regex, even if the total count is unchanged, which answers "where was a line containing this touched at all?" Reach for `-S` to find an introduction or deletion; reach for `-G` to catch a modification that `-S` would miss because the line was edited rather than added.
+
 | Objective                          | Command                                | Purpose / Context                                                                                                  |
 |:-----------------------------------|:---------------------------------------|:-------------------------------------------------------------------------------------------------------------------|
-| **Find String Addition/Removal**   | `git log -S "search_string" --oneline` | Locates commits where the absolute count of the string changed.                                                    |
-| **Find String Regular Expression** | `git log -G "regex_pattern" -p`        | Locates commits where the string matches a pattern within the diff lines.                                          |
+| **Find String Addition/Removal**   | `git log -S "search_string" --oneline` | Locates commits where the absolute count of the string changed. (The "Pickaxe" search).                            |
+| **Find String Regular Expression** | `git log -G "regex_pattern" -p`        | Locates commits where an added or removed diff line matches the pattern, even if the count is unchanged.           |
 | **Track Line History Range**       | `git log -L <start>,<end>:<file_path>` | Traces the evolution of specific line ranges across time.                                                          |
 | **Trace File Rename History**      | `git log --follow -- <file_path>`      | Ensures history tracking persists across file renames.                                                             |
 | **Inspect Line Ancestry**          | `git blame -w -M <file_path>`          | Displays author and commit hash for each line, ignoring whitespace (`-w`) and moving lines within the file (`-M`). |
+| **Blame Past a Noise Commit**      | `git blame <commit>^ -- <file_path>`   | Re-runs blame against the *parent* of a known formatting commit, skipping it to reveal the real author beneath.    |
+
+### Hunting a Regression
+::: {.subheading}
+`git bisect`
+:::
+
+The tools above find *where code lives*; `git bisect` finds *which commit broke something*, and it is the most powerful investigation tool Git offers. The insight is that your history is a sorted sequence: somewhere along the chain of commits there is a transition from "working" to "broken", and you want the single commit where that flip happened. Checking every commit one by one is linear, but because the commits are ordered, you can binary-search them instead. Tell Git one commit that is known **good** and one that is known **bad**, and it checks out the commit halfway between them. You test it and report `good` or `bad`; Git discards the half that cannot contain the transition and bisects again. A history of a thousand commits collapses to roughly ten tests.
+
+| Objective                | Command                          | Purpose / Context                                                                  |
+|:-------------------------|:---------------------------------|:-----------------------------------------------------------------------------------|
+| **Begin a Hunt**         | `git bisect start`               | Enters bisect mode, ready to receive the boundary commits.                         |
+| **Mark the Boundaries**  | `git bisect bad` <br> `git bisect good <hash>` | Declares the current commit broken and an older commit known to work.  |
+| **Report a Test Result** | `git bisect good` / `git bisect bad` | Reports the checked-out midpoint, prompting Git to narrow the range further.    |
+| **Automate the Search**  | `git bisect run <test_command>`  | Runs a script at each step, using its exit code to mark commits automatically.     |
+| **End the Hunt**         | `git bisect reset`               | Restores `HEAD` to where you started before the bisect began.                      |
+
+### Recovering Lost Work
+::: {.subheading}
+`git reflog`
+:::
+
+Not all investigation is about other people's code; sometimes you need to investigate your own recent past, usually after a rebase or reset that seems to have eaten your commits. Here is the reassuring truth: those commits are almost never gone. When a branch ref moves off a commit, the commit object still sits in the database; it has merely become *unreachable*, with no ref pointing at it. The **reflog** is Git's private journal of everywhere `HEAD` and your branch tips have pointed, recorded every time they moved. It is purely local and never pushed. Because it remembers the hash a ref held *before* your destructive command, it gives you the address of the "lost" commit so you can point a branch back at it and bring it back to life.
+
+| Objective                  | Command                              | Purpose / Context                                                                       |
+|:---------------------------|:-------------------------------------|:----------------------------------------------------------------------------------------|
+| **View HEAD Movements**    | `git reflog`                         | Lists recent positions of `HEAD` with their hashes and the action that moved them.      |
+| **Inspect a Lost Commit**  | `git show HEAD@{2}`                  | Shows the commit `HEAD` pointed to two moves ago, using reflog's positional syntax.     |
+| **Recover to a Prior State** | `git reset --hard HEAD@{1}`        | Moves your branch back to where it was one action ago, undoing a bad reset or rebase.   |
+| **Rescue an Orphaned Commit** | `git branch rescue <lost_hash>`   | Anchors a new branch to a commit found in the reflog, making it reachable again.        |
 
 ### Tutorial
 ::: {.subheading}
@@ -135,6 +215,12 @@ When a standard `git blame` shows a generic "Refactor formatting" commit instead
    ```bash
    git log -S "void calculate_weights" -p --raw
    ```
+
+If `git blame` keeps stopping at the same formatting commit, blame its parent instead to step past the noise and find the commit that actually wrote the logic:
+
+```bash
+git blame <formatting_commit>^ -- analysis.qmd
+```
 
 ## Managing Diverged Branches
 ::: {.subheading}

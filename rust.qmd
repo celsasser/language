@@ -5841,7 +5841,11 @@ The serialization framework that the whole ecosystem agrees on
 
 The problem it solves is the one C/C++ programmers know painfully well. In C, turning a `struct` into JSON means hand-writing a function that walks each field and prints it, and parsing means hand-writing the inverse with all the error checking that implies. Every struct needs its own pair of functions, every format needs its own variant, and a single renamed field silently breaks the round-trip. serde generates all of that for you at compile time, and does it once for every format simultaneously.
 
-#### The Big Idea: A Two-Sided Framework
+#### The Big Idea
+::: {.subheading}
+A Two-Sided Framework
+:::
+
 The insight that makes serde different from a typical JSON library is that it splits the work in half and standardizes the seam between the halves.
 
 - **Your type** implements `Serialize` / `Deserialize`. These traits describe the *shape* of your data ("I am a struct with three fields named x, y, z") without knowing or caring what format it will become.
@@ -5994,17 +5998,17 @@ struct User {
 
 The most common attributes, container-level (on the type) and field-level (on a field):
 
-| Attribute                                   | Level     | Effect                                                                          |
-|---------------------------------------------|-----------|---------------------------------------------------------------------------------|
-| `rename_all = "camelCase"`                  | Container | Convert every field name to a naming style (`camelCase`, `kebab-case`, `PascalCase`, ...) |
-| `deny_unknown_fields`                       | Container | Error if the input contains a field the struct does not declare                 |
-| `rename = "name"`                           | Field     | Map this one field to a different external name                                  |
-| `default`                                   | Field     | Use the type's `Default` value when the field is absent in the input            |
-| `default = "path::to::fn"`                  | Field     | Call a function to produce the default                                           |
-| `skip`                                      | Field     | Never serialize or deserialize this field (must be `Default`-able)              |
-| `skip_serializing_if = "Option::is_none"`   | Field     | Omit the field from output when the predicate is true                           |
-| `flatten`                                   | Field     | Inline a nested struct's fields into the parent (handy for shared/extra fields) |
-| `with = "module"`                           | Field     | Use custom serialize/deserialize logic (e.g. a date format)                     |
+| Attribute                                 | Level     | Effect                                                                                    |
+|-------------------------------------------|-----------|-------------------------------------------------------------------------------------------|
+| `rename_all = "camelCase"`                | Container | Convert every field name to a naming style (`camelCase`, `kebab-case`, `PascalCase`, ...) |
+| `deny_unknown_fields`                     | Container | Error if the input contains a field the struct does not declare                           |
+| `rename = "name"`                         | Field     | Map this one field to a different external name                                           |
+| `default`                                 | Field     | Use the type's `Default` value when the field is absent in the input                      |
+| `default = "path::to::fn"`                | Field     | Call a function to produce the default                                                    |
+| `skip`                                    | Field     | Never serialize or deserialize this field (must be `Default`-able)                        |
+| `skip_serializing_if = "Option::is_none"` | Field     | Omit the field from output when the predicate is true                                     |
+| `flatten`                                 | Field     | Inline a nested struct's fields into the parent (handy for shared/extra fields)           |
+| `with = "module"`                         | Field     | Use custom serialize/deserialize logic (e.g. a date format)                               |
 
 `#[serde(default)]` deserves a callout for anyone coming from C: it is how serde models *optional input* without making the field itself `Option<T>`. A field marked `default` may be absent from the JSON; serde fills it with `Default::default()` rather than erroring. Combine this with `Option<T>` only when "absent" and "present but null" need to be distinguished.
 
@@ -6048,7 +6052,11 @@ enum Method {
 }
 ```
 
-#### When You Don't Have a Struct: `serde_json::Value`
+#### When You Don't Have a Struct
+::: {.subheading}
+`serde_json::Value`
+:::
+
 Sometimes the shape is unknown or genuinely dynamic, an arbitrary JSON blob you want to inspect at runtime. For that, `serde_json::Value` is an enum that can hold any JSON value, and the `json!` macro builds one inline.
 
 ```rust
@@ -6069,7 +6077,11 @@ let payload = json!({
 
 This is the escape hatch. Prefer a typed struct whenever the schema is known: you get validation, autocompletion, and compile-time guarantees that `Value` cannot offer. Reach for `Value` only when the data truly has no fixed shape.
 
-#### A Practical Pattern: Loading a Config File
+#### A Practical Pattern
+::: {.subheading}
+Loading a Config File
+:::
+
 Tying it back to something you do already, here is the idiom for reading a typed config from a TOML file. It is the natural companion to a [clap](#clap) `--config <FILE>` flag.
 
 ```rust

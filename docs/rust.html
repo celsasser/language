@@ -591,14 +591,14 @@ window.Quarto = {
   </ul></li>
   <li><a href="#serde" id="toc-serde" class="nav-link" data-scroll-target="#serde"><code>serde</code></a>
   <ul class="collapse">
-  <li><a href="#the-big-idea-a-two-sided-framework" id="toc-the-big-idea-a-two-sided-framework" class="nav-link" data-scroll-target="#the-big-idea-a-two-sided-framework">The Big Idea: A Two-Sided Framework</a></li>
+  <li><a href="#the-big-idea" id="toc-the-big-idea" class="nav-link" data-scroll-target="#the-big-idea">The Big Idea</a></li>
   <li><a href="#adding-it-to-a-project" id="toc-adding-it-to-a-project" class="nav-link" data-scroll-target="#adding-it-to-a-project">Adding It to a Project</a></li>
   <li><a href="#deriving-serialize-and-deserialize" id="toc-deriving-serialize-and-deserialize" class="nav-link" data-scroll-target="#deriving-serialize-and-deserialize">Deriving <code>Serialize</code> and <code>Deserialize</code></a></li>
   <li><a href="#it-really-is-format-agnostic" id="toc-it-really-is-format-agnostic" class="nav-link" data-scroll-target="#it-really-is-format-agnostic">It Really Is Format-Agnostic</a></li>
   <li><a href="#customizing-the-mapping-with-attributes" id="toc-customizing-the-mapping-with-attributes" class="nav-link" data-scroll-target="#customizing-the-mapping-with-attributes">Customizing the Mapping with Attributes</a></li>
   <li><a href="#nested-and-collection-types" id="toc-nested-and-collection-types" class="nav-link" data-scroll-target="#nested-and-collection-types">Nested and Collection Types</a></li>
-  <li><a href="#when-you-dont-have-a-struct-serde_jsonvalue" id="toc-when-you-dont-have-a-struct-serde_jsonvalue" class="nav-link" data-scroll-target="#when-you-dont-have-a-struct-serde_jsonvalue">When You Don’t Have a Struct: <code>serde_json::Value</code></a></li>
-  <li><a href="#a-practical-pattern-loading-a-config-file" id="toc-a-practical-pattern-loading-a-config-file" class="nav-link" data-scroll-target="#a-practical-pattern-loading-a-config-file">A Practical Pattern: Loading a Config File</a></li>
+  <li><a href="#when-you-dont-have-a-struct" id="toc-when-you-dont-have-a-struct" class="nav-link" data-scroll-target="#when-you-dont-have-a-struct">When You Don’t Have a Struct</a></li>
+  <li><a href="#a-practical-pattern" id="toc-a-practical-pattern" class="nav-link" data-scroll-target="#a-practical-pattern">A Practical Pattern</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#key-differences-from-cc" id="toc-key-differences-from-cc" class="nav-link" data-scroll-target="#key-differences-from-cc">Key Differences from C/C++</a></li>
@@ -7382,8 +7382,11 @@ pexs24 0.3.1</code></pre>
 </div>
 <p><a href="https://serde.rs/" target="_blank" rel="noopener noreferrer">serde</a> (a contraction of <strong>ser</strong>ialize/<strong>de</strong>serialize) is the crate Rust uses to convert data structures to and from external formats: JSON, TOML, YAML, MessagePack, CBOR, and dozens more. It is, by download count, the most-used crate in the ecosystem, and for good reason: nearly every library that touches a config file, an HTTP body, or a <code>.json</code> on disk speaks serde. Learn it once and the knowledge transfers everywhere.</p>
 <p>The problem it solves is the one C/C++ programmers know painfully well. In C, turning a <code>struct</code> into JSON means hand-writing a function that walks each field and prints it, and parsing means hand-writing the inverse with all the error checking that implies. Every struct needs its own pair of functions, every format needs its own variant, and a single renamed field silently breaks the round-trip. serde generates all of that for you at compile time, and does it once for every format simultaneously.</p>
-<section id="the-big-idea-a-two-sided-framework" class="level4">
-<h4 class="anchored" data-anchor-id="the-big-idea-a-two-sided-framework">The Big Idea: A Two-Sided Framework</h4>
+<section id="the-big-idea" class="level4">
+<h4 class="anchored" data-anchor-id="the-big-idea">The Big Idea</h4>
+<div class="subheading">
+<p>A Two-Sided Framework</p>
+</div>
 <p>The insight that makes serde different from a typical JSON library is that it splits the work in half and standardizes the seam between the halves.</p>
 <ul>
 <li><strong>Your type</strong> implements <code>Serialize</code> / <code>Deserialize</code>. These traits describe the <em>shape</em> of your data (“I am a struct with three fields named x, y, z”) without knowing or caring what format it will become.</li>
@@ -7515,9 +7518,9 @@ Config { host: "localhost", port: 8080, retries: 3 }</code></pre>
 <p>The most common attributes, container-level (on the type) and field-level (on a field):</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 32%">
-<col style="width: 8%">
-<col style="width: 59%">
+<col style="width: 29%">
+<col style="width: 7%">
+<col style="width: 62%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -7611,8 +7614,11 @@ Config { host: "localhost", port: 8080, retries: 3 }</code></pre>
 <span id="cb318-7"><a href="#cb318-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"metadata"</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">"region"</span><span class="fu">:</span> <span class="st">"us-east-1"</span> <span class="fu">}</span></span>
 <span id="cb318-8"><a href="#cb318-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="when-you-dont-have-a-struct-serde_jsonvalue" class="level4">
-<h4 class="anchored" data-anchor-id="when-you-dont-have-a-struct-serde_jsonvalue">When You Don’t Have a Struct: <code>serde_json::Value</code></h4>
+<section id="when-you-dont-have-a-struct" class="level4">
+<h4 class="anchored" data-anchor-id="when-you-dont-have-a-struct">When You Don’t Have a Struct</h4>
+<div class="subheading">
+<p><code>serde_json::Value</code></p>
+</div>
 <p>Sometimes the shape is unknown or genuinely dynamic, an arbitrary JSON blob you want to inspect at runtime. For that, <code>serde_json::Value</code> is an enum that can hold any JSON value, and the <code>json!</code> macro builds one inline.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb319"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb319-1"><a href="#cb319-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde_json::</span><span class="op">{</span>json<span class="op">,</span> Value<span class="op">};</span></span>
 <span id="cb319-2"><a href="#cb319-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -7629,8 +7635,11 @@ Config { host: "localhost", port: 8080, retries: 3 }</code></pre>
 <span id="cb319-13"><a href="#cb319-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This is the escape hatch. Prefer a typed struct whenever the schema is known: you get validation, autocompletion, and compile-time guarantees that <code>Value</code> cannot offer. Reach for <code>Value</code> only when the data truly has no fixed shape.</p>
 </section>
-<section id="a-practical-pattern-loading-a-config-file" class="level4">
-<h4 class="anchored" data-anchor-id="a-practical-pattern-loading-a-config-file">A Practical Pattern: Loading a Config File</h4>
+<section id="a-practical-pattern" class="level4">
+<h4 class="anchored" data-anchor-id="a-practical-pattern">A Practical Pattern</h4>
+<div class="subheading">
+<p>Loading a Config File</p>
+</div>
 <p>Tying it back to something you do already, here is the idiom for reading a typed config from a TOML file. It is the natural companion to a <a href="#clap">clap</a> <code>--config &lt;FILE&gt;</code> flag.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb320"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb320-1"><a href="#cb320-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde::</span>Deserialize<span class="op">;</span></span>
 <span id="cb320-2"><a href="#cb320-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::</span>fs<span class="op">;</span></span>

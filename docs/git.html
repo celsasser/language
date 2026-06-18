@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-06-17">
+<meta name="dcterms.date" content="2026-06-18">
 
 <title>Git Reference Manual – Computer Language Notebook</title>
 <style>
@@ -387,7 +387,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">June 17, 2026</p>
+      <p class="date">June 18, 2026</p>
     </div>
   </div>
   
@@ -912,7 +912,7 @@ Note
 <ol type="1">
 <li><strong>Fetch current upstream state</strong> without shifting your HEAD pointer: <code>bash     git fetch origin</code></li>
 <li><strong>Initiate the rebase</strong> on top of the updated remote branch (e.g., <code>main</code>): <code>bash     git rebase origin/main</code></li>
-<li><strong>Handle Conflicts Immediatley:</strong> If Git pauses due to conflicting edits, it will leave the markers (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>) directly in your source files.
+<li><strong>Handle Conflicts Immediately:</strong> If Git pauses due to conflicting edits, it will leave the markers (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>) directly in your source files.
 <ul>
 <li>Open the affected file.</li>
 <li>The top block (between <code>HEAD</code> and <code>=======</code>) represents the upstream state from <code>main</code>.</li>
@@ -994,7 +994,7 @@ Note
 </div>
 <p>Assume you have made 4 commits locally, but the middle two are intermediate fixes that clutter the project log.</p>
 <ol type="1">
-<li><strong>Launch the interactive editor</strong> targetting the last 4 commits on your current branch: <code>bash     git rebase -i HEAD~4</code></li>
+<li><strong>Launch the interactive editor</strong> targeting the last 4 commits on your current branch: <code>bash     git rebase -i HEAD~4</code></li>
 <li><strong>Analyze the instruction list:</strong> An editor window will open showing your commits chronologically from top to bottom (the reverse of <code>git log</code>). <code>text     pick a1b2c3d Initial data ingestion script     pick e5f6g7h Fix broken file path handling     pick i9j0k1l Typo correction in headers     pick m3n4o5p Complete visualization pipeline</code></li>
 <li><strong>Modify the operations:</strong> Change the instructions to consolidate the intermediate commits into the primary ingestion script. <code>text     pick a1b2c3d Initial data ingestion script     fixup e5f6g7h Fix broken file path handling     fixup i9j0k1l Typo correction in headers     pick m3n4o5p Complete visualization pipeline</code></li>
 <li><strong>Save and Close</strong> the editor. Git will sequentially apply <code>a1b2c3d</code>, merge the structural changes of the next two commits directly into it without changing its intent, and then apply <code>m3n4o5p</code>. Your history is now condensed into two pristine commits.</li>

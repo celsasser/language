@@ -5832,6 +5832,276 @@ pexs24 0.3.1
 See [clap documentation](https://docs.rs/clap/latest/clap/){target="_blank" rel="noopener noreferrer"} and the [clap derive reference](https://docs.rs/clap/latest/clap/_derive/index.html){target="_blank" rel="noopener noreferrer"} for the full attribute catalog.
 :::
 
+### `serde`
+::: {.subheading}
+The serialization framework that the whole ecosystem agrees on
+:::
+
+[serde](https://serde.rs/){target="_blank" rel="noopener noreferrer"} (a contraction of **ser**ialize/**de**serialize) is the crate Rust uses to convert data structures to and from external formats: JSON, TOML, YAML, MessagePack, CBOR, and dozens more. It is, by download count, the most-used crate in the ecosystem, and for good reason: nearly every library that touches a config file, an HTTP body, or a `.json` on disk speaks serde. Learn it once and the knowledge transfers everywhere.
+
+The problem it solves is the one C/C++ programmers know painfully well. In C, turning a `struct` into JSON means hand-writing a function that walks each field and prints it, and parsing means hand-writing the inverse with all the error checking that implies. Every struct needs its own pair of functions, every format needs its own variant, and a single renamed field silently breaks the round-trip. serde generates all of that for you at compile time, and does it once for every format simultaneously.
+
+#### The Big Idea: A Two-Sided Framework
+The insight that makes serde different from a typical JSON library is that it splits the work in half and standardizes the seam between the halves.
+
+- **Your type** implements `Serialize` / `Deserialize`. These traits describe the *shape* of your data ("I am a struct with three fields named x, y, z") without knowing or caring what format it will become.
+- **A format crate** (`serde_json`, `toml`, `serde_yaml`, ...) implements a *Serializer* / *Deserializer*. These know how to write and read one specific format, without knowing anything about your particular struct.
+
+serde defines the interface in the middle. Your type talks to that interface; the format crate talks to that interface; the two never talk to each other directly. This is why one `#[derive(Serialize, Deserialize)]` on your struct gives you *every* format at once. Add the `toml` crate and your existing structs serialize to TOML with no further changes.
+
+```{mermaid}
+flowchart LR
+    A["Your struct<br/>(Serialize / Deserialize)"] <--> B["serde<br/>data model"]
+    B <--> C["serde_json"]
+    B <--> D["toml"]
+    B <--> E["serde_yaml"]
+    C <--> F["JSON text"]
+    D <--> G["TOML text"]
+    E <--> H["YAML text"]
+```
+
+It is the same separation-of-concerns move as a virtual interface in C++: the data model is the abstract base class both sides depend on, so neither side depends on the other.
+
+#### Adding It to a Project
+serde itself is the framework; you almost always pair it with at least one format crate. The `derive` feature enables the `#[derive(...)]` macros and is the part you will use constantly.
+
+```toml
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"          # the JSON format crate
+```
+
+For other formats, add the corresponding crate alongside it:
+
+```toml
+toml = "0.8"              # TOML, e.g. for config files
+serde_yaml = "0.9"        # YAML
+rmp-serde = "1"           # MessagePack (a compact binary format)
+```
+
+#### Deriving `Serialize` and `Deserialize`
+The entire workflow starts by tagging your type. `#[derive(Serialize, Deserialize)]` reads the struct at compile time and generates both implementations.
+
+```rust
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Config {
+    host: String,
+    port: u16,
+    retries: u32,
+}
+```
+
+That derive is the whole investment. From here, *any* format crate can read and write a `Config`. Here it is with JSON:
+
+```rust
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Config {
+    host: String,
+    port: u16,
+    retries: u32,
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = Config {
+        host: "localhost".to_string(),
+        port: 8080,
+        retries: 3,
+    };
+
+    // Serialize: struct -> JSON string
+    let json = serde_json::to_string_pretty(&config)?;
+    println!("{json}");
+
+    // Deserialize: JSON string -> struct
+    let parsed: Config = serde_json::from_str(&json)?;
+    println!("{parsed:?}");
+
+    Ok(())
+}
+```
+
+```
+{
+  "host": "localhost",
+  "port": 8080,
+  "retries": 3
+}
+Config { host: "localhost", port: 8080, retries: 3 }
+```
+
+Two things worth noticing. First, deserialization is *type-directed*: `serde_json::from_str` knows to produce a `Config` because the binding is annotated `let parsed: Config`. serde reads the JSON to fill that specific shape, so a missing or mistyped field becomes a real `Err`, not a silent default. Second, the field names in the output come straight from the Rust field names. That mapping is the default, and it is adjustable, which the next section covers.
+
+#### It Really Is Format-Agnostic
+The same `Config` struct, with no changes, round-trips through any format crate. The only thing that changes is which crate's `to_string` / `from_str` you call.
+
+```rust
+// JSON
+let text = serde_json::to_string(&config)?;
+let back: Config = serde_json::from_str(&text)?;
+
+// TOML
+let text = toml::to_string(&config)?;
+let back: Config = toml::from_str(&text)?;
+
+// YAML
+let text = serde_yaml::to_string(&config)?;
+let back: Config = serde_yaml::from_str(&text)?;
+```
+
+The same struct rendered in each format:
+
+```toml
+# TOML
+host = "localhost"
+port = 8080
+retries = 3
+```
+
+```yaml
+# YAML
+host: localhost
+port: 8080
+retries: 3
+```
+
+This is the payoff of the two-sided design: you describe your data once and gain every format the ecosystem supports. A config file in TOML, an API response in JSON, and a cache in MessagePack can all share the exact same struct definitions.
+
+#### Customizing the Mapping with Attributes
+Real-world data rarely matches Rust naming conventions exactly. JSON tends toward `camelCase`, your structs use `snake_case`, fields are sometimes optional, and external names do not always make valid Rust identifiers. serde's `#[serde(...)]` attributes bridge the gap, much as clap's `#[arg(...)]` attributes tune argument parsing.
+
+```rust
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]      // userId in JSON, user_id in Rust
+struct User {
+    user_id: u64,
+
+    #[serde(rename = "emailAddress")]   // override a single field's name
+    email: String,
+
+    #[serde(default)]                   // missing -> Default::default()
+    active: bool,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    nickname: Option<String>,           // omitted from output when None
+}
+```
+
+The most common attributes, container-level (on the type) and field-level (on a field):
+
+| Attribute                                   | Level     | Effect                                                                          |
+|---------------------------------------------|-----------|---------------------------------------------------------------------------------|
+| `rename_all = "camelCase"`                  | Container | Convert every field name to a naming style (`camelCase`, `kebab-case`, `PascalCase`, ...) |
+| `deny_unknown_fields`                       | Container | Error if the input contains a field the struct does not declare                 |
+| `rename = "name"`                           | Field     | Map this one field to a different external name                                  |
+| `default`                                   | Field     | Use the type's `Default` value when the field is absent in the input            |
+| `default = "path::to::fn"`                  | Field     | Call a function to produce the default                                           |
+| `skip`                                      | Field     | Never serialize or deserialize this field (must be `Default`-able)              |
+| `skip_serializing_if = "Option::is_none"`   | Field     | Omit the field from output when the predicate is true                           |
+| `flatten`                                   | Field     | Inline a nested struct's fields into the parent (handy for shared/extra fields) |
+| `with = "module"`                           | Field     | Use custom serialize/deserialize logic (e.g. a date format)                     |
+
+`#[serde(default)]` deserves a callout for anyone coming from C: it is how serde models *optional input* without making the field itself `Option<T>`. A field marked `default` may be absent from the JSON; serde fills it with `Default::default()` rather than erroring. Combine this with `Option<T>` only when "absent" and "present but null" need to be distinguished.
+
+#### Nested and Collection Types
+serde composes. Any type whose components all implement the traits gets them too, so structs of structs, `Vec<T>`, `HashMap<K, V>`, and `Option<T>` all work with no extra effort. Enums serialize as a tagged object by default.
+
+```rust
+use serde::{Serialize, Deserialize};
+use std::collections::HashMap;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Server {
+    name: String,
+    endpoints: Vec<Endpoint>,
+    metadata: HashMap<String, String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Endpoint {
+    path: String,
+    method: Method,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "UPPERCASE")]
+enum Method {
+    Get,
+    Post,
+    Delete,
+}
+```
+
+```json
+{
+  "name": "api",
+  "endpoints": [
+    { "path": "/users", "method": "GET" },
+    { "path": "/users", "method": "POST" }
+  ],
+  "metadata": { "region": "us-east-1" }
+}
+```
+
+#### When You Don't Have a Struct: `serde_json::Value`
+Sometimes the shape is unknown or genuinely dynamic, an arbitrary JSON blob you want to inspect at runtime. For that, `serde_json::Value` is an enum that can hold any JSON value, and the `json!` macro builds one inline.
+
+```rust
+use serde_json::{json, Value};
+
+let data: Value = serde_json::from_str(r#"{ "name": "ada", "age": 36 }"#)?;
+
+// Index into it like a tree; missing keys yield Value::Null
+let name = data["name"].as_str().unwrap_or("unknown");
+let age  = data["age"].as_u64().unwrap_or(0);
+
+// Build a Value directly
+let payload = json!({
+    "status": "ok",
+    "items": [1, 2, 3],
+});
+```
+
+This is the escape hatch. Prefer a typed struct whenever the schema is known: you get validation, autocompletion, and compile-time guarantees that `Value` cannot offer. Reach for `Value` only when the data truly has no fixed shape.
+
+#### A Practical Pattern: Loading a Config File
+Tying it back to something you do already, here is the idiom for reading a typed config from a TOML file. It is the natural companion to a [clap](#clap) `--config <FILE>` flag.
+
+```rust
+use serde::Deserialize;
+use std::fs;
+
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]       // typo in the config -> loud error, not silent ignore
+struct AppConfig {
+    host: String,
+    #[serde(default = "default_port")]
+    port: u16,
+    log_level: String,
+}
+
+fn default_port() -> u16 {
+    8080
+}
+
+fn load_config(path: &str) -> Result<AppConfig, Box<dyn std::error::Error>> {
+    let text = fs::read_to_string(path)?;
+    let config: AppConfig = toml::from_str(&text)?;
+    Ok(config)
+}
+```
+
+`deny_unknown_fields` turns a misspelled key in the config file into an immediate, descriptive error instead of a silently-ignored setting, which is exactly the failure mode you want surfaced early.
+
+::: {.see-more}
+See the [serde documentation](https://serde.rs/){target="_blank" rel="noopener noreferrer"}, the [attribute reference](https://serde.rs/attributes.html){target="_blank" rel="noopener noreferrer"}, and the [serde_json docs](https://docs.rs/serde_json/latest/serde_json/){target="_blank" rel="noopener noreferrer"} for the complete catalog.
+:::
+
 ## Key Differences from C/C++
 ::: {.subheading}
 Quick Reference

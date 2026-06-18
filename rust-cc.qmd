@@ -1,0 +1,1008 @@
+---
+title: "Rust: Cargo and Crates"
+---
+
+## Cargo
+::: {.subheading}
+The Build System
+:::
+
+![](images/rust-00.png){width=2.25in style="float: left; padding: 0 1em"}
+Cargo is Rust's build tool, package manager, and test runner. You'll use it for everything.
+
+```bash
+cargo new my_project    # create new project
+cargo build             # debug build
+cargo build --release   # optimized build
+cargo run               # build and run
+cargo test              # run all tests
+cargo check             # fast type-check without building
+cargo clippy            # linter
+cargo fmt               # formatter
+```
+
+Dependencies go in `Cargo.toml`:
+
+```toml
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+regex = "1.10"
+```
+
+`cargo add serde` adds a dependency from the command line. The ecosystem (crates.io) is large and high quality.
+
+### `Cargo.toml` in Full
+A complete manifest with all common fields looks like this:
+
+```toml
+[package]
+name        = "my_project"
+version     = "0.1.0"
+edition     = "2021"
+rust-version = "1.70"           # minimum Rust version required to compile this crate
+authors     = ["Alice <alice@example.com>"]
+description = "A short description"
+license     = "MIT OR Apache-2.0"
+repository  = "https://github.com/alice/my_project"
+
+[dependencies]
+serde  = { version = "1.0", features = ["derive"] }
+regex  = "1.10"
+rand   = { version = "0.8", optional = true }       # only included if the feature is enabled
+my_lib = { path = "../my_lib" }                     # local crate on disk
+some_fork = { git = "https://github.com/...", branch = "fix/thing" }
+
+[dev-dependencies]
+pretty_assertions = "1.4"   # only compiled for tests and benchmarks
+
+[build-dependencies]
+cc = "1.0"                  # only compiled for build.rs
+
+[features]
+default  = []               # features enabled by default (none here)
+graphics = ["rand"]         # enable this feature to pull in rand
+
+[profile.release]
+opt-level = 3               # maximum optimization
+lto       = true            # link-time optimization
+strip     = true            # strip debug symbols from the binary
+```
+
+### Editions
+::: {.subheading}
+Opt-in language evolution without breaking the ecosystem
+:::
+
+Yes, editions are named by year: `2015`, `2018`, `2021`, and `2024`. Each edition allows the Rust team to make changes to the language's syntax and semantics that would otherwise be backward-incompatible, without forcing anyone to upgrade immediately.
+
+The key insight is that *editions are per-crate, and all editions can link together*. A crate compiled with edition 2015 and a crate compiled with edition 2021 produce compatible object code. The edition setting lives in `Cargo.toml` and affects only the crate it belongs to. This means the ecosystem never splits the way Python 2 vs Python 3 did.
+
+What changes between editions is language syntax and a small number of semantic rules, not the standard library. The standard library API is versioned by the Rust release channel separately. An example: in edition 2015 you had to write `extern crate serde;` at the top of `main.rs` to bring an external crate into scope. In 2018 that was removed entirely. Both editions call the same `serde` functions at runtime.
+
+| Edition | Notable changes                                                                                                                                           |
+|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2015    | Original Rust. `extern crate` required. Old module path rules.                                                                                            |
+| 2018    | `extern crate` no longer needed. Clearer `use` paths (`crate::`, `super::`). `async`/`await` syntax. `?` usable in `main`. [Non-lexical lifetimes](rust-ho.qmd#NLL). |
+| 2021    | More precise closure captures (captures only what it uses, not the whole struct). `IntoIterator` implemented for arrays. Cargo feature resolver v2.       |
+| 2024    | `gen` blocks and coroutines. `impl Trait` lifetime improvements. Stricter `unsafe` requirements.                                                          |
+
+Migrating is low-friction. Running `cargo fix --edition` rewrites the parts of your code that need updating automatically, then you change the `edition` field in `Cargo.toml`. Most migrations take a few minutes.
+
+::: {.callout-note title="Which edition to use?"}
+Start new projects with the latest edition (`2021` at minimum, `2024` if your toolchain supports it). There is no reason to start on an older edition. When reading existing code, the edition tells you which syntax rules apply, which matters when looking up path resolution or closure capture behavior.
+:::
+
+### Dependency Version Constraints
+Cargo uses [semantic versioning](https://semver.org){target="_blank" rel="noopener noreferrer"}. The version string in `Cargo.toml` is a *requirement*, not an exact pin. Cargo selects the newest version that satisfies all constraints in the dependency graph:
+
+| Requirement             | Meaning                        | Resolves to (e.g.) |
+|-------------------------|--------------------------------|--------------------|
+| `"1.0"` or `"^1.0"`     | `>=1.0.0, <2.0.0` (default)    | `1.9.4`            |
+| `"1.2.3"` or `"^1.2.3"` | `>=1.2.3, <2.0.0`              | `1.9.4`            |
+| `"~1.2.3"`              | `>=1.2.3, <1.3.0` (patch only) | `1.2.9`            |
+| `"=1.2.3"`              | Exactly `1.2.3`                | `1.2.3`            |
+| `"*"`                   | Any version                    | latest             |
+
+The caret rule (`^`) is the default and the most common. It reflects semver's promise: a library increment its major version when it makes breaking changes, so `>=1.0, <2.0` is safe to let Cargo update freely within.
+
+`Cargo.lock` records the exact resolved versions. Commit `Cargo.lock` for binaries (so builds are reproducible) and typically do not commit it for libraries (so downstream users get the benefit of patch updates).
+
+### Dependency Scopes
+Not every dependency is needed in every context:
+
+```toml
+[dependencies]       # always compiled, included in the final binary
+serde = "1.0"
+
+[dev-dependencies]   # compiled only for `cargo test` and `cargo bench`
+mockall = "0.12"
+criterion = "0.5"
+
+[build-dependencies] # compiled only for build.rs (runs before the main build)
+cc = "1.0"
+```
+
+`dev-dependencies` are the right place for test helpers, assertion libraries, and benchmarking frameworks. They are absent from release builds entirely.
+
+`build-dependencies` are for `build.rs`, a special script Cargo runs before compiling your crate. Common uses: compiling C code, generating Rust source from a schema, or probing the build environment.
+
+### Feature Flags
+Features let you make parts of your crate optional, activated at compile time:
+
+```toml
+[features]
+default  = ["logging"]          # enabled unless the user opts out
+logging  = ["dep:log"]          # enables the `log` dependency
+tls      = ["dep:rustls"]
+full     = ["logging", "tls"]   # convenience: enables everything
+```
+
+A user of your crate enables features in their own `Cargo.toml`:
+
+```toml
+my_lib = { version = "1.0", features = ["tls"] }
+my_lib = { version = "1.0", default-features = false }   # strip defaults
+```
+
+In your code, gate feature-specific code with `#[cfg(feature = "tls")]`:
+
+```rust
+#[cfg(feature = "tls")]
+pub mod tls_support { ... }
+```
+
+Features are additive: enabling a feature can only add code, never remove it. This is a deliberate constraint that keeps the dependency resolver simple.
+
+### Build Profiles
+Cargo compiles in two profiles by default. You can tune both:
+
+```toml
+[profile.dev]
+opt-level = 0      # no optimization — fast to compile, slow to run
+debug     = true   # include debug symbols
+
+[profile.release]
+opt-level = 3      # maximum optimization — slow to compile, fast to run
+lto       = true   # link-time optimization: slower link, smaller/faster binary
+strip     = true   # remove debug symbols from the output binary
+panic     = "abort" # smaller binary: no stack unwinding on panic
+```
+
+`cargo build` uses `dev`. `cargo build --release` uses `release`. You can define custom profiles for benchmarks or special builds:
+
+```toml
+[profile.bench]
+inherits  = "release"
+debug     = true    # keep symbols for profiling
+```
+
+### Environment Variables
+Cargo manages a well-known list of [environment variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html){target="_blank"}. They fall into to major categories:
+
+1. **Variables Cargo sets**: these are variables that Cargo prepares for our consumption during compilation.
+2. **Variables Cargo reads**: these are variables that Cargo consumes during compilation.
+
+::: {.panel data-label="Environment Variable I/O"}
+##### `env` the Function
+Rust includes the [`env`](https://doc.rust-lang.org/stable/std/env/){target="_blank"} module as part of the standard library. It includes functions to read and write environment variables.
+
+##### Examples
+```rust
+use std::env;
+
+let key = "HOME";
+match env::var(key) {
+    Ok(val) => println!("{key}: {val:?}"),
+    Err(e) => println!("couldn't interpret {key}: {e}"),
+}
+```
+
+```rust
+use std::env;
+
+let key = "KEY";
+unsafe {
+    env::set_var(key, "VALUE");
+}
+assert_eq!(env::var(key), Ok("VALUE".to_string()));
+```
+
+But the *super-cool* way of reading an environment variable is the `env!` macro.
+
+##### `env!` the Macro
+`env!` inspects an environment variable at *compile time*. This macro will expand to the value of the named environment variable at compile time, yielding an expression of type `&'static str`. If the environment variable is not defined, then a compilation error will be emitted. To not emit a compile error, use the `option_env!` macro instead.
+
+##### Examples
+```rust
+let path: &'static str = env!("PATH");
+println!("the $PATH variable at the time of compiling was: {path}");
+```
+
+You can customize the error message by passing a string as the second parameter:
+
+```rust
+let doc: &'static str = env!("documentation", "what's that?!");
+```
+:::
+
+Cargo's environment variable list is very long, so we've picked out some fan favorites as a sampler platter. See the official documentation (which I think is): [The Cargo Book](https://doc.rust-lang.org/cargo/reference/environment-variables.html){target="_blank"}.
+
+#### Cargo Sets
+| Variable Name             | Type        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+|---------------------------|:-----------:|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `CARGO`                   | Information | Path to the cargo binary performing the build.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `CARGO_MANIFEST_DIR`      | Information | The directory containing the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `CARGO_MANIFEST_PATH`     | Information | The path to the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `CARGO_PKG_VERSION`       | Information | The full version of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `CARGO_PKG_VERSION_MAJOR` | Information | The major version of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `CARGO_PKG_VERSION_MINOR` | Information | The minor version of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `CARGO_PKG_VERSION_PATCH` | Information | The patch version of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `CARGO_PKG_VERSION_PRE`   | Information | The pre-release version of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `CARGO_PKG_AUTHORS`       | Information | Colon separated list of authors from the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `CARGO_PKG_NAME`          | Information | The name of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `CARGO_PKG_DESCRIPTION`   | Information | The description from the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `CARGO_PKG_HOMEPAGE`      | Information | The home page from the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `CARGO_PKG_REPOSITORY`    | Information | The repository from the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `CARGO_PKG_LICENSE`       | Information | The license from the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `CARGO_PKG_LICENSE_FILE`  | Information | The license file from the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `CARGO_PKG_RUST_VERSION`  | Information | The Rust version from the manifest of your package. Note that this is the minimum Rust version supported by the package, not the current Rust version.                                                                                                                                                                                                                                                                                                                                          |
+| `CARGO_PKG_README`        | Information | Path to the README file of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `CARGO_CRATE_NAME`        | Information | The name of the crate that is currently being compiled. It is the name of the Cargo target with - converted to _, such as the name of the library, binary, example, integration test, or benchmark.                                                                                                                                                                                                                                                                                             |
+| `CARGO_BIN_NAME`          | Information | The name of the binary that is currently being compiled. Only set for binaries or binary examples. This name does not include any file extension, such as .exe.                                                                                                                                                                                                                                                                                                                                 |
+| `OUT_DIR`                 | Information | If the package has a build script, this is set to the folder where the build script should place its output. See below for more information. (Only set during compilation.) Cargo does not guarantee that this directory is empty, and it is not cleaned between builds.                                                                                                                                                                                                                        |
+| `CARGO_BIN_EXE_<name>`    | Information | The absolute path to a binary target’s executable. This is only set when building an integration test or benchmark. This may be used with the env macro to find the executable to run for testing purposes. The `<name>` is the name of the binary target, exactly as-is. For example, `CARGO_BIN_EXE_my-program` for a binary named my-program. Binaries are automatically built when the test is built, unless the binary has required features that are not enabled.                         |
+| `CARGO_PRIMARY_PACKAGE`   | Information | This environment variable will be set if the package being built is primary. Primary packages are the ones the user selected on the command-line, either with -p flags or the defaults based on the current directory and the default workspace members. This variable will not be set when building dependencies, unless a dependency is also a workspace member that was also selected on the command-line. This is only set when compiling the package (not when running binaries or tests). |
+| `CARGO_TARGET_TMPDIR`     | Information | Only set when building integration test or benchmark code. This is a path to a directory inside the target directory where integration tests or benchmarks are free to put any data needed by the tests/benches. Cargo initially creates this directory but doesn’t manage its content in any way, this is the responsibility of the test code.                                                                                                                                                 |
+| `CARGO`                   | Scripting   | Path to the cargo binary performing the build.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `CARGO_MANIFEST_DIR`      | Scripting   | The directory containing the manifest for the package being built (the package containing the build script). Also note that this is the value of the current working directory of the build script when it starts.                                                                                                                                                                                                                                                                              |
+| `CARGO_MANIFEST_PATH`     | Scripting   | The path to the manifest of your package.                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `CARGO_MANIFEST_LINKS`    | Scripting   | the manifest links value.                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `CARGO_MAKEFLAGS`         | Scripting   | Contains parameters needed for Cargo’s jobserver implementation to parallelize subprocesses. Rustc or cargo invocations from `build.rs` can already read `CARGO_MAKEFLAGS`, but GNU Make requires the flags to be specified either directly as arguments, or through the `MAKEFLAGS` environment variable. Currently Cargo doesn’t set the `MAKEFLAGS` variable, but it’s free for build scripts invoking GNU Make to set it to the contents of `CARGO_MAKEFLAGS`.                              |
+| `CARGO_FEATURE_<name>`    | Scripting   | For each activated feature of the package being built, this environment variable will be present where `<name>` is the name of the feature uppercased and having - translated to `_`.                                                                                                                                                                                                                                                                                                           |
+
+#### Cargo Reads
+| Variable Name                         | Type          | Description                                                                                                                                                                                                                                                                                                                                              |
+|---------------------------------------|:-------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `CARGO_LOG`                           | Configuration | Cargo uses the tracing crate to display debug log messages. The `CARGO_LOG` environment variable can be set to enable debug logging, with a value such as trace, debug, or warn. Usually it is only used during debugging. For more details refer to the Debug logging.                                                                                  |
+| `CARGO_HOME`                          | Configuration | Cargo maintains a local cache of the registry index and of git checkouts of crates. By default these are stored under `$HOME/.cargo` (`%USERPROFILE%\.cargo` on Windows), but this variable overrides the location of this directory. Once a crate is cached it is not removed by the clean command. For more details refer to the guide.                |
+| `CARGO_TARGET_DIR`                    | Configuration | Location of where to place all generated artifacts, relative to the current working directory. See [`build.target-dir`](https://doc.rust-lang.org/cargo/reference/config.html#buildtarget-dir){target="_blank"} to set via config.                                                                                                                       |
+| `CARGO`                               | Configuration | If set, Cargo will forward this value instead of setting it to its own auto-detected path when it builds crates and when it executes build scripts and external subcommands. This value is not directly executed by Cargo, and should always point at a command that behaves exactly like cargo, as that’s what users of the variable will be expecting. |
+| `RUSTC`                               | Configuration | Instead of running rustc, Cargo will execute this specified compiler instead. See build.rustc to set via config.                                                                                                                                                                                                                                         |
+| `CARGO_ALIAS_<name>`                  | Information   | Command aliases, see [`alias`](https://doc.rust-lang.org/cargo/reference/config.html#alias){target="_blank"}.                                                                                                                                                                                                                                            |
+| `CARGO_BUILD_JOBS`                    | Information   | Number of parallel jobs, see [`build.jobs`](https://doc.rust-lang.org/cargo/reference/config.html#buildjobs){target="_blank"}.                                                                                                                                                                                                                           |
+| `CARGO_BUILD_RUSTC`                   | Information   | The rustc executable, see [`build.rustc`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustc){target="_blank"}.                                                                                                                                                                                                                            |
+| `CARGO_BUILD_RUSTC_WRAPPER`           | Information   | The `rustc` wrapper, see [`build.rustc-wrapper`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustc-wrapper){target="_blank"}.                                                                                                                                                                                                             |
+| `CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER` | Information   | The rustc wrapper for workspace members only, see [`build.rustc-workspace-wrapper`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustc-workspace-wrapper){target="_blank"}.                                                                                                                                                                |
+| `CARGO_BUILD_RUSTDOC`                 | Information   | The rustdoc executable, see [`build.rustdoc`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustdoc){target="_blank"}.                                                                                                                                                                                                                      |
+| `CARGO_BUILD_TARGET`                  | Information   | The default target platform, see [`build.target`](https://doc.rust-lang.org/cargo/reference/config.html#buildtarget){target="_blank"}.                                                                                                                                                                                                                   |
+| `CARGO_BUILD_TARGET_DIR`              | Information   | The default output directory, see [`build.target-dir`](https://doc.rust-lang.org/cargo/reference/config.html#buildtarget-dir){target="_blank"}.                                                                                                                                                                                                          |
+| `CARGO_BUILD_BUILD_DIR`               | Information   | The default build directory, see [`build.build-dir`](https://doc.rust-lang.org/cargo/reference/config.html#buildbuild-dir){target="_blank"}.                                                                                                                                                                                                             |
+| `CARGO_BUILD_RUSTFLAGS`               | Information   | Extra rustc flags, see [`build.rustflags`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustflags){target="_blank"}.                                                                                                                                                                                                                       |
+
+::: {.see-more}
+See [Packages, Crates, and Modules](https://doc.rust-lang.org/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.
+:::
+
+## Crates
+::: {.subheading}
+A few fellas that I have taken a liking to
+:::
+
+A crate comes in two flavors: *executables* and *libraries*. Library crates don’t have a `main` function, and they don’t compile to an executable. Instead, they define functionality intended to be shared with multiple projects. And when you feel like sharing your brilliance with the world, you can version and publish your library crate to crates.io where it will be hosted for others to pull down.
+
+This little section briefly covers some published crates that I can use help with. Starting with `clap`.
+
+### `clap`
+::: {.subheading}
+Command-line argument parsing, the civilized way
+:::
+
+[clap](https://docs.rs/clap/latest/clap/){target="_blank" rel="noopener noreferrer"} (Command Line Argument Parser) turns a Rust struct into a fully-featured CLI: `--help`, `--version`, validation, [subcommands](#subcommands), and shell completions all come for free. You describe what your program accepts; clap handles the rest.
+
+Add it to `Cargo.toml` with the `derive` feature, which enables the attribute-based API used throughout this section:
+
+```toml
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+```
+
+#### The Derive API
+The [derive](#derive(parser)) API lets you describe your CLI as a struct. Clap reads the struct and its attributes at compile time and generates the parser automatically. This is the approach you will use in almost all real projects.
+
+```rust
+use clap::Parser;
+
+#[derive(Parser)]
+#[command(name = "greet", version = "1.0", about = "Greet someone")]
+struct Cli {
+    /// The name to greet
+    name: String,
+
+    /// How many times to repeat the greeting
+    #[arg(short, long, default_value_t = 1)]
+    count: u32,
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    for _ in 0..cli.count {
+        println!("Hello, {}!", cli.name);
+    }
+}
+```
+
+Running `./greet --help` produces:
+
+```
+Greet someone
+
+Usage: greet [OPTIONS] <NAME>
+
+Arguments:
+  <NAME>  The name to greet
+
+Options:
+  -c, --count <COUNT>  How many times to repeat the greeting [default: 1]
+  -h, --help           Print help
+  -V, --version        Print version
+```
+
+`Cli::parse()` reads `std::env::args()`, validates the input, and returns a populated `Cli`. If parsing fails, it prints an error and exits — no `Result` to unwrap.
+
+#### `#[derive(Parser)]`
+`Parser` is the [trait](rust-ho.qmd#traits) that drives everything. Applying `#[derive(Parser)]` to a struct generates an implementation of that trait, including the `parse()` and `try_parse()` associated functions. Without it, none of the other clap attributes do anything.
+
+```rust
+#[derive(Parser)]          // generates Cli::parse(), Cli::try_parse(), etc.
+struct Cli { ... }
+```
+
+`try_parse()` is available when you want to handle errors yourself instead of letting clap exit:
+
+```rust
+let cli = Cli::try_parse()?;   // returns Result<Cli, clap::Error>
+```
+
+#### `#[command(...)]` Attributes
+`#[command(...)]` applies to the struct as a whole and controls top-level metadata about your program.
+
+```rust
+#[derive(Parser)]
+#[command(
+    name    = "pexs24",
+    version = env!("CARGO_PKG_VERSION"),
+    author  = "Curtis",
+    about   = "Process expression files for the 2024 dataset",
+)]
+struct Cli { ... }
+```
+
+| Attribute                             | Effect                                              |
+|---------------------------------------|-----------------------------------------------------|
+| `name = "pexs24"`                     | Sets the program name shown in usage and help text  |
+| `version = "1.2.3"`                   | Sets the version shown by `--version`               |
+| `version = env!("CARGO_PKG_VERSION")` | Reads the version from `Cargo.toml` at compile time |
+| `author = "..."`                      | Sets the author shown in `--help`                   |
+| `about = "..."`                       | One-line description shown at the top of `--help`   |
+| `long_about = "..."`                  | Longer description shown in `--help` (multiline)    |
+
+**`name = "pexs24"`** matters because clap uses the binary file name by default. If your binary is named `target/debug/pexs24_dev`, that ugly name shows up in every usage example. Setting `name` pins it to a clean, version-independent string.
+
+**`version = env!("CARGO_PKG_VERSION")`** is worth pausing on. `env!` is a built-in Rust macro that reads an [environment variable](https://doc.rust-lang.org/cargo/reference/environment-variables.html){target="_blank" rel="noopener noreferrer"} at *compile time*. Cargo sets `CARGO_PKG_VERSION` to the `version` field in your `Cargo.toml` before invoking the compiler. The result is that your `--version` output always matches your `Cargo.toml` with zero manual synchronization.
+
+```toml
+# Cargo.toml
+[package]
+version = "0.3.1"
+```
+
+```
+$ pexs24 --version
+pexs24 0.3.1
+```
+
+Change the version in one place; the binary reflects it automatically.
+
+#### `#[arg(...)]` Attributes
+`#[arg(...)]` applies to individual fields and controls how each argument is parsed.
+
+##### Positional Arguments
+A field with no `short` or `long` attribute is positional — the user supplies it by position, not by name.
+
+```rust
+#[derive(Parser)]
+struct Cli {
+    #[arg(name = "FILE", num_args = 1)]
+    input: String,
+}
+```
+
+```
+Usage: prog <FILE>
+```
+
+##### What does `name = "FILE"` mean?
+The `name` attribute in `#[arg(...)]` sets the argument's internal **ID** and, for positional arguments, its **metavar** — the placeholder text shown in usage and help output. The uppercase `FILE` in `<FILE>` is a Unix convention: metavars are written in ALL_CAPS to visually distinguish the placeholder from the flags around it, and to make the type of input obvious at a glance.
+
+```
+Usage: prog [OPTIONS] <FILE>              # FILE is the metavar
+            ^^^^^^^^  ^^^^^^
+            flags      positional argument
+```
+
+"FILE" is not arbitrary. It communicates meaning to the user: *this argument expects a file path*. By convention:
+
+| Metavar     | Communicates                     |
+|-------------|----------------------------------|
+| `<FILE>`    | Expects a file path              |
+| `<DIR>`     | Expects a directory path         |
+| `<HOST>`    | Expects a hostname or IP address |
+| `<N>`       | Expects a number                 |
+| `<PATTERN>` | Expects a regular expression     |
+| `<KEY>`     | Expects a key string             |
+
+Clap will use the field name (uppercased) as the metavar if you omit `name`. So a field named `input` would display as `<INPUT>`. Setting `name = "FILE"` gives you a more informative, idiomatic label without renaming the Rust field.
+
+If you want to control the metavar display independently of the ID, use `value_name` instead:
+
+```rust
+#[arg(value_name = "FILE")]
+input: String,
+```
+
+`value_name` only affects the display; it does not change the ID. This is the preferred approach in clap 4.
+
+**`num_args = 1`** tells clap how many values this argument consumes. For a single value it is the default, so you typically omit it. More useful forms:
+
+| `num_args` | Meaning                                           |
+|------------|---------------------------------------------------|
+| `1`        | Exactly one value (the default)                   |
+| `0..=1`    | Zero or one value (use `Option<T>` for the field) |
+| `1..`      | One or more values (use `Vec<T>` for the field)   |
+| `0..`      | Zero or more values                               |
+| `3`        | Exactly three values                              |
+
+##### Flags and Options
+Adding `short` and/or `long` turns a field into a named argument rather than a positional one.
+
+```rust
+#[derive(Parser)]
+struct Cli {
+    /// Enable verbose output
+    #[arg(short, long)]
+    verbose: bool,          // --verbose / -v
+
+    /// Output file path
+    #[arg(short, long, value_name = "FILE")]
+    output: Option<String>, // --output <FILE> / -o <FILE>, optional
+
+    /// Number of threads
+    #[arg(short = 'j', long = "jobs", default_value_t = 4)]
+    jobs: u32,              // --jobs <JOBS> / -j <JOBS>
+}
+```
+
+`short` and `long` without values derive from the field name: `verbose` becomes `-v` and `--verbose`. Assign explicit characters or strings when the default conflicts or is not what you want.
+
+`bool` fields paired with `short`/`long` become **flags** — they are `false` by default and become `true` when passed. No value is consumed.
+
+`Option<T>` fields are **optional arguments** — omitting them produces `None`; passing them produces `Some(value)`.
+
+##### Common `#[arg(...)]` Attributes
+| Attribute                | Effect                                                                                                                                                                        |
+|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `short`                  | Add a short flag derived from the field name (`-v`)                                                                                                                           |
+| `short = 'x'`            | Add a specific short flag (`-x`)                                                                                                                                              |
+| `long`                   | Add a long flag derived from the field name (`--verbose`)                                                                                                                     |
+| `long = "my-flag"`       | Add a specific long flag                                                                                                                                                      |
+| `value_name = "FILE"`    | Set the metavar shown in help text                                                                                                                                            |
+| `name = "FILE"`          | Set the argument's internal ID (and metavar for positionals)                                                                                                                  |
+| `default_value = "8080"` | String default, parsed into the field's type                                                                                                                                  |
+| `default_value_t = 8080` | Typed default — no parsing, must match the field type                                                                                                                         |
+| `required = true`        | Force the argument to be provided (overrides `Option<T>`)                                                                                                                     |
+| `num_args = 1..`         | Accept multiple values into a `Vec<T>`                                                                                                                                        |
+| `env = "MY_VAR"`         | Fall back to an [environment variable](https://doc.rust-lang.org/cargo/reference/environment-variables.html){target="_blank" rel="noopener noreferrer"} if the flag is absent |
+| `hide = true`            | Omit the argument from help output                                                                                                                                            |
+
+Doc comments (`/// ...`) above a field become the help text for that argument. Clap reads them directly — no separate `help = "..."` attribute needed.
+
+#### Multiple Values
+When a flag should accept a list of values, use `Vec<T>` and `num_args`:
+
+```rust
+#[derive(Parser)]
+struct Cli {
+    /// Input files to process
+    #[arg(value_name = "FILE", num_args = 1..)]
+    inputs: Vec<String>,
+
+    /// Tags to apply
+    #[arg(short, long, value_name = "TAG")]
+    tags: Vec<String>,         // --tag foo --tag bar
+}
+```
+
+Positional `Vec<T>` with `num_args = 1..` collects all remaining positional arguments. Named `Vec<T>` fields (with `short`/`long`) allow the flag to be repeated: `--tag foo --tag bar`.
+
+#### Subcommands
+Subcommands model tools like `git commit` or `cargo build` where the first argument selects a mode of operation. Clap supports both, and both may have their own options:
+
+`<command> [command-options] <subcommand> [subcommand-options] [subcommand-args]`
+
+- `command`: (defined on the top-level `Cli` struct)
+- `command-options`: (defined on the top-level `Cli` struct)
+- `subcommand`: (defined inside a specific enum variant)
+- `subcommand-options`: (defined inside a specific enum variant)
+
+If a command option should work in either position, mark it `global = true`.
+
+Define an enum with `#[derive(Subcommand)]` and embed it in your top-level `Parser` struct. By convention this struct is named `Cli`, but any name works — clap derives from the struct name you call `.parse()` on:
+
+```rust
+use clap::{Parser, Subcommand};
+
+#[derive(Parser)]
+#[command(name = "tool")]
+struct Cli {
+    /// Command-level option (applies to the root command)
+    #[arg(long, value_name = "FILE", default_value = "tool.toml")]
+    config: String,
+
+    /// Global option: accepted before or after the subcommand
+    #[arg(short, long, global = true)]
+    verbose: bool,
+
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Compress a file
+    Compress {
+        #[arg(value_name = "FILE")]
+        input: String,
+
+        #[arg(short, long, value_name = "FILE")]
+        output: Option<String>,
+    },
+    /// List available formats
+    Formats,
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    if cli.verbose {
+        eprintln!("Using config: {}", cli.config);
+    }
+
+    match cli.command {
+        Commands::Compress { input, output } => {
+            let dest = output.unwrap_or_else(|| format!("{}.gz", input));
+            println!("Compressing {} -> {}", input, dest);
+        }
+        Commands::Formats => {
+            println!("Supported: gz, zst, xz");
+        }
+    }
+}
+```
+
+::: {.explanation}
+- `#[command(subcommand)]` on the command field tells clap "when parsing, look for a subcommand name here".
+- The enum `Commands` (tagged `#[derive(Subcommand)]`) is the dispatcher — it lists what subcommands are available and routes to the right one.
+- Compress and Formats are the actual subcommands — the things the user types on the command line
+
+**So the flow is**:
+
+1. clap sees a word on the command line.
+2. It hands it to the dispatcher enum (`Command`).
+3. The dispatcher enum matches it to a variant and populates that variant's fields.
+:::
+
+```{bash}
+$ tool --help
+Usage: tool [OPTIONS] <COMMAND>
+
+Commands:
+  compress  Compress a file
+  formats   List available formats
+  help      Print this message or the help of a subcommand
+
+Options:
+      --config <FILE>  [default: tool.toml]
+  -v, --verbose
+  -h, --help           Print help
+
+$ tool compress --help
+Compress a file
+
+Usage: tool compress [OPTIONS] <FILE>
+
+Arguments:
+  <FILE>
+
+Options:
+  -o, --output <FILE>
+  -v, --verbose
+  -h, --help           Print help
+```
+
+Each subcommand gets its own `--help` page automatically.
+
+##### Optional Subcommands
+If the tool should run without a subcommand (falling back to some default behavior), make the field `Option<Commands>`:
+
+```rust
+#[derive(Parser)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Some(Commands::Compress { input, output }) => { /* ... */ }
+        Some(Commands::Formats)                    => { /* ... */ }
+        None                                       => println!("No subcommand given; try --help"),
+    }
+}
+```
+
+#### A Complete Example
+::: {.subheading}
+Sans subcommands
+:::
+
+Putting it all together: a realistic flat CLI (no subcommands) for a file processing tool, combining positional arguments, optional flags, typed defaults, and version output.
+
+```rust
+use clap::Parser;
+
+#[derive(Parser)]
+#[command(
+    name    = "pexs24",
+    version = env!("CARGO_PKG_VERSION"),
+    about   = "Process expression files for the 2024 dataset",
+)]
+struct Cli {
+    /// Input file to process
+    #[arg(value_name = "FILE", num_args = 1)]
+    input: String,
+
+    /// Write output to FILE instead of stdout
+    #[arg(short, long, value_name = "FILE")]
+    output: Option<String>,
+
+    /// Number of worker threads
+    #[arg(short = 'j', long = "jobs", default_value_t = 4, value_name = "N")]
+    jobs: u32,
+
+    /// Enable verbose logging
+    #[arg(short, long)]
+    verbose: bool,
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    if cli.verbose {
+        eprintln!("Processing {} with {} threads", cli.input, cli.jobs);
+    }
+
+    match cli.output {
+        Some(path) => println!("Writing to {}", path),
+        None       => println!("Writing to stdout"),
+    }
+}
+```
+
+```
+$ pexs24 --help
+Process expression files for the 2024 dataset
+
+Usage: pexs24 [OPTIONS] <FILE>
+
+Arguments:
+  <FILE>  Input file to process
+
+Options:
+  -o, --output <FILE>  Write output to FILE instead of stdout
+  -j, --jobs <N>       Number of worker threads [default: 4]
+  -v, --verbose        Enable verbose logging
+  -h, --help           Print help
+  -V, --version        Print version
+
+$ pexs24 --version
+pexs24 0.3.1
+```
+
+::: {.see-more}
+See [clap documentation](https://docs.rs/clap/latest/clap/){target="_blank" rel="noopener noreferrer"} and the [clap derive reference](https://docs.rs/clap/latest/clap/_derive/index.html){target="_blank" rel="noopener noreferrer"} for the full attribute catalog.
+:::
+
+### `serde`
+::: {.subheading}
+The serialization framework that the whole ecosystem agrees on
+:::
+
+[serde](https://serde.rs/){target="_blank" rel="noopener noreferrer"} (a contraction of **ser**ialize/**de**serialize) is the crate Rust uses to convert data structures to and from external formats: JSON, TOML, YAML, MessagePack, CBOR, and dozens more. It is, by download count, the most-used crate in the ecosystem, and for good reason: nearly every library that touches a config file, an HTTP body, or a `.json` on disk speaks serde. Learn it once and the knowledge transfers everywhere.
+
+The problem it solves is the one C/C++ programmers know painfully well. In C, turning a `struct` into JSON means hand-writing a function that walks each field and prints it, and parsing means hand-writing the inverse with all the error checking that implies. Every struct needs its own pair of functions, every format needs its own variant, and a single renamed field silently breaks the round-trip. serde generates all of that for you at compile time, and does it once for every format simultaneously.
+
+#### The Big Idea
+::: {.subheading}
+A Two-Sided Framework
+:::
+
+The insight that makes serde different from a typical JSON library is that it splits the work in half and standardizes the seam between the halves.
+
+- **Your type** implements `Serialize` / `Deserialize`. These traits describe the *shape* of your data ("I am a struct with three fields named x, y, z") without knowing or caring what format it will become.
+- **A format crate** (`serde_json`, `toml`, `serde_yaml`, ...) implements a *Serializer* / *Deserializer*. These know how to write and read one specific format, without knowing anything about your particular struct.
+
+serde defines the interface in the middle. Your type talks to that interface; the format crate talks to that interface; the two never talk to each other directly. This is why one `#[derive(Serialize, Deserialize)]` on your struct gives you *every* format at once. Add the `toml` crate and your existing structs serialize to TOML with no further changes.
+
+```{mermaid}
+flowchart LR
+    A["Your struct<br/>(Serialize / Deserialize)"] <--> B["serde<br/>data model"]
+    B <--> C["serde_json"]
+    B <--> D["toml"]
+    B <--> E["serde_yaml"]
+    C <--> F["JSON text"]
+    D <--> G["TOML text"]
+    E <--> H["YAML text"]
+```
+
+It is the same separation-of-concerns move as a virtual interface in C++: the data model is the abstract base class both sides depend on, so neither side depends on the other.
+
+#### Adding It to a Project
+serde itself is the framework; you almost always pair it with at least one format crate. The `derive` feature enables the `#[derive(...)]` macros and is the part you will use constantly.
+
+```toml
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"          # the JSON format crate
+```
+
+For other formats, add the corresponding crate alongside it:
+
+```toml
+toml = "0.8"              # TOML, e.g. for config files
+serde_yaml = "0.9"        # YAML
+rmp-serde = "1"           # MessagePack (a compact binary format)
+```
+
+#### Deriving `Serialize` and `Deserialize`
+The entire workflow starts by tagging your type. `#[derive(Serialize, Deserialize)]` reads the struct at compile time and generates both implementations.
+
+```rust
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Config {
+    host: String,
+    port: u16,
+    retries: u32,
+}
+```
+
+That derive is the whole investment. From here, *any* format crate can read and write a `Config`. Here it is with JSON:
+
+```rust
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Config {
+    host: String,
+    port: u16,
+    retries: u32,
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = Config {
+        host: "localhost".to_string(),
+        port: 8080,
+        retries: 3,
+    };
+
+    // Serialize: struct -> JSON string
+    let json = serde_json::to_string_pretty(&config)?;
+    println!("{json}");
+
+    // Deserialize: JSON string -> struct
+    let parsed: Config = serde_json::from_str(&json)?;
+    println!("{parsed:?}");
+
+    Ok(())
+}
+```
+
+```
+{
+  "host": "localhost",
+  "port": 8080,
+  "retries": 3
+}
+Config { host: "localhost", port: 8080, retries: 3 }
+```
+
+Two things worth noticing. First, deserialization is *type-directed*: `serde_json::from_str` knows to produce a `Config` because the binding is annotated `let parsed: Config`. serde reads the JSON to fill that specific shape, so a missing or mistyped field becomes a real `Err`, not a silent default. Second, the field names in the output come straight from the Rust field names. That mapping is the default, and it is adjustable, which the next section covers.
+
+#### It Really Is Format-Agnostic
+The same `Config` struct, with no changes, round-trips through any format crate. The only thing that changes is which crate's `to_string` / `from_str` you call.
+
+```rust
+// JSON
+let text = serde_json::to_string(&config)?;
+let back: Config = serde_json::from_str(&text)?;
+
+// TOML
+let text = toml::to_string(&config)?;
+let back: Config = toml::from_str(&text)?;
+
+// YAML
+let text = serde_yaml::to_string(&config)?;
+let back: Config = serde_yaml::from_str(&text)?;
+```
+
+The same struct rendered in each format:
+
+```toml
+# TOML
+host = "localhost"
+port = 8080
+retries = 3
+```
+
+```yaml
+# YAML
+host: localhost
+port: 8080
+retries: 3
+```
+
+This is the payoff of the two-sided design: you describe your data once and gain every format the ecosystem supports. A config file in TOML, an API response in JSON, and a cache in MessagePack can all share the exact same struct definitions.
+
+#### Customizing the Mapping with Attributes
+Real-world data rarely matches Rust naming conventions exactly. JSON tends toward `camelCase`, your structs use `snake_case`, fields are sometimes optional, and external names do not always make valid Rust identifiers. serde's `#[serde(...)]` attributes bridge the gap, much as clap's `#[arg(...)]` attributes tune argument parsing.
+
+```rust
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]      // userId in JSON, user_id in Rust
+struct User {
+    user_id: u64,
+
+    #[serde(rename = "emailAddress")]   // override a single field's name
+    email: String,
+
+    #[serde(default)]                   // missing -> Default::default()
+    active: bool,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    nickname: Option<String>,           // omitted from output when None
+}
+```
+
+The most common attributes, container-level (on the type) and field-level (on a field):
+
+| Attribute                                 | Level     | Effect                                                                                    |
+|-------------------------------------------|-----------|-------------------------------------------------------------------------------------------|
+| `rename_all = "camelCase"`                | Container | Convert every field name to a naming style (`camelCase`, `kebab-case`, `PascalCase`, ...) |
+| `deny_unknown_fields`                     | Container | Error if the input contains a field the struct does not declare                           |
+| `rename = "name"`                         | Field     | Map this one field to a different external name                                           |
+| `default`                                 | Field     | Use the type's `Default` value when the field is absent in the input                      |
+| `default = "path::to::fn"`                | Field     | Call a function to produce the default                                                    |
+| `skip`                                    | Field     | Never serialize or deserialize this field (must be `Default`-able)                        |
+| `skip_serializing_if = "Option::is_none"` | Field     | Omit the field from output when the predicate is true                                     |
+| `flatten`                                 | Field     | Inline a nested struct's fields into the parent (handy for shared/extra fields)           |
+| `with = "module"`                         | Field     | Use custom serialize/deserialize logic (e.g. a date format)                               |
+
+`#[serde(default)]` deserves a callout for anyone coming from C: it is how serde models *optional input* without making the field itself `Option<T>`. A field marked `default` may be absent from the JSON; serde fills it with `Default::default()` rather than erroring. Combine this with `Option<T>` only when "absent" and "present but null" need to be distinguished.
+
+#### Nested and Collection Types
+serde composes. Any type whose components all implement the traits gets them too, so structs of structs, `Vec<T>`, `HashMap<K, V>`, and `Option<T>` all work with no extra effort. Enums serialize as a tagged object by default.
+
+```rust
+use serde::{Serialize, Deserialize};
+use std::collections::HashMap;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Server {
+    name: String,
+    endpoints: Vec<Endpoint>,
+    metadata: HashMap<String, String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Endpoint {
+    path: String,
+    method: Method,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "UPPERCASE")]
+enum Method {
+    Get,
+    Post,
+    Delete,
+}
+```
+
+```json
+{
+  "name": "api",
+  "endpoints": [
+    { "path": "/users", "method": "GET" },
+    { "path": "/users", "method": "POST" }
+  ],
+  "metadata": { "region": "us-east-1" }
+}
+```
+
+#### When You Don't Have a Struct
+::: {.subheading}
+`serde_json::Value`
+:::
+
+Sometimes the shape is unknown or genuinely dynamic, an arbitrary JSON blob you want to inspect at runtime. For that, `serde_json::Value` is an enum that can hold any JSON value, and the `json!` macro builds one inline.
+
+```rust
+use serde_json::{json, Value};
+
+let data: Value = serde_json::from_str(r#"{ "name": "ada", "age": 36 }"#)?;
+
+// Index into it like a tree; missing keys yield Value::Null
+let name = data["name"].as_str().unwrap_or("unknown");
+let age  = data["age"].as_u64().unwrap_or(0);
+
+// Build a Value directly
+let payload = json!({
+    "status": "ok",
+    "items": [1, 2, 3],
+});
+```
+
+This is the escape hatch. Prefer a typed struct whenever the schema is known: you get validation, autocompletion, and compile-time guarantees that `Value` cannot offer. Reach for `Value` only when the data truly has no fixed shape.
+
+#### A Practical Pattern
+::: {.subheading}
+Loading a Config File
+:::
+
+Tying it back to something you do already, here is the idiom for reading a typed config from a TOML file. It is the natural companion to a [clap](#clap) `--config <FILE>` flag.
+
+```rust
+use serde::Deserialize;
+use std::fs;
+
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]       // typo in the config -> loud error, not silent ignore
+struct AppConfig {
+    host: String,
+    #[serde(default = "default_port")]
+    port: u16,
+    log_level: String,
+}
+
+fn default_port() -> u16 {
+    8080
+}
+
+fn load_config(path: &str) -> Result<AppConfig, Box<dyn std::error::Error>> {
+    let text = fs::read_to_string(path)?;
+    let config: AppConfig = toml::from_str(&text)?;
+    Ok(config)
+}
+```
+
+`deny_unknown_fields` turns a misspelled key in the config file into an immediate, descriptive error instead of a silently-ignored setting, which is exactly the failure mode you want surfaced early.
+
+::: {.see-more}
+See the [serde documentation](https://serde.rs/){target="_blank" rel="noopener noreferrer"}, the [attribute reference](https://serde.rs/attributes.html){target="_blank" rel="noopener noreferrer"}, and the [serde_json docs](https://docs.rs/serde_json/latest/serde_json/){target="_blank" rel="noopener noreferrer"} for the complete catalog.
+:::

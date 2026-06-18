@@ -4,20 +4,19 @@ subtitle: "A History of Computer Languages"
 ---
 
 ## Where Languages Come From
-
 Every computer language ever written is, at its core, a notation for describing *computation*. That idea — that computation itself could be formalized, written down, and reasoned about — did not begin with silicon. It began with mathematics. To understand why programming languages look the way they do, why they fight the battles they fight, and why the three languages in this notebook were chosen, you have to follow the thread back to where it starts.
 
 ## The Mathematical Roots
-
 ### Leibniz and the Dream of a Universal Calculus
-
 In the late 17th century, Gottfried Wilhelm Leibniz dreamed of a *calculus ratiocinator* — a universal calculating system that could reduce all reasoning to symbol manipulation. If arguments could be encoded as symbols and symbols manipulated by rule, then disputes between scholars could be resolved not by debate but by calculation: *"Let us compute."* The dream was centuries ahead of its time. Leibniz did not achieve it. But he invented the binary number system and built mechanical calculators, and the dream itself proved contagious.
 
 ### Boole and the Algebra of Thought
-
 In 1854, George Boole published *An Investigation of the Laws of Thought*, establishing that logical propositions — AND, OR, NOT — could be treated as algebraic expressions. True and false became 1 and 0. Inference became arithmetic. This was not yet computing, but it was the algebra that would eventually run inside every transistor on every chip ever made. Boolean logic is the bedrock below the bedrock.
 
-### Babbage and Lovelace: The First Programmers
+### Babbage and Lovelace
+::: {.subheading}
+The First Programmers
+:::
 
 Charles Babbage spent decades designing mechanical computing engines. His **Difference Engine** (1822) could tabulate polynomial functions. His **Analytical Engine** (1837) was far more ambitious: it had a *store* (memory), a *mill* (processor), and it could be directed by punched cards. It was never built in his lifetime, but the design was sound.
 
@@ -28,75 +27,74 @@ Ada Lovelace, working from Babbage's notes, wrote what is now recognized as the 
 That sentence contains both the power and the humility of every programming language ever written. The machine does exactly what you tell it. The craft is knowing how to tell it correctly.
 
 ## The Theoretical Foundations
-
 ### Church and the Lambda Calculus
-
 In the 1930s, Alonzo Church developed the **lambda calculus** — a formal system for expressing computation using function abstraction and application. On paper, with Greek letters, he showed that any computable function could be expressed as the application of anonymous functions to arguments. Lambda calculus has no loops, no variables in the imperative sense, no state. Just functions calling functions.
 
 This sounds abstract, but it is the direct ancestor of functional programming. Every time you write an anonymous function — a lambda, a closure, an arrow function — you are using Church's notation, imported wholesale into modern languages.
 
 ### Turing and the Machine
-
 In 1936, Alan Turing published "On Computable Numbers," introducing the **Turing machine**: an abstract device with an infinite tape, a read/write head, and a finite set of rules. Given the right rules, it could simulate any mechanical process. Turing proved that certain problems were *undecidable* — no algorithm could solve them — and in doing so, he defined the boundary of what computation can and cannot do.
 
 Church and Turing arrived at the same boundary from opposite directions. The **Church-Turing thesis** holds that any effectively computable function is computable by a Turing machine and expressible in the lambda calculus. This equivalence — between the procedural model (do this, then that, change this register) and the functional model (apply this function to that value) — echoes through the history of programming languages as a recurring argument about which style is more natural, more correct, more powerful.
 
 ### Von Neumann and the Stored-Program Architecture
-
 The theoretical work of Church and Turing became physical in the 1940s. John von Neumann's 1945 report on the EDVAC computer articulated what became the dominant architecture of the modern computer: a processor and a memory that holds both *data* and *instructions*. Programs are not external configurations wired into the machine; they are data stored in the same space as the numbers they compute on.
 
 This insight — the **stored-program computer** — is why programming is possible at all. A program is data. You can write programs that read programs. You can write compilers. You can write operating systems. The entire software stack rests on this one architectural decision.
 
-
 ## The Generations of Language
-
 With the theoretical groundwork laid and machines finally built, the question became practical: how do humans tell the machine what to do? The answer evolved through recognizable generations.
 
-### First Generation: Machine Code (1940s)
+### First Generation
+::: {.subheading}
+Machine Code (1940s)
+:::
 
 The earliest computers were programmed in **machine code** — raw binary instructions specific to the processor's hardware. A programmer working on the ENIAC in 1945 set switches, plugged cables, and read reference cards mapping decimal operation codes to physical behaviors. There was no abstraction. Every instruction was a direct hardware command.
 
-| Era | Representation | Example |
-|:----|:--------------|:--------|
+| Era          | Representation       | Example          |
+|:-------------|:---------------------|:-----------------|
 | Machine Code | Binary / Hex opcodes | `B8 01 00 00 00` |
-| Assembly | Mnemonic + operands | `MOV EAX, 1` |
-| High-Level | Language statement | `int x = 1;` |
+| Assembly     | Mnemonic + operands  | `MOV EAX, 1`     |
+| High-Level   | Language statement   | `int x = 1;`     |
 
 Machine code is still what runs on every processor today. Every other generation is a translation layer.
 
-### Second Generation: Assembly Language (1950s)
+### Second Generation
+::: {.subheading}
+Assembly Language (1950s)
+:::
 
 **Assembly language** replaced raw opcodes with human-readable mnemonics. `MOV`, `ADD`, `JMP`. An **assembler** — itself a program — translates these mnemonics one-for-one into machine code. One mnemonic becomes one instruction. The 1:1 relationship is the defining characteristic of assembly. There is no abstraction about what the processor will do; you are telling it exactly which registers to move, which memory addresses to read.
 
 Assembly gave programmers legibility without sacrificing control. It remains the language of choice anywhere the hardware itself must be negotiated directly: bootloaders, interrupt handlers, cycle-critical DSP routines, embedded microcontrollers with 256 bytes of RAM. It is covered in this notebook for exactly that reason.
 
-### Third Generation: High-Level Languages (1950s–1970s)
+### Third Generation
+::: {.subheading}
+High-Level Languages (1950s–1970s)
+:::
 
 Third-generation languages introduced **abstraction** — one statement expanding into many machine instructions. A `for` loop, a function call, a variable — these have no direct equivalent in hardware. The compiler invents the translation.
 
 The major milestones:
 
-| Year | Language | Significance |
-|:-----|:---------|:-------------|
-| 1957 | **FORTRAN** | First compiled high-level language. Proved that compilers could match hand-tuned assembly in performance. Scientific computing. |
-| 1958 | **LISP** | First functional language. Lists and lambda abstraction. Influenced nearly every dynamic language since. |
-| 1959 | **COBOL** | Business data processing. English-like syntax. Ran the world's financial infrastructure for decades (and still does). |
-| 1960 | **ALGOL 60** | Introduced block structure, lexical scoping, and the grammar that most modern languages still use. Never widely deployed but enormously influential. |
-| 1964 | **BASIC** | Designed to be simple enough that non-specialists could program. Brought computing to universities and, eventually, homes. |
-| 1972 | **C** | Systems programming. Close enough to the machine to write operating systems, fast enough to replace assembly in most contexts. The lingua franca of computing. |
-| 1975 | **Scheme** | Minimal, elegant Lisp dialect. Lexical scope, tail recursion, first-class continuations. A language for teaching the nature of computation. |
-
+| Year | Language     | Significance                                                                                                                                                   |
+|:-----|:-------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1957 | **FORTRAN**  | First compiled high-level language. Proved that compilers could match hand-tuned assembly in performance. Scientific computing.                                |
+| 1958 | **LISP**     | First functional language. Lists and lambda abstraction. Influenced nearly every dynamic language since.                                                       |
+| 1959 | **COBOL**    | Business data processing. English-like syntax. Ran the world's financial infrastructure for decades (and still does).                                          |
+| 1960 | **ALGOL 60** | Introduced block structure, lexical scoping, and the grammar that most modern languages still use. Never widely deployed but enormously influential.           |
+| 1964 | **BASIC**    | Designed to be simple enough that non-specialists could program. Brought computing to universities and, eventually, homes.                                     |
+| 1972 | **C**        | Systems programming. Close enough to the machine to write operating systems, fast enough to replace assembly in most contexts. The lingua franca of computing. |
+| 1975 | **Scheme**   | Minimal, elegant Lisp dialect. Lexical scope, tail recursion, first-class continuations. A language for teaching the nature of computation.                    |
 
 ## The Great Schisms
-
 ### The Structured Programming Revolution
-
 In the 1960s, programs grew large enough to become unmanageable. The culprit, according to Edsger Dijkstra's 1968 letter "Go To Statement Considered Harmful," was the `GOTO` — the unconditional jump that let control flow anywhere in the program. Large programs with many `GOTO`s became impossible to reason about. Dijkstra argued that control flow should be structured: sequences, conditionals, and loops only.
 
 **Structured programming** — the discipline of using `if`, `while`, and `for` instead of `GOTO` — is now so universal it is invisible. Every language in this notebook is a structured language. But the fight was real, and the resolution shaped what "good code" means to this day.
 
 ### Object-Oriented Programming
-
 In 1967, **Simula** introduced the concepts of *objects* and *classes* — bundles of data and behavior that could model real-world entities. Smalltalk, developed at Xerox PARC in the 1970s, refined the idea into a pure philosophy: everything is an object; computation is objects sending messages to each other.
 
 **C++** brought object-oriented programming to the systems world in 1983, adding classes to C without abandoning its performance characteristics. **Java** (1995) brought it to the masses with a garbage-collected, platform-independent runtime. By the 1990s, OOP had won the mainstream. Almost every language taught in universities was object-oriented.
@@ -104,16 +102,13 @@ In 1967, **Simula** introduced the concepts of *objects* and *classes* — bundl
 OOP solved real problems. It gave large teams a vocabulary for decomposing complex systems. But it also introduced its own complexity: deep inheritance hierarchies, mutable shared state, a tendency toward architecture for architecture's sake. The reaction against OOP's excesses would shape the next generation of systems languages.
 
 ### The Functional Renaissance
-
 Lisp had been functional since 1958, but functional programming remained academic for decades. In the 1980s and 1990s, **ML** and **Haskell** developed rigorous type systems built around functional ideas: immutability, algebraic data types, pattern matching, monads. These were not primarily practical languages; they were laboratories for type theory.
 
 The ideas escaped the laboratory. **Erlang** (1986) used functional techniques to build massively concurrent, fault-tolerant telephone infrastructure. **Scala** (2004) fused functional and object-oriented programming on the JVM. **Clojure** (2007) brought a Lisp to the JVM with a pragmatic emphasis on immutability and concurrency. And mainstream languages — Java, C#, Python, JavaScript — absorbed functional features one by one: lambdas, map/filter/reduce, pattern matching, immutable data structures.
 
 The insight that functional programming gave the world was this: **mutable shared state is the root of most concurrency bugs.** If data cannot change, threads cannot corrupt each other. This insight became urgent as multi-core processors became standard, and it drove a resurgence of interest in functional design throughout the 2000s and 2010s.
 
-
 ## The Safety Problem
-
 As software grew to run aircraft, medical devices, financial systems, and critical infrastructure, the cost of bugs became existential. And one category of bug proved devastatingly common: **memory errors**.
 
 C and C++ give programmers direct control over memory. That control enables extraordinary performance and hardware access. It also enables buffer overflows, use-after-free errors, null pointer dereferences, and data races — entire classes of vulnerabilities that have caused some of the most catastrophic security failures in computing history. The **Morris Worm** (1988), **Heartbleed** (2014), and countless others traced to memory mismanagement in C and C++ code.
@@ -122,8 +117,10 @@ For decades, the response was tooling: valgrind, AddressSanitizer, static analyz
 
 The alternative — garbage-collected languages like Java, Python, Go — solve memory safety by taking memory management away from the programmer entirely. The garbage collector tracks allocations and frees them when no references remain. This works remarkably well. But it comes with a cost: unpredictable pause times, higher memory overhead, and an inability to reason precisely about when and where resources are released. For systems programming — operating systems, device drivers, real-time signal processing — these costs are often unacceptable.
 
-
-## The Modern Era: Rust and the Safety-Performance Synthesis
+## The Modern Era
+::: {.subheading}
+Rust and the Safety-Performance Synthesis
+:::
 
 For most of computing history, you chose between safety and control. Garbage-collected languages gave you safety at the cost of performance and predictability. C and C++ gave you control at the cost of safety. The assumption was that this tradeoff was fundamental.
 
@@ -141,9 +138,7 @@ Rust did not appear from nowhere. It synthesized decades of research: region-bas
 
 The response from industry was unusual for a new systems language: enthusiastic adoption. Mozilla used Rust to rewrite performance-critical parts of Firefox. Microsoft began rewriting Windows components in Rust. The Linux kernel accepted Rust as a second implementation language in 2022. The U.S. National Security Agency and CISA issued guidance recommending Rust and other memory-safe languages for new systems development. The narrative that safety and systems performance were irreconcilable was broken.
 
-
 ## Why These Three Languages
-
 This notebook covers **Assembly**, **C**, and **Rust**. The choice is not arbitrary — it follows the spine of systems programming evolution:
 
 ```
@@ -162,9 +157,7 @@ Together, these three languages span from the metal to the modern, from direct h
 
 That is what this notebook is about.
 
-
 ## A Note on What Gets Left Out
-
 The history above covers the threads most relevant to systems programming. It omits or mentions only in passing:
 
 - **SQL and declarative languages** — a wholly different paradigm where you describe *what* you want, not *how* to compute it
@@ -175,6 +168,5 @@ The history above covers the threads most relevant to systems programming. It om
 These are not lesser paths. They reflect different answers to the same question: *what does a useful notation for computation look like?* The answer depends entirely on what you need to compute, and for whom.
 
 The languages in this notebook are the ones you need if the machine itself is part of what you are programming. If you need to be close to the hardware — close enough that you care about register allocation, stack depth, cache behavior, and memory layout — this is your lineage.
-
 
 *The next chapter begins where computation itself begins: assembly language and the direct instruction of hardware.*

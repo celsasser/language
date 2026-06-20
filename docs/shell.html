@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-06-17">
+<meta name="dcterms.date" content="2026-06-20">
 
 <title>The Shell – Computer Language Notebook</title>
 <style>
@@ -419,6 +419,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#search-inside-a-programs-output-not-a-file" id="toc-search-inside-a-programs-output-not-a-file" class="nav-link" data-scroll-target="#search-inside-a-programs-output-not-a-file">Search inside a program’s output, not a file</a></li>
   <li><a href="#edit-a-set-of-files-chosen-by-content" id="toc-edit-a-set-of-files-chosen-by-content" class="nav-link" data-scroll-target="#edit-a-set-of-files-chosen-by-content">Edit a set of files chosen by content</a></li>
   </ul></li>
+  <li><a href="#gnarly-breakdowns" id="toc-gnarly-breakdowns" class="nav-link" data-scroll-target="#gnarly-breakdowns">Gnarly Breakdowns</a>
+  <ul>
+  <li><a href="#find-in-a-loop" id="toc-find-in-a-loop" class="nav-link" data-scroll-target="#find-in-a-loop"><code>find</code> in a Loop</a>
+  <ul class="collapse">
+  <li><a href="#the-naive-version-and-why-it-breaks" id="toc-the-naive-version-and-why-it-breaks" class="nav-link" data-scroll-target="#the-naive-version-and-why-it-breaks">The naive version, and why it breaks</a></li>
+  <li><a href="#enter--print0" id="toc-enter--print0" class="nav-link" data-scroll-target="#enter--print0">Enter <code>-print0</code></a></li>
+  <li><a href="#reading-the-stream-back" id="toc-reading-the-stream-back" class="nav-link" data-scroll-target="#reading-the-stream-back">Reading the stream back</a></li>
+  <li><a href="#a-subtlety" id="toc-a-subtlety" class="nav-link" data-scroll-target="#a-subtlety">A subtlety</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#writing-safe-shell" id="toc-writing-safe-shell" class="nav-link" data-scroll-target="#writing-safe-shell">Writing Safe Shell</a>
+  <ul>
+  <li><a href="#quote-every-expansion" id="toc-quote-every-expansion" class="nav-link" data-scroll-target="#quote-every-expansion">Quote every expansion</a></li>
+  <li><a href="#fail-loudly" id="toc-fail-loudly" class="nav-link" data-scroll-target="#fail-loudly">Fail loudly</a></li>
+  <li><a href="#know-the-anti-patterns-by-name" id="toc-know-the-anti-patterns-by-name" class="nav-link" data-scroll-target="#know-the-anti-patterns-by-name">Know the anti-patterns by name</a></li>
+  <li><a href="#let-a-linter-retrain-your-instinct" id="toc-let-a-linter-retrain-your-instinct" class="nav-link" data-scroll-target="#let-a-linter-retrain-your-instinct">Let a linter retrain your instinct</a></li>
+  </ul></li>
   <li><a href="#where-to-go-next" id="toc-where-to-go-next" class="nav-link" data-scroll-target="#where-to-go-next">Where to Go Next</a></li>
   </ul>
 </nav>
@@ -440,7 +457,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">June 17, 2026</p>
+      <p class="date">June 20, 2026</p>
     </div>
   </div>
   
@@ -1886,6 +1903,242 @@ child: sh_var=[] env_var=[dong]</code></pre>
 </div>
 <div class="callout-body-container callout-body">
 <p>Almost every shell task decomposes the same way: <strong>produce</strong> a stream (<code>ls</code>, <code>find</code>, <code>grep</code>, a program’s output), <strong>transform</strong> it through filters (<code>grep</code>, <code>sort</code>, <code>uniq</code>, <code>cut</code>, <code>sed</code>), and <strong>consume</strong> the result (<code>wc</code>, <code>less</code>, a redirect to a file, or <code>xargs</code> into another command). When a task feels hard, you are usually missing one of those three stages, not a fancier tool.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="gnarly-breakdowns" class="level2">
+<h2 class="anchored" data-anchor-id="gnarly-breakdowns">Gnarly Breakdowns</h2>
+<section id="find-in-a-loop" class="level3">
+<h3 class="anchored" data-anchor-id="find-in-a-loop"><code>find</code> in a Loop</h3>
+<pre class="shell"><code>find '&lt;path&gt;' -name "&lt;filter&gt;" -print0 | while IFS= read -r -d '' f
+do
+    # f is a row in the results of the `find` expression
+    echo $f
+done</code></pre>
+<div class="subheading">
+<p>The bulletproof way to iterate over files found by <code>find</code>, including files whose names contain spaces, tabs, newlines, or anything else.</p>
+</div>
+<p>This one earns its place in “Gnarly Breakdowns” because every piece of it exists to defend against a single enemy: <strong>filenames can contain almost any character</strong>. On a Unix filesystem the only two bytes forbidden in a filename are <code>/</code> (the path separator) and the null byte <code>\0</code>. <em>Everything else is fair game</em>: spaces, tabs, newlines, quotes, glob characters. A robust loop over filenames has to treat the filename as opaque bytes, and that constraint is what shapes every flag below.</p>
+<section id="the-naive-version-and-why-it-breaks" class="level4">
+<h4 class="anchored" data-anchor-id="the-naive-version-and-why-it-breaks">The naive version, and why it breaks</h4>
+<p>The obvious thing to write is:</p>
+<pre class="shell"><code>for f in $(find '&lt;path&gt;' -name "&lt;filter&gt;")   # don't do this
+do
+    echo "$f"
+done</code></pre>
+<p>It reads beautifully and it is wrong. The problem is what <code>$(...)</code> does with the text <code>find</code> produces. Command substitution drops the output into the command line as <em>unquoted text</em>, and the shell then performs <strong>word splitting</strong> and <strong>glob expansion</strong> on it before <code>for</code> ever sees it.</p>
+<p>Word splitting chops that text apart on every character in <code>IFS</code>, which by default is space, tab, and newline. So consider a single file named <code>my report.txt</code>. <code>find</code> prints it as the eight-character string <code>my report.txt</code>, but the shell splits it on the space into two words, and the loop runs twice: once with <code>my</code> and once with <code>report.txt</code>. Neither names a real file.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="Two failures, not one">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Two failures, not one
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <code>$(find ...)</code> approach has a second, sneakier bug. After word splitting, the shell runs <strong>filename expansion (globbing)</strong> on each word. If <code>find</code> turns up a file literally named <code>*.c</code>, that word gets expanded against the current directory and silently becomes the list of <code>.c</code> files there. Word splitting mangles names with whitespace; globbing mangles names containing <code>*</code>, <code>?</code>, or <code>[</code>. The <code>for ... in $(...)</code> form is exposed to both.</p>
+</div>
+</div>
+<p>You can <em>partially</em> rescue the naive loop by setting <code>IFS=$'\n'</code> so it splits only on newlines instead of spaces. That fixes filenames with spaces, but it still falls apart on the legal-but-evil filename that <em>contains a newline</em>, and it does nothing about globbing. There is no value of <code>IFS</code> that makes <code>for f in $(...)</code> fully safe, because newline is itself a legal filename character. We need a separator that is <em>not</em> a legal filename character. There is exactly one: the null byte.</p>
+</section>
+<section id="enter--print0" class="level4">
+<h4 class="anchored" data-anchor-id="enter--print0">Enter <code>-print0</code></h4>
+<p><code>-print0</code> is a <code>find</code> action, the sibling of the default <code>-print</code>. Where <code>-print</code> writes each result followed by a <strong>newline</strong>, <code>-print0</code> writes each result followed by a <strong>null byte</strong> (<code>\0</code>, an actual zero byte).</p>
+<p>That single choice solves the unsolvable. Newline can appear inside a filename, so it cannot reliably mark the end of one. The null byte <em>cannot</em> appear inside a filename (it is one of the two forbidden bytes), so it is the one perfectly unambiguous delimiter. <code>find ... -print0</code> produces a stream like:</p>
+<pre><code>./a.txt\0./my report.txt\0./weird\nname.txt\0</code></pre>
+<p>where each <code>\0</code> is a real zero byte. The list is now parseable with zero ambiguity, <em>no matter what the names contain</em>. The convention is widespread: <code>xargs -0</code>, <code>grep -z</code>, <code>sort -z</code>, and <code>cut -z</code> all speak this same null-delimited dialect, which is why <code>find -print0 | xargs -0 ...</code> is such a common pairing.</p>
+</section>
+<section id="reading-the-stream-back" class="level4">
+<h4 class="anchored" data-anchor-id="reading-the-stream-back">Reading the stream back</h4>
+<div class="subheading">
+<p><code>while ... read</code></p>
+</div>
+<p>Now we need a consumer that respects null delimiters, and that rules out <code>for</code>. We pipe the stream into a <code>while read</code> loop instead. You have <a href="#while-and-until">already seen <code>read</code></a> as the canonical line reader; here it is the same tool with two extra flags. Let’s take the loop header apart left to right:</p>
+<pre class="shell"><code>while IFS= read -r -d '' f</code></pre>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 34%">
+<col style="width: 60%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Piece</th>
+<th>What it does</th>
+<th>Why it’s here</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>IFS=</code></td>
+<td>Empties the field separator <strong>for this command only</strong></td>
+<td>Stops <code>read</code> from trimming leading/trailing whitespace, so <code>spaced  .txt</code> survives intact</td>
+</tr>
+<tr class="even">
+<td><code>read</code></td>
+<td>Reads one record from stdin into a variable</td>
+<td>The loop body runs once per record; <code>read</code> returns non-zero at end of stream, ending the loop</td>
+</tr>
+<tr class="odd">
+<td><code>-r</code></td>
+<td>“Raw” mode: do not treat backslash as an escape</td>
+<td>A literal <code>\</code> in a filename stays a <code>\</code>, not an escape sequence</td>
+</tr>
+<tr class="even">
+<td><code>-d ''</code></td>
+<td>Set the <strong>record delimiter</strong> to the null byte</td>
+<td>This is the keystone: it tells <code>read</code> to stop at <code>\0</code> instead of at newline, matching <code>-print0</code></td>
+</tr>
+<tr class="odd">
+<td><code>f</code></td>
+<td>The variable each record lands in</td>
+<td>Inside the loop, <code>"$f"</code> is one complete, untouched filename</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>-d ''</code> flag is the half that pairs with <code>-print0</code>. <code>read</code> normally splits its input on newlines; <code>-d</code> overrides that delimiter. Bash strings can’t hold an actual null byte, so <code>-d ''</code> (an empty string) is the idiom the shell interprets as “delimit on <code>\0</code>.” Producer emits null-terminated records, consumer splits on null-terminated records: the two halves are matched, and a newline buried inside a filename now sails through as ordinary data.</p>
+<p>The <code>IFS=</code> and <code>-r</code> here do exactly the job <a href="#while-and-until">described earlier</a> for plain line reading; <code>read</code> is doing the same work, just with a different delimiter. The only genuinely new ingredient compared to the everyday <code>while IFS= read -r line</code> loop is <code>-d ''</code>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Quote `$f` in the body">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Quote <code>$f</code> in the body
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The breakdown’s example uses <code>echo $f</code>, but in real scripts write <code>echo "$f"</code> (and <code>rm "$f"</code>, <code>mv "$f" ...</code>, and so on). An unquoted <code>$f</code> re-introduces the very word splitting and globbing this whole construction exists to avoid: the careful null-delimited reading is undone the moment you expand the variable bare. The quotes are the last link in the chain.</p>
+</div>
+</div>
+</section>
+<section id="a-subtlety" class="level4">
+<h4 class="anchored" data-anchor-id="a-subtlety">A subtlety</h4>
+<div class="subheading">
+<p>the pipe creates a subshell</p>
+</div>
+<p>One trap worth naming. Because the loop is on the right side of a <code>|</code>, it runs in a <strong>subshell</strong>. Any variable you set inside the loop (a counter, an accumulator) is lost when the loop ends, since the subshell’s environment doesn’t propagate back to the parent. If you need to keep state, use <strong>process substitution</strong> instead of a pipe, which keeps the loop in the current shell:</p>
+<pre class="shell"><code>count=0
+while IFS= read -r -d '' f
+do
+    count=$((count + 1))
+done &lt; &lt;(find '&lt;path&gt;' -name "&lt;filter&gt;" -print0)
+echo "$count files"   # the count survives</code></pre>
+<p>Note the redirect <code>&lt; &lt;(...)</code>: the loop reads from a file descriptor fed by <code>find</code>, rather than being piped into. Same null-delimited contract, no subshell.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="The shape to internalize">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>The shape to internalize
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>find ... -print0 | while IFS= read -r -d '' f; do ...; done</code>. Producer null-terminates with <code>-print0</code>; consumer splits on null with <code>-d ''</code>. It is verbose, but it is the <em>only</em> loop that is correct for every legal filename. When you need state to survive, swap the pipe for <code>done &lt; &lt;(find ... -print0)</code>.</p>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="writing-safe-shell" class="level2">
+<h2 class="anchored" data-anchor-id="writing-safe-shell">Writing Safe Shell</h2>
+<div class="subheading">
+<p>Shell rarely crashes; it obeys. That is precisely what makes it dangerous, and why a handful of defensive habits matter more than cleverness.</p>
+</div>
+<p>The breakdown above is a special case of a general truth: the shell’s failure modes are <em>quiet</em>. A C bug segfaults, a Rust bug refuses to compile, but a shell bug runs perfectly on your test directory and then silently does the wrong thing weeks later on an input you didn’t anticipate. The language won’t warn you; it just follows a word-splitting or globbing rule you forgot was in play. That is unnerving, and the right response is not to avoid shell but to <em>aim</em> your caution at the few places the sharp edges actually live. They are surprisingly few.</p>
+<section id="quote-every-expansion" class="level4">
+<h4 class="anchored" data-anchor-id="quote-every-expansion">Quote every expansion</h4>
+<p>The single highest-leverage habit. An unquoted <code>$var</code> is subjected to word splitting and globbing; a quoted <code>"$var"</code> is passed through verbatim. This is the same mechanism that broke <code>for f in $(find ...)</code>, and it bites everywhere variables appear.</p>
+<pre class="shell"><code>rm $file        # splits on spaces, expands globs: a loaded gun
+rm "$file"      # one argument, exactly as stored: safe
+
+cp "$src" "$dst"            # quote both sides, always
+echo "${args[@]}"          # quote array expansions too: "${arr[@]}"</code></pre>
+<p>If you do one thing differently after this notebook, make it this.</p>
+</section>
+<section id="fail-loudly" class="level4">
+<h4 class="anchored" data-anchor-id="fail-loudly">Fail loudly</h4>
+<div class="subheading">
+<p><code>set -euo pipefail</code></p>
+</div>
+<p>Put this at the top of every script. It converts the shell’s silent shrug into an immediate, visible stop, which is exactly the safety net your instinct is asking for.</p>
+<pre class="shell"><code>#!/usr/bin/env bash
+set -euo pipefail</code></pre>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 37%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Flag</th>
+<th>Effect</th>
+<th>Without it</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>set -e</code></td>
+<td>Exit the moment any command fails</td>
+<td>The script charges past a failed step and runs the next one on bad state</td>
+</tr>
+<tr class="even">
+<td><code>set -u</code></td>
+<td>Treat use of an unset variable as an error</td>
+<td>A typo’d <code>$flie</code> quietly expands to the empty string</td>
+</tr>
+<tr class="odd">
+<td><code>set -o pipefail</code></td>
+<td>A pipeline fails if <strong>any</strong> stage fails, not just the last</td>
+<td><code>grep x file \| sort</code> reports success even when <code>grep</code> couldn’t open the file</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled" title="`set -e` is a blunt instrument">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span><code>set -e</code> is a blunt instrument
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>It is a real improvement, but it has well-known blind spots: it ignores failures inside most conditionals and command substitutions, and a command whose non-zero exit you <em>expect</em> (like <code>grep</code> finding no match) will halt the script unless you handle it, e.g.&nbsp;<code>grep x file || true</code>. Treat <code>set -e</code> as a strong default, not a guarantee, and still check the exit codes that matter.</p>
+</div>
+</div>
+</section>
+<section id="know-the-anti-patterns-by-name" class="level4">
+<h4 class="anchored" data-anchor-id="know-the-anti-patterns-by-name">Know the anti-patterns by name</h4>
+<p>Most shell disasters are a small, recognizable set. Learn to flinch at these:</p>
+<ul>
+<li><strong>Unquoted <code>$(...)</code> in a <code>for</code> loop.</strong> The construction this whole section grew out of. Reach for <code>find -print0 | while read -d ''</code> instead.</li>
+<li><strong>Parsing <code>ls</code>.</strong> <code>ls</code> is for humans; its output is ambiguous and locale-dependent. Use a glob (<code>for f in *.txt</code>) or <code>find</code> for machine consumption.</li>
+<li><strong>Building command lines by string concatenation.</strong> <code>cmd="rm $args"; $cmd</code> re-runs splitting and globbing on the whole string. Use an array instead: <code>cmd=(rm -- "$file"); "${cmd[@]}"</code>.</li>
+<li><strong>Forgetting <code>--</code>.</strong> A filename beginning with <code>-</code> is read as an option. <code>rm -- "$file"</code> tells the command “no more flags follow,” so <code>-rf.txt</code> is treated as a name, not a switch.</li>
+</ul>
+</section>
+<section id="let-a-linter-retrain-your-instinct" class="level4">
+<h4 class="anchored" data-anchor-id="let-a-linter-retrain-your-instinct">Let a linter retrain your instinct</h4>
+<p><a href="https://www.shellcheck.net/" target="_blank" rel="noopener noreferrer"><code>shellcheck</code></a> is the static analyzer the shell never shipped with. It catches the quoting, splitting, and <code>set -e</code> mistakes above automatically, and it explains <em>why</em> each one is a bug with a linked rationale. Run it on every script:</p>
+<pre class="shell"><code>shellcheck myscript.sh</code></pre>
+<p>It is the fastest way to convert vague unease into concrete, named knowledge. After a few weeks of heeding it, the rules stop being a checklist and become reflex.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="The safe-shell starting block">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>The safe-shell starting block
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Every script: <code>#!/usr/bin/env bash</code> then <code>set -euo pipefail</code>. Every variable: <code>"$quoted"</code>. Every script before you trust it: <code>shellcheck</code>. That trio neutralizes the large majority of shell bugs, which frees you to be relaxed about the 90% of shell that is genuinely safe, and sharp only where it counts.</p>
 </div>
 </div>
 </section>

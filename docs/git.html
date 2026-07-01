@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.25">
+<meta name="generator" content="quarto-1.9.38">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -10,6 +10,9 @@
 
 <title>Git Reference Manual – Computer Language Notebook</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -71,15 +74,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="././favicon.png" rel="icon" type="image/png">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-238593fbc75c52b1713b5944fbe78712.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-f876f781226a33a7a2f77a56c5ae090f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -119,8 +121,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a href="./index.html" class="navbar-brand navbar-brand-logo">
-    </a>
     <a class="navbar-brand" href="./index.html">
     <span class="navbar-title">Computer Language Notebook</span>
     </a>
@@ -178,6 +178,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="./c.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">The C Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cpp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The C++ Language</span></a>
   </div>
 </li>
           <li class="sidebar-item sidebar-item-section">
@@ -851,9 +857,9 @@ Note
 <p>When a standard <code>git blame</code> shows a generic “Refactor formatting” commit instead of the actual author of the logic, the file’s ancestry must be traced backwards.</p>
 <ol type="1">
 <li><strong>Locate the line range</strong> of interest in your file (e.g., lines 45 through 60 in <code>analysis.qmd</code>).</li>
-<li><strong>Execute the line-log search</strong> to filter the DAG down to only modifications affecting those lines: <code>bash     git log -L 45,60:analysis.qmd --oneline</code></li>
+<li><strong>Execute the line-log search</strong> to filter the DAG down to only modifications affecting those lines: <code>bash  git log -L 45,60:analysis.qmd --oneline</code></li>
 <li><strong>Identify the root commit</strong> at the bottom of this generated log.</li>
-<li>If the code was introduced from another file entirely, run a <strong>pickaxe search</strong> using a signature keyword or definition from that snippet across the whole history: <code>bash     git log -S "void calculate_weights" -p --raw</code></li>
+<li>If the code was introduced from another file entirely, run a <strong>pickaxe search</strong> using a signature keyword or definition from that snippet across the whole history: <code>bash  git log -S "void calculate_weights" -p --raw</code></li>
 </ol>
 <p>If <code>git blame</code> keeps stopping at the same formatting commit, blame its parent instead to step past the noise and find the commit that actually wrote the logic:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> blame <span class="op">&lt;</span>formatting_commit<span class="op">&gt;</span>^ <span class="at">--</span> analysis.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -980,8 +986,8 @@ Note
 </div>
 <p>When your local branch cannot be pushed because the remote tracking branch has new work, use a rebase-driven alignment to avoid creating unnecessary merge loops.</p>
 <ol type="1">
-<li><strong>Fetch current upstream state</strong> without shifting your HEAD pointer: <code>bash     git fetch origin</code></li>
-<li><strong>Initiate the rebase</strong> on top of the updated remote branch (e.g., <code>main</code>): <code>bash     git rebase origin/main</code></li>
+<li><strong>Fetch current upstream state</strong> without shifting your HEAD pointer: <code>bash  git fetch origin</code></li>
+<li><strong>Initiate the rebase</strong> on top of the updated remote branch (e.g., <code>main</code>): <code>bash  git rebase origin/main</code></li>
 <li><strong>Handle Conflicts Immediately:</strong> If Git pauses due to conflicting edits, it will leave the markers (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>) directly in your source files.
 <ul>
 <li>Open the affected file.</li>
@@ -989,7 +995,7 @@ Note
 <li>The bottom block (between <code>=======</code> and your commit hash) represents your local changes.</li>
 <li>Edit the file to unify the logic, removing all conflict markers.</li>
 </ul></li>
-<li><strong>Stage and Progress:</strong> Do <em>not</em> run a new commit command. Stage the resolved assets and instruct the rebase engine to proceed to your next commit: <code>bash     git add path/to/resolved_file.qmd     git rebase --continue</code></li>
+<li><strong>Stage and Progress:</strong> Do <em>not</em> run a new commit command. Stage the resolved assets and instruct the rebase engine to proceed to your next commit: <code>bash  git add path/to/resolved_file.qmd  git rebase --continue</code></li>
 </ol>
 </section>
 </section>
@@ -1064,9 +1070,9 @@ Note
 </div>
 <p>Assume you have made 4 commits locally, but the middle two are intermediate fixes that clutter the project log.</p>
 <ol type="1">
-<li><strong>Launch the interactive editor</strong> targeting the last 4 commits on your current branch: <code>bash     git rebase -i HEAD~4</code></li>
-<li><strong>Analyze the instruction list:</strong> An editor window will open showing your commits chronologically from top to bottom (the reverse of <code>git log</code>). <code>text     pick a1b2c3d Initial data ingestion script     pick e5f6g7h Fix broken file path handling     pick i9j0k1l Typo correction in headers     pick m3n4o5p Complete visualization pipeline</code></li>
-<li><strong>Modify the operations:</strong> Change the instructions to consolidate the intermediate commits into the primary ingestion script. <code>text     pick a1b2c3d Initial data ingestion script     fixup e5f6g7h Fix broken file path handling     fixup i9j0k1l Typo correction in headers     pick m3n4o5p Complete visualization pipeline</code></li>
+<li><strong>Launch the interactive editor</strong> targeting the last 4 commits on your current branch: <code>bash  git rebase -i HEAD~4</code></li>
+<li><strong>Analyze the instruction list:</strong> An editor window will open showing your commits chronologically from top to bottom (the reverse of <code>git log</code>). <code>text  pick a1b2c3d Initial data ingestion script  pick e5f6g7h Fix broken file path handling  pick i9j0k1l Typo correction in headers  pick m3n4o5p Complete visualization pipeline</code></li>
+<li><strong>Modify the operations:</strong> Change the instructions to consolidate the intermediate commits into the primary ingestion script. <code>text  pick a1b2c3d Initial data ingestion script  fixup e5f6g7h Fix broken file path handling  fixup i9j0k1l Typo correction in headers  pick m3n4o5p Complete visualization pipeline</code></li>
 <li><strong>Save and Close</strong> the editor. Git will sequentially apply <code>a1b2c3d</code>, merge the structural changes of the next two commits directly into it without changing its intent, and then apply <code>m3n4o5p</code>. Your history is now condensed into two pristine commits.</li>
 </ol>
 </section>
@@ -1130,9 +1136,9 @@ Note
 </div>
 <p>A common point of failure occurs when a collaborator updates a submodule reference on a remote branch, and your local workspace falls out of sync after a pull, resulting in modified dirty working directories.</p>
 <ol type="1">
-<li><strong>Pull the latest parent commits:</strong> <code>bash     git pull origin main</code></li>
+<li><strong>Pull the latest parent commits:</strong> <code>bash  git pull origin main</code></li>
 <li>Running <code>git status</code> may show the submodule directory as modified or untracked because your local pointer has moved in history, but the physical files in that directory haven’t shifted yet.</li>
-<li><strong>Synchronize the physical files</strong> to match the precise commit hash expected by the parent project: <code>bash     git submodule update --init --recursive</code></li>
+<li><strong>Synchronize the physical files</strong> to match the precise commit hash expected by the parent project: <code>bash  git submodule update --init --recursive</code></li>
 <li><strong>Making edits inside a submodule:</strong> If you need to make changes to the submodule library itself:
 <ul>
 <li>Change into the submodule directory: <code>cd path/to/submodule</code>.</li>
@@ -1198,10 +1204,10 @@ Note
 </div>
 <p>If you run a rebase that goes completely wrong, corrupts your code, or deletes crucial commits, you can use the reflog to time-travel back to the moment before the rebase started.</p>
 <ol type="1">
-<li><strong>Query the local reference log:</strong> <code>bash     git reflog</code></li>
-<li><strong>Analyze the output log</strong> from top to bottom (most recent actions are at the top): <code>text     7a8b9c0 HEAD@{0}: rebase (continue): Finished rebase onto origin/main     3d4e5f6 HEAD@{1}: rebase (step): Applied commit "Fixed typo"     1a2b3c4 HEAD@{2}: rebase (start): checkout origin/main     987f65e HEAD@{3}: commit: Ready for production architecture</code></li>
+<li><strong>Query the local reference log:</strong> <code>bash  git reflog</code></li>
+<li><strong>Analyze the output log</strong> from top to bottom (most recent actions are at the top): <code>text  7a8b9c0 HEAD@{0}: rebase (continue): Finished rebase onto origin/main  3d4e5f6 HEAD@{1}: rebase (step): Applied commit "Fixed typo"  1a2b3c4 HEAD@{2}: rebase (start): checkout origin/main  987f65e HEAD@{3}: commit: Ready for production architecture</code></li>
 <li><strong>Locate the entry</strong> right before the rebase mechanics began. In this case, <code>HEAD@{3}</code> represents your pristine local state before the rebase started.</li>
-<li><strong>Hard-reset your branch</strong> back to that safe coordinate: <code>bash     git reset --hard HEAD@{3}</code></li>
+<li><strong>Hard-reset your branch</strong> back to that safe coordinate: <code>bash  git reset --hard HEAD@{3}</code></li>
 </ol>
 <p>Your working directory and commit history are now restored exactly as they existed before the operation.</p>
 

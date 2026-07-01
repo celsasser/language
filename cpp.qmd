@@ -1,0 +1,200 @@
+---
+title: "The C++ Language"
+subtitle: "From C to a multi-paradigm systems language"
+---
+
+<!--
+SKELETON — outline only. Section headers and orienting notes are in place;
+prose and code examples are to be written in a later pass.
+
+Audience: experienced C/C++-adjacent readers, same as the C and Rust chapters.
+Anchor every concept to what the reader knows from C, and contrast with Rust
+where the comparison illuminates (RAII vs. ownership, templates vs. generics,
+exceptions vs. Result). Keep examples idiomatic modern C++ (C++17/20), not
+"C with a few classes." Plain hosted examples unless a point needs otherwise.
+-->
+
+## Overview
+<!-- IMAGE: C++ logo, same float-left treatment as c.qmd's Overview. -->
+
+<!-- What C++ is, and the one-sentence thesis: C++ is not "C with classes plus
+extras" but a distinct multi-paradigm language built on the principle of
+zero-overhead abstraction. Bjarne Stroustrup, Bell Labs, 1979 ("C with Classes")
+→ standardized C++98, then the modern era: C++11, 14, 17, 20, 23. Cross-link
+back to the "C is not C++" callout in c.qmd. -->
+
+### A Short History of the Standard
+<!-- Timeline table paralleling c.qmd's: C with Classes (1979) → C++98 → C++03
+→ C++11 (the "modern C++" inflection: auto, move semantics, lambdas, smart
+pointers, range-for) → C++14 → C++17 (structured bindings, optional, variant,
+filesystem) → C++20 (concepts, ranges, coroutines, modules) → C++23. Emphasize
+that "modern C++" means C++11 and later, and idiomatic modern C++ looks very
+different from C++98. -->
+
+### The C++ Philosophy
+::: {.subheading}
+Zero-overhead abstraction
+:::
+<!-- The core design tenets: you don't pay for what you don't use; abstractions
+should cost no more than the hand-written equivalent; direct hardware access
+preserved from C; multi-paradigm (procedural, OO, generic, functional).
+Contrast with Rust's safety-first and Python's programmer-time-first stances. -->
+
+## What C++ Adds to C
+<!-- Orienting section: the reader knows C. Enumerate at a high level what C++
+layers on, each expanded in its own section below. This is the "map." -->
+
+- References (`&`) vs. pointers
+- `class` / access control / member functions
+- Constructors, destructors, and **RAII**
+- Function and operator overloading
+- Templates (generic programming)
+- The Standard Template Library (STL)
+- Exceptions
+- Namespaces
+- Stronger type safety (`nullptr`, `enum class`, `static_cast` family)
+
+### Small but Pervasive Differences
+<!-- The little things that bite a C programmer immediately: bool as a real
+keyword, stricter implicit conversions, // comments (well before C99), struct
+names as types without typedef, function overloading changing name-mangling,
+`nullptr` vs NULL, uniform initialization braces. Quick table. -->
+
+## Types and Declarations
+### References
+::: {.subheading}
+Aliases, not pointers
+:::
+<!-- `int&` — a reference must bind on declaration, can't be reseated, no null.
+Contrast with pointers. Pass-by-reference vs. C's pass-a-pointer idiom.
+const references as the idiom for cheap read-only parameters. -->
+
+### `auto` and Type Deduction
+<!-- `auto`, `decltype`, when to use them and when they hurt readability. -->
+
+### `enum class`
+<!-- Scoped, type-safe enums — the fix for C's leaky enums covered in c.qmd. -->
+
+### Uniform Initialization
+<!-- Brace-init `{}`, initializer lists, the most-vexing-parse it solves and the
+narrowing it forbids. -->
+
+## Classes and Objects
+### From `struct` to `class`
+<!-- The only default difference (public vs. private), then everything member
+functions add. Anchor to C's "struct + free functions operating on it" pattern. -->
+
+### Member Functions, `this`, and `const` Methods
+<!-- Methods, the implicit `this` pointer, const-qualified member functions. -->
+
+### Access Control
+<!-- public / private / protected; encapsulation as enforced-by-compiler, unlike
+Python's convention-only privacy. -->
+
+### Constructors and Destructors
+<!-- Default/parameterized/copy/move constructors, destructor, initializer lists.
+Set up RAII, which gets its own section because it's the keystone idea. -->
+
+### RAII
+::: {.subheading}
+The keystone idea
+:::
+<!-- Resource Acquisition Is Initialization: tie resource lifetime to object
+lifetime; destructor releases. Compare directly to C's manual free/goto-cleanup
+ladder (from c.qmd's goto section) and to Rust's ownership/Drop. This is THE
+concept that distinguishes C++ from C; give it room. -->
+
+### The Rule of Three / Five / Zero
+<!-- If you define one of destructor/copy-ctor/copy-assign you probably need all
+three; move semantics make it five; RAII wrapper types let you aim for zero. -->
+
+### Operator Overloading
+<!-- Making user types behave like built-ins. Compare to Rust trait impls
+(`std::ops`) and Python dunder methods. Cautionary notes on overuse. -->
+
+## Templates
+::: {.subheading}
+Generic programming
+:::
+### Function and Class Templates
+<!-- The mechanism: compile-time instantiation, monomorphization. Contrast with
+Rust generics (bounded by traits) and C's macro-based genericity. -->
+
+### Template Specialization
+<!-- Full and partial specialization; when and why. -->
+
+### Concepts (C++20)
+<!-- Constraints on template parameters — the long-awaited answer to inscrutable
+template error messages. Direct parallel to Rust trait bounds. -->
+
+## The Standard Template Library
+::: {.subheading}
+Containers, iterators, algorithms
+:::
+### Containers
+<!-- vector, array, string, map/unordered_map, set, etc. Table with C-array and
+malloc'd-buffer contrasts. `std::string` vs. C's null-terminated char arrays
+(callback to c.qmd Strings). -->
+
+### Iterators
+<!-- The abstraction gluing containers to algorithms; the half-open [begin, end)
+convention; range-based for. -->
+
+### Algorithms and Ranges
+<!-- <algorithm> (sort, find, transform, accumulate) and C++20 ranges. Compare
+to Rust iterator adapters and Python comprehensions. -->
+
+## Memory Management
+### `new` / `delete`
+<!-- vs. C's malloc/free; why raw new/delete is now discouraged. -->
+
+### Smart Pointers
+<!-- unique_ptr (owning, move-only), shared_ptr (refcounted), weak_ptr. The
+modern answer to manual delete. Compare to Rust Box/Rc/Arc — nearly 1:1. -->
+
+### Move Semantics
+<!-- lvalues/rvalues, `std::move`, move constructors; why they exist (avoid deep
+copies) and how they underpin unique_ptr and efficient container growth. -->
+
+## Error Handling
+### Exceptions
+<!-- try/catch/throw, stack unwinding + RAII interplay, exception safety
+guarantees. Why embedded/game/systems shops often disable them (-fno-exceptions)
+and the cost model. -->
+
+### Alternatives
+<!-- std::optional, std::expected (C++23), error codes. Compare to Rust's
+Result-as-the-only-way. -->
+
+## Namespaces
+<!-- Organizing names; `using` declarations vs. directives; the C++ answer to
+C's file-static and prefix conventions. Anchor to c.qmd's translation-unit model. -->
+
+## Compilation and the Build
+<!-- What differs from the C build (c.qmd's "The Build"): name mangling, the
+ODR, templates and header-only libraries, why C++ builds are slow, modules
+(C++20) as the intended fix. Toolchain: g++, clang++, CMake as the de facto
+build system. Keep short; cross-reference c.qmd rather than repeat. -->
+
+## Key Differences from C
+<!-- Summary table for the C programmer: what to unlearn, what carries over.
+Pass-by-value still holds; but references, RAII, overloading, and templates
+change the idioms substantially. -->
+
+## Key Differences from Rust
+<!-- For readers who did the Rust chapters: RAII vs. ownership+borrow-checker,
+exceptions vs. Result, templates vs. trait-bounded generics, "safe by
+convention" vs. "safe by compiler." What Rust took from C++ and improved. -->
+
+## Where to Go Next
+<!-- .see-more div with authoritative references: Stroustrup's "A Tour of C++"
+and "The C++ Programming Language," cppreference.com, the C++ Core Guidelines. -->
+
+## Further Reading
+<!--
+- Stroustrup, B. (2022). A Tour of C++ (3rd ed.). Addison-Wesley.
+- Stroustrup, B. (2013). The C++ Programming Language (4th ed.).
+- Meyers, S. (2014). Effective Modern C++. O'Reilly.
+- cppreference.com — the working reference.
+- C++ Core Guidelines (Stroustrup & Sutter).
+-->

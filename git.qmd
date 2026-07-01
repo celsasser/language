@@ -245,6 +245,30 @@ To integrate changes from `main` into `feature`, you have two structural options
     A---D---E [main]
 ```
 
+### Finding Where Two Branches Diverged
+::: {.subheading}
+The fork in the road
+:::
+
+Before you can integrate divergent branches, it helps to answer a prior question: *where did they split?* That commit, their most recent common ancestor (commit `A` in the diagrams above), is what `git merge-base` finds.
+
+```bash
+git merge-base main feature      # the commit where the two diverged
+```
+
+From there, two cousins answer "what's different?":
+
+| Command | What it gives you |
+|:--------|:------------------|
+| `git merge-base A B` | The single best common ancestor: the fork in the road. |
+| `git merge-base --all A B` | *All* common ancestors, for criss-crossed merge histories. |
+| `git log --oneline A..B` | Commits on `B` but not `A` (everything after the fork, on B's side). |
+| `git log --oneline --left-right A...B` | Both sides at once: `<` is unique to `A`, `>` unique to `B`. |
+
+::: {.callout-note}
+**Two dots vs. three.** `A..B` means "reachable from B but not A." `A...B` (symmetric difference) means "reachable from one but not both", and the **merge-base is exactly the point where the three-dot range stops.** That's why finding the fork and listing the divergence are the same idea viewed from two angles.
+:::
+
 ### Reference & Commands
 | Objective              | Command                                       | Structural Impact                                                                |
 |:-----------------------|:----------------------------------------------|:---------------------------------------------------------------------------------|

@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-06-18">
+<meta name="dcterms.date" content="2026-07-15">
 
 <title>Rust: Cargo and Crates – Computer Language Notebook</title>
 <style>
@@ -359,6 +359,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#cargo-sets" id="toc-cargo-sets" class="nav-link" data-scroll-target="#cargo-sets">Cargo Sets</a></li>
   <li><a href="#cargo-reads" id="toc-cargo-reads" class="nav-link" data-scroll-target="#cargo-reads">Cargo Reads</a></li>
   </ul></li>
+  <li><a href="#the-build" id="toc-the-build" class="nav-link" data-scroll-target="#the-build">The Build</a>
+  <ul class="collapse">
+  <li><a href="#build.rs" id="toc-build.rs" class="nav-link" data-scroll-target="#build.rs"><code>build.rs</code></a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#crates" id="toc-crates" class="nav-link" data-scroll-target="#crates">Crates</a>
   <ul>
@@ -403,7 +407,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">June 18, 2026</p>
+      <p class="date">July 15, 2026</p>
     </div>
   </div>
   
@@ -420,7 +424,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="subheading">
 <p>The Build System</p>
 </div>
-<p><img src="images/rust-00.png" class="img-fluid" style="float: left; padding: 0 1em;width:2.25in"> Cargo is Rust’s build tool, package manager, and test runner. You’ll use it for everything.</p>
+<p><img src="images/rust-00.png" class="img-fluid" style="float: left; padding: 0 1em;width:2.25in"></p>
+<p>Cargo is Rust’s build tool, package manager, and test runner. You’ll use it for everything.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">cargo</span> new my_project    <span class="co"># create new project</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">cargo</span> build             <span class="co"># debug build</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">cargo</span> build <span class="at">--release</span>   <span class="co"># optimized build</span></span>
@@ -908,9 +913,80 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
+</section>
+</section>
+<section id="the-build" class="level3">
+<h3 class="anchored" data-anchor-id="the-build">The Build</h3>
+<div class="todo">
+<p>I created this section so that I had a place to put the function of <code>build.rs</code> (which also could use some work). It’s lacking just about everything. Populate the build section.</p>
+</div>
+<section id="build.rs" class="level4">
+<h4 class="anchored" data-anchor-id="build.rs"><code>build.rs</code></h4>
+<p><code>build.rs</code> is one of those Cargo conventions that feels like magic until you know the rule behind it.</p>
+<section id="what-is-it" class="level5">
+<h5 class="anchored" data-anchor-id="what-is-it">What is it?</h5>
+<div class="subheading">
+<p>Is it like a preprocessor?</p>
+</div>
+<p>It is sort of like a preprocessor, but it’s a useful distinction to draw. A C preprocessor does textual substitution inside your source before compilation. <code>build.rs</code> doesn’t touch or rewrite your <code>.rs</code> files at all. It’s better thought of as a <em>pre-build hook</em>: an arbitrary Rust program that runs first and influences the build <em>from the outside</em> via three main channels:</p>
+<ul>
+<li><strong>Environment variables</strong> for <code>env!()</code> (your version hash).</li>
+<li><strong>Generated code files</strong> written into <code>OUT_DIR</code>, which your crate then pulls in with <code>include!(concat!(env!("OUT_DIR"), "/generated.rs"))</code>. <em>This</em> part is the closest thing to preprocessing/codegen.</li>
+<li><strong>Linker/compiler directives</strong> printed to Cargo (link a native library, add a search path, set a <code>cfg</code> flag).</li>
+</ul>
+</section>
+<section id="run-by-magic" class="level5">
+<h5 class="anchored" data-anchor-id="run-by-magic">Run by Magic?</h5>
+<div class="subheading">
+<p>How does Rust knows to run it?</p>
+</div>
+<p>It’s pure <em>convention over configuration</em>. Cargo automatically looks for a file named exactly <code>build.rs</code> in the package root (next to <code>Cargo.toml</code>). If it exists, Cargo treats it as the package’s <em>build script</em>, compiles it as a standalone binary, and runs it <em>before</em> compiling your actual crate. That’s the whole rule: right name, right location. Nothing in <code>Cargo.toml</code> needs to point at it. If you want to opt out of the convention or use a different path, <em>that’s</em> when you configure it explicitly:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[package]</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="dt">build</span> <span class="op">=</span> <span class="st">"my_build_script.rs"</span>   <span class="co"># custom path</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># or</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="dt">build</span> <span class="op">=</span> <span class="cn">false</span>                   <span class="co"># disable auto-detection entirely</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>So the absence of configuration in your other project isn’t Rust doing something implicit and hidden; it’s you relying on the default that <code>build = "build.rs"</code> is assumed.</p>
+</section>
+<section id="the-execution-model" class="level5">
+<h5 class="anchored" data-anchor-id="the-execution-model">The Execution Model</h5>
+<p>This is the key mental model:</p>
+<ol type="1">
+<li>Cargo compiles <code>build.rs</code> into its own executable (it can use dependencies you list under <code>[build-dependencies]</code> in <code>Cargo.toml</code>).</li>
+<li>Cargo runs that executable before building your crate.</li>
+<li>The build script communicates back to Cargo by printing specially-formatted lines to stdout, like <code>cargo:rustc-env=...</code> or <code>cargo:rerun-if-changed=...</code>.</li>
+<li>Then your crate compiles, with whatever the build script set up now in effect.</li>
+</ol>
+<p>Your build-hash-in-the-version case is a textbook example. The script runs <code>git</code>, captures the hash, and prints something like:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">// build.rs</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> main() <span class="op">{</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> hash <span class="op">=</span> <span class="co">/* run `git rev-parse --short HEAD` */</span><span class="op">;</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">println!</span>(<span class="st">"cargo:rustc-env=BUILD_HASH={hash}"</span>)<span class="op">;</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Then in your actual source you read it at compile time with <code>env!("BUILD_HASH")</code>. The value gets baked into the binary as a string literal.</p>
+</section>
+<section id="intended-use" class="level5">
+<h5 class="anchored" data-anchor-id="intended-use">Intended Use</h5>
+<p>How is it intended to be used?</p>
+<ul>
+<li><strong>Compiling native/C code</strong> and linking it (via the <code>cc</code> crate). This is the single most common use.</li>
+<li><strong>Code generation</strong>: protobuf (<code>prost</code>/<code>tonic</code>), FFI bindings (<code>bindgen</code>), parsers, big lookup tables computed at build time.</li>
+<li><strong>Baking in build metadata</strong>: git hash, build timestamp, compiler version, target triple (your case; the <code>vergen</code> crate automates exactly this).</li>
+<li><strong>Feature/environment detection</strong>: probing whether a system library exists and emitting <code>cfg</code> flags accordingly.</li>
+</ul>
+</section>
+<section id="caching" class="level5">
+<h5 class="anchored" data-anchor-id="caching">Caching</h5>
+<div class="subheading">
+<p>Put many a good man in the asylum</p>
+</div>
+<p>By default Cargo re-runs the build script when <em>any</em> file in the package changes, and caches otherwise. Build scripts control this explicitly with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="pp">println!</span>(<span class="st">"cargo:rerun-if-changed=path/to/file"</span>)<span class="op">;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="pp">println!</span>(<span class="st">"cargo:rerun-if-env-changed=SOME_VAR"</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The moment you emit any <code>rerun-if-*</code> line, you <em>override</em> the default and Cargo will <em>only</em> re-run for the conditions you list. This bites people with git-hash scripts: the hash changes on every commit, but no tracked <em>file</em> Cargo watches necessarily changed, so the baked-in hash can go stale. The common workaround is to watch <code>.git/HEAD</code> and the relevant ref, or to force a re-run each time.</p>
 <div class="see-more">
 <p>See <a href="https://doc.rust-lang.org/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html" target="_blank" rel="noopener noreferrer">Packages, Crates, and Modules</a> in <em>The Rust Programming Language</em> for more information.</p>
 </div>
+</section>
 </section>
 </section>
 </section>
@@ -928,31 +1004,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p><a href="https://docs.rs/clap/latest/clap/" target="_blank" rel="noopener noreferrer">clap</a> (Command Line Argument Parser) turns a Rust struct into a fully-featured CLI: <code>--help</code>, <code>--version</code>, validation, <a href="#subcommands">subcommands</a>, and shell completions all come for free. You describe what your program accepts; clap handles the rest.</p>
 <p>Add it to <code>Cargo.toml</code> with the <code>derive</code> feature, which enables the attribute-based API used throughout this section:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[dependencies]</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="dt">clap</span> <span class="op">=</span> <span class="op">{ </span><span class="dt">version</span><span class="op"> =</span> <span class="st">"4"</span><span class="op">, </span><span class="dt">features</span><span class="op"> =</span> <span class="op">[</span><span class="st">"derive"</span><span class="op">] }</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[dependencies]</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="dt">clap</span> <span class="op">=</span> <span class="op">{ </span><span class="dt">version</span><span class="op"> =</span> <span class="st">"4"</span><span class="op">, </span><span class="dt">features</span><span class="op"> =</span> <span class="op">[</span><span class="st">"derive"</span><span class="op">] }</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <section id="the-derive-api" class="level4">
 <h4 class="anchored" data-anchor-id="the-derive-api">The Derive API</h4>
 <p>The <a href="#derive(parser)">derive</a> API lets you describe your CLI as a struct. Clap reads the struct and its attributes at compile time and generates the parser automatically. This is the approach you will use in almost all real projects.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">clap::</span>Parser<span class="op">;</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>command<span class="at">(</span>name <span class="op">=</span> <span class="st">"greet"</span><span class="op">,</span> version <span class="op">=</span> <span class="st">"1.0"</span><span class="op">,</span> about <span class="op">=</span> <span class="st">"Greet someone"</span><span class="at">)]</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// The name to greet</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    name<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// How many times to repeat the greeting</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="op">,</span> default_value_t <span class="op">=</span> <span class="dv">1</span><span class="at">)]</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    count<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> main() <span class="op">{</span></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> cli <span class="op">=</span> <span class="pp">Cli::</span>parse()<span class="op">;</span></span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="dv">0</span><span class="op">..</span>cli<span class="op">.</span>count <span class="op">{</span></span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>        <span class="pp">println!</span>(<span class="st">"Hello, {}!"</span><span class="op">,</span> cli<span class="op">.</span>name)<span class="op">;</span></span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">clap::</span>Parser<span class="op">;</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>command<span class="at">(</span>name <span class="op">=</span> <span class="st">"greet"</span><span class="op">,</span> version <span class="op">=</span> <span class="st">"1.0"</span><span class="op">,</span> about <span class="op">=</span> <span class="st">"Greet someone"</span><span class="at">)]</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// The name to greet</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    name<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// How many times to repeat the greeting</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="op">,</span> default_value_t <span class="op">=</span> <span class="dv">1</span><span class="at">)]</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    count<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> main() <span class="op">{</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> cli <span class="op">=</span> <span class="pp">Cli::</span>parse()<span class="op">;</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="dv">0</span><span class="op">..</span>cli<span class="op">.</span>count <span class="op">{</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>        <span class="pp">println!</span>(<span class="st">"Hello, {}!"</span><span class="op">,</span> cli<span class="op">.</span>name)<span class="op">;</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Running <code>./greet --help</code> produces:</p>
 <pre><code>Greet someone
 
@@ -970,22 +1046,22 @@ Options:
 <section id="deriveparser" class="level4">
 <h4 class="anchored" data-anchor-id="deriveparser"><code>#[derive(Parser)]</code></h4>
 <p><code>Parser</code> is the <a href="./rust-ho.html#traits">trait</a> that drives everything. Applying <code>#[derive(Parser)]</code> to a struct generates an implementation of that trait, including the <code>parse()</code> and <code>try_parse()</code> associated functions. Without it, none of the other clap attributes do anything.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span>          <span class="co">// generates Cli::parse(), Cli::try_parse(), etc.</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span>          <span class="co">// generates Cli::parse(), Cli::try_parse(), etc.</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>try_parse()</code> is available when you want to handle errors yourself instead of letting clap exit:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> cli <span class="op">=</span> <span class="pp">Cli::</span>try_parse()<span class="op">?;</span>   <span class="co">// returns Result&lt;Cli, clap::Error&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> cli <span class="op">=</span> <span class="pp">Cli::</span>try_parse()<span class="op">?;</span>   <span class="co">// returns Result&lt;Cli, clap::Error&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="command...-attributes" class="level4">
 <h4 class="anchored" data-anchor-id="command...-attributes"><code>#[command(...)]</code> Attributes</h4>
 <p><code>#[command(...)]</code> applies to the struct as a whole and controls top-level metadata about your program.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>command<span class="at">(</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    name    <span class="op">=</span> <span class="st">"pexs24"</span><span class="op">,</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    version <span class="op">=</span> <span class="pp">env!</span><span class="at">(</span><span class="st">"CARGO_PKG_VERSION"</span><span class="at">)</span><span class="op">,</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    author  <span class="op">=</span> <span class="st">"Curtis"</span><span class="op">,</span></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    about   <span class="op">=</span> <span class="st">"Process expression files for the 2024 dataset"</span><span class="op">,</span></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="at">)]</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>command<span class="at">(</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    name    <span class="op">=</span> <span class="st">"pexs24"</span><span class="op">,</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    version <span class="op">=</span> <span class="pp">env!</span><span class="at">(</span><span class="st">"CARGO_PKG_VERSION"</span><span class="at">)</span><span class="op">,</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    author  <span class="op">=</span> <span class="st">"Curtis"</span><span class="op">,</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    about   <span class="op">=</span> <span class="st">"Process expression files for the 2024 dataset"</span><span class="op">,</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="at">)]</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 42%">
@@ -1026,9 +1102,9 @@ Options:
 </table>
 <p><strong><code>name = "pexs24"</code></strong> matters because clap uses the binary file name by default. If your binary is named <code>target/debug/pexs24_dev</code>, that ugly name shows up in every usage example. Setting <code>name</code> pins it to a clean, version-independent string.</p>
 <p><strong><code>version = env!("CARGO_PKG_VERSION")</code></strong> is worth pausing on. <code>env!</code> is a built-in Rust macro that reads an <a href="https://doc.rust-lang.org/cargo/reference/environment-variables.html" target="_blank" rel="noopener noreferrer">environment variable</a> at <em>compile time</em>. Cargo sets <code>CARGO_PKG_VERSION</code> to the <code>version</code> field in your <code>Cargo.toml</code> before invoking the compiler. The result is that your <code>--version</code> output always matches your <code>Cargo.toml</code> with zero manual synchronization.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cargo.toml</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="kw">[package]</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="dt">version</span> <span class="op">=</span> <span class="st">"0.3.1"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cargo.toml</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="kw">[package]</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="dt">version</span> <span class="op">=</span> <span class="st">"0.3.1"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <pre><code>$ pexs24 --version
 pexs24 0.3.1</code></pre>
 <p>Change the version in one place; the binary reflects it automatically.</p>
@@ -1039,11 +1115,11 @@ pexs24 0.3.1</code></pre>
 <section id="positional-arguments" class="level5">
 <h5 class="anchored" data-anchor-id="positional-arguments">Positional Arguments</h5>
 <p>A field with no <code>short</code> or <code>long</code> attribute is positional — the user supplies it by position, not by name.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>name <span class="op">=</span> <span class="st">"FILE"</span><span class="op">,</span> num_args <span class="op">=</span> <span class="dv">1</span><span class="at">)]</span></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    input<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>name <span class="op">=</span> <span class="st">"FILE"</span><span class="op">,</span> num_args <span class="op">=</span> <span class="dv">1</span><span class="at">)]</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    input<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <pre><code>Usage: prog &lt;FILE&gt;</code></pre>
 </section>
 <section id="what-does-name-file-mean" class="level5">
@@ -1089,8 +1165,8 @@ pexs24 0.3.1</code></pre>
 </table>
 <p>Clap will use the field name (uppercased) as the metavar if you omit <code>name</code>. So a field named <code>input</code> would display as <code>&lt;INPUT&gt;</code>. Setting <code>name = "FILE"</code> gives you a more informative, idiomatic label without renaming the Rust field.</p>
 <p>If you want to control the metavar display independently of the ID, use <code>value_name</code> instead:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>arg<span class="at">(</span>value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="at">)]</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>input<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>arg<span class="at">(</span>value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="at">)]</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>input<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>value_name</code> only affects the display; it does not change the ID. This is the preferred approach in clap 4.</p>
 <p><strong><code>num_args = 1</code></strong> tells clap how many values this argument consumes. For a single value it is the default, so you typically omit it. More useful forms:</p>
 <table class="caption-top table">
@@ -1127,20 +1203,20 @@ pexs24 0.3.1</code></pre>
 <section id="flags-and-options" class="level5">
 <h5 class="anchored" data-anchor-id="flags-and-options">Flags and Options</h5>
 <p>Adding <code>short</code> and/or <code>long</code> turns a field into a named argument rather than a positional one.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Enable verbose output</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="at">)]</span></span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">:</span> <span class="dt">bool</span><span class="op">,</span>          <span class="co">// --verbose / -v</span></span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Output file path</span></span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="op">,</span> value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="at">)]</span></span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    output<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;,</span> <span class="co">// --output &lt;FILE&gt; / -o &lt;FILE&gt;, optional</span></span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Number of threads</span></span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short <span class="op">=</span> <span class="ch">'j'</span><span class="op">,</span> long <span class="op">=</span> <span class="st">"jobs"</span><span class="op">,</span> default_value_t <span class="op">=</span> <span class="dv">4</span><span class="at">)]</span></span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    jobs<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span>              <span class="co">// --jobs &lt;JOBS&gt; / -j &lt;JOBS&gt;</span></span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Enable verbose output</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="at">)]</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">:</span> <span class="dt">bool</span><span class="op">,</span>          <span class="co">// --verbose / -v</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Output file path</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="op">,</span> value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="at">)]</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    output<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;,</span> <span class="co">// --output &lt;FILE&gt; / -o &lt;FILE&gt;, optional</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Number of threads</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short <span class="op">=</span> <span class="ch">'j'</span><span class="op">,</span> long <span class="op">=</span> <span class="st">"jobs"</span><span class="op">,</span> default_value_t <span class="op">=</span> <span class="dv">4</span><span class="at">)]</span></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    jobs<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span>              <span class="co">// --jobs &lt;JOBS&gt; / -j &lt;JOBS&gt;</span></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>short</code> and <code>long</code> without values derive from the field name: <code>verbose</code> becomes <code>-v</code> and <code>--verbose</code>. Assign explicit characters or strings when the default conflicts or is not what you want.</p>
 <p><code>bool</code> fields paired with <code>short</code>/<code>long</code> become <strong>flags</strong> — they are <code>false</code> by default and become <code>true</code> when passed. No value is consumed.</p>
 <p><code>Option&lt;T&gt;</code> fields are <strong>optional arguments</strong> — omitting them produces <code>None</code>; passing them produces <code>Some(value)</code>.</p>
@@ -1211,16 +1287,16 @@ pexs24 0.3.1</code></pre>
 <section id="multiple-values" class="level4">
 <h4 class="anchored" data-anchor-id="multiple-values">Multiple Values</h4>
 <p>When a flag should accept a list of values, use <code>Vec&lt;T&gt;</code> and <code>num_args</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Input files to process</span></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="op">,</span> num_args <span class="op">=</span> <span class="dv">1</span><span class="op">..</span><span class="at">)]</span></span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;,</span></span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Tags to apply</span></span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="op">,</span> value_name <span class="op">=</span> <span class="st">"TAG"</span><span class="at">)]</span></span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    tags<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;,</span>         <span class="co">// --tag foo --tag bar</span></span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Input files to process</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="op">,</span> num_args <span class="op">=</span> <span class="dv">1</span><span class="op">..</span><span class="at">)]</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;,</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Tags to apply</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="op">,</span> value_name <span class="op">=</span> <span class="st">"TAG"</span><span class="at">)]</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>    tags<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;,</span>         <span class="co">// --tag foo --tag bar</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Positional <code>Vec&lt;T&gt;</code> with <code>num_args = 1..</code> collects all remaining positional arguments. Named <code>Vec&lt;T&gt;</code> fields (with <code>short</code>/<code>long</code>) allow the flag to be repeated: <code>--tag foo --tag bar</code>.</p>
 </section>
 <section id="subcommands" class="level4">
@@ -1235,54 +1311,54 @@ pexs24 0.3.1</code></pre>
 </ul>
 <p>If a command option should work in either position, mark it <code>global = true</code>.</p>
 <p>Define an enum with <code>#[derive(Subcommand)]</code> and embed it in your top-level <code>Parser</code> struct. By convention this struct is named <code>Cli</code>, but any name works — clap derives from the struct name you call <code>.parse()</code> on:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">clap::</span><span class="op">{</span>Parser<span class="op">,</span> Subcommand<span class="op">};</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>command<span class="at">(</span>name <span class="op">=</span> <span class="st">"tool"</span><span class="at">)]</span></span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Command-level option (applies to the root command)</span></span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>long<span class="op">,</span> value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="op">,</span> default_value <span class="op">=</span> <span class="st">"tool.toml"</span><span class="at">)]</span></span>
-<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    config<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
-<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Global option: accepted before or after the subcommand</span></span>
-<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="op">,</span> global <span class="op">=</span> <span class="cn">true</span><span class="at">)]</span></span>
-<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">:</span> <span class="dt">bool</span><span class="op">,</span></span>
-<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>command<span class="at">(</span>subcommand<span class="at">)]</span></span>
-<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>    command<span class="op">:</span> Commands<span class="op">,</span></span>
-<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Subcommand<span class="at">)]</span></span>
-<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> Commands <span class="op">{</span></span>
-<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Compress a file</span></span>
-<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>    Compress <span class="op">{</span></span>
-<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">#[</span>arg<span class="at">(</span>value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="at">)]</span></span>
-<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>        input<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
-<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a>        <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="op">,</span> value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="at">)]</span></span>
-<span id="cb28-26"><a href="#cb28-26" aria-hidden="true" tabindex="-1"></a>        output<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;,</span></span>
-<span id="cb28-27"><a href="#cb28-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
-<span id="cb28-28"><a href="#cb28-28" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// List available formats</span></span>
-<span id="cb28-29"><a href="#cb28-29" aria-hidden="true" tabindex="-1"></a>    Formats<span class="op">,</span></span>
-<span id="cb28-30"><a href="#cb28-30" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb28-31"><a href="#cb28-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-32"><a href="#cb28-32" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> main() <span class="op">{</span></span>
-<span id="cb28-33"><a href="#cb28-33" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> cli <span class="op">=</span> <span class="pp">Cli::</span>parse()<span class="op">;</span></span>
-<span id="cb28-34"><a href="#cb28-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-35"><a href="#cb28-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> cli<span class="op">.</span>verbose <span class="op">{</span></span>
-<span id="cb28-36"><a href="#cb28-36" aria-hidden="true" tabindex="-1"></a>        <span class="pp">eprintln!</span>(<span class="st">"Using config: {}"</span><span class="op">,</span> cli<span class="op">.</span>config)<span class="op">;</span></span>
-<span id="cb28-37"><a href="#cb28-37" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb28-38"><a href="#cb28-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-39"><a href="#cb28-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">match</span> cli<span class="op">.</span>command <span class="op">{</span></span>
-<span id="cb28-40"><a href="#cb28-40" aria-hidden="true" tabindex="-1"></a>        <span class="pp">Commands::</span>Compress <span class="op">{</span> input<span class="op">,</span> output <span class="op">}</span> <span class="op">=&gt;</span> <span class="op">{</span></span>
-<span id="cb28-41"><a href="#cb28-41" aria-hidden="true" tabindex="-1"></a>            <span class="kw">let</span> dest <span class="op">=</span> output<span class="op">.</span>unwrap_or_else(<span class="op">||</span> <span class="pp">format!</span>(<span class="st">"{}.gz"</span><span class="op">,</span> input))<span class="op">;</span></span>
-<span id="cb28-42"><a href="#cb28-42" aria-hidden="true" tabindex="-1"></a>            <span class="pp">println!</span>(<span class="st">"Compressing {} -&gt; {}"</span><span class="op">,</span> input<span class="op">,</span> dest)<span class="op">;</span></span>
-<span id="cb28-43"><a href="#cb28-43" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
-<span id="cb28-44"><a href="#cb28-44" aria-hidden="true" tabindex="-1"></a>        <span class="pp">Commands::</span>Formats <span class="op">=&gt;</span> <span class="op">{</span></span>
-<span id="cb28-45"><a href="#cb28-45" aria-hidden="true" tabindex="-1"></a>            <span class="pp">println!</span>(<span class="st">"Supported: gz, zst, xz"</span>)<span class="op">;</span></span>
-<span id="cb28-46"><a href="#cb28-46" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
-<span id="cb28-47"><a href="#cb28-47" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb28-48"><a href="#cb28-48" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">clap::</span><span class="op">{</span>Parser<span class="op">,</span> Subcommand<span class="op">};</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>command<span class="at">(</span>name <span class="op">=</span> <span class="st">"tool"</span><span class="at">)]</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Command-level option (applies to the root command)</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>long<span class="op">,</span> value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="op">,</span> default_value <span class="op">=</span> <span class="st">"tool.toml"</span><span class="at">)]</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    config<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Global option: accepted before or after the subcommand</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="op">,</span> global <span class="op">=</span> <span class="cn">true</span><span class="at">)]</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">:</span> <span class="dt">bool</span><span class="op">,</span></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>command<span class="at">(</span>subcommand<span class="at">)]</span></span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    command<span class="op">:</span> Commands<span class="op">,</span></span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Subcommand<span class="at">)]</span></span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> Commands <span class="op">{</span></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Compress a file</span></span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>    Compress <span class="op">{</span></span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">#[</span>arg<span class="at">(</span>value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="at">)]</span></span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>        input<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>        <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="op">,</span> value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="at">)]</span></span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>        output<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;,</span></span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// List available formats</span></span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>    Formats<span class="op">,</span></span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> main() <span class="op">{</span></span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> cli <span class="op">=</span> <span class="pp">Cli::</span>parse()<span class="op">;</span></span>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> cli<span class="op">.</span>verbose <span class="op">{</span></span>
+<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>        <span class="pp">eprintln!</span>(<span class="st">"Using config: {}"</span><span class="op">,</span> cli<span class="op">.</span>config)<span class="op">;</span></span>
+<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">match</span> cli<span class="op">.</span>command <span class="op">{</span></span>
+<span id="cb31-40"><a href="#cb31-40" aria-hidden="true" tabindex="-1"></a>        <span class="pp">Commands::</span>Compress <span class="op">{</span> input<span class="op">,</span> output <span class="op">}</span> <span class="op">=&gt;</span> <span class="op">{</span></span>
+<span id="cb31-41"><a href="#cb31-41" aria-hidden="true" tabindex="-1"></a>            <span class="kw">let</span> dest <span class="op">=</span> output<span class="op">.</span>unwrap_or_else(<span class="op">||</span> <span class="pp">format!</span>(<span class="st">"{}.gz"</span><span class="op">,</span> input))<span class="op">;</span></span>
+<span id="cb31-42"><a href="#cb31-42" aria-hidden="true" tabindex="-1"></a>            <span class="pp">println!</span>(<span class="st">"Compressing {} -&gt; {}"</span><span class="op">,</span> input<span class="op">,</span> dest)<span class="op">;</span></span>
+<span id="cb31-43"><a href="#cb31-43" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb31-44"><a href="#cb31-44" aria-hidden="true" tabindex="-1"></a>        <span class="pp">Commands::</span>Formats <span class="op">=&gt;</span> <span class="op">{</span></span>
+<span id="cb31-45"><a href="#cb31-45" aria-hidden="true" tabindex="-1"></a>            <span class="pp">println!</span>(<span class="st">"Supported: gz, zst, xz"</span>)<span class="op">;</span></span>
+<span id="cb31-46"><a href="#cb31-46" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb31-47"><a href="#cb31-47" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb31-48"><a href="#cb31-48" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="explanation">
 <ul>
 <li><code>#[command(subcommand)]</code> on the command field tells clap “when parsing, look for a subcommand name here”.</li>
@@ -1325,21 +1401,21 @@ Options:
 <section id="optional-subcommands" class="level5">
 <h5 class="anchored" data-anchor-id="optional-subcommands">Optional Subcommands</h5>
 <p>If the tool should run without a subcommand (falling back to some default behavior), make the field <code>Option&lt;Commands&gt;</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>command<span class="at">(</span>subcommand<span class="at">)]</span></span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    command<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span>Commands<span class="op">&gt;,</span></span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> main() <span class="op">{</span></span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> cli <span class="op">=</span> <span class="pp">Cli::</span>parse()<span class="op">;</span></span>
-<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">match</span> cli<span class="op">.</span>command <span class="op">{</span></span>
-<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>        <span class="cn">Some</span>(<span class="pp">Commands::</span>Compress <span class="op">{</span> input<span class="op">,</span> output <span class="op">}</span>) <span class="op">=&gt;</span> <span class="op">{</span> <span class="co">/* ... */</span> <span class="op">}</span></span>
-<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>        <span class="cn">Some</span>(<span class="pp">Commands::</span>Formats)                    <span class="op">=&gt;</span> <span class="op">{</span> <span class="co">/* ... */</span> <span class="op">}</span></span>
-<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>        <span class="cn">None</span>                                       <span class="op">=&gt;</span> <span class="pp">println!</span>(<span class="st">"No subcommand given; try --help"</span>)<span class="op">,</span></span>
-<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>command<span class="at">(</span>subcommand<span class="at">)]</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    command<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span>Commands<span class="op">&gt;,</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> main() <span class="op">{</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> cli <span class="op">=</span> <span class="pp">Cli::</span>parse()<span class="op">;</span></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">match</span> cli<span class="op">.</span>command <span class="op">{</span></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>        <span class="cn">Some</span>(<span class="pp">Commands::</span>Compress <span class="op">{</span> input<span class="op">,</span> output <span class="op">}</span>) <span class="op">=&gt;</span> <span class="op">{</span> <span class="co">/* ... */</span> <span class="op">}</span></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>        <span class="cn">Some</span>(<span class="pp">Commands::</span>Formats)                    <span class="op">=&gt;</span> <span class="op">{</span> <span class="co">/* ... */</span> <span class="op">}</span></span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>        <span class="cn">None</span>                                       <span class="op">=&gt;</span> <span class="pp">println!</span>(<span class="st">"No subcommand given; try --help"</span>)<span class="op">,</span></span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="a-complete-example" class="level4">
@@ -1348,44 +1424,44 @@ Options:
 <p>Sans subcommands</p>
 </div>
 <p>Putting it all together: a realistic flat CLI (no subcommands) for a file processing tool, combining positional arguments, optional flags, typed defaults, and version output.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">clap::</span>Parser<span class="op">;</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>command<span class="at">(</span></span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    name    <span class="op">=</span> <span class="st">"pexs24"</span><span class="op">,</span></span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    version <span class="op">=</span> <span class="pp">env!</span><span class="at">(</span><span class="st">"CARGO_PKG_VERSION"</span><span class="at">)</span><span class="op">,</span></span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    about   <span class="op">=</span> <span class="st">"Process expression files for the 2024 dataset"</span><span class="op">,</span></span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="at">)]</span></span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Input file to process</span></span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="op">,</span> num_args <span class="op">=</span> <span class="dv">1</span><span class="at">)]</span></span>
-<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>    input<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
-<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Write output to FILE instead of stdout</span></span>
-<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="op">,</span> value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="at">)]</span></span>
-<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>    output<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;,</span></span>
-<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Number of worker threads</span></span>
-<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short <span class="op">=</span> <span class="ch">'j'</span><span class="op">,</span> long <span class="op">=</span> <span class="st">"jobs"</span><span class="op">,</span> default_value_t <span class="op">=</span> <span class="dv">4</span><span class="op">,</span> value_name <span class="op">=</span> <span class="st">"N"</span><span class="at">)]</span></span>
-<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>    jobs<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
-<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Enable verbose logging</span></span>
-<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="at">)]</span></span>
-<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">:</span> <span class="dt">bool</span><span class="op">,</span></span>
-<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> main() <span class="op">{</span></span>
-<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> cli <span class="op">=</span> <span class="pp">Cli::</span>parse()<span class="op">;</span></span>
-<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> cli<span class="op">.</span>verbose <span class="op">{</span></span>
-<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>        <span class="pp">eprintln!</span>(<span class="st">"Processing {} with {} threads"</span><span class="op">,</span> cli<span class="op">.</span>input<span class="op">,</span> cli<span class="op">.</span>jobs)<span class="op">;</span></span>
-<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">match</span> cli<span class="op">.</span>output <span class="op">{</span></span>
-<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>        <span class="cn">Some</span>(path) <span class="op">=&gt;</span> <span class="pp">println!</span>(<span class="st">"Writing to {}"</span><span class="op">,</span> path)<span class="op">,</span></span>
-<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>        <span class="cn">None</span>       <span class="op">=&gt;</span> <span class="pp">println!</span>(<span class="st">"Writing to stdout"</span>)<span class="op">,</span></span>
-<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">clap::</span>Parser<span class="op">;</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>command<span class="at">(</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    name    <span class="op">=</span> <span class="st">"pexs24"</span><span class="op">,</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    version <span class="op">=</span> <span class="pp">env!</span><span class="at">(</span><span class="st">"CARGO_PKG_VERSION"</span><span class="at">)</span><span class="op">,</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    about   <span class="op">=</span> <span class="st">"Process expression files for the 2024 dataset"</span><span class="op">,</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a><span class="at">)]</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Input file to process</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="op">,</span> num_args <span class="op">=</span> <span class="dv">1</span><span class="at">)]</span></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>    input<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Write output to FILE instead of stdout</span></span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="op">,</span> value_name <span class="op">=</span> <span class="st">"FILE"</span><span class="at">)]</span></span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>    output<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;,</span></span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Number of worker threads</span></span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short <span class="op">=</span> <span class="ch">'j'</span><span class="op">,</span> long <span class="op">=</span> <span class="st">"jobs"</span><span class="op">,</span> default_value_t <span class="op">=</span> <span class="dv">4</span><span class="op">,</span> value_name <span class="op">=</span> <span class="st">"N"</span><span class="at">)]</span></span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>    jobs<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>    <span class="co">/// Enable verbose logging</span></span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>arg<span class="at">(</span>short<span class="op">,</span> long<span class="at">)]</span></span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">:</span> <span class="dt">bool</span><span class="op">,</span></span>
+<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-27"><a href="#cb34-27" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> main() <span class="op">{</span></span>
+<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> cli <span class="op">=</span> <span class="pp">Cli::</span>parse()<span class="op">;</span></span>
+<span id="cb34-29"><a href="#cb34-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> cli<span class="op">.</span>verbose <span class="op">{</span></span>
+<span id="cb34-31"><a href="#cb34-31" aria-hidden="true" tabindex="-1"></a>        <span class="pp">eprintln!</span>(<span class="st">"Processing {} with {} threads"</span><span class="op">,</span> cli<span class="op">.</span>input<span class="op">,</span> cli<span class="op">.</span>jobs)<span class="op">;</span></span>
+<span id="cb34-32"><a href="#cb34-32" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb34-33"><a href="#cb34-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-34"><a href="#cb34-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">match</span> cli<span class="op">.</span>output <span class="op">{</span></span>
+<span id="cb34-35"><a href="#cb34-35" aria-hidden="true" tabindex="-1"></a>        <span class="cn">Some</span>(path) <span class="op">=&gt;</span> <span class="pp">println!</span>(<span class="st">"Writing to {}"</span><span class="op">,</span> path)<span class="op">,</span></span>
+<span id="cb34-36"><a href="#cb34-36" aria-hidden="true" tabindex="-1"></a>        <span class="cn">None</span>       <span class="op">=&gt;</span> <span class="pp">println!</span>(<span class="st">"Writing to stdout"</span>)<span class="op">,</span></span>
+<span id="cb34-37"><a href="#cb34-37" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb34-38"><a href="#cb34-38" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <pre><code>$ pexs24 --help
 Process expression files for the 2024 dataset
 
@@ -1450,52 +1526,52 @@ pexs24 0.3.1</code></pre>
 <section id="adding-it-to-a-project" class="level4">
 <h4 class="anchored" data-anchor-id="adding-it-to-a-project">Adding It to a Project</h4>
 <p>serde itself is the framework; you almost always pair it with at least one format crate. The <code>derive</code> feature enables the <code>#[derive(...)]</code> macros and is the part you will use constantly.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[dependencies]</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="dt">serde</span> <span class="op">=</span> <span class="op">{ </span><span class="dt">version</span><span class="op"> =</span> <span class="st">"1"</span><span class="op">, </span><span class="dt">features</span><span class="op"> =</span> <span class="op">[</span><span class="st">"derive"</span><span class="op">] }</span></span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="dt">serde_json</span> <span class="op">=</span> <span class="st">"1"</span>          <span class="co"># the JSON format crate</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[dependencies]</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="dt">serde</span> <span class="op">=</span> <span class="op">{ </span><span class="dt">version</span><span class="op"> =</span> <span class="st">"1"</span><span class="op">, </span><span class="dt">features</span><span class="op"> =</span> <span class="op">[</span><span class="st">"derive"</span><span class="op">] }</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="dt">serde_json</span> <span class="op">=</span> <span class="st">"1"</span>          <span class="co"># the JSON format crate</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>For other formats, add the corresponding crate alongside it:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="dt">toml</span> <span class="op">=</span> <span class="st">"0.8"</span>              <span class="co"># TOML, e.g. for config files</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="dt">serde_yaml</span> <span class="op">=</span> <span class="st">"0.9"</span>        <span class="co"># YAML</span></span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="dt">rmp-serde</span> <span class="op">=</span> <span class="st">"1"</span>           <span class="co"># MessagePack (a compact binary format)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="dt">toml</span> <span class="op">=</span> <span class="st">"0.8"</span>              <span class="co"># TOML, e.g. for config files</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="dt">serde_yaml</span> <span class="op">=</span> <span class="st">"0.9"</span>        <span class="co"># YAML</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="dt">rmp-serde</span> <span class="op">=</span> <span class="st">"1"</span>           <span class="co"># MessagePack (a compact binary format)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="deriving-serialize-and-deserialize" class="level4">
 <h4 class="anchored" data-anchor-id="deriving-serialize-and-deserialize">Deriving <code>Serialize</code> and <code>Deserialize</code></h4>
 <p>The entire workflow starts by tagging your type. <code>#[derive(Serialize, Deserialize)]</code> reads the struct at compile time and generates both implementations.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde::</span><span class="op">{</span>Serialize<span class="op">,</span> Deserialize<span class="op">};</span></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Serialize<span class="op">,</span> Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Config <span class="op">{</span></span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    host<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>    port<span class="op">:</span> <span class="dt">u16</span><span class="op">,</span></span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    retries<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde::</span><span class="op">{</span>Serialize<span class="op">,</span> Deserialize<span class="op">};</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Serialize<span class="op">,</span> Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Config <span class="op">{</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    host<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    port<span class="op">:</span> <span class="dt">u16</span><span class="op">,</span></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    retries<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>That derive is the whole investment. From here, <em>any</em> format crate can read and write a <code>Config</code>. Here it is with JSON:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde::</span><span class="op">{</span>Serialize<span class="op">,</span> Deserialize<span class="op">};</span></span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Serialize<span class="op">,</span> Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Config <span class="op">{</span></span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    host<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    port<span class="op">:</span> <span class="dt">u16</span><span class="op">,</span></span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    retries<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> main() <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>()<span class="op">,</span> <span class="dt">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="pp">std::error::</span><span class="bu">Error</span><span class="op">&gt;&gt;</span> <span class="op">{</span></span>
-<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> config <span class="op">=</span> Config <span class="op">{</span></span>
-<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>        host<span class="op">:</span> <span class="st">"localhost"</span><span class="op">.</span>to_string()<span class="op">,</span></span>
-<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>        port<span class="op">:</span> <span class="dv">8080</span><span class="op">,</span></span>
-<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>        retries<span class="op">:</span> <span class="dv">3</span><span class="op">,</span></span>
-<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
-<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Serialize: struct -&gt; JSON string</span></span>
-<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> json <span class="op">=</span> <span class="pp">serde_json::</span>to_string_pretty(<span class="op">&amp;</span>config)<span class="op">?;</span></span>
-<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a>    <span class="pp">println!</span>(<span class="st">"{json}"</span>)<span class="op">;</span></span>
-<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Deserialize: JSON string -&gt; struct</span></span>
-<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> parsed<span class="op">:</span> Config <span class="op">=</span> <span class="pp">serde_json::</span>from_str(<span class="op">&amp;</span>json)<span class="op">?;</span></span>
-<span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a>    <span class="pp">println!</span>(<span class="st">"{parsed:?}"</span>)<span class="op">;</span></span>
-<span id="cb36-24"><a href="#cb36-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-25"><a href="#cb36-25" aria-hidden="true" tabindex="-1"></a>    <span class="cn">Ok</span>(())</span>
-<span id="cb36-26"><a href="#cb36-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde::</span><span class="op">{</span>Serialize<span class="op">,</span> Deserialize<span class="op">};</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Serialize<span class="op">,</span> Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Config <span class="op">{</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    host<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    port<span class="op">:</span> <span class="dt">u16</span><span class="op">,</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    retries<span class="op">:</span> <span class="dt">u32</span><span class="op">,</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> main() <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>()<span class="op">,</span> <span class="dt">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="pp">std::error::</span><span class="bu">Error</span><span class="op">&gt;&gt;</span> <span class="op">{</span></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> config <span class="op">=</span> Config <span class="op">{</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>        host<span class="op">:</span> <span class="st">"localhost"</span><span class="op">.</span>to_string()<span class="op">,</span></span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>        port<span class="op">:</span> <span class="dv">8080</span><span class="op">,</span></span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a>        retries<span class="op">:</span> <span class="dv">3</span><span class="op">,</span></span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Serialize: struct -&gt; JSON string</span></span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> json <span class="op">=</span> <span class="pp">serde_json::</span>to_string_pretty(<span class="op">&amp;</span>config)<span class="op">?;</span></span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a>    <span class="pp">println!</span>(<span class="st">"{json}"</span>)<span class="op">;</span></span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Deserialize: JSON string -&gt; struct</span></span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> parsed<span class="op">:</span> Config <span class="op">=</span> <span class="pp">serde_json::</span>from_str(<span class="op">&amp;</span>json)<span class="op">?;</span></span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a>    <span class="pp">println!</span>(<span class="st">"{parsed:?}"</span>)<span class="op">;</span></span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a>    <span class="cn">Ok</span>(())</span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <pre><code>{
   "host": "localhost",
   "port": 8080,
@@ -1507,47 +1583,47 @@ Config { host: "localhost", port: 8080, retries: 3 }</code></pre>
 <section id="it-really-is-format-agnostic" class="level4">
 <h4 class="anchored" data-anchor-id="it-really-is-format-agnostic">It Really Is Format-Agnostic</h4>
 <p>The same <code>Config</code> struct, with no changes, round-trips through any format crate. The only thing that changes is which crate’s <code>to_string</code> / <code>from_str</code> you call.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co">// JSON</span></span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> text <span class="op">=</span> <span class="pp">serde_json::</span>to_string(<span class="op">&amp;</span>config)<span class="op">?;</span></span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> back<span class="op">:</span> Config <span class="op">=</span> <span class="pp">serde_json::</span>from_str(<span class="op">&amp;</span>text)<span class="op">?;</span></span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="co">// TOML</span></span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> text <span class="op">=</span> <span class="pp">toml::</span>to_string(<span class="op">&amp;</span>config)<span class="op">?;</span></span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> back<span class="op">:</span> Config <span class="op">=</span> <span class="pp">toml::</span>from_str(<span class="op">&amp;</span>text)<span class="op">?;</span></span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a><span class="co">// YAML</span></span>
-<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> text <span class="op">=</span> <span class="pp">serde_yaml::</span>to_string(<span class="op">&amp;</span>config)<span class="op">?;</span></span>
-<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> back<span class="op">:</span> Config <span class="op">=</span> <span class="pp">serde_yaml::</span>from_str(<span class="op">&amp;</span>text)<span class="op">?;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co">// JSON</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> text <span class="op">=</span> <span class="pp">serde_json::</span>to_string(<span class="op">&amp;</span>config)<span class="op">?;</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> back<span class="op">:</span> Config <span class="op">=</span> <span class="pp">serde_json::</span>from_str(<span class="op">&amp;</span>text)<span class="op">?;</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="co">// TOML</span></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> text <span class="op">=</span> <span class="pp">toml::</span>to_string(<span class="op">&amp;</span>config)<span class="op">?;</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> back<span class="op">:</span> Config <span class="op">=</span> <span class="pp">toml::</span>from_str(<span class="op">&amp;</span>text)<span class="op">?;</span></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a><span class="co">// YAML</span></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> text <span class="op">=</span> <span class="pp">serde_yaml::</span>to_string(<span class="op">&amp;</span>config)<span class="op">?;</span></span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> back<span class="op">:</span> Config <span class="op">=</span> <span class="pp">serde_yaml::</span>from_str(<span class="op">&amp;</span>text)<span class="op">?;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The same struct rendered in each format:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># TOML</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="dt">host</span> <span class="op">=</span> <span class="st">"localhost"</span></span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="dt">port</span> <span class="op">=</span> <span class="dv">8080</span></span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="dt">retries</span> <span class="op">=</span> <span class="dv">3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># YAML</span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">host</span><span class="kw">:</span><span class="at"> localhost</span></span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="dv">8080</span></span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="fu">retries</span><span class="kw">:</span><span class="at"> </span><span class="dv">3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># TOML</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="dt">host</span> <span class="op">=</span> <span class="st">"localhost"</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="dt">port</span> <span class="op">=</span> <span class="dv">8080</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="dt">retries</span> <span class="op">=</span> <span class="dv">3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># YAML</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="fu">host</span><span class="kw">:</span><span class="at"> localhost</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="dv">8080</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="fu">retries</span><span class="kw">:</span><span class="at"> </span><span class="dv">3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This is the payoff of the two-sided design: you describe your data once and gain every format the ecosystem supports. A config file in TOML, an API response in JSON, and a cache in MessagePack can all share the exact same struct definitions.</p>
 </section>
 <section id="customizing-the-mapping-with-attributes" class="level4">
 <h4 class="anchored" data-anchor-id="customizing-the-mapping-with-attributes">Customizing the Mapping with Attributes</h4>
 <p>Real-world data rarely matches Rust naming conventions exactly. JSON tends toward <code>camelCase</code>, your structs use <code>snake_case</code>, fields are sometimes optional, and external names do not always make valid Rust identifiers. serde’s <code>#[serde(...)]</code> attributes bridge the gap, much as clap’s <code>#[arg(...)]</code> attributes tune argument parsing.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde::</span><span class="op">{</span>Serialize<span class="op">,</span> Deserialize<span class="op">};</span></span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Serialize<span class="op">,</span> Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
-<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>serde<span class="at">(</span>rename_all <span class="op">=</span> <span class="st">"camelCase"</span><span class="at">)]</span>      <span class="co">// userId in JSON, user_id in Rust</span></span>
-<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> User <span class="op">{</span></span>
-<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>    user_id<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
-<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>serde<span class="at">(</span>rename <span class="op">=</span> <span class="st">"emailAddress"</span><span class="at">)]</span>   <span class="co">// override a single field's name</span></span>
-<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>    email<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
-<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>serde<span class="at">(</span><span class="kw">default</span><span class="at">)]</span>                   <span class="co">// missing -&gt; Default::default()</span></span>
-<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>    active<span class="op">:</span> <span class="dt">bool</span><span class="op">,</span></span>
-<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>serde<span class="at">(</span>skip_serializing_if <span class="op">=</span> <span class="st">"Option::is_none"</span><span class="at">)]</span></span>
-<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>    nickname<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;,</span>           <span class="co">// omitted from output when None</span></span>
-<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde::</span><span class="op">{</span>Serialize<span class="op">,</span> Deserialize<span class="op">};</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Serialize<span class="op">,</span> Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>serde<span class="at">(</span>rename_all <span class="op">=</span> <span class="st">"camelCase"</span><span class="at">)]</span>      <span class="co">// userId in JSON, user_id in Rust</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> User <span class="op">{</span></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>    user_id<span class="op">:</span> <span class="dt">u64</span><span class="op">,</span></span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>serde<span class="at">(</span>rename <span class="op">=</span> <span class="st">"emailAddress"</span><span class="at">)]</span>   <span class="co">// override a single field's name</span></span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>    email<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>serde<span class="at">(</span><span class="kw">default</span><span class="at">)]</span>                   <span class="co">// missing -&gt; Default::default()</span></span>
+<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>    active<span class="op">:</span> <span class="dt">bool</span><span class="op">,</span></span>
+<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>serde<span class="at">(</span>skip_serializing_if <span class="op">=</span> <span class="st">"Option::is_none"</span><span class="at">)]</span></span>
+<span id="cb44-15"><a href="#cb44-15" aria-hidden="true" tabindex="-1"></a>    nickname<span class="op">:</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;,</span>           <span class="co">// omitted from output when None</span></span>
+<span id="cb44-16"><a href="#cb44-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The most common attributes, container-level (on the type) and field-level (on a field):</p>
 <table class="caption-top table">
 <colgroup>
@@ -1615,37 +1691,37 @@ Config { host: "localhost", port: 8080, retries: 3 }</code></pre>
 <section id="nested-and-collection-types" class="level4">
 <h4 class="anchored" data-anchor-id="nested-and-collection-types">Nested and Collection Types</h4>
 <p>serde composes. Any type whose components all implement the traits gets them too, so structs of structs, <code>Vec&lt;T&gt;</code>, <code>HashMap&lt;K, V&gt;</code>, and <code>Option&lt;T&gt;</code> all work with no extra effort. Enums serialize as a tagged object by default.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde::</span><span class="op">{</span>Serialize<span class="op">,</span> Deserialize<span class="op">};</span></span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::collections::</span>HashMap<span class="op">;</span></span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Serialize<span class="op">,</span> Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
-<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Server <span class="op">{</span></span>
-<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>    name<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
-<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>    endpoints<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span>Endpoint<span class="op">&gt;,</span></span>
-<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>    metadata<span class="op">:</span> HashMap<span class="op">&lt;</span><span class="dt">String</span><span class="op">,</span> <span class="dt">String</span><span class="op">&gt;,</span></span>
-<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Serialize<span class="op">,</span> Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
-<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Endpoint <span class="op">{</span></span>
-<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a>    path<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
-<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a>    method<span class="op">:</span> Method<span class="op">,</span></span>
-<span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb42-16"><a href="#cb42-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-17"><a href="#cb42-17" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Serialize<span class="op">,</span> Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
-<span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>serde<span class="at">(</span>rename_all <span class="op">=</span> <span class="st">"UPPERCASE"</span><span class="at">)]</span></span>
-<span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> Method <span class="op">{</span></span>
-<span id="cb42-20"><a href="#cb42-20" aria-hidden="true" tabindex="-1"></a>    Get<span class="op">,</span></span>
-<span id="cb42-21"><a href="#cb42-21" aria-hidden="true" tabindex="-1"></a>    Post<span class="op">,</span></span>
-<span id="cb42-22"><a href="#cb42-22" aria-hidden="true" tabindex="-1"></a>    Delete<span class="op">,</span></span>
-<span id="cb42-23"><a href="#cb42-23" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"api"</span><span class="fu">,</span></span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"endpoints"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">"path"</span><span class="fu">:</span> <span class="st">"/users"</span><span class="fu">,</span> <span class="dt">"method"</span><span class="fu">:</span> <span class="st">"GET"</span> <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">"path"</span><span class="fu">:</span> <span class="st">"/users"</span><span class="fu">,</span> <span class="dt">"method"</span><span class="fu">:</span> <span class="st">"POST"</span> <span class="fu">}</span></span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"metadata"</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">"region"</span><span class="fu">:</span> <span class="st">"us-east-1"</span> <span class="fu">}</span></span>
-<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde::</span><span class="op">{</span>Serialize<span class="op">,</span> Deserialize<span class="op">};</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::collections::</span>HashMap<span class="op">;</span></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Serialize<span class="op">,</span> Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Server <span class="op">{</span></span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>    name<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>    endpoints<span class="op">:</span> <span class="dt">Vec</span><span class="op">&lt;</span>Endpoint<span class="op">&gt;,</span></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>    metadata<span class="op">:</span> HashMap<span class="op">&lt;</span><span class="dt">String</span><span class="op">,</span> <span class="dt">String</span><span class="op">&gt;,</span></span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Serialize<span class="op">,</span> Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
+<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Endpoint <span class="op">{</span></span>
+<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>    path<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
+<span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a>    method<span class="op">:</span> Method<span class="op">,</span></span>
+<span id="cb45-15"><a href="#cb45-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb45-16"><a href="#cb45-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-17"><a href="#cb45-17" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Serialize<span class="op">,</span> Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
+<span id="cb45-18"><a href="#cb45-18" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>serde<span class="at">(</span>rename_all <span class="op">=</span> <span class="st">"UPPERCASE"</span><span class="at">)]</span></span>
+<span id="cb45-19"><a href="#cb45-19" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> Method <span class="op">{</span></span>
+<span id="cb45-20"><a href="#cb45-20" aria-hidden="true" tabindex="-1"></a>    Get<span class="op">,</span></span>
+<span id="cb45-21"><a href="#cb45-21" aria-hidden="true" tabindex="-1"></a>    Post<span class="op">,</span></span>
+<span id="cb45-22"><a href="#cb45-22" aria-hidden="true" tabindex="-1"></a>    Delete<span class="op">,</span></span>
+<span id="cb45-23"><a href="#cb45-23" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode json code-with-copy"><code class="sourceCode json"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"api"</span><span class="fu">,</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"endpoints"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">"path"</span><span class="fu">:</span> <span class="st">"/users"</span><span class="fu">,</span> <span class="dt">"method"</span><span class="fu">:</span> <span class="st">"GET"</span> <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">"path"</span><span class="fu">:</span> <span class="st">"/users"</span><span class="fu">,</span> <span class="dt">"method"</span><span class="fu">:</span> <span class="st">"POST"</span> <span class="fu">}</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"metadata"</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">"region"</span><span class="fu">:</span> <span class="st">"us-east-1"</span> <span class="fu">}</span></span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="when-you-dont-have-a-struct" class="level4">
 <h4 class="anchored" data-anchor-id="when-you-dont-have-a-struct">When You Don’t Have a Struct</h4>
@@ -1653,19 +1729,19 @@ Config { host: "localhost", port: 8080, retries: 3 }</code></pre>
 <p><code>serde_json::Value</code></p>
 </div>
 <p>Sometimes the shape is unknown or genuinely dynamic, an arbitrary JSON blob you want to inspect at runtime. For that, <code>serde_json::Value</code> is an enum that can hold any JSON value, and the <code>json!</code> macro builds one inline.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde_json::</span><span class="op">{</span>json<span class="op">,</span> Value<span class="op">};</span></span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> data<span class="op">:</span> Value <span class="op">=</span> <span class="pp">serde_json::</span>from_str(<span class="st">r#"{ "name": "ada", "age": 36 }"#</span>)<span class="op">?;</span></span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Index into it like a tree; missing keys yield Value::Null</span></span>
-<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> name <span class="op">=</span> data[<span class="st">"name"</span>]<span class="op">.</span>as_str()<span class="op">.</span>unwrap_or(<span class="st">"unknown"</span>)<span class="op">;</span></span>
-<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> age  <span class="op">=</span> data[<span class="st">"age"</span>]<span class="op">.</span>as_u64()<span class="op">.</span>unwrap_or(<span class="dv">0</span>)<span class="op">;</span></span>
-<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Build a Value directly</span></span>
-<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> payload <span class="op">=</span> <span class="pp">json!</span>(<span class="op">{</span></span>
-<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"status"</span><span class="op">:</span> <span class="st">"ok"</span><span class="op">,</span></span>
-<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"items"</span><span class="op">:</span> [<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>]<span class="op">,</span></span>
-<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde_json::</span><span class="op">{</span>json<span class="op">,</span> Value<span class="op">};</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> data<span class="op">:</span> Value <span class="op">=</span> <span class="pp">serde_json::</span>from_str(<span class="st">r#"{ "name": "ada", "age": 36 }"#</span>)<span class="op">?;</span></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Index into it like a tree; missing keys yield Value::Null</span></span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> name <span class="op">=</span> data[<span class="st">"name"</span>]<span class="op">.</span>as_str()<span class="op">.</span>unwrap_or(<span class="st">"unknown"</span>)<span class="op">;</span></span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> age  <span class="op">=</span> data[<span class="st">"age"</span>]<span class="op">.</span>as_u64()<span class="op">.</span>unwrap_or(<span class="dv">0</span>)<span class="op">;</span></span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Build a Value directly</span></span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> payload <span class="op">=</span> <span class="pp">json!</span>(<span class="op">{</span></span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"status"</span><span class="op">:</span> <span class="st">"ok"</span><span class="op">,</span></span>
+<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"items"</span><span class="op">:</span> [<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>]<span class="op">,</span></span>
+<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span>)<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This is the escape hatch. Prefer a typed struct whenever the schema is known: you get validation, autocompletion, and compile-time guarantees that <code>Value</code> cannot offer. Reach for <code>Value</code> only when the data truly has no fixed shape.</p>
 </section>
 <section id="a-practical-pattern" class="level4">
@@ -1674,27 +1750,27 @@ Config { host: "localhost", port: 8080, retries: 3 }</code></pre>
 <p>Loading a Config File</p>
 </div>
 <p>Tying it back to something you do already, here is the idiom for reading a typed config from a TOML file. It is the natural companion to a <a href="#clap">clap</a> <code>--config &lt;FILE&gt;</code> flag.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde::</span>Deserialize<span class="op">;</span></span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::</span>fs<span class="op">;</span></span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>serde<span class="at">(</span>deny_unknown_fields<span class="at">)]</span>       <span class="co">// typo in the config -&gt; loud error, not silent ignore</span></span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> AppConfig <span class="op">{</span></span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>    host<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
-<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>serde<span class="at">(</span><span class="kw">default</span> <span class="op">=</span> <span class="st">"default_port"</span><span class="at">)]</span></span>
-<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>    port<span class="op">:</span> <span class="dt">u16</span><span class="op">,</span></span>
-<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>    log_level<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
-<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> default_port() <span class="op">-&gt;</span> <span class="dt">u16</span> <span class="op">{</span></span>
-<span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a>    <span class="dv">8080</span></span>
-<span id="cb45-15"><a href="#cb45-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb45-16"><a href="#cb45-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-17"><a href="#cb45-17" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> load_config(path<span class="op">:</span> <span class="op">&amp;</span><span class="dt">str</span>) <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>AppConfig<span class="op">,</span> <span class="dt">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="pp">std::error::</span><span class="bu">Error</span><span class="op">&gt;&gt;</span> <span class="op">{</span></span>
-<span id="cb45-18"><a href="#cb45-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> text <span class="op">=</span> <span class="pp">fs::</span>read_to_string(path)<span class="op">?;</span></span>
-<span id="cb45-19"><a href="#cb45-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> config<span class="op">:</span> AppConfig <span class="op">=</span> <span class="pp">toml::</span>from_str(<span class="op">&amp;</span>text)<span class="op">?;</span></span>
-<span id="cb45-20"><a href="#cb45-20" aria-hidden="true" tabindex="-1"></a>    <span class="cn">Ok</span>(config)</span>
-<span id="cb45-21"><a href="#cb45-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">serde::</span>Deserialize<span class="op">;</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::</span>fs<span class="op">;</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Deserialize<span class="op">,</span> <span class="bu">Debug</span><span class="at">)]</span></span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>serde<span class="at">(</span>deny_unknown_fields<span class="at">)]</span>       <span class="co">// typo in the config -&gt; loud error, not silent ignore</span></span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> AppConfig <span class="op">{</span></span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>    host<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">#[</span>serde<span class="at">(</span><span class="kw">default</span> <span class="op">=</span> <span class="st">"default_port"</span><span class="at">)]</span></span>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a>    port<span class="op">:</span> <span class="dt">u16</span><span class="op">,</span></span>
+<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>    log_level<span class="op">:</span> <span class="dt">String</span><span class="op">,</span></span>
+<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> default_port() <span class="op">-&gt;</span> <span class="dt">u16</span> <span class="op">{</span></span>
+<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a>    <span class="dv">8080</span></span>
+<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb48-16"><a href="#cb48-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-17"><a href="#cb48-17" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> load_config(path<span class="op">:</span> <span class="op">&amp;</span><span class="dt">str</span>) <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>AppConfig<span class="op">,</span> <span class="dt">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="pp">std::error::</span><span class="bu">Error</span><span class="op">&gt;&gt;</span> <span class="op">{</span></span>
+<span id="cb48-18"><a href="#cb48-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> text <span class="op">=</span> <span class="pp">fs::</span>read_to_string(path)<span class="op">?;</span></span>
+<span id="cb48-19"><a href="#cb48-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> config<span class="op">:</span> AppConfig <span class="op">=</span> <span class="pp">toml::</span>from_str(<span class="op">&amp;</span>text)<span class="op">?;</span></span>
+<span id="cb48-20"><a href="#cb48-20" aria-hidden="true" tabindex="-1"></a>    <span class="cn">Ok</span>(config)</span>
+<span id="cb48-21"><a href="#cb48-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>deny_unknown_fields</code> turns a misspelled key in the config file into an immediate, descriptive error instead of a silently-ignored setting, which is exactly the failure mode you want surfaced early.</p>
 <div class="see-more">
 <p>See the <a href="https://serde.rs/" target="_blank" rel="noopener noreferrer">serde documentation</a>, the <a href="https://serde.rs/attributes.html" target="_blank" rel="noopener noreferrer">attribute reference</a>, and the <a href="https://docs.rs/serde_json/latest/serde_json/" target="_blank" rel="noopener noreferrer">serde_json docs</a> for the complete catalog.</p>

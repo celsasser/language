@@ -8,6 +8,7 @@ The Build System
 :::
 
 ![](images/rust-00.png){width=2.25in style="float: left; padding: 0 1em"}
+
 Cargo is Rust's build tool, package manager, and test runner. You'll use it for everything.
 
 ```bash
@@ -79,12 +80,12 @@ The key insight is that *editions are per-crate, and all editions can link toget
 
 What changes between editions is language syntax and a small number of semantic rules, not the standard library. The standard library API is versioned by the Rust release channel separately. An example: in edition 2015 you had to write `extern crate serde;` at the top of `main.rs` to bring an external crate into scope. In 2018 that was removed entirely. Both editions call the same `serde` functions at runtime.
 
-| Edition | Notable changes                                                                                                                                           |
-|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 2015    | Original Rust. `extern crate` required. Old module path rules.                                                                                            |
+| Edition | Notable changes                                                                                                                                                      |
+|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2015    | Original Rust. `extern crate` required. Old module path rules.                                                                                                       |
 | 2018    | `extern crate` no longer needed. Clearer `use` paths (`crate::`, `super::`). `async`/`await` syntax. `?` usable in `main`. [Non-lexical lifetimes](rust-ho.qmd#NLL). |
-| 2021    | More precise closure captures (captures only what it uses, not the whole struct). `IntoIterator` implemented for arrays. Cargo feature resolver v2.       |
-| 2024    | `gen` blocks and coroutines. `impl Trait` lifetime improvements. Stricter `unsafe` requirements.                                                          |
+| 2021    | More precise closure captures (captures only what it uses, not the whole struct). `IntoIterator` implemented for arrays. Cargo feature resolver v2.                  |
+| 2024    | `gen` blocks and coroutines. `impl Trait` lifetime improvements. Stricter `unsafe` requirements.                                                                     |
 
 Migrating is low-friction. Running `cargo fix --edition` rewrites the parts of your code that need updating automatically, then you change the `edition` field in `Cargo.toml`. Most migrations take a few minutes.
 
@@ -278,6 +279,83 @@ Cargo's environment variable list is very long, so we've picked out some fan fav
 | `CARGO_BUILD_TARGET_DIR`              | Information   | The default output directory, see [`build.target-dir`](https://doc.rust-lang.org/cargo/reference/config.html#buildtarget-dir){target="_blank"}.                                                                                                                                                                                                          |
 | `CARGO_BUILD_BUILD_DIR`               | Information   | The default build directory, see [`build.build-dir`](https://doc.rust-lang.org/cargo/reference/config.html#buildbuild-dir){target="_blank"}.                                                                                                                                                                                                             |
 | `CARGO_BUILD_RUSTFLAGS`               | Information   | Extra rustc flags, see [`build.rustflags`](https://doc.rust-lang.org/cargo/reference/config.html#buildrustflags){target="_blank"}.                                                                                                                                                                                                                       |
+
+### The Build
+::: {.todo}
+I created this section so that I had a place to put the function of `build.rs` (which also could use some work). It's lacking just about everything. Populate the build section.
+:::
+
+#### `build.rs`
+`build.rs` is one of those Cargo conventions that feels like magic until you know the rule behind it.
+
+##### What is it?
+::: {.subheading}
+Is it like a preprocessor?
+:::
+
+It is sort of like a preprocessor, but it's a useful distinction to draw. A C preprocessor does textual substitution inside your source before compilation. `build.rs` doesn't touch or rewrite your `.rs` files at all. It's better thought of as a *pre-build hook*: an arbitrary Rust program that runs first and influences the build *from the outside* via three main channels:
+
+- **Environment variables** for `env!()` (your version hash).
+- **Generated code files** written into `OUT_DIR`, which your crate then pulls in with `include!(concat!(env!("OUT_DIR"), "/generated.rs"))`. *This* part is the closest thing to preprocessing/codegen.
+- **Linker/compiler directives** printed to Cargo (link a native library, add a search path, set a `cfg` flag).
+
+##### Run by Magic?
+::: {.subheading}
+How does Rust knows to run it?
+:::
+
+It's pure *convention over configuration*. Cargo automatically looks for a file named exactly `build.rs` in the package root (next to `Cargo.toml`). If it exists, Cargo treats it as the package's *build script*, compiles it as a standalone binary, and runs it *before* compiling your actual crate. That's the whole rule: right name, right location. Nothing in `Cargo.toml` needs to point at it. If you want to opt out of the convention or use a different path, *that's* when you configure it explicitly:
+
+```toml
+[package]
+build = "my_build_script.rs"   # custom path
+# or
+build = false                   # disable auto-detection entirely
+```
+
+So the absence of configuration in your other project isn't Rust doing something implicit and hidden; it's you relying on the default that `build = "build.rs"` is assumed.
+
+##### The Execution Model
+This is the key mental model:
+
+1. Cargo compiles `build.rs` into its own executable (it can use dependencies you list under `[build-dependencies]` in `Cargo.toml`).
+2. Cargo runs that executable before building your crate.
+3. The build script communicates back to Cargo by printing specially-formatted lines to stdout, like `cargo:rustc-env=...` or `cargo:rerun-if-changed=...`.
+4. Then your crate compiles, with whatever the build script set up now in effect.
+
+Your build-hash-in-the-version case is a textbook example. The script runs `git`, captures the hash, and prints something like:
+
+```rust
+// build.rs
+fn main() {
+    let hash = /* run `git rev-parse --short HEAD` */;
+    println!("cargo:rustc-env=BUILD_HASH={hash}");
+}
+```
+
+Then in your actual source you read it at compile time with `env!("BUILD_HASH")`. The value gets baked into the binary as a string literal.
+
+##### Intended Use
+How is it intended to be used?
+
+- **Compiling native/C code** and linking it (via the `cc` crate). This is the single most common use.
+- **Code generation**: protobuf (`prost`/`tonic`), FFI bindings (`bindgen`), parsers, big lookup tables computed at build time.
+- **Baking in build metadata**: git hash, build timestamp, compiler version, target triple (your case; the `vergen` crate automates exactly this).
+- **Feature/environment detection**: probing whether a system library exists and emitting `cfg` flags accordingly.
+
+##### Caching
+::: {.subheading}
+Put many a good man in the asylum
+:::
+
+By default Cargo re-runs the build script when *any* file in the package changes, and caches otherwise. Build scripts control this explicitly with:
+
+```rust
+println!("cargo:rerun-if-changed=path/to/file");
+println!("cargo:rerun-if-env-changed=SOME_VAR");
+```
+
+The moment you emit any `rerun-if-*` line, you *override* the default and Cargo will *only* re-run for the conditions you list. This bites people with git-hash scripts: the hash changes on every commit, but no tracked *file* Cargo watches necessarily changed, so the baked-in hash can go stale. The common workaround is to watch `.git/HEAD` and the relevant ref, or to force a re-run each time.
 
 ::: {.see-more}
 See [Packages, Crates, and Modules](https://doc.rust-lang.org/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html){target="_blank" rel="noopener noreferrer"} in *The Rust Programming Language* for more information.

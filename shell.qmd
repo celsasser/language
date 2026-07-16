@@ -266,12 +266,12 @@ The whole family shares one shape: `${` *parameter operator word* `}`. The *para
 
 These four are the workhorses. Each takes a **glob pattern** (the same wildcards as [globbing](#globbing), not a regex) and removes the matched piece from one end of the value:
 
-| Expansion       | Removes                                    | Mnemonic                          |
-|-----------------|--------------------------------------------|-----------------------------------|
-| `${var#pat}`    | shortest match of `pat` from the **front** | `#` is left of `$` on the keyboard |
-| `${var##pat}`   | longest match of `pat` from the **front**  | doubled = greedy                  |
-| `${var%pat}`    | shortest match of `pat` from the **back**  | `%` is right of `$`               |
-| `${var%%pat}`   | longest match of `pat` from the **back**   | doubled = greedy                  |
+| Expansion     | Removes                                    | Mnemonic                           |
+|---------------|--------------------------------------------|------------------------------------|
+| `${var#pat}`  | shortest match of `pat` from the **front** | `#` is left of `$` on the keyboard |
+| `${var##pat}` | longest match of `pat` from the **front**  | doubled = greedy                   |
+| `${var%pat}`  | shortest match of `pat` from the **back**  | `%` is right of `$`                |
+| `${var%%pat}` | longest match of `pat` from the **back**   | doubled = greedy                   |
 
 The single/double distinction is about greed, and it only bites when the pattern contains a `*`:
 
@@ -309,7 +309,6 @@ The colon is the difference between "unset or empty" (with `:`) and merely "unse
 ### Slicing, Length, and Substitution
 ::: {.subheading}
 The rest of the toolkit: substrings, length, search-and-replace, case.
-
 :::
 
 The remaining operators round out the string library. These are bash/zsh features (not in strict POSIX `sh`), so reserve them for scripts with a `bash` shebang:
@@ -328,10 +327,11 @@ echo "${name,,}"         # deploy-prod-2024        lower-case (bash 4+; zsh: ${n
 
 Substitution (`${var/from/to}`) is the in-shell `sed s///` for the common case, and like the trimming operators it takes a glob pattern for `from`, not a regex.
 
-### Argument Parsing: The Real-World Loop
+### Argument Parsing
 ::: {.subheading}
-Where parameter expansion, `case`, and `shift` come together.
+The Real-World Loop: where parameter expansion, `case`, and `shift` come together.
 :::
+
 
 Nearly every hand-written CLI parser is the same shape: a `while` loop over the positional arguments, a `case` that dispatches on the current one, and `shift` to advance. Here is the pattern in full, the kind of loop you will find at the top of countless real scripts:
 
@@ -378,20 +378,52 @@ The `-r|--run` branch unconditionally swallows the following argument as `SD_ROO
 ::: {.callout-note title="How should an option take its argument? Prefer `--option=value`."}
 There are three conventions in circulation, and they are not equally safe:
 
-| Style                | Example              | Cost                                                            |
-|----------------------|----------------------|----------------------------------------------------------------|
-| **Attached, `=`**    | `--profile=release`  | One token, unambiguous. `${1#--profile=}` extracts it locally. |
-| **Separate token**   | `--profile release`  | Two tokens; the parser must look ahead and `shift` twice.       |
-| **Glued short form** | `-prelease`          | Terse, but ambiguous with bundling (`-p -r`), and unreadable.   |
+| Style                | Example             | Cost                                                           |
+|----------------------|---------------------|----------------------------------------------------------------|
+| **Attached, `=`**    | `--profile=release` | One token, unambiguous. `${1#--profile=}` extracts it locally. |
+| **Separate token**   | `--profile release` | Two tokens; the parser must look ahead and `shift` twice.      |
+| **Glued short form** | `-prelease`         | Terse, but ambiguous with bundling (`-p -r`), and unreadable.  |
 
 The **attached `--option=value`** form is the most bullet-proof, and your instinct is right. Its value travels *with* the flag as a single argument, so there is no "is the next token my value or the next flag?" lookahead, no risk of consuming a flag by accident (the bug above), and no ambiguity if the value itself starts with a dash (`--pattern=-foo` is unmistakable, whereas `--pattern -foo` looks like two flags). The parser branch stays entirely local: match `--option=*`, then `${1#--option=}`. The separate-token form is what most GNU tools also accept, and it is fine when you handle the lookahead deliberately, but the `=` form removes the entire class of "who owns the next argument" mistakes. Reserve the glued short form for genuine single-letter boolean flags, where bundling (`-rf`) is a feature, not a hazard.
 
 For anything beyond a handful of flags, reach for a real parser instead of hand-rolling: bash's built-in `getopts` (POSIX short options), the GNU `getopt` program (long options too), or, honestly, a different language once the flag matrix gets wide.
 :::
 
-### `getopts`: The Built-in Parser
+### Optional Values Need Two Patterns
 ::: {.subheading}
-The POSIX shell's own option parser, for when the hand-rolled loop gets tedious.
+When a flag's `=value` is optional, bare `--flag` and `--flag=value` are different tokens.
+:::
+
+Once you commit to the `=` convention, a subtlety surfaces the moment a flag's value becomes *optional*. Suppose `--run` should enable auto-run on its own, but also accept an optional `--run=<path>` to override a default. The trap: the glob `--run=*` requires the literal `=` to be present, so a bare `--run` **does not match it**. You need two branches, one per spelling:
+
+```bash
+--run)                           # bare: enable, keep the default path
+    AUTO_RUN=true
+    shift
+    ;;
+--run=*)                         # with a value: enable, and maybe override
+    AUTO_RUN=true
+    value="${1#--run=}"          # everything after '='; may be the empty string
+    if [ -n "$value" ]; then     # only override when a real path was given
+        SD_ROOT="$value"
+    fi
+    shift
+    ;;
+```
+
+This also settles a tempting shortcut: "can't I just assign `${1#--run=}` to a variable and test whether it's empty?" You can, but only to answer *one* of three separate questions, and it is easy to conflate them:
+
+| What you want to know                       | How you actually test it                                                                      |
+|---------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Was `--run` passed at all?                  | The `case` pattern. Entering **either** branch means yes; do not inspect a variable for this. |
+| Did they use `--run=value` or bare `--run`? | **Which** branch fired. Matching `--run=*` means a value was supplied (possibly empty).       |
+| Was the supplied value non-empty?           | `[ -n "$value" ]` (or `[ -z "$value" ]`), always quoted.                                      |
+
+Emptiness alone cannot distinguish the first two rows, because `SD_ROOT` ends up empty both when the user passes nothing (`--run`) and when they pass an empty value (`--run=`). That ambiguity is exactly why a separate boolean like `AUTO_RUN` earns its place: it records "did they ask to run?" unambiguously, set the instant either branch fires, independent of whether a path came with it. Reserve the emptiness test for the narrow, honest question it answers well, "is there a usable value here?", and let the `case` structure answer the rest.
+
+### The Built-in Parser `getopts`
+::: {.subheading}
+The POSIX shell's own option parser, for when the hand-rolled loop gets tedious
 :::
 
 The hand-rolled `while`/`case`/`shift` loop is honest and portable, but it grows repetitive: every flag needs its own branch, its own `shift` bookkeeping, and its own error handling. `getopts` is a POSIX built-in that absorbs that boilerplate for **short options** (`-v`, `-o file`, and bundled forms like `-vo`). It is not a separate program; it is a shell keyword you call once per iteration of a `while` loop, and it walks the arguments for you.
@@ -1290,6 +1322,10 @@ Almost every shell task decomposes the same way: **produce** a stream (`ls`, `fi
 
 ## Gnarly Breakdowns
 ### `find` in a Loop
+::: {.subheading}
+The bulletproof way to iterate over files found by `find`, including files whose names contain spaces, tabs, newlines, or anything else.
+:::
+
 ```shell
 find '<path>' -name "<filter>" -print0 | while IFS= read -r -d '' f
 do
@@ -1297,10 +1333,6 @@ do
     echo "$f"
 done
 ```
-
-::: {.subheading}
-The bulletproof way to iterate over files found by `find`, including files whose names contain spaces, tabs, newlines, or anything else.
-:::
 
 This one earns its place in "Gnarly Breakdowns" because every piece of it exists to defend against a single enemy: **filenames can contain almost any character**. On a Unix filesystem the only two bytes forbidden in a filename are `/` (the path separator) and the null byte `\0`. *Everything else is fair game*: spaces, tabs, newlines, quotes, glob characters. A robust loop over filenames has to treat the filename as opaque bytes, and that constraint is what shapes every flag below.
 

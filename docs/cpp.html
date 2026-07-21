@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-07-01">
+<meta name="dcterms.date" content="2026-07-21">
 
 <title>The C++ Language – Computer Language Notebook</title>
 <style>
@@ -23,6 +23,41 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -317,10 +352,27 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#small-but-pervasive-differences" id="toc-small-but-pervasive-differences" class="nav-link" data-scroll-target="#small-but-pervasive-differences">Small but Pervasive Differences</a></li>
   </ul></li>
+  <li><a href="#lambdas-and-modern-c" id="toc-lambdas-and-modern-c" class="nav-link" data-scroll-target="#lambdas-and-modern-c">Lambdas and Modern C++</a>
+  <ul>
+  <li><a href="#auto-and-type-deduction" id="toc-auto-and-type-deduction" class="nav-link" data-scroll-target="#auto-and-type-deduction"><code>auto</code> and Type Deduction</a>
+  <ul class="collapse">
+  <li><a href="#two-important-rules" id="toc-two-important-rules" class="nav-link" data-scroll-target="#two-important-rules">Two Important Rules</a></li>
+  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a></li>
+  </ul></li>
+  <li><a href="#lambdas" id="toc-lambdas" class="nav-link" data-scroll-target="#lambdas">Lambdas</a>
+  <ul class="collapse">
+  <li><a href="#capture-modes" id="toc-capture-modes" class="nav-link" data-scroll-target="#capture-modes">Capture Modes</a></li>
+  <li><a href="#mutable-and-generic-lambdas" id="toc-mutable-and-generic-lambdas" class="nav-link" data-scroll-target="#mutable-and-generic-lambdas"><code>mutable</code> and Generic Lambdas</a></li>
+  <li><a href="#storing-a-lambda-auto-vs-stdfunction" id="toc-storing-a-lambda-auto-vs-stdfunction" class="nav-link" data-scroll-target="#storing-a-lambda-auto-vs-stdfunction">Storing a Lambda: <code>auto</code> vs <code>std::function</code></a></li>
+  <li><a href="#in-practice-lambdas-and-algorithms" id="toc-in-practice-lambdas-and-algorithms" class="nav-link" data-scroll-target="#in-practice-lambdas-and-algorithms">In Practice: Lambdas and Algorithms</a></li>
+  <li><a href="#lambdas-across-languages" id="toc-lambdas-across-languages" class="nav-link" data-scroll-target="#lambdas-across-languages">Lambdas Across Languages</a></li>
+  </ul></li>
+  <li><a href="#structured-bindings" id="toc-structured-bindings" class="nav-link" data-scroll-target="#structured-bindings">Structured Bindings</a></li>
+  <li><a href="#constexpr-and-if-constexpr" id="toc-constexpr-and-if-constexpr" class="nav-link" data-scroll-target="#constexpr-and-if-constexpr"><code>constexpr</code> and <code>if constexpr</code></a></li>
+  </ul></li>
   <li><a href="#types-and-declarations" id="toc-types-and-declarations" class="nav-link" data-scroll-target="#types-and-declarations">Types and Declarations</a>
   <ul>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
-  <li><a href="#auto-and-type-deduction" id="toc-auto-and-type-deduction" class="nav-link" data-scroll-target="#auto-and-type-deduction"><code>auto</code> and Type Deduction</a></li>
   <li><a href="#enum-class" id="toc-enum-class" class="nav-link" data-scroll-target="#enum-class"><code>enum class</code></a></li>
   <li><a href="#uniform-initialization" id="toc-uniform-initialization" class="nav-link" data-scroll-target="#uniform-initialization">Uniform Initialization</a></li>
   </ul></li>
@@ -383,7 +435,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 1, 2026</p>
+      <p class="date">July 21, 2026</p>
     </div>
   </div>
   
@@ -407,20 +459,94 @@ exceptions vs. Result). Keep examples idiomatic modern C++ (C++17/20), not
 -->
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<!-- IMAGE: C++ logo, same float-left treatment as c.qmd's Overview. -->
-<!-- What C++ is, and the one-sentence thesis: C++ is not "C with classes plus
-extras" but a distinct multi-paradigm language built on the principle of
-zero-overhead abstraction. Bjarne Stroustrup, Bell Labs, 1979 ("C with Classes")
-→ standardized C++98, then the modern era: C++11, 14, 17, 20, 23. Cross-link
-back to the "C is not C++" callout in c.qmd. -->
+<p><img src="images/cpp-00.svg" class="img-fluid" style="float: left; padding: 0 2em 0 1em;width:2in"></p>
+<p><br><strong>C++</strong> is a general-purpose, multi-paradigm systems language that grew out of C but is no longer the same language. It is tempting to read it as “C with classes plus a few extras,” and its syntax invites the mistake, yet that framing badly undersells it. C++ supports procedural, object-oriented, generic, and functional styles, and the modern language leans on all four at once. What holds them together is a single organizing principle: <em>zero-overhead abstraction</em>. You do not pay for what you do not use, and the abstractions you do use should cost no more than the equivalent code you would have written by hand. This is what lets C++ compete with C on the metal while offering expressiveness closer to a high-level language.</p>
+<p>The language began as <strong>“C with Classes”</strong>, written by Bjarne Stroustrup at Bell Labs in 1979 and renamed C++ in 1983. It was first standardized as <strong>C++98</strong>, but the version most people mean today is <strong>modern C++</strong>: the run of standards from C++11 onward that added move semantics, lambdas, smart pointers, and much else. Idiomatic modern C++ looks strikingly different from the C++98 of textbook lore, and this chapter targets that modern dialect throughout. If you have read the <a href="./c.html">C chapter</a>, keep its <a href="./c.html#overview">“C is not C++”</a> callout in mind: the two languages share ancestry and much syntax, but their idioms and philosophies diverge sharply.</p>
+<div style="clear: both">
+
+</div>
 <section id="a-short-history-of-the-standard" class="level3">
 <h3 class="anchored" data-anchor-id="a-short-history-of-the-standard">A Short History of the Standard</h3>
-<!-- Timeline table paralleling c.qmd's: C with Classes (1979) → C++98 → C++03
-→ C++11 (the "modern C++" inflection: auto, move semantics, lambdas, smart
-pointers, range-for) → C++14 → C++17 (structured bindings, optional, variant,
-filesystem) → C++20 (concepts, ranges, coroutines, modules) → C++23. Emphasize
-that "modern C++" means C++11 and later, and idiomatic modern C++ looks very
-different from C++98. -->
+<p>Like C, C++ has evolved through a sequence of ISO standards, and the standard a codebase targets explains which features are available to it. Unlike C, whose revisions were mostly small and additive, C++ went through a genuine inflection at <em>C++11</em>, after which the language and its idioms changed enough that the community draws a line there and calls everything past it “modern C++.” The revisions since have arrived on a steady three-year cadence, each one substantial.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 5%">
+<col style="width: 13%">
+<col style="width: 67%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Standard</th>
+<th style="text-align: center;">Year</th>
+<th style="text-align: center;">Common name</th>
+<th style="text-align: left;">What it introduced</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">C with Classes</td>
+<td style="text-align: center;">1979</td>
+<td style="text-align: center;">(precursor)</td>
+<td style="text-align: left;">Stroustrup’s Bell Labs research project: classes, member functions, and basic inheritance grafted onto C.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">C++98</td>
+<td style="text-align: center;">1998</td>
+<td style="text-align: center;">C++98</td>
+<td style="text-align: left;">The first ISO standard. Templates, the STL (containers, iterators, algorithms), exceptions, namespaces, and RTTI.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C++03</td>
+<td style="text-align: center;">2003</td>
+<td style="text-align: center;">C++03</td>
+<td style="text-align: left;">A defect-report release. No new features; wording fixes and clarifications only.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">C++11</td>
+<td style="text-align: center;">2011</td>
+<td style="text-align: center;">“Modern C++”</td>
+<td style="text-align: left;">The inflection point: <code>auto</code>, move semantics and rvalue references, lambdas, smart pointers (<code>unique_ptr</code>/<code>shared_ptr</code>), range-based <code>for</code>, <code>nullptr</code>, <code>enum class</code>, uniform initialization.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C++14</td>
+<td style="text-align: center;">2014</td>
+<td style="text-align: center;">C++14</td>
+<td style="text-align: left;">A polish release for C++11: generic lambdas (<code>auto</code> parameters), lambda init-capture, relaxed <code>constexpr</code>, return-type deduction.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">C++17</td>
+<td style="text-align: center;">2017</td>
+<td style="text-align: center;">C++17</td>
+<td style="text-align: left;">Structured bindings, <code>std::optional</code>, <code>std::variant</code>, <code>if constexpr</code>, the <code>&lt;filesystem&gt;</code> library, guaranteed copy elision.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C++20</td>
+<td style="text-align: center;">2020</td>
+<td style="text-align: center;">C++20</td>
+<td style="text-align: left;">The largest revision since C++11: concepts, ranges, coroutines, and modules, plus the three-way comparison (<code>&lt;=&gt;</code>) operator.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">C++23</td>
+<td style="text-align: center;">2023</td>
+<td style="text-align: center;">C++23</td>
+<td style="text-align: left;"><code>std::expected</code>, <code>std::print</code>, deducing <code>this</code>, and quality-of-life library additions.</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled" title="&quot;Modern C++&quot; means C++11 and later">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>“Modern C++” means C++11 and later
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>When practitioners say “modern C++,” they mean C++11 onward. The difference is not cosmetic: idiomatic modern C++ favors <code>auto</code>, range-based loops, smart pointers over raw <code>new</code>/<code>delete</code>, and lambdas passed to standard algorithms, none of which existed in C++98. If a code sample here looks unfamiliar next to older C++ you have seen, this is usually why. Compilers select a standard with a flag such as <code>-std=c++17</code> or <code>-std=c++20</code>; there is rarely a reason to target anything below C++17 for new work.</p>
+</div>
+</div>
 </section>
 <section id="the-c-philosophy" class="level3">
 <h3 class="anchored" data-anchor-id="the-c-philosophy">The C++ Philosophy</h3>
@@ -440,7 +566,7 @@ layers on, each expanded in its own section below. This is the "map." -->
 <ul>
 <li>References (<code>&amp;</code>) vs.&nbsp;pointers</li>
 <li><code>class</code> / access control / member functions</li>
-<li>Constructors, destructors, and <strong>RAII</strong></li>
+<li>Constructors, destructors, and RAII</li>
 <li>Function and operator overloading</li>
 <li>Templates (generic programming)</li>
 <li>The Standard Template Library (STL)</li>
@@ -456,6 +582,265 @@ names as types without typedef, function overloading changing name-mangling,
 `nullptr` vs NULL, uniform initialization braces. Quick table. -->
 </section>
 </section>
+<section id="lambdas-and-modern-c" class="level2">
+<h2 class="anchored" data-anchor-id="lambdas-and-modern-c">Lambdas and Modern C++</h2>
+<div class="subheading">
+<p>Anonymous functions and the C++11-and-later additions</p>
+</div>
+<p>Several of the features that define modern C++ are additions layered on top of the C++98 core rather than replacements for it. This section houses them. We start with <code>auto</code>, since it underpins how the others read, then move to the <strong>lambda</strong>: an anonymous function you can write inline and pass around like a value. Other members of this cluster (structured bindings, <code>constexpr</code>) get their own sub-sections later; the <a href="#concepts-c20"><code>concepts</code></a> that constrain templates live under <a href="#templates">Templates</a>, since that is where they do their work.</p>
+<section id="auto-and-type-deduction" class="level3">
+<h3 class="anchored" data-anchor-id="auto-and-type-deduction"><code>auto</code> and Type Deduction</h3>
+<div class="subheading">
+<p>Let the compiler name the type</p>
+</div>
+<p>In C, every variable’s type is spelled out at its declaration. C++11 introduced <code>auto</code>, which tells the compiler to deduce the type from the initializer. The value is still statically typed and the deduction happens entirely at compile time; <code>auto</code> is not dynamic typing, and there is zero runtime cost. It is a convenience for the programmer, not a change to the type system.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> count <span class="op">=</span> <span class="dv">0</span><span class="op">;</span>          <span class="co">// int</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> ratio <span class="op">=</span> <span class="fl">3.14</span><span class="op">;</span>       <span class="co">// double</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> name <span class="op">=</span> <span class="st">"hello"</span><span class="op">;</span>     <span class="co">// const char*  (a C string literal, not std::string)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For simple scalars <code>auto</code> buys little, and spelling the type is often clearer. Its value shows up with the verbose types that pervade modern C++, above all iterator and template types, where the explicit spelling is long, brittle, and adds no information:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>map<span class="op">&lt;</span><span class="bu">std::</span>string<span class="op">,</span> <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;&gt;</span> table<span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Without auto: the type is a mouthful, and repeating it invites mistakes.</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>map<span class="op">&lt;</span><span class="bu">std::</span>string<span class="op">,</span> <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;&gt;::</span>iterator it <span class="op">=</span> table<span class="op">.</span>begin<span class="op">();</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">// With auto: identical meaning, and it survives a change to table's type.</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> it <span class="op">=</span> table<span class="op">.</span>begin<span class="op">();</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="two-important-rules" class="level4">
+<h4 class="anchored" data-anchor-id="two-important-rules">Two Important Rules</h4>
+<p>Two rules are worth internalizing early.</p>
+<ol type="1">
+<li>Unadorned <code>auto</code> strips references and <code>const</code>: it deduces a value type, so <code>auto x = some_ref;</code> copies. To preserve them, say so explicitly with <code>const auto&amp;</code>, which is the idiomatic way to name a cheap read-only alias:</li>
+</ol>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="bu">std::</span>string<span class="op">&amp;</span> first <span class="op">=</span> names<span class="op">.</span>front<span class="op">();</span>   <span class="co">// explicit type</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> first <span class="op">=</span> names<span class="op">.</span>front<span class="op">();</span>           <span class="co">// same thing, deduced</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ol start="2" type="1">
+<li><code>auto</code> needs an initializer to deduce from; <code>auto x;</code> is an error. For the flip case, deducing the type <em>of an existing expression</em> without evaluating it, C++ provides <code>decltype</code>, mostly used in generic code where a type must track whatever the caller supplied:</li>
+</ol>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> a <span class="op">=</span> <span class="dv">5</span><span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">decltype</span><span class="op">(</span>a<span class="op">)</span> b <span class="op">=</span> <span class="dv">10</span><span class="op">;</span>    <span class="co">// b is int, taken from a's declared type</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="examples" class="level4">
+<h4 class="anchored" data-anchor-id="examples">Examples</h4>
+<p>With those rules in hand, here is a spread of deductions worth reading closely. The comment after each line names the type <code>auto</code> resolves to, and the surprises are exactly the cases where reference and <code>const</code> get stripped:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;</span> numbers<span class="op">{</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">};</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="bu">std::</span>string label <span class="op">=</span> <span class="st">"id"</span><span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> x <span class="op">=</span> numbers<span class="op">.</span>size<span class="op">();</span>      <span class="co">// std::size_t  (an unsigned type, not int)</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> y <span class="op">=</span> numbers<span class="op">[</span><span class="dv">0</span><span class="op">];</span>          <span class="co">// int          (a copy; operator[] returns int&amp;, but auto drops the &amp;)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span><span class="op">&amp;</span> z <span class="op">=</span> numbers<span class="op">[</span><span class="dv">0</span><span class="op">];</span>         <span class="co">// int&amp;         (a live reference into the vector)</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> s <span class="op">=</span> label<span class="op">;</span>               <span class="co">// std::string  (a copy; the top-level const is dropped)</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> r <span class="op">=</span> label<span class="op">;</span>        <span class="co">// const std::string&amp;  (no copy; const and &amp; preserved because you asked)</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> ptr <span class="op">=</span> <span class="op">&amp;</span>numbers<span class="op">;</span>          <span class="co">// std::vector&lt;int&gt;*</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> make <span class="op">=</span> <span class="bu">std::</span>make_unique<span class="op">&lt;</span><span class="bu">std::</span>string<span class="op">&gt;(</span><span class="st">"hi"</span><span class="op">);</span>   <span class="co">// std::unique_ptr&lt;std::string&gt;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span> n <span class="op">:</span> numbers<span class="op">)</span> <span class="op">{</span> <span class="op">}</span>    <span class="co">// n is int   (each element copied per iteration)</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span><span class="op">&amp;</span> n <span class="op">:</span> numbers<span class="op">)</span> <span class="op">{</span> <span class="op">}</span>   <span class="co">// n is int&amp;  (mutate elements in place)</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> n <span class="op">:</span> numbers<span class="op">)</span> <span class="op">{</span> <span class="op">}</span>  <span class="co">// n is const int&amp;  (read-only, no copy)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The pattern to carry away: bare <code>auto</code> gives you a fresh value with references and top-level <code>const</code> peeled off, and you add <code>&amp;</code> or <code>const&amp;</code> back when you want to bind to the original rather than copy it.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Use `auto` to remove noise, not information">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Use <code>auto</code> to remove noise, not information
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>auto</code> is at its best when the type is obvious from the right-hand side or too verbose to be worth spelling (<code>auto widget = std::make_unique&lt;Widget&gt;();</code>, iterators, lambda results). It hurts when the type is the point and the initializer does not reveal it: <code>auto result = compute();</code> tells a reader nothing. The C++ Core Guidelines favor <code>auto</code> where it improves readability, which is a judgment call, not an always-or-never rule.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="lambdas" class="level3">
+<h3 class="anchored" data-anchor-id="lambdas">Lambdas</h3>
+<div class="subheading">
+<p>Functions as values, written inline</p>
+</div>
+<p>Before C++11, passing behavior into a function meant one of two awkward things: a free function referenced by pointer, or a hand-written <strong>functor</strong>, a class with an overloaded <code>operator()</code>. Both put the logic far from where it is used, and the functor approach is verbose boilerplate. A <em>lambda</em> collapses all of that into an expression you write exactly where you need it. C and Rust programmers already have a mental model for this: a lambda is C++’s answer to what Rust calls a <a href="./rust-ho.html#closures">closure</a> and Python calls a <code>lambda</code>.</p>
+<p>Here is the anatomy:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="op">[</span>captures<span class="op">](</span>parameters<span class="op">)</span> <span class="op">-&gt;</span> <span class="dt">return_type</span> <span class="op">{</span> body <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>[captures]</code> clause is what makes a lambda more than an anonymous function: it is the list of variables the lambda pulls in from the surrounding scope. The <code>-&gt; return_type</code> is almost always omitted, since the compiler deduces it from the <code>return</code> statements. In practice most lambdas are short:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> square <span class="op">=</span> <span class="op">[](</span><span class="dt">int</span> x<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> x <span class="op">*</span> x<span class="op">;</span> <span class="op">};</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> nine <span class="op">=</span> square<span class="op">(</span><span class="dv">3</span><span class="op">);</span>                        <span class="co">// 9</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>That reads like a function assigned to a variable, and it nearly is. The difference is the capture clause, which lets the lambda close over local state:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> factor <span class="op">=</span> <span class="dv">10</span><span class="op">;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> scale <span class="op">=</span> <span class="op">[</span>factor<span class="op">](</span><span class="dt">int</span> x<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> x <span class="op">*</span> factor<span class="op">;</span> <span class="op">};</span>  <span class="co">// captures factor by copy</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> forty <span class="op">=</span> scale<span class="op">(</span><span class="dv">4</span><span class="op">);</span>                                  <span class="co">// 40</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="capture-modes" class="level4">
+<h4 class="anchored" data-anchor-id="capture-modes">Capture Modes</h4>
+<p>The capture clause is where C++ makes an explicit, per-variable decision that Rust infers for you and Python does not let you control at all. You state exactly what the lambda closes over and <em>how</em>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 84%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Capture</th>
+<th style="text-align: left;">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>[]</code></td>
+<td style="text-align: left;">Capture nothing. The lambda uses only its parameters and globals.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>[=]</code></td>
+<td style="text-align: left;">Capture all used variables <em>by copy</em>. Each becomes a private snapshot.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>[&amp;]</code></td>
+<td style="text-align: left;">Capture all used variables <em>by reference</em>. The lambda sees live state.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>[x]</code></td>
+<td style="text-align: left;">Capture <code>x</code> by copy; capture nothing else.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>[&amp;x]</code></td>
+<td style="text-align: left;">Capture <code>x</code> by reference; capture nothing else.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>[=, &amp;x]</code></td>
+<td style="text-align: left;">Everything by copy, except <code>x</code> by reference.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>[this]</code></td>
+<td style="text-align: left;">Capture the enclosing object’s <code>this</code> pointer (members become accessible).</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>[*this]</code></td>
+<td style="text-align: left;">Capture a copy of the enclosing object (C++17).</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>[y = expr]</code></td>
+<td style="text-align: left;"><strong>Init-capture</strong> (C++14): introduce a new lambda member <code>y</code> initialized to <code>expr</code>. The idiomatic way to move a value into a lambda: <code>[p = std::move(ptr)]</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>By-copy capture takes a snapshot at the point the lambda is <em>created</em>, not when it is called. By-reference capture stores a reference to the original variable, so the lambda sees later changes, and, dangerously, outlives nothing on its own.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="Dangling reference captures are the classic footgun">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Dangling reference captures are the classic footgun
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A <code>[&amp;]</code> (or <code>[&amp;x]</code>) capture stores a reference, not a value. If the lambda outlives the variable it captured, that reference dangles and calling the lambda is undefined behavior. This bites hardest when a lambda is stored, returned, or handed to another thread, and the captured local goes out of scope before the lambda runs.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> make_counter<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> count <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">[&amp;]()</span> <span class="op">{</span> <span class="cf">return</span> <span class="op">++</span>count<span class="op">;</span> <span class="op">};</span>   <span class="co">// </span><span class="al">BUG</span><span class="co">: count dies when make_counter returns</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Capture by copy (<code>[count]</code> or <code>[=]</code>), or use init-capture to move ownership in, whenever the lambda might outlive the enclosing scope. Rust rejects this class of bug at compile time via the borrow checker; C++ trusts you to get it right.</p>
+</div>
+</div>
+</section>
+<section id="mutable-and-generic-lambdas" class="level4">
+<h4 class="anchored" data-anchor-id="mutable-and-generic-lambdas"><code>mutable</code> and Generic Lambdas</h4>
+<p>A by-copy capture is <code>const</code> inside the lambda by default: the snapshot is read-only. Adding <code>mutable</code> lets the body modify its own copy, which persists across calls to the same lambda object:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> counter <span class="op">=</span> <span class="op">[</span>count <span class="op">=</span> <span class="dv">0</span><span class="op">]()</span> <span class="at">mutable</span> <span class="op">{</span> <span class="cf">return</span> <span class="op">++</span>count<span class="op">;</span> <span class="op">};</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>counter<span class="op">();</span>   <span class="co">// 1</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>counter<span class="op">();</span>   <span class="co">// 2  -- the lambda's own copy of count survives between calls</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Since C++14, a lambda parameter can be declared <code>auto</code>, making it a <strong>generic lambda</strong>. The compiler generates a templated <code>operator()</code>, so one lambda works across types, much like a function template written inline:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> add <span class="op">=</span> <span class="op">[](</span><span class="kw">auto</span> a<span class="op">,</span> <span class="kw">auto</span> b<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> a <span class="op">+</span> b<span class="op">;</span> <span class="op">};</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>add<span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="dv">4</span><span class="op">);</span>        <span class="co">// 7      (int)</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>add<span class="op">(</span><span class="fl">1.5</span><span class="op">,</span> <span class="fl">2.0</span><span class="op">);</span>    <span class="co">// 3.5    (double)</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>add<span class="op">(</span><span class="bu">std::</span>string<span class="op">(</span><span class="st">"foo"</span><span class="op">),</span> <span class="bu">std::</span>string<span class="op">(</span><span class="st">"bar"</span><span class="op">));</span>  <span class="co">// "foobar"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="storing-a-lambda-auto-vs-stdfunction" class="level4">
+<h4 class="anchored" data-anchor-id="storing-a-lambda-auto-vs-stdfunction">Storing a Lambda: <code>auto</code> vs <code>std::function</code></h4>
+<p>Every lambda has a <strong>unique, unnamed type</strong> the compiler invents just for it. Two lambdas with identical bodies still have different types. This matters when you store one:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> f <span class="op">=</span> <span class="op">[](</span><span class="dt">int</span> x<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> x <span class="op">+</span> <span class="dv">1</span><span class="op">;</span> <span class="op">};</span>   <span class="co">// zero-overhead: f's type is the lambda's own type</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Using <code>auto</code> stores the lambda directly, and the call compiles down to a direct, inlinable invocation with no indirection. This is the zero-overhead-abstraction thesis made concrete: the lambda costs no more than the hand-written functor it replaced.</p>
+<p>When you need a single named type that can hold <em>any</em> callable with a given signature, reach for <code>std::function</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;functional&gt;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>function<span class="op">&lt;</span><span class="dt">int</span><span class="op">(</span><span class="dt">int</span><span class="op">)&gt;</span> g <span class="op">=</span> <span class="op">[](</span><span class="dt">int</span> x<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> x <span class="op">+</span> <span class="dv">1</span><span class="op">;</span> <span class="op">};</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>std::function</code> is type-erased: it can hold a lambda, a function pointer, or a functor interchangeably, at the cost of a virtual-dispatch-like indirection and, often, a heap allocation. Prefer <code>auto</code> for locals and template parameters; reserve <code>std::function</code> for when you genuinely need to store callables of differing concrete types behind one interface (for example, a <code>std::vector&lt;std::function&lt;...&gt;&gt;</code> of callbacks).</p>
+</section>
+<section id="in-practice-lambdas-and-algorithms" class="level4">
+<h4 class="anchored" data-anchor-id="in-practice-lambdas-and-algorithms">In Practice: Lambdas and Algorithms</h4>
+<p>Lambdas earn their keep as arguments to the standard algorithms, where the behavior belongs right at the call site:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;algorithm&gt;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;vector&gt;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;</span> values<span class="op">{</span><span class="dv">5</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">8</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">9</span><span class="op">,</span> <span class="dv">3</span><span class="op">};</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Sort descending: the comparison is written inline, not as a separate function.</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>sort<span class="op">(</span>values<span class="op">.</span>begin<span class="op">(),</span> values<span class="op">.</span>end<span class="op">(),</span> <span class="op">[](</span><span class="dt">int</span> a<span class="op">,</span> <span class="dt">int</span> b<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> a <span class="op">&gt;</span> b<span class="op">;</span> <span class="op">});</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Find the first value above a runtime threshold, captured by copy.</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> threshold <span class="op">=</span> <span class="dv">4</span><span class="op">;</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> it <span class="op">=</span> <span class="bu">std::</span>find_if<span class="op">(</span>values<span class="op">.</span>begin<span class="op">(),</span> values<span class="op">.</span>end<span class="op">(),</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>                       <span class="op">[</span>threshold<span class="op">](</span><span class="dt">int</span> v<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> v <span class="op">&gt;</span> threshold<span class="op">;</span> <span class="op">});</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is idiomatic modern C++, and it is the single most common place a newcomer meets lambdas.</p>
+</section>
+<section id="lambdas-across-languages" class="level4">
+<h4 class="anchored" data-anchor-id="lambdas-across-languages">Lambdas Across Languages</h4>
+<p>The same idea appears in Rust and Python, but each language makes different tradeoffs around <em>how capture works</em> and <em>what safety it guarantees</em>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 30%">
+<col style="width: 35%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Aspect</th>
+<th style="text-align: left;">C++ lambda</th>
+<th style="text-align: left;">Rust closure</th>
+<th style="text-align: left;">Python <code>lambda</code> / <code>def</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Capture control</td>
+<td style="text-align: left;"><strong>Explicit and per-variable</strong> (<code>[=]</code>, <code>[&amp;]</code>, <code>[x]</code>)</td>
+<td style="text-align: left;"><strong>Inferred</strong>; encoded in the <code>Fn</code>/<code>FnMut</code>/<code>FnOnce</code> traits</td>
+<td style="text-align: left;">Implicit; captures the enclosing scope by reference</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Move semantics</td>
+<td style="text-align: left;"><code>[x = std::move(x)]</code> init-capture</td>
+<td style="text-align: left;"><code>move \|\|</code> keyword forces ownership in</td>
+<td style="text-align: left;">No moves; everything is a reference to a shared object</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Safety</td>
+<td style="text-align: left;">Trusts you; dangling captures compile</td>
+<td style="text-align: left;">Borrow checker rejects dangling captures at compile time</td>
+<td style="text-align: left;">Captures late-bound; the late-binding closure trap is a common surprise</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Storage type</td>
+<td style="text-align: left;">Unique unnamed type; <code>std::function</code> to erase</td>
+<td style="text-align: left;">Unique unnamed type; <code>Box&lt;dyn Fn&gt;</code> to erase</td>
+<td style="text-align: left;">Ordinary object; no distinction</td>
+</tr>
+</tbody>
+</table>
+<p>The through-line: C++ hands you fine-grained, explicit control and expects you to wield it correctly; Rust encodes the same distinctions in the type system and checks them; Python hides them entirely. If you know Rust’s closures, the <a href="./rust-ho.html#closures">Closures section</a> of the Rust chapter is worth rereading with this table in hand.</p>
+</section>
+</section>
+<section id="structured-bindings" class="level3">
+<h3 class="anchored" data-anchor-id="structured-bindings">Structured Bindings</h3>
+<!-- C++17 `auto [a, b] = pair;`: destructuring for pairs, tuples, structs, and
+arrays. Compare to Rust/Python tuple unpacking and to the `std::tie` idiom it
+replaced. Full prose in a later pass. -->
+</section>
+<section id="constexpr-and-if-constexpr" class="level3">
+<h3 class="anchored" data-anchor-id="constexpr-and-if-constexpr"><code>constexpr</code> and <code>if constexpr</code></h3>
+<!-- Compile-time evaluation: `constexpr` functions/variables, and C++17
+`if constexpr` for compile-time branch selection in templates (replacing much
+SFINAE and tag dispatch). Cross-link to Concepts. Full prose in a later pass. -->
+</section>
+</section>
 <section id="types-and-declarations" class="level2">
 <h2 class="anchored" data-anchor-id="types-and-declarations">Types and Declarations</h2>
 <section id="references" class="level3">
@@ -466,10 +851,6 @@ names as types without typedef, function overloading changing name-mangling,
 <!-- `int&` — a reference must bind on declaration, can't be reseated, no null.
 Contrast with pointers. Pass-by-reference vs. C's pass-a-pointer idiom.
 const references as the idiom for cheap read-only parameters. -->
-</section>
-<section id="auto-and-type-deduction" class="level3">
-<h3 class="anchored" data-anchor-id="auto-and-type-deduction"><code>auto</code> and Type Deduction</h3>
-<!-- `auto`, `decltype`, when to use them and when they hurt readability. -->
 </section>
 <section id="enum-class" class="level3">
 <h3 class="anchored" data-anchor-id="enum-class"><code>enum class</code></h3>

@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-07-21">
+<meta name="dcterms.date" content="2026-07-22">
 
 <title>The C++ Language – Computer Language Notebook</title>
 <style>
@@ -110,6 +110,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -395,7 +424,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#the-standard-template-library" id="toc-the-standard-template-library" class="nav-link" data-scroll-target="#the-standard-template-library">The Standard Template Library</a>
   <ul>
   <li><a href="#containers" id="toc-containers" class="nav-link" data-scroll-target="#containers">Containers</a></li>
-  <li><a href="#iterators" id="toc-iterators" class="nav-link" data-scroll-target="#iterators">Iterators</a></li>
+  <li><a href="#iterators" id="toc-iterators" class="nav-link" data-scroll-target="#iterators">Iterators</a>
+  <ul class="collapse">
+  <li><a href="#the-half-open-range-begin-end" id="toc-the-half-open-range-begin-end" class="nav-link" data-scroll-target="#the-half-open-range-begin-end">The Half-Open Range <code>[begin, end)</code></a></li>
+  <li><a href="#the-five-iterator-categories" id="toc-the-five-iterator-categories" class="nav-link" data-scroll-target="#the-five-iterator-categories">The Five Iterator Categories</a></li>
+  <li><a href="#the-various-ways-to-iterate" id="toc-the-various-ways-to-iterate" class="nav-link" data-scroll-target="#the-various-ways-to-iterate">The Various Ways to Iterate</a></li>
+  </ul></li>
   <li><a href="#algorithms-and-ranges" id="toc-algorithms-and-ranges" class="nav-link" data-scroll-target="#algorithms-and-ranges">Algorithms and Ranges</a></li>
   </ul></li>
   <li><a href="#memory-management" id="toc-memory-management" class="nav-link" data-scroll-target="#memory-management">Memory Management</a>
@@ -435,7 +469,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 21, 2026</p>
+      <p class="date">July 22, 2026</p>
     </div>
   </div>
   
@@ -929,21 +963,261 @@ template error messages. Direct parallel to Rust trait bounds. -->
 <div class="subheading">
 <p>Containers, iterators, algorithms</p>
 </div>
+<p>The <strong>Standard Template Library</strong> is the part of the C++ standard library that a C programmer has no counterpart for. C gives you arrays, <code>malloc</code>, and a handful of <code>&lt;string.h&gt;</code> functions; you build every data structure by hand and track every length yourself. The STL hands you ready-made, type-safe, self-managing collections and a large catalog of algorithms to operate on them, all built out of templates so they work with any element type at zero runtime cost over the equivalent hand-written code.</p>
+<p>The library rests on three interlocking pieces, and understanding how they fit together is more valuable than memorizing any one of them:</p>
+<ul>
+<li><strong>Containers</strong> own and manage a collection of elements: <code>std::vector</code>, <code>std::map</code>, <code>std::set</code>, and the rest. They handle their own memory, growth, and cleanup via <a href="#raii">RAII</a>.</li>
+<li><strong>Iterators</strong> are the glue. An iterator is a small object that points into a container and knows how to move through it. They are the subject that repays the most study, so they get the longest treatment below.</li>
+<li><strong>Algorithms</strong> are free functions like <code>std::sort</code>, <code>std::find</code>, and <code>std::accumulate</code> that do useful work over a range of elements.</li>
+</ul>
+<p>The design insight that ties these together is due to Alexander Stepanov, and it is the reason the library is shaped the way it is: <strong>algorithms are written against iterators, not against containers</strong>. <code>std::sort</code> does not know or care whether it is sorting a <code>vector</code>, a <code>deque</code>, or a plain C array; it only knows how to advance an iterator and compare what it points at. This decoupling is what stops the library from needing a separate <code>sort</code> for every container type. Learn the iterator interface once and every algorithm becomes available to every compatible container. That is why the sections below spend a paragraph on containers, several on iterators, and only a teaser on algorithms: the iterators are the load-bearing idea.</p>
 <section id="containers" class="level3">
 <h3 class="anchored" data-anchor-id="containers">Containers</h3>
-<!-- vector, array, string, map/unordered_map, set, etc. Table with C-array and
-malloc'd-buffer contrasts. `std::string` vs. C's null-terminated char arrays
-(callback to c.qmd Strings). -->
+<div class="subheading">
+<p>Self-managing collections, one per job</p>
+</div>
+<p>A container is an object that owns a collection of elements and manages their storage for you. Where in C you would declare a <code>char buffer[256]</code>, track how many bytes are live in a separate <code>size_t length</code>, and call <code>realloc</code> when it fills, a <code>std::vector</code> bundles all of that into one object that grows on demand and frees itself when it goes out of scope. The same relief applies to text: <code>std::string</code> replaces the null-terminated <code>char</code> array (see the <a href="./c.html#strings">C Strings section</a>) with a length-carrying, self-resizing object, so a length query is <span class="math inline">\(O(1)\)</span> rather than an <span class="math inline">\(O(n)\)</span> scan for the terminator.</p>
+<p>The containers divide into three families plus <em>container adapters</em>.</p>
+<ol type="1">
+<li><strong>Sequence</strong> containers keep elements in the order you insert them, addressed by position.</li>
+<li><strong>Associative</strong> containers keep elements sorted by key in a balanced tree, giving <span class="math inline">\(O(\log n)\)</span> lookup and ordered traversal.</li>
+<li><strong>Unordered</strong> containers keep elements in a hash table, giving <span class="math inline">\(O(1)\)</span> average lookup but no meaningful order.</li>
+<li>There are also <strong>container adaptors</strong>, which are thin interfaces layered over another container to restrict its behavior.</li>
+</ol>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 9%">
+<col style="width: 19%">
+<col style="width: 33%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Container</th>
+<th style="text-align: left;">Family</th>
+<th style="text-align: left;">Underlying structure</th>
+<th style="text-align: left;">Reach for it when</th>
+<th style="text-align: left;">C / C++ analog</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>std::array&lt;T,N&gt;</code></td>
+<td style="text-align: left;">sequence</td>
+<td style="text-align: left;">fixed-size stack array</td>
+<td style="text-align: left;">size is known at compile time</td>
+<td style="text-align: left;">C’s <code>T arr[N]</code>, but safe</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>std::vector&lt;T&gt;</code></td>
+<td style="text-align: left;">sequence</td>
+<td style="text-align: left;">contiguous heap array</td>
+<td style="text-align: left;">your default; fast index, fast append at end</td>
+<td style="text-align: left;"><code>malloc</code>’d growable buffer</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>std::string</code></td>
+<td style="text-align: left;">sequence</td>
+<td style="text-align: left;">contiguous heap <code>char</code>s</td>
+<td style="text-align: left;">mutable, dynamic sequence of characters</td>
+<td style="text-align: left;">null-terminated <code>char[]</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>std::deque&lt;T&gt;</code></td>
+<td style="text-align: left;">sequence</td>
+<td style="text-align: left;">chunked array</td>
+<td style="text-align: left;">fast push/pop at <em>both</em> ends</td>
+<td style="text-align: left;">(no direct C analog)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>std::stack&lt;T, C&gt;</code></td>
+<td style="text-align: left;">container adapter</td>
+<td style="text-align: left;"><code>std::deque</code>, <code>std::vector</code>, etc.</td>
+<td style="text-align: left;">fast push/pop at the top</td>
+<td style="text-align: left;">(no direct C analog)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>std::list&lt;T&gt;</code></td>
+<td style="text-align: left;">sequence</td>
+<td style="text-align: left;">doubly-linked list</td>
+<td style="text-align: left;">frequent splicing/insertion in the middle</td>
+<td style="text-align: left;">hand-rolled linked list</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>std::map&lt;K,V&gt;</code></td>
+<td style="text-align: left;">associative</td>
+<td style="text-align: left;">balanced binary tree</td>
+<td style="text-align: left;">key-value pairs kept sorted by key</td>
+<td style="text-align: left;">(no direct C analog)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>std::set&lt;K&gt;</code></td>
+<td style="text-align: left;">associative</td>
+<td style="text-align: left;">balanced binary tree</td>
+<td style="text-align: left;">unique keys kept sorted</td>
+<td style="text-align: left;">(no direct C analog)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>std::unordered_map&lt;K,V&gt;</code></td>
+<td style="text-align: left;">unordered</td>
+<td style="text-align: left;">hash table</td>
+<td style="text-align: left;">key-value pairs, fastest lookup, order irrelevant</td>
+<td style="text-align: left;">hash table by hand</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>std::unordered_set&lt;K&gt;</code></td>
+<td style="text-align: left;">unordered</td>
+<td style="text-align: left;">hash table</td>
+<td style="text-align: left;">unique keys, fastest membership test</td>
+<td style="text-align: left;">hash table by hand</td>
+</tr>
+</tbody>
+</table>
+<p><code>std::stack</code>, <code>std::queue</code>, and <code>std::priority_queue</code> round out the list as adaptors: each wraps one of the above (a <code>deque</code> by default) and exposes only a restricted interface, so a <code>std::stack</code> offers <code>push</code>/<code>pop</code>/<code>top</code> and nothing else. Between these nine-or-so types, <code>std::vector</code> is the overwhelming default. Its contiguous storage is cache-friendly and its append is amortized <span class="math inline">\(O(1)\)</span>; reach for something else only when you have a specific reason (<code>map</code> for sorted keys, <code>unordered_map</code> for raw lookup speed, <code>list</code> for cheap middle-insertion).</p>
+<p>Here is a compact tour of the two you will use most, written in idiomatic modern C++:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;vector&gt;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;map&gt;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;string&gt;</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="bu">std::</span>string<span class="op">&gt;</span> names<span class="op">{</span><span class="st">"ada"</span><span class="op">,</span> <span class="st">"grace"</span><span class="op">,</span> <span class="st">"linus"</span><span class="op">};</span>   <span class="co">// brace-init, three elements</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>names<span class="op">.</span>push_back<span class="op">(</span><span class="st">"dennis"</span><span class="op">);</span>            <span class="co">// append a copy</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>names<span class="op">.</span>emplace_back<span class="op">(</span><span class="st">"bjarne"</span><span class="op">);</span>         <span class="co">// construct in place (avoids a temporary)</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>string first <span class="op">=</span> names<span class="op">[</span><span class="dv">0</span><span class="op">];</span>         <span class="co">// "ada"  -- fast, but no bounds check</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>string last  <span class="op">=</span> names<span class="op">.</span>at<span class="op">(</span><span class="dv">4</span><span class="op">);</span>      <span class="co">// "bjarne" -- bounds-checked; throws on overrun</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>size_t count <span class="op">=</span> names<span class="op">.</span>size<span class="op">();</span>     <span class="co">// 5</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>map<span class="op">&lt;</span><span class="bu">std::</span>string<span class="op">,</span> <span class="dt">int</span><span class="op">&gt;</span> ages<span class="op">;</span>      <span class="co">// keys kept sorted</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>ages<span class="op">[</span><span class="st">"ada"</span><span class="op">]</span>   <span class="op">=</span> <span class="dv">36</span><span class="op">;</span>                   <span class="co">// insert or overwrite by key</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>ages<span class="op">[</span><span class="st">"grace"</span><span class="op">]</span> <span class="op">=</span> <span class="dv">85</span><span class="op">;</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>ages<span class="op">.</span>contains<span class="op">(</span><span class="st">"ada"</span><span class="op">))</span> <span class="op">{</span>           <span class="co">// C++20; before that, ages.count("ada") &gt; 0</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> a <span class="op">=</span> ages<span class="op">.</span>at<span class="op">(</span><span class="st">"ada"</span><span class="op">);</span>           <span class="co">// 36</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>[]</code> on a <code>std::map</code> is worth a note for the C programmer: it <em>inserts</em> a default-constructed value if the key is absent, so <code>ages["nobody"]</code> silently creates an entry. Use <code>.at()</code> or <code>.contains()</code>/<code>.find()</code> when you mean only to read.</p>
 </section>
 <section id="iterators" class="level3">
 <h3 class="anchored" data-anchor-id="iterators">Iterators</h3>
-<!-- The abstraction gluing containers to algorithms; the half-open [begin, end)
-convention; range-based for. -->
+<div class="subheading">
+<p>A generalized pointer into a container</p>
+</div>
+<p>Here is the concept the rest of the STL is built on, stated as plainly as it can be: <span class="hl-blue">an iterator is an object that behaves like a pointer into a container.</span> That is not an analogy for teaching purposes; it is close to the literal truth. An iterator supports exactly the operations you already use on a C pointer walking an array:</p>
+<ul>
+<li><code>*it</code> <strong>dereferences</strong> it to get the element it currently refers to (read or write).</li>
+<li><code>++it</code> <strong>advances</strong> it to the next element.</li>
+<li><code>it == other</code> and <code>it != other</code> <strong>compare</strong> two iterators for position.</li>
+</ul>
+<p>For a <code>std::vector</code>, whose elements are contiguous in memory, an iterator quite literally <em>is</em> a pointer (or a thin wrapper around one), and <code>++it</code> is ordinary pointer arithmetic. For a <code>std::map</code>, whose elements live in a balanced tree, an iterator is a small object holding a node pointer, and <code>++it</code> is the code that walks to the in-order-next node. The internals differ completely, but the <em>interface</em> is identical: <code>*it</code>, <code>++it</code>, <code>!=</code>. That uniformity is the whole trick. An algorithm written in terms of <code>*it</code> and <code>++it</code> neither knows nor cares which container it is walking, which is exactly why one <code>std::sort</code> serves them all.</p>
+<section id="the-half-open-range-begin-end" class="level4">
+<h4 class="anchored" data-anchor-id="the-half-open-range-begin-end">The Half-Open Range <code>[begin, end)</code></h4>
+<p>Every container hands out two iterators that define its extent: <code>begin()</code> points at the first element, and <code>end()</code> points at <strong>one position past the last element</strong>. <code>end()</code> is deliberately not the last element; it is a sentinel you are never meant to dereference, marking where the sequence stops. A range written this way, first included, last excluded, is called half-open and conventionally notated <code>[begin, end)</code>.</p>
+<p>This looks odd until you see what it buys you, and it is the same convention behind C pointer loops (<code>for (p = arr; p != arr + n; ++p)</code>) and Rust’s <code>0..n</code> ranges:</p>
+<ul>
+<li><strong>The empty range is natural.</strong> A container with no elements has <code>begin() == end()</code>, so “is this range empty?” is just a comparison, with no special case.</li>
+<li><strong>The size is a subtraction.</strong> For random-access iterators, <code>end() - begin()</code> is exactly the element count. No <code>+1</code>, no <code>-1</code>.</li>
+<li><strong>Loop termination is clean.</strong> <code>while (it != end)</code> stops at precisely the right place, with no off-by-one at the boundary.</li>
+</ul>
+<p>The loop idiom falls straight out of it: start at <code>begin()</code>, advance with <code>++it</code>, stop the instant <code>it == end()</code>.</p>
+</section>
+<section id="the-five-iterator-categories" class="level4">
+<h4 class="anchored" data-anchor-id="the-five-iterator-categories">The Five Iterator Categories</h4>
+<p>Not every iterator supports every operation. A <code>std::vector</code> iterator can jump to <code>it + 5</code> in one step; a <code>std::list</code> iterator can only shuffle forward or backward one node at a time; a <code>std::istream</code> iterator can be read once and never rewound. The library formalizes these differences into five categories, each a superset of the one before it. An algorithm advertises the weakest category it needs, and any iterator that meets or exceeds it will work.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 53%">
+<col style="width: 27%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Category</th>
+<th style="text-align: left;">Adds the ability to</th>
+<th style="text-align: left;">Example source</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Input</strong></td>
+<td style="text-align: left;">read, <code>++</code> (single pass, forward only)</td>
+<td style="text-align: left;"><code>std::istream_iterator</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Output</strong></td>
+<td style="text-align: left;">write, <code>++</code> (single pass, forward only)</td>
+<td style="text-align: left;"><code>std::ostream_iterator</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Forward</strong></td>
+<td style="text-align: left;">read/write, multi-pass forward</td>
+<td style="text-align: left;"><code>std::forward_list</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Bidirectional</strong></td>
+<td style="text-align: left;"><code>--</code> as well as <code>++</code> (walk backward)</td>
+<td style="text-align: left;"><code>std::list</code>, <code>std::map</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Random-access</strong></td>
+<td style="text-align: left;"><code>it + n</code>, <code>it[n]</code>, <code>&lt;</code>/<code>&gt;</code> (jump anywhere in <span class="math inline">\(O(1)\)</span>)</td>
+<td style="text-align: left;"><code>std::vector</code>, <code>std::array</code>, <code>std::deque</code></td>
+</tr>
+</tbody>
+</table>
+<p>This taxonomy is not academic; it has concrete consequences. <code>std::sort</code> needs random-access iterators, so it accepts a <code>std::vector</code> but rejects a <code>std::list</code>. That is precisely why <code>std::list</code> ships with its own <code>.sort()</code> member function: a linked list cannot offer random access, so the generic algorithm does not apply and the container provides a specialized one instead.</p>
+</section>
+<section id="the-various-ways-to-iterate" class="level4">
+<h4 class="anchored" data-anchor-id="the-various-ways-to-iterate">The Various Ways to Iterate</h4>
+<p>There are several ways to walk a container, and they are not merely stylistic choices; they differ in which containers they support and how much they ask of you. Here they are from lowest-level to highest, over the same <code>std::vector&lt;int&gt;</code>.</p>
+<p><strong>1. The index loop.</strong> The C way: count an integer from <code>0</code> to <code>size()</code>. It works <em>only</em> on random-access containers (you cannot index a <code>std::list</code>), and it is the most error-prone (off-by-ones, signed/unsigned mismatches).</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>size_t i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> v<span class="op">.</span>size<span class="op">();</span> <span class="op">++</span>i<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> v<span class="op">[</span>i<span class="op">]</span> <span class="op">&lt;&lt;</span> <span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>2. The explicit iterator loop.</strong> The general form. This is the half-open range spelled out by hand, and unlike the index loop it works with <em>every</em> container, because it asks only for <code>begin</code>/<code>end</code>/<code>++</code>/<code>*</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span> it <span class="op">=</span> v<span class="op">.</span>begin<span class="op">();</span> it <span class="op">!=</span> v<span class="op">.</span>end<span class="op">();</span> <span class="op">++</span>it<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">*</span>it <span class="op">&lt;&lt;</span> <span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">;</span>   <span class="co">// *it reads the element; assign to it to write</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>3. The range-based <code>for</code>.</strong> C++11 sugar that is nothing more than loop #2 written for you: the compiler expands <code>for (x : v)</code> into an iterator loop over <code>v.begin()</code>/<code>v.end()</code>. This is the idiomatic default; prefer it unless you specifically need the iterator itself (say, to <code>erase</code> while looping). The choice of <code>auto</code> qualifier matters exactly as it did in the <a href="#auto-and-type-deduction"><code>auto</code> section</a>: <code>auto</code> copies each element, <code>auto&amp;</code> binds a mutable reference to it, and <code>const auto&amp;</code> binds a cheap read-only reference.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> x <span class="op">:</span> v<span class="op">)</span> <span class="op">{</span> <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> x <span class="op">&lt;&lt;</span> <span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">;</span> <span class="op">}</span>  <span class="co">// read-only, no copy: the default</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span><span class="op">&amp;</span> x <span class="op">:</span> v<span class="op">)</span>       <span class="op">{</span> x <span class="op">*=</span> <span class="dv">2</span><span class="op">;</span> <span class="op">}</span>                   <span class="co">// mutate elements in place</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>4. <code>const</code> and reverse iterators.</strong> <code>cbegin()</code>/<code>cend()</code> yield iterators that forbid writing through them, documenting read-only intent. <code>rbegin()</code>/<code>rend()</code> yield <strong>reverse iterators</strong> that walk the container back-to-front while still using <code>++</code>; the iterator quietly moves backward under the hood.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span> it <span class="op">=</span> v<span class="op">.</span>rbegin<span class="op">();</span> it <span class="op">!=</span> v<span class="op">.</span>rend<span class="op">();</span> <span class="op">++</span>it<span class="op">)</span> <span class="op">{</span>   <span class="co">// last element to first</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">*</span>it <span class="op">&lt;&lt;</span> <span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">;</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>5. Handing the range to an algorithm.</strong> Once you have <code>begin()</code> and <code>end()</code>, you rarely need to write the loop at all. Pass the pair to a standard algorithm and let it do the walking. This is the payoff the whole design was built for, and it leads directly into the next section.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>sort<span class="op">(</span>v<span class="op">.</span>begin<span class="op">(),</span> v<span class="op">.</span>end<span class="op">());</span>                        <span class="co">// the algorithm owns the loop</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-warning callout-titled" title="Iterator invalidation is the classic footgun">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Iterator invalidation is the classic footgun
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>An iterator points <em>into</em> a container’s storage, so operations that move that storage can leave outstanding iterators dangling, and using one afterward is undefined behavior. The textbook case is a <code>std::vector</code> that reallocates: a <code>push_back</code> that exceeds capacity moves every element to a new block, and every iterator (and pointer, and reference) you were holding now points at freed memory. <code>erase</code> invalidates iterators at and after the removal point. Each container documents its own invalidation rules.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> it <span class="op">=</span> v<span class="op">.</span>begin<span class="op">();</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>v<span class="op">.</span>push_back<span class="op">(</span><span class="dv">99</span><span class="op">);</span>     <span class="co">// may reallocate...</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">*</span>it<span class="op">;</span>    <span class="co">// ...and now `it` may dangle -- undefined behavior</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is exactly the class of bug Rust’s borrow checker rejects at compile time: it will not let you hold an immutable borrow (the iterator) across a mutating call (<code>push_back</code>). C++ leaves the discipline to you. If you must modify a container while traversing it, use the iterator that the container’s own <code>erase</code>/<code>insert</code> <em>returns</em>, which is guaranteed valid.</p>
+</div>
+</div>
+</section>
 </section>
 <section id="algorithms-and-ranges" class="level3">
 <h3 class="anchored" data-anchor-id="algorithms-and-ranges">Algorithms and Ranges</h3>
-<!-- <algorithm> (sort, find, transform, accumulate) and C++20 ranges. Compare
-to Rust iterator adapters and Python comprehensions. -->
+<div class="subheading">
+<p>Free functions that speak iterators</p>
+</div>
+<p>Because every algorithm is written against iterators rather than a specific container, the <code>&lt;algorithm&gt;</code> and <code>&lt;numeric&gt;</code> headers give you a large catalog of operations that work uniformly across containers. You pass a half-open <code>[begin, end)</code> range and the algorithm does the walking. A handful see constant use: <code>std::sort</code> orders a range, <code>std::find</code> locates a value, <code>std::transform</code> maps a function over one range into another, and <code>std::accumulate</code> folds a range down to a single value.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;algorithm&gt;</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;numeric&gt;</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>sort<span class="op">(</span>v<span class="op">.</span>begin<span class="op">(),</span> v<span class="op">.</span>end<span class="op">());</span>                              <span class="co">// order ascending</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> it  <span class="op">=</span> <span class="bu">std::</span>find<span class="op">(</span>v<span class="op">.</span>begin<span class="op">(),</span> v<span class="op">.</span>end<span class="op">(),</span> <span class="dv">42</span><span class="op">);</span>              <span class="co">// first element == 42, or v.end()</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span>  sum <span class="op">=</span> <span class="bu">std::</span>accumulate<span class="op">(</span>v<span class="op">.</span>begin<span class="op">(),</span> v<span class="op">.</span>end<span class="op">(),</span> <span class="dv">0</span><span class="op">);</span>         <span class="co">// fold with + starting from 0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The full <code>&lt;algorithm&gt;</code> catalog and the C++20 <code>ranges</code> library (which lets you write <code>std::ranges::sort(v)</code> on the whole container, and chain lazy views like <code>v | std::views::filter(...) | std::views::transform(...)</code>) are a topic for a later pass. If you have read the Rust chapter, ranges are C++’s answer to <a href="./rust-ho.html#iterators">Rust’s iterator adapters</a>, and both play the role that list comprehensions play in Python: a declarative pipeline over a sequence, in place of a hand-written loop.</p>
 </section>
 </section>
 <section id="memory-management" class="level2">

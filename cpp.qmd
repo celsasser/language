@@ -13,7 +13,6 @@ where the comparison illuminates (RAII vs. ownership, templates vs. generics,
 exceptions vs. Result). Keep examples idiomatic modern C++ (C++17/20), not
 "C with a few classes." Plain hosted examples unless a point needs otherwise.
 -->
-
 ## Overview
 ![](images/cpp-00.svg){width=2in style="float: left; padding: 0 2em 0 1em"}
 
@@ -28,16 +27,16 @@ The language began as **"C with Classes"**, written by Bjarne Stroustrup at Bell
 ### A Short History of the Standard
 Like C, C++ has evolved through a sequence of ISO standards, and the standard a codebase targets explains which features are available to it. Unlike C, whose revisions were mostly small and additive, C++ went through a genuine inflection at *C++11*, after which the language and its idioms changed enough that the community draws a line there and calls everything past it "modern C++." The revisions since have arrived on a steady three-year cadence, each one substantial.
 
-| Standard       | Year | Common name    | What it introduced |
-|:---------------|:----:|:--------------:|:-------------------------------------------------------------------------------|
-| C with Classes | 1979 | (precursor)    | Stroustrup's Bell Labs research project: classes, member functions, and basic inheritance grafted onto C.                                         |
-| C++98          | 1998 | C++98          | The first ISO standard. Templates, the STL (containers, iterators, algorithms), exceptions, namespaces, and RTTI.                                 |
-| C++03          | 2003 | C++03          | A defect-report release. No new features; wording fixes and clarifications only.                                                                  |
-| C++11          | 2011 | "Modern C++"   | The inflection point: `auto`, move semantics and rvalue references, lambdas, smart pointers (`unique_ptr`/`shared_ptr`), range-based `for`, `nullptr`, `enum class`, uniform initialization. |
-| C++14          | 2014 | C++14          | A polish release for C++11: generic lambdas (`auto` parameters), lambda init-capture, relaxed `constexpr`, return-type deduction.                 |
-| C++17          | 2017 | C++17          | Structured bindings, `std::optional`, `std::variant`, `if constexpr`, the `<filesystem>` library, guaranteed copy elision.                        |
-| C++20          | 2020 | C++20          | The largest revision since C++11: concepts, ranges, coroutines, and modules, plus the three-way comparison (`<=>`) operator.                  |
-| C++23          | 2023 | C++23          | `std::expected`, `std::print`, deducing `this`, and quality-of-life library additions.                                                           |
+| Standard       | Year | Common name  | What it introduced                                                                                                                                                                           |
+|:---------------|:----:|:------------:|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| C with Classes | 1979 | (precursor)  | Stroustrup's Bell Labs research project: classes, member functions, and basic inheritance grafted onto C.                                                                                    |
+| C++98          | 1998 | C++98        | The first ISO standard. Templates, the STL (containers, iterators, algorithms), exceptions, namespaces, and RTTI.                                                                            |
+| C++03          | 2003 | C++03        | A defect-report release. No new features; wording fixes and clarifications only.                                                                                                             |
+| C++11          | 2011 | "Modern C++" | The inflection point: `auto`, move semantics and rvalue references, lambdas, smart pointers (`unique_ptr`/`shared_ptr`), range-based `for`, `nullptr`, `enum class`, uniform initialization. |
+| C++14          | 2014 | C++14        | A polish release for C++11: generic lambdas (`auto` parameters), lambda init-capture, relaxed `constexpr`, return-type deduction.                                                            |
+| C++17          | 2017 | C++17        | Structured bindings, `std::optional`, `std::variant`, `if constexpr`, the `<filesystem>` library, guaranteed copy elision.                                                                   |
+| C++20          | 2020 | C++20        | The largest revision since C++11: concepts, ranges, coroutines, and modules, plus the three-way comparison (`<=>`) operator.                                                                 |
+| C++23          | 2023 | C++23        | `std::expected`, `std::print`, deducing `this`, and quality-of-life library additions.                                                                                                       |
 
 ::: {.callout-note title="\"Modern C++\" means C++11 and later"}
 When practitioners say "modern C++," they mean C++11 onward. The difference is not cosmetic: idiomatic modern C++ favors `auto`, range-based loops, smart pointers over raw `new`/`delete`, and lambdas passed to standard algorithms, none of which existed in C++98. If a code sample here looks unfamiliar next to older C++ you have seen, this is usually why. Compilers select a standard with a flag such as `-std=c++17` or `-std=c++20`; there is rarely a reason to target anything below C++17 for new work.
@@ -47,15 +46,14 @@ When practitioners say "modern C++," they mean C++11 onward. The difference is n
 ::: {.subheading}
 Zero-overhead abstraction
 :::
+
 <!-- The core design tenets: you don't pay for what you don't use; abstractions
 should cost no more than the hand-written equivalent; direct hardware access
 preserved from C; multi-paradigm (procedural, OO, generic, functional).
 Contrast with Rust's safety-first and Python's programmer-time-first stances. -->
-
 ## What C++ Adds to C
 <!-- Orienting section: the reader knows C. Enumerate at a high level what C++
 layers on, each expanded in its own section below. This is the "map." -->
-
 - References (`&`) vs. pointers
 - `class` / access control / member functions
 - Constructors, destructors, and RAII
@@ -71,7 +69,6 @@ layers on, each expanded in its own section below. This is the "map." -->
 keyword, stricter implicit conversions, // comments (well before C99), struct
 names as types without typedef, function overloading changing name-mangling,
 `nullptr` vs NULL, uniform initialization braces. Quick table. -->
-
 ## Lambdas and Modern C++
 ::: {.subheading}
 Anonymous functions and the C++11-and-later additions
@@ -177,20 +174,19 @@ int forty = scale(4);                                  // 40
 ```
 
 #### Capture Modes
-
 The capture clause is where C++ makes an explicit, per-variable decision that Rust infers for you and Python does not let you control at all. You state exactly what the lambda closes over and *how*.
 
-| Capture | Meaning |
-|:------------|:-----------------------------------------------------------------------|
-| `[]`        | Capture nothing. The lambda uses only its parameters and globals.       |
-| `[=]`       | Capture all used variables *by copy*. Each becomes a private snapshot.|
-| `[&]`       | Capture all used variables *by reference*. The lambda sees live state.|
-| `[x]`       | Capture `x` by copy; capture nothing else.                              |
-| `[&x]`      | Capture `x` by reference; capture nothing else.                         |
-| `[=, &x]`   | Everything by copy, except `x` by reference.                            |
-| `[this]`    | Capture the enclosing object's `this` pointer (members become accessible). |
-| `[*this]`   | Capture a copy of the enclosing object (C++17).                     |
-| `[y = expr]`| **Init-capture** (C++14): introduce a new lambda member `y` initialized to `expr`. The idiomatic way to move a value into a lambda: `[p = std::move(ptr)]`. |
+| Capture      | Meaning                                                                                                                                                     |
+|:-------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `[]`         | Capture nothing. The lambda uses only its parameters and globals.                                                                                           |
+| `[=]`        | Capture all used variables *by copy*. Each becomes a private snapshot.                                                                                      |
+| `[&]`        | Capture all used variables *by reference*. The lambda sees live state.                                                                                      |
+| `[x]`        | Capture `x` by copy; capture nothing else.                                                                                                                  |
+| `[&x]`       | Capture `x` by reference; capture nothing else.                                                                                                             |
+| `[=, &x]`    | Everything by copy, except `x` by reference.                                                                                                                |
+| `[this]`     | Capture the enclosing object's `this` pointer (members become accessible).                                                                                  |
+| `[*this]`    | Capture a copy of the enclosing object (C++17).                                                                                                             |
+| `[y = expr]` | **Init-capture** (C++14): introduce a new lambda member `y` initialized to `expr`. The idiomatic way to move a value into a lambda: `[p = std::move(ptr)]`. |
 
 By-copy capture takes a snapshot at the point the lambda is *created*, not when it is called. By-reference capture stores a reference to the original variable, so the lambda sees later changes, and, dangerously, outlives nothing on its own.
 
@@ -208,7 +204,6 @@ Capture by copy (`[count]` or `[=]`), or use init-capture to move ownership in, 
 :::
 
 #### `mutable` and Generic Lambdas
-
 A by-copy capture is `const` inside the lambda by default: the snapshot is read-only. Adding `mutable` lets the body modify its own copy, which persists across calls to the same lambda object:
 
 ```cpp
@@ -226,7 +221,10 @@ add(1.5, 2.0);    // 3.5    (double)
 add(std::string("foo"), std::string("bar"));  // "foobar"
 ```
 
-#### Storing a Lambda: `auto` vs `std::function`
+#### Storing a Lambda
+::: {.subheading}
+`auto` vs `std::function`
+:::
 
 Every lambda has a **unique, unnamed type** the compiler invents just for it. Two lambdas with identical bodies still have different types. This matters when you store one:
 
@@ -245,7 +243,10 @@ std::function<int(int)> g = [](int x) { return x + 1; };
 
 `std::function` is type-erased: it can hold a lambda, a function pointer, or a functor interchangeably, at the cost of a virtual-dispatch-like indirection and, often, a heap allocation. Prefer `auto` for locals and template parameters; reserve `std::function` for when you genuinely need to store callables of differing concrete types behind one interface (for example, a `std::vector<std::function<...>>` of callbacks).
 
-#### In Practice: Lambdas and Algorithms
+#### In Practice
+::: {.subheading}
+Lambdas and Algorithms
+:::
 
 Lambdas earn their keep as arguments to the standard algorithms, where the behavior belongs right at the call site:
 
@@ -267,15 +268,14 @@ auto it = std::find_if(values.begin(), values.end(),
 This is idiomatic modern C++, and it is the single most common place a newcomer meets lambdas.
 
 #### Lambdas Across Languages
-
 The same idea appears in Rust and Python, but each language makes different tradeoffs around *how capture works* and *what safety it guarantees*.
 
-| Aspect          | C++ lambda                          | Rust closure                              | Python `lambda` / `def` |
-|:----------------|:------------------------------------|:------------------------------------------|:------------------------|
-| Capture control | **Explicit and per-variable** (`[=]`, `[&]`, `[x]`) | **Inferred**; encoded in the `Fn`/`FnMut`/`FnOnce` traits | Implicit; captures the enclosing scope by reference |
-| Move semantics  | `[x = std::move(x)]` init-capture   | `move \|\|` keyword forces ownership in   | No moves; everything is a reference to a shared object |
-| Safety          | Trusts you; dangling captures compile | Borrow checker rejects dangling captures at compile time | Captures late-bound; the late-binding closure trap is a common surprise |
-| Storage type    | Unique unnamed type; `std::function` to erase | Unique unnamed type; `Box<dyn Fn>` to erase | Ordinary object; no distinction |
+| Aspect          | C++ lambda                                          | Rust closure                                              | Python `lambda` / `def`                                                 |
+|:----------------|:----------------------------------------------------|:----------------------------------------------------------|:------------------------------------------------------------------------|
+| Capture control | **Explicit and per-variable** (`[=]`, `[&]`, `[x]`) | **Inferred**; encoded in the `Fn`/`FnMut`/`FnOnce` traits | Implicit; captures the enclosing scope by reference                     |
+| Move semantics  | `[x = std::move(x)]` init-capture                   | `move \|\|` keyword forces ownership in                   | No moves; everything is a reference to a shared object                  |
+| Safety          | Trusts you; dangling captures compile               | Borrow checker rejects dangling captures at compile time  | Captures late-bound; the late-binding closure trap is a common surprise |
+| Storage type    | Unique unnamed type; `std::function` to erase       | Unique unnamed type; `Box<dyn Fn>` to erase               | Ordinary object; no distinction                                         |
 
 The through-line: C++ hands you fine-grained, explicit control and expects you to wield it correctly; Rust encodes the same distinctions in the type system and checks them; Python hides them entirely. If you know Rust's closures, the [Closures section](rust-ho.qmd#closures) of the Rust chapter is worth rereading with this table in hand.
 
@@ -283,76 +283,355 @@ The through-line: C++ hands you fine-grained, explicit control and expects you t
 <!-- C++17 `auto [a, b] = pair;`: destructuring for pairs, tuples, structs, and
 arrays. Compare to Rust/Python tuple unpacking and to the `std::tie` idiom it
 replaced. Full prose in a later pass. -->
-
 ### `constexpr` and `if constexpr`
 <!-- Compile-time evaluation: `constexpr` functions/variables, and C++17
 `if constexpr` for compile-time branch selection in templates (replacing much
 SFINAE and tag dispatch). Cross-link to Concepts. Full prose in a later pass. -->
-
 ## Types and Declarations
 ### References
 ::: {.subheading}
 Aliases, not pointers
 :::
+
 <!-- `int&` — a reference must bind on declaration, can't be reseated, no null.
 Contrast with pointers. Pass-by-reference vs. C's pass-a-pointer idiom.
 const references as the idiom for cheap read-only parameters. -->
-
 ### `enum class`
 <!-- Scoped, type-safe enums — the fix for C's leaky enums covered in c.qmd. -->
-
 ### Uniform Initialization
 <!-- Brace-init `{}`, initializer lists, the most-vexing-parse it solves and the
 narrowing it forbids. -->
-
 ## Classes and Objects
 ### From `struct` to `class`
 <!-- The only default difference (public vs. private), then everything member
 functions add. Anchor to C's "struct + free functions operating on it" pattern. -->
-
 ### Member Functions, `this`, and `const` Methods
-<!-- Methods, the implicit `this` pointer, const-qualified member functions. -->
+::: {.subheading}
+Functions that belong to an object
+:::
+
+In C, a "method" is a free function you pass the struct to by hand: `account_deposit(&acct, 100)`. C++ folds that pointer into the language. A **member function** is declared inside the class and called on an instance with the dot operator, and the object it was called on is passed to it invisibly, as a hidden pointer named `this`:
+
+```cpp
+class Account {
+public:
+    void deposit(int amount) {
+        balance_ += amount;      // balance_ is this->balance_
+    }
+
+private:
+    int balance_ = 0;
+};
+
+Account acct;
+acct.deposit(100);               // acct is bound to `this` inside deposit
+```
+
+`this` is a pointer to the object the member function was invoked on. `acct.deposit(100)` is, under the hood, close to the C call `Account_deposit(&acct, 100)`, with `this == &acct`. Everything member functions add over C's free-function style flows from having that pointer supplied automatically.
+
+#### Implicit Member Access
+Here is the mechanism you noticed. Inside a member function, when you write an unqualified name like `balance_`, the compiler looks it up in the enclosing class scope; if it finds a member of that name, it silently rewrites the access as `this->balance_`. The two forms are exactly equivalent:
+
+```cpp
+void deposit(int amount) {
+    balance_       += amount;    // implicit: relies on name lookup finding the member
+    this->balance_ += amount;    // explicit: the same thing, spelled out
+}
+```
+
+This has no formal one-word name in the standard; it is simply **name lookup** finding a member and applying the implicit `this->`. And it is not a Modern C++ addition: it has worked since the earliest days of the language, C++98 and before. If 1990s code you read leaned on explicit `this->` everywhere, that was either house style or a way to sidestep exactly the shadowing case below, not a limitation of the compiler.
+
+Crucially, and this answers the other half of your question, **the same rule applies to member functions**. Calling `helper()` inside a method is implicitly `this->helper()`:
+
+```cpp
+class Parser {
+public:
+    void run() { advance(); }        // implicitly this->advance()
+private:
+    void advance() { /* ... */ }
+};
+```
+
+#### When Names Collide
+::: {.subheading}
+Shadowing
+:::
+
+The one case where the implicit form and the explicit form *diverge* is shadowing, when a local variable or parameter has the same name as a member. Name lookup always prefers the nearest scope, so the unqualified name resolves to the **local**, and the member is hidden. This is precisely why the trailing-underscore convention exists:
+
+```cpp
+class Point {
+public:
+    void set_x(int x) {
+        x = x;            // BUG: assigns the parameter to itself; the member is untouched
+    }
+private:
+    int x;                // shadowed by the parameter `x`
+};
+```
+
+Here `x` resolves to the parameter in both positions, so the member never changes. There are two idiomatic fixes, and both are worth knowing:
+
+```cpp
+void set_x(int x) { this->x = x; }     // 1. qualify the member explicitly with this->
+```
+
+```cpp
+class Point {
+public:
+    void set_x(int x) { x_ = x; }      // 2. name the member so it never collides
+private:
+    int x_;                             // trailing underscore: the member is x_, the param is x
+};
+```
+
+The `member_` convention (a trailing underscore, sometimes a leading `m_`) is the more common answer in modern codebases because it removes the ambiguity everywhere at once, rather than requiring `this->` at each site. This is a *naming discipline*, not a language feature: the compiler attaches no meaning to the underscore. It simply guarantees the member and any local never share a spelling, so unqualified `x_` is always the member and you never have to think about shadowing. When you saw `var_` used with no local `var_` in sight, that was the convention doing its job: `var_` was a member, resolved by ordinary name lookup to `this->var_`.
+
+::: {.callout-note title="A leading underscore is the wrong choice" collapse="false"}
+Trailing underscore (`value_`), yes; *leading* underscore (`_value`), no. Identifiers that begin with an underscore followed by a capital letter, or that contain a double underscore, are reserved for the implementation in every scope, and a leading underscore is reserved at file scope. Trailing-underscore member names avoid the reserved-identifier rules entirely, which is a good part of why that convention won out.
+
+The following is forbidden by the official C++ Language Standard:
+
+| Pattern                            | Scope                 | Rule / Consequence                                                      | Example                                 |
+|:---------------------------|:------------------------|----------------------------------------------------------------|-----------------------------------------|
+| **Double Underscore (`__`)**       | Anywhere in the name  | Completely Reserved for the implementation.                             | `__myVar`, `my__Var`                    |
+| **Leading `_` + `[A-Z]+`** | Anywhere in the code  | Completely Reserved (often used for internal library macros).           | `_MyVariable`                           |
+| **Leading `_` + `[a-z]+`** | Global Namespace only | Reserved; can conflict with OS-specific or runtime environment symbols. | `int _variable;` (at file/global scope) |
+
+##### The One Exception
+::: {.subheading}
+User-Defined Literals (C++11 and Newer)
+:::
+
+There is one place where the C++ language requires you to use a leading underscore: *Custom User-Defined Literals*.
+
+```cpp
+// Legal and REQUIRED by the standard for user code
+long double operator"" _miles(long double m) {
+    return m * 1609.34;
+}
+
+auto distance = 5.0_miles;   // Resolves safely
+```
+:::
+
+#### `const` Member Functions
+A member function can promise not to modify the object by appending `const` to its signature. Inside such a function, `this` is a pointer-to-`const`, so any attempt to change a member is a compile error. This is the member-function counterpart to the `const` references you use for cheap read-only parameters:
+
+```cpp
+class Account {
+public:
+    int  balance() const { return balance_; }   // read-only: promises not to mutate
+    void deposit(int amount) { balance_ += amount; }   // non-const: allowed to mutate
+
+private:
+    int balance_ = 0;
+};
+
+const Account frozen;
+frozen.balance();        // OK: const method on a const object
+frozen.deposit(100);     // compile error: can't call a non-const method on a const object
+```
+
+The rule is strict and it propagates: you may call only `const` member functions on a `const` object. This is why marking every non-mutating method `const` matters in practice; omit it and callers holding a `const` reference to your object cannot use the method at all. Mark member functions `const` whenever they do not modify the object; it costs nothing and it is what makes `const`-correctness work across an entire codebase.
+
+::: {.callout-note title="Modern footnote: explicit object parameters (C++23)"}
+For decades `this` was strictly a hidden pointer you could not name in the parameter list. C++23 added **explicit object parameters** ("deducing `this`"), letting you write the object parameter out by name: `int balance(this const Account& self) { return self.balance_; }`. It is a specialist feature, useful for removing `const`/non-`const` duplication and for recursive lambdas, and it does not change anything above; the implicit `this` remains the everyday form. It is worth knowing the name exists so the syntax is not a surprise if you meet it.
+:::
 
 ### Access Control
 <!-- public / private / protected; encapsulation as enforced-by-compiler, unlike
 Python's convention-only privacy. -->
-
 ### Constructors and Destructors
-<!-- Default/parameterized/copy/move constructors, destructor, initializer lists.
-Set up RAII, which gets its own section because it's the keystone idea. -->
+::: {.subheading}
+Building and tearing down objects
+:::
+
+A **constructor** is a special member function that runs when an object comes into being; a **destructor** runs when it goes away. This much you already know if you learned C++ in the 1990s, and the core mechanics are unchanged. What has changed, and changed profoundly, is the cast of constructors the compiler recognizes. C++98 defined the *special member functions* as the default constructor, the copy constructor, the copy-assignment operator, and the destructor. C++11 added two more, the **move constructor** and **move-assignment operator**, and those additions are what turned the copy-heavy C++ you remember into something far leaner. We will build up to them.
+
+#### Constructors
+A constructor has the class's name and no return type. A class may have several, distinguished by their parameters (ordinary [overloading](#operator-overloading)):
+
+```cpp
+class Point {
+public:
+    Point() : x_(0), y_(0) {}                    // default constructor
+    Point(int x, int y) : x_(x), y_(y) {}        // parameterized constructor
+
+private:
+    int x_, y_;
+};
+
+Point origin;          // calls Point()
+Point p(3, 4);         // calls Point(int, int)
+```
+
+The `: x_(0), y_(0)` part is the **member initializer list**, and it is worth dwelling on because it is not the same as assigning inside the body. Members in the initializer list are *constructed* with those values directly; members assigned in the body are first default-constructed and then overwritten. For `int` the difference is negligible, but for class-type members (a `std::string`, another object) it is the difference between one construction and two operations. It is also the *only* way to initialize `const` members and references, which cannot be assigned after the fact. Prefer the initializer list.
+
+::: {.callout-note title="Modern change: initialization got safer and less surprising"}
+Two C++11 additions smoothed over classic constructor traps.
+
+- **In-class member initializers** let you give a member a default right where it is declared (`int x_ = 0;`), so every constructor need not repeat it.
+- **uniform (brace) initialization**, covered under [Uniform Initialization](#uniform-initialization), lets you write `Point p{3, 4};`; it sidesteps the "most vexing parse" (where `Point p();` is read as a *function declaration*, not an object) and forbids narrowing conversions that the old `()` syntax silently allowed.
+
+For new code, brace-init is the default choice.
+:::
+
+A constructor taking a single argument doubles as an *implicit conversion*, which is occasionally handy and frequently a trap. Marking it `explicit` (as on the `File` constructor in the RAII section) disables that implicit conversion, so `File f = "path";` will not silently compile. Reach for `explicit` by default on single-argument constructors.
+
+#### Destructors
+The destructor is `~ClassName()`, takes no parameters, and there is exactly one. It runs automatically when the object's lifetime ends: at the closing brace for a stack object, or at `delete` for a heap object. As the [RAII section](#raii) laid out, this automatic, guaranteed invocation is the hook the entire resource-management story hangs on. If your class owns a resource, the destructor is where you give it back:
+
+```cpp
+~File() { if (handle_) std::fclose(handle_); }
+```
+
+One rule from your era still bites and is worth restating: if a class is meant to be inherited from and deleted through a base-class pointer, its destructor must be `virtual`. Otherwise `delete base_ptr;` runs only the base destructor and silently skips the derived one, leaking whatever the derived class owned.
+
+#### Copy
+::: {.subheading}
+the Constructor and the Assignment Operator
+:::
+
+Here is the part you remember unfondly, and your instinct was sound. By default the compiler writes a **copy constructor** and a **copy-assignment operator** for you, and they perform a *member-wise* copy:
+
+```cpp
+Point a(3, 4);
+Point b = a;    // copy constructor: b is built as a copy of a
+Point c;
+c = a;          // copy-assignment operator: existing c is overwritten from a
+```
+
+For a `Point` holding two `int`s, member-wise copy is exactly right. The trouble, the trouble you ran into, arrives when a class owns a resource through a raw pointer. A member-wise copy duplicates the *pointer*, not what it points at, so two objects now believe they own the same buffer. Both destructors free it (a double-free), and a write through one corrupts the other. This is the classic reason to hand-write a copy constructor that performs a **deep copy**, allocating its own buffer, which is fiddly, easy to get wrong, and the source of the reference-counting machinery you recall disliking.
+
+Modern C++ largely dissolves this problem, in two ways. First, **you rarely write these by hand anymore**, because you no longer hold resources through raw pointers; you hold them through RAII types (`std::vector`, `std::string`, `std::unique_ptr`) that already know how to copy or move themselves correctly. A class built out of such members gets a correct compiler-generated copy for free, which is the [Rule of Zero](#the-rule-of-three-five-zero) of the next section. Second, when copying really is the wrong default, C++11 lets you *say so* rather than fake it with private undefined functions the way C++98 forced you to:
+
+```cpp
+class Widget {
+public:
+    Widget(const Widget&) = delete;             // this type cannot be copied...
+    Widget& operator=(const Widget&) = delete;
+    Widget(Widget&&) = default;                 // ...but it can be moved (see below)
+    Widget& operator=(Widget&&) = default;
+};
+```
+
+The `= default` and `= delete` specifiers are themselves a C++11 addition: `= default` asks for the compiler's version explicitly, and `= delete` removes a function outright, turning a misuse into a compile error instead of a link error.
+
+#### Move
+::: {.subheading}
+the Modern Answer to Needless Copies
+:::
+
+The headline change since your time is **move semantics** (C++11). The insight is simple once stated: when you copy from a temporary or from an object you are finished with, deep-copying its resources is pure waste, because the source is about to be destroyed anyway. Instead of duplicating the buffer, you can *steal* it: transfer the pointer to the new object and leave the source holding nothing, so its now-trivial destructor harms nothing.
+
+A **move constructor** and **move-assignment operator** implement exactly this transfer. Returning a large `std::vector` from a function, once a potential deep copy of every element, is now a near-free pointer handoff:
+
+```cpp
+std::vector<int> build() {
+    std::vector<int> result(1'000'000);
+    // ...fill it...
+    return result;         // moved out, not copied: O(1), not O(n)
+}
+
+std::vector<int> data = build();   // the million ints are never duplicated
+```
+
+You almost never write move constructors yourself, for the same reason you rarely write copy constructors: the RAII types you build from already implement them. The full mechanics, `std::move`, rvalue references (`&&`), and *why* returning by value is now cheap, get their own treatment under [Move Semantics](#move-semantics). For now the takeaway is the one that answers your question directly: the copy-everywhere overhead that made 1990s C++ feel heavy is largely gone, replaced by moves that transfer ownership instead of duplicating it, and by RAII members that make the whole family of special functions something you configure rather than hand-code.
 
 ### RAII
 ::: {.subheading}
 The keystone idea
 :::
-<!-- Resource Acquisition Is Initialization: tie resource lifetime to object
-lifetime; destructor releases. Compare directly to C's manual free/goto-cleanup
-ladder (from c.qmd's goto section) and to Rust's ownership/Drop. This is THE
-concept that distinguishes C++ from C; give it room. -->
+
+If you take one idea away from this chapter, make it this one. **RAII** stands for *Resource Acquisition Is Initialization*, which is a famously bad name for a genuinely great idea. The name emphasizes the wrong half; what matters is the *release*, not the acquisition. Stated in plain terms: [tie the lifetime of a resource to the lifetime of an object, so that the resource is released automatically when the object is destroyed.]{.hl-blue} A resource is anything you acquire and must later give back: heap memory, an open file, a lock, a socket, a database handle.
+
+The mechanism rests on one guarantee the C++ language makes and C does not: **when an object goes out of scope, its destructor runs automatically, and it always runs.** A destructor is the special member function named `~ClassName()`; it is C++'s counterpart to a constructor, invoked not when you build the object but when you tear it down. So the recipe is to acquire the resource in the constructor and release it in the destructor. After that, correct cleanup is not something the programmer has to remember; it is something the compiler emits.
+
+#### The Problem It Solves
+Recall from the [C chapter](c.qmd#goto) the cleanup ladder: because C has no destructors and no `finally`, a function that acquires several resources must unwind them by hand, usually through a chain of `goto fail_*` labels. It works, but every early return is a chance to leak, and a `throw` (once exceptions enter the picture) skips the cleanup entirely. Here is the C shape of the problem:
+
+```c
+FILE* file = fopen("data.txt", "r");
+if (!file) return -1;
+
+char* buffer = malloc(1024);
+if (!buffer) {
+    fclose(file);        // must remember to undo the fopen...
+    return -1;
+}
+
+if (parse(file, buffer) != 0) {
+    free(buffer);        // ...and undo both, in the right order, on every exit path
+    fclose(file);
+    return -1;
+}
+
+free(buffer);            // and again on the success path
+fclose(file);
+return 0;
+```
+
+Every exit from this function repeats the teardown, and the burden of getting it right, on every path, forever, is entirely on you. Miss one and you have a leak; get the order wrong and you have a bug.
+
+#### The RAII Version
+Wrap each resource in an object whose destructor releases it, and the ladder disappears. The cleanup code is written *once*, in the destructor, and the compiler inserts the call at every point the object leaves scope, including exits by exception:
+
+```cpp
+class File {
+public:
+    explicit File(const char* path) : handle_(std::fopen(path, "r")) {
+        if (!handle_) throw std::runtime_error("cannot open file");
+    }
+    ~File() { if (handle_) std::fclose(handle_); }   // release, automatically
+
+    std::FILE* get() const { return handle_; }
+
+private:
+    std::FILE* handle_;
+};
+
+void process() {
+    File file("data.txt");           // acquired here
+    std::vector<char> buffer(1024);  // also RAII: frees its own memory
+    parse(file.get(), buffer);
+}   // <-- file's destructor runs here, closing the handle; buffer's frees the memory.
+    //     This happens on normal return AND if parse() throws.
+```
+
+There is no `fclose`, no `free`, and no cleanup ladder, because there is nothing to remember. Note that both objects are torn down in **reverse order of construction** (`buffer` first, then `file`), which is exactly what you want when later resources depend on earlier ones.
+
+This is why the STL containers you met earlier need no manual cleanup: `std::vector`, `std::string`, and `std::map` are RAII types. Their constructors allocate and their destructors free, so `std::vector<char> buffer(1024)` above is complete and leak-proof on its own. The smart pointers covered [later](#smart-pointers) (`std::unique_ptr`, `std::shared_ptr`) are RAII wrappers around raw `new`, which is precisely why modern C++ tells you to prefer them over bare `new`/`delete`.
+
+::: {.callout-note title="RAII and Rust's ownership are the same idea, differently enforced"}
+If you have read the Rust chapters, RAII will feel deeply familiar, because Rust took it directly from C++ and made it the center of the language. Rust's `Drop` trait is the destructor; a value's `drop` runs when it goes out of scope, exactly as a C++ destructor does. The difference is enforcement. C++ gives you RAII as a *pattern* you must apply correctly (and can circumvent: a raw `new` with no wrapper still leaks). Rust promotes the same lifetime discipline into the *type system* via ownership and the borrow checker, so the compiler forces it on you and rejects the code that would leak or use-after-free. Same mechanism, tie cleanup to scope; C++ trusts you to reach for it, Rust makes it inescapable.
+:::
+
+The Rule of Three/Five/Zero below is really a corollary of RAII: once an object owns a resource, you must decide what copying and moving that object mean, which is the subject of the next section.
 
 ### The Rule of Three / Five / Zero
 <!-- If you define one of destructor/copy-ctor/copy-assign you probably need all
 three; move semantics make it five; RAII wrapper types let you aim for zero. -->
-
 ### Operator Overloading
 <!-- Making user types behave like built-ins. Compare to Rust trait impls
 (`std::ops`) and Python dunder methods. Cautionary notes on overuse. -->
-
 ## Templates
 ::: {.subheading}
 Generic programming
 :::
+
 ### Function and Class Templates
 <!-- The mechanism: compile-time instantiation, monomorphization. Contrast with
 Rust generics (bounded by traits) and C's macro-based genericity. -->
-
 ### Template Specialization
 <!-- Full and partial specialization; when and why. -->
+### Concepts
+::: {.subheading}
+C++20
+:::
 
-### Concepts (C++20)
 <!-- Constraints on template parameters — the long-awaited answer to inscrutable
 template error messages. Direct parallel to Rust trait bounds. -->
-
 ## The Standard Template Library
 ::: {.subheading}
 Containers, iterators, algorithms
@@ -382,18 +661,18 @@ The containers divide into three families plus *container adapters*.
 3. **Unordered** containers keep elements in a hash table, giving $O(1)$ average lookup but no meaningful order.
 4. There are also **container adaptors**, which are thin interfaces layered over another container to restrict its behavior.
 
-| Container | Family | Underlying structure | Reach for it when | C / C++ analog |
-|:---------------------|:-----------|:------------------------|:-------------------------------------------|:---------------------------|
-| `std::array<T,N>`    | sequence   | fixed-size stack array     | size is known at compile time              | C's `T arr[N]`, but safe |
-| `std::vector<T>`     | sequence   | contiguous heap array      | your default; fast index, fast append at end | `malloc`'d growable buffer |
-| `std::string`        | sequence   | contiguous heap `char`s    | mutable, dynamic sequence of characters    | null-terminated `char[]` |
-| `std::deque<T>`      | sequence   | chunked array              | fast push/pop at *both* ends               | (no direct C analog)    |
-| `std::stack<T, C>`   | container adapter | `std::deque`, `std::vector`, etc. | fast push/pop at the top     | (no direct C analog)    |
-| `std::list<T>`       | sequence   | doubly-linked list         | frequent splicing/insertion in the middle  | hand-rolled linked list |
-| `std::map<K,V>`      | associative| balanced binary tree       | key-value pairs kept sorted by key         | (no direct C analog)    |
-| `std::set<K>`        | associative| balanced binary tree       | unique keys kept sorted                     | (no direct C analog)    |
-| `std::unordered_map<K,V>` | unordered | hash table              | key-value pairs, fastest lookup, order irrelevant | hash table by hand |
-| `std::unordered_set<K>`   | unordered | hash table              | unique keys, fastest membership test        | hash table by hand      |
+| Container                 | Family            | Underlying structure              | Reach for it when                                 | C / C++ analog             |
+|:--------------------------|:------------------|:----------------------------------|:--------------------------------------------------|:---------------------------|
+| `std::array<T,N>`         | sequence          | fixed-size stack array            | size is known at compile time                     | C's `T arr[N]`, but safe   |
+| `std::vector<T>`          | sequence          | contiguous heap array             | your default; fast index, fast append at end      | `malloc`'d growable buffer |
+| `std::string`             | sequence          | contiguous heap `char`s           | mutable, dynamic sequence of characters           | null-terminated `char[]`   |
+| `std::deque<T>`           | sequence          | chunked array                     | fast push/pop at *both* ends                      | (no direct C analog)       |
+| `std::stack<T, C>`        | container adapter | `std::deque`, `std::vector`, etc. | fast push/pop at the top                          | (no direct C analog)       |
+| `std::list<T>`            | sequence          | doubly-linked list                | frequent splicing/insertion in the middle         | hand-rolled linked list    |
+| `std::map<K,V>`           | associative       | balanced binary tree              | key-value pairs kept sorted by key                | (no direct C analog)       |
+| `std::set<K>`             | associative       | balanced binary tree              | unique keys kept sorted                           | (no direct C analog)       |
+| `std::unordered_map<K,V>` | unordered         | hash table                        | key-value pairs, fastest lookup, order irrelevant | hash table by hand         |
+| `std::unordered_set<K>`   | unordered         | hash table                        | unique keys, fastest membership test              | hash table by hand         |
 
 `std::stack`, `std::queue`, and `std::priority_queue` round out the list as adaptors: each wraps one of the above (a `deque` by default) and exposes only a restricted interface, so a `std::stack` offers `push`/`pop`/`top` and nothing else. Between these nine-or-so types, `std::vector` is the overwhelming default. Its contiguous storage is cache-friendly and its append is amortized $O(1)$; reach for something else only when you have a specific reason (`map` for sorted keys, `unordered_map` for raw lookup speed, `list` for cheap middle-insertion).
 
@@ -437,7 +716,6 @@ Here is the concept the rest of the STL is built on, stated as plainly as it can
 For a `std::vector`, whose elements are contiguous in memory, an iterator quite literally *is* a pointer (or a thin wrapper around one), and `++it` is ordinary pointer arithmetic. For a `std::map`, whose elements live in a balanced tree, an iterator is a small object holding a node pointer, and `++it` is the code that walks to the in-order-next node. The internals differ completely, but the *interface* is identical: `*it`, `++it`, `!=`. That uniformity is the whole trick. An algorithm written in terms of `*it` and `++it` neither knows nor cares which container it is walking, which is exactly why one `std::sort` serves them all.
 
 #### The Half-Open Range `[begin, end)`
-
 Every container hands out two iterators that define its extent: `begin()` points at the first element, and `end()` points at **one position past the last element**. `end()` is deliberately not the last element; it is a sentinel you are never meant to dereference, marking where the sequence stops. A range written this way, first included, last excluded, is called half-open and conventionally notated `[begin, end)`.
 
 This looks odd until you see what it buys you, and it is the same convention behind C pointer loops (`for (p = arr; p != arr + n; ++p)`) and Rust's `0..n` ranges:
@@ -449,21 +727,19 @@ This looks odd until you see what it buys you, and it is the same convention beh
 The loop idiom falls straight out of it: start at `begin()`, advance with `++it`, stop the instant `it == end()`.
 
 #### The Five Iterator Categories
-
 Not every iterator supports every operation. A `std::vector` iterator can jump to `it + 5` in one step; a `std::list` iterator can only shuffle forward or backward one node at a time; a `std::istream` iterator can be read once and never rewound. The library formalizes these differences into five categories, each a superset of the one before it. An algorithm advertises the weakest category it needs, and any iterator that meets or exceeds it will work.
 
-| Category | Adds the ability to | Example source |
-|:------------------|:--------------------------------------------------|:-------------------------|
-| **Input**         | read, `++` (single pass, forward only)             | `std::istream_iterator`  |
-| **Output**        | write, `++` (single pass, forward only)            | `std::ostream_iterator`  |
-| **Forward**       | read/write, multi-pass forward                     | `std::forward_list`      |
-| **Bidirectional** | `--` as well as `++` (walk backward)               | `std::list`, `std::map`  |
+| Category          | Adds the ability to                                  | Example source                            |
+|:------------------|:-----------------------------------------------------|:------------------------------------------|
+| **Input**         | read, `++` (single pass, forward only)               | `std::istream_iterator`                   |
+| **Output**        | write, `++` (single pass, forward only)              | `std::ostream_iterator`                   |
+| **Forward**       | read/write, multi-pass forward                       | `std::forward_list`                       |
+| **Bidirectional** | `--` as well as `++` (walk backward)                 | `std::list`, `std::map`                   |
 | **Random-access** | `it + n`, `it[n]`, `<`/`>` (jump anywhere in $O(1)$) | `std::vector`, `std::array`, `std::deque` |
 
 This taxonomy is not academic; it has concrete consequences. `std::sort` needs random-access iterators, so it accepts a `std::vector` but rejects a `std::list`. That is precisely why `std::list` ships with its own `.sort()` member function: a linked list cannot offer random access, so the generic algorithm does not apply and the container provides a specialized one instead.
 
 #### The Various Ways to Iterate
-
 There are several ways to walk a container, and they are not merely stylistic choices; they differ in which containers they support and how much they ask of you. Here they are from lowest-level to highest, over the same `std::vector<int>`.
 
 **1. The index loop.** The C way: count an integer from `0` to `size()`. It works *only* on random-access containers (you cannot index a `std::list`), and it is the most error-prone (off-by-ones, signed/unsigned mismatches).
@@ -536,49 +812,39 @@ The full `<algorithm>` catalog and the C++20 `ranges` library (which lets you wr
 ## Memory Management
 ### `new` / `delete`
 <!-- vs. C's malloc/free; why raw new/delete is now discouraged. -->
-
 ### Smart Pointers
 <!-- unique_ptr (owning, move-only), shared_ptr (refcounted), weak_ptr. The
 modern answer to manual delete. Compare to Rust Box/Rc/Arc — nearly 1:1. -->
-
 ### Move Semantics
 <!-- lvalues/rvalues, `std::move`, move constructors; why they exist (avoid deep
 copies) and how they underpin unique_ptr and efficient container growth. -->
-
 ## Error Handling
 ### Exceptions
 <!-- try/catch/throw, stack unwinding + RAII interplay, exception safety
 guarantees. Why embedded/game/systems shops often disable them (-fno-exceptions)
 and the cost model. -->
-
 ### Alternatives
 <!-- std::optional, std::expected (C++23), error codes. Compare to Rust's
 Result-as-the-only-way. -->
-
 ## Namespaces
 <!-- Organizing names; `using` declarations vs. directives; the C++ answer to
 C's file-static and prefix conventions. Anchor to c.qmd's translation-unit model. -->
-
 ## Compilation and the Build
 <!-- What differs from the C build (c.qmd's "The Build"): name mangling, the
 ODR, templates and header-only libraries, why C++ builds are slow, modules
 (C++20) as the intended fix. Toolchain: g++, clang++, CMake as the de facto
 build system. Keep short; cross-reference c.qmd rather than repeat. -->
-
 ## Key Differences from C
 <!-- Summary table for the C programmer: what to unlearn, what carries over.
 Pass-by-value still holds; but references, RAII, overloading, and templates
 change the idioms substantially. -->
-
 ## Key Differences from Rust
 <!-- For readers who did the Rust chapters: RAII vs. ownership+borrow-checker,
 exceptions vs. Result, templates vs. trait-bounded generics, "safe by
 convention" vs. "safe by compiler." What Rust took from C++ and improved. -->
-
 ## Where to Go Next
 <!-- .see-more div with authoritative references: Stroustrup's "A Tour of C++"
 and "The C++ Programming Language," cppreference.com, the C++ Core Guidelines. -->
-
 ## Further Reading
 <!--
 - Stroustrup, B. (2022). A Tour of C++ (3rd ed.). Addison-Wesley.

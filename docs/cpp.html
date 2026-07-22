@@ -392,8 +392,8 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#capture-modes" id="toc-capture-modes" class="nav-link" data-scroll-target="#capture-modes">Capture Modes</a></li>
   <li><a href="#mutable-and-generic-lambdas" id="toc-mutable-and-generic-lambdas" class="nav-link" data-scroll-target="#mutable-and-generic-lambdas"><code>mutable</code> and Generic Lambdas</a></li>
-  <li><a href="#storing-a-lambda-auto-vs-stdfunction" id="toc-storing-a-lambda-auto-vs-stdfunction" class="nav-link" data-scroll-target="#storing-a-lambda-auto-vs-stdfunction">Storing a Lambda: <code>auto</code> vs <code>std::function</code></a></li>
-  <li><a href="#in-practice-lambdas-and-algorithms" id="toc-in-practice-lambdas-and-algorithms" class="nav-link" data-scroll-target="#in-practice-lambdas-and-algorithms">In Practice: Lambdas and Algorithms</a></li>
+  <li><a href="#storing-a-lambda" id="toc-storing-a-lambda" class="nav-link" data-scroll-target="#storing-a-lambda">Storing a Lambda</a></li>
+  <li><a href="#in-practice" id="toc-in-practice" class="nav-link" data-scroll-target="#in-practice">In Practice</a></li>
   <li><a href="#lambdas-across-languages" id="toc-lambdas-across-languages" class="nav-link" data-scroll-target="#lambdas-across-languages">Lambdas Across Languages</a></li>
   </ul></li>
   <li><a href="#structured-bindings" id="toc-structured-bindings" class="nav-link" data-scroll-target="#structured-bindings">Structured Bindings</a></li>
@@ -408,10 +408,25 @@ window.Quarto = {
   <li><a href="#classes-and-objects" id="toc-classes-and-objects" class="nav-link" data-scroll-target="#classes-and-objects">Classes and Objects</a>
   <ul>
   <li><a href="#from-struct-to-class" id="toc-from-struct-to-class" class="nav-link" data-scroll-target="#from-struct-to-class">From <code>struct</code> to <code>class</code></a></li>
-  <li><a href="#member-functions-this-and-const-methods" id="toc-member-functions-this-and-const-methods" class="nav-link" data-scroll-target="#member-functions-this-and-const-methods">Member Functions, <code>this</code>, and <code>const</code> Methods</a></li>
+  <li><a href="#member-functions-this-and-const-methods" id="toc-member-functions-this-and-const-methods" class="nav-link" data-scroll-target="#member-functions-this-and-const-methods">Member Functions, <code>this</code>, and <code>const</code> Methods</a>
+  <ul class="collapse">
+  <li><a href="#implicit-member-access" id="toc-implicit-member-access" class="nav-link" data-scroll-target="#implicit-member-access">Implicit Member Access</a></li>
+  <li><a href="#when-names-collide" id="toc-when-names-collide" class="nav-link" data-scroll-target="#when-names-collide">When Names Collide</a></li>
+  <li><a href="#const-member-functions" id="toc-const-member-functions" class="nav-link" data-scroll-target="#const-member-functions"><code>const</code> Member Functions</a></li>
+  </ul></li>
   <li><a href="#access-control" id="toc-access-control" class="nav-link" data-scroll-target="#access-control">Access Control</a></li>
-  <li><a href="#constructors-and-destructors" id="toc-constructors-and-destructors" class="nav-link" data-scroll-target="#constructors-and-destructors">Constructors and Destructors</a></li>
-  <li><a href="#raii" id="toc-raii" class="nav-link" data-scroll-target="#raii">RAII</a></li>
+  <li><a href="#constructors-and-destructors" id="toc-constructors-and-destructors" class="nav-link" data-scroll-target="#constructors-and-destructors">Constructors and Destructors</a>
+  <ul class="collapse">
+  <li><a href="#constructors" id="toc-constructors" class="nav-link" data-scroll-target="#constructors">Constructors</a></li>
+  <li><a href="#destructors" id="toc-destructors" class="nav-link" data-scroll-target="#destructors">Destructors</a></li>
+  <li><a href="#copy" id="toc-copy" class="nav-link" data-scroll-target="#copy">Copy</a></li>
+  <li><a href="#move" id="toc-move" class="nav-link" data-scroll-target="#move">Move</a></li>
+  </ul></li>
+  <li><a href="#raii" id="toc-raii" class="nav-link" data-scroll-target="#raii">RAII</a>
+  <ul class="collapse">
+  <li><a href="#the-problem-it-solves" id="toc-the-problem-it-solves" class="nav-link" data-scroll-target="#the-problem-it-solves">The Problem It Solves</a></li>
+  <li><a href="#the-raii-version" id="toc-the-raii-version" class="nav-link" data-scroll-target="#the-raii-version">The RAII Version</a></li>
+  </ul></li>
   <li><a href="#the-rule-of-three-five-zero" id="toc-the-rule-of-three-five-zero" class="nav-link" data-scroll-target="#the-rule-of-three-five-zero">The Rule of Three / Five / Zero</a></li>
   <li><a href="#operator-overloading" id="toc-operator-overloading" class="nav-link" data-scroll-target="#operator-overloading">Operator Overloading</a></li>
   </ul></li>
@@ -419,7 +434,7 @@ window.Quarto = {
   <ul>
   <li><a href="#function-and-class-templates" id="toc-function-and-class-templates" class="nav-link" data-scroll-target="#function-and-class-templates">Function and Class Templates</a></li>
   <li><a href="#template-specialization" id="toc-template-specialization" class="nav-link" data-scroll-target="#template-specialization">Template Specialization</a></li>
-  <li><a href="#concepts-c20" id="toc-concepts-c20" class="nav-link" data-scroll-target="#concepts-c20">Concepts (C++20)</a></li>
+  <li><a href="#concepts" id="toc-concepts" class="nav-link" data-scroll-target="#concepts">Concepts</a></li>
   </ul></li>
   <li><a href="#the-standard-template-library" id="toc-the-standard-template-library" class="nav-link" data-scroll-target="#the-standard-template-library">The Standard Template Library</a>
   <ul>
@@ -504,10 +519,10 @@ exceptions vs. Result). Keep examples idiomatic modern C++ (C++17/20), not
 <p>Like C, C++ has evolved through a sequence of ISO standards, and the standard a codebase targets explains which features are available to it. Unlike C, whose revisions were mostly small and additive, C++ went through a genuine inflection at <em>C++11</em>, after which the language and its idioms changed enough that the community draws a line there and calls everything past it “modern C++.” The revisions since have arrived on a steady three-year cadence, each one substantial.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 13%">
-<col style="width: 5%">
-<col style="width: 13%">
-<col style="width: 67%">
+<col style="width: 7%">
+<col style="width: 2%">
+<col style="width: 6%">
+<col style="width: 84%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -707,8 +722,8 @@ names as types without typedef, function overloading changing name-mangling,
 <p>The capture clause is where C++ makes an explicit, per-variable decision that Rust infers for you and Python does not let you control at all. You state exactly what the lambda closes over and <em>how</em>.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 15%">
-<col style="width: 84%">
+<col style="width: 8%">
+<col style="width: 91%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -787,8 +802,11 @@ names as types without typedef, function overloading changing name-mangling,
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>add<span class="op">(</span><span class="fl">1.5</span><span class="op">,</span> <span class="fl">2.0</span><span class="op">);</span>    <span class="co">// 3.5    (double)</span></span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>add<span class="op">(</span><span class="bu">std::</span>string<span class="op">(</span><span class="st">"foo"</span><span class="op">),</span> <span class="bu">std::</span>string<span class="op">(</span><span class="st">"bar"</span><span class="op">));</span>  <span class="co">// "foobar"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="storing-a-lambda-auto-vs-stdfunction" class="level4">
-<h4 class="anchored" data-anchor-id="storing-a-lambda-auto-vs-stdfunction">Storing a Lambda: <code>auto</code> vs <code>std::function</code></h4>
+<section id="storing-a-lambda" class="level4">
+<h4 class="anchored" data-anchor-id="storing-a-lambda">Storing a Lambda</h4>
+<div class="subheading">
+<p><code>auto</code> vs <code>std::function</code></p>
+</div>
 <p>Every lambda has a <strong>unique, unnamed type</strong> the compiler invents just for it. Two lambdas with identical bodies still have different types. This matters when you store one:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> f <span class="op">=</span> <span class="op">[](</span><span class="dt">int</span> x<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> x <span class="op">+</span> <span class="dv">1</span><span class="op">;</span> <span class="op">};</span>   <span class="co">// zero-overhead: f's type is the lambda's own type</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Using <code>auto</code> stores the lambda directly, and the call compiles down to a direct, inlinable invocation with no indirection. This is the zero-overhead-abstraction thesis made concrete: the lambda costs no more than the hand-written functor it replaced.</p>
@@ -797,8 +815,11 @@ names as types without typedef, function overloading changing name-mangling,
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>function<span class="op">&lt;</span><span class="dt">int</span><span class="op">(</span><span class="dt">int</span><span class="op">)&gt;</span> g <span class="op">=</span> <span class="op">[](</span><span class="dt">int</span> x<span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> x <span class="op">+</span> <span class="dv">1</span><span class="op">;</span> <span class="op">};</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>std::function</code> is type-erased: it can hold a lambda, a function pointer, or a functor interchangeably, at the cost of a virtual-dispatch-like indirection and, often, a heap allocation. Prefer <code>auto</code> for locals and template parameters; reserve <code>std::function</code> for when you genuinely need to store callables of differing concrete types behind one interface (for example, a <code>std::vector&lt;std::function&lt;...&gt;&gt;</code> of callbacks).</p>
 </section>
-<section id="in-practice-lambdas-and-algorithms" class="level4">
-<h4 class="anchored" data-anchor-id="in-practice-lambdas-and-algorithms">In Practice: Lambdas and Algorithms</h4>
+<section id="in-practice" class="level4">
+<h4 class="anchored" data-anchor-id="in-practice">In Practice</h4>
+<div class="subheading">
+<p>Lambdas and Algorithms</p>
+</div>
 <p>Lambdas earn their keep as arguments to the standard algorithms, where the behavior belongs right at the call site:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;algorithm&gt;</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;vector&gt;</span></span>
@@ -819,10 +840,10 @@ names as types without typedef, function overloading changing name-mangling,
 <p>The same idea appears in Rust and Python, but each language makes different tradeoffs around <em>how capture works</em> and <em>what safety it guarantees</em>.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 13%">
-<col style="width: 30%">
-<col style="width: 35%">
-<col style="width: 20%">
+<col style="width: 8%">
+<col style="width: 26%">
+<col style="width: 29%">
+<col style="width: 36%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -905,7 +926,159 @@ functions add. Anchor to C's "struct + free functions operating on it" pattern. 
 </section>
 <section id="member-functions-this-and-const-methods" class="level3">
 <h3 class="anchored" data-anchor-id="member-functions-this-and-const-methods">Member Functions, <code>this</code>, and <code>const</code> Methods</h3>
-<!-- Methods, the implicit `this` pointer, const-qualified member functions. -->
+<div class="subheading">
+<p>Functions that belong to an object</p>
+</div>
+<p>In C, a “method” is a free function you pass the struct to by hand: <code>account_deposit(&amp;acct, 100)</code>. C++ folds that pointer into the language. A <strong>member function</strong> is declared inside the class and called on an instance with the dot operator, and the object it was called on is passed to it invisibly, as a hidden pointer named <code>this</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Account <span class="op">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> deposit<span class="op">(</span><span class="dt">int</span> amount<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">balance_</span> <span class="op">+=</span> amount<span class="op">;</span>      <span class="co">// balance_ is this-&gt;balance_</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> <span class="va">balance_</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>Account acct<span class="op">;</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>acct<span class="op">.</span>deposit<span class="op">(</span><span class="dv">100</span><span class="op">);</span>               <span class="co">// acct is bound to `this` inside deposit</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>this</code> is a pointer to the object the member function was invoked on. <code>acct.deposit(100)</code> is, under the hood, close to the C call <code>Account_deposit(&amp;acct, 100)</code>, with <code>this == &amp;acct</code>. Everything member functions add over C’s free-function style flows from having that pointer supplied automatically.</p>
+<section id="implicit-member-access" class="level4">
+<h4 class="anchored" data-anchor-id="implicit-member-access">Implicit Member Access</h4>
+<p>Here is the mechanism you noticed. Inside a member function, when you write an unqualified name like <code>balance_</code>, the compiler looks it up in the enclosing class scope; if it finds a member of that name, it silently rewrites the access as <code>this-&gt;balance_</code>. The two forms are exactly equivalent:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> deposit<span class="op">(</span><span class="dt">int</span> amount<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">balance_</span>       <span class="op">+=</span> amount<span class="op">;</span>    <span class="co">// implicit: relies on name lookup finding the member</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">this</span><span class="op">-&gt;</span><span class="va">balance_</span> <span class="op">+=</span> amount<span class="op">;</span>    <span class="co">// explicit: the same thing, spelled out</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This has no formal one-word name in the standard; it is simply <strong>name lookup</strong> finding a member and applying the implicit <code>this-&gt;</code>. And it is not a Modern C++ addition: it has worked since the earliest days of the language, C++98 and before. If 1990s code you read leaned on explicit <code>this-&gt;</code> everywhere, that was either house style or a way to sidestep exactly the shadowing case below, not a limitation of the compiler.</p>
+<p>Crucially, and this answers the other half of your question, <strong>the same rule applies to member functions</strong>. Calling <code>helper()</code> inside a method is implicitly <code>this-&gt;helper()</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Parser <span class="op">{</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> run<span class="op">()</span> <span class="op">{</span> advance<span class="op">();</span> <span class="op">}</span>        <span class="co">// implicitly this-&gt;advance()</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> advance<span class="op">()</span> <span class="op">{</span> <span class="co">/* ... */</span> <span class="op">}</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="when-names-collide" class="level4">
+<h4 class="anchored" data-anchor-id="when-names-collide">When Names Collide</h4>
+<div class="subheading">
+<p>Shadowing</p>
+</div>
+<p>The one case where the implicit form and the explicit form <em>diverge</em> is shadowing, when a local variable or parameter has the same name as a member. Name lookup always prefers the nearest scope, so the unqualified name resolves to the <strong>local</strong>, and the member is hidden. This is precisely why the trailing-underscore convention exists:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Point <span class="op">{</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> set_x<span class="op">(</span><span class="dt">int</span> x<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> x<span class="op">;</span>            <span class="co">// </span><span class="al">BUG</span><span class="co">: assigns the parameter to itself; the member is untouched</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> x<span class="op">;</span>                <span class="co">// shadowed by the parameter `x`</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Here <code>x</code> resolves to the parameter in both positions, so the member never changes. There are two idiomatic fixes, and both are worth knowing:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> set_x<span class="op">(</span><span class="dt">int</span> x<span class="op">)</span> <span class="op">{</span> <span class="kw">this</span><span class="op">-&gt;</span>x <span class="op">=</span> x<span class="op">;</span> <span class="op">}</span>     <span class="co">// 1. qualify the member explicitly with this-&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Point <span class="op">{</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> set_x<span class="op">(</span><span class="dt">int</span> x<span class="op">)</span> <span class="op">{</span> <span class="va">x_</span> <span class="op">=</span> x<span class="op">;</span> <span class="op">}</span>      <span class="co">// 2. name the member so it never collides</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> <span class="va">x_</span><span class="op">;</span>                             <span class="co">// trailing underscore: the member is x_, the param is x</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>member_</code> convention (a trailing underscore, sometimes a leading <code>m_</code>) is the more common answer in modern codebases because it removes the ambiguity everywhere at once, rather than requiring <code>this-&gt;</code> at each site. This is a <em>naming discipline</em>, not a language feature: the compiler attaches no meaning to the underscore. It simply guarantees the member and any local never share a spelling, so unqualified <code>x_</code> is always the member and you never have to think about shadowing. When you saw <code>var_</code> used with no local <code>var_</code> in sight, that was the convention doing its job: <code>var_</code> was a member, resolved by ordinary name lookup to <code>this-&gt;var_</code>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="A leading underscore is the wrong choice">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="true" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A leading underscore is the wrong choice
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse show">
+<div class="callout-body-container callout-body">
+<p>Trailing underscore (<code>value_</code>), yes; <em>leading</em> underscore (<code>_value</code>), no. Identifiers that begin with an underscore followed by a capital letter, or that contain a double underscore, are reserved for the implementation in every scope, and a leading underscore is reserved at file scope. Trailing-underscore member names avoid the reserved-identifier rules entirely, which is a good part of why that convention won out.</p>
+<p>The following is forbidden by the official C++ Language Standard:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 17%">
+<col style="width: 15%">
+<col style="width: 40%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Pattern</th>
+<th style="text-align: left;">Scope</th>
+<th>Rule / Consequence</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Double Underscore (<code>__</code>)</strong></td>
+<td style="text-align: left;">Anywhere in the name</td>
+<td>Completely Reserved for the implementation.</td>
+<td><code>__myVar</code>, <code>my__Var</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Leading <code>_</code> + <code>[A-Z]+</code></strong></td>
+<td style="text-align: left;">Anywhere in the code</td>
+<td>Completely Reserved (often used for internal library macros).</td>
+<td><code>_MyVariable</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Leading <code>_</code> + <code>[a-z]+</code></strong></td>
+<td style="text-align: left;">Global Namespace only</td>
+<td>Reserved; can conflict with OS-specific or runtime environment symbols.</td>
+<td><code>int _variable;</code> (at file/global scope)</td>
+</tr>
+</tbody>
+</table>
+<section id="the-one-exception" class="level5">
+<h5 class="anchored" data-anchor-id="the-one-exception">The One Exception</h5>
+<div class="subheading">
+<p>User-Defined Literals (C++11 and Newer)</p>
+</div>
+<p>There is one place where the C++ language requires you to use a leading underscore: <em>Custom User-Defined Literals</em>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Legal and REQUIRED by the standard for user code</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="dt">long</span> <span class="dt">double</span> <span class="kw">operator</span><span class="st">""</span> _miles<span class="op">(</span><span class="dt">long</span> <span class="dt">double</span> m<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> m <span class="op">*</span> <span class="fl">1609.34</span><span class="op">;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> distance <span class="op">=</span> <span class="fl">5.0</span><span class="op">_miles;</span>   <span class="co">// Resolves safely</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</div>
+</div>
+</div>
+</section>
+<section id="const-member-functions" class="level4">
+<h4 class="anchored" data-anchor-id="const-member-functions"><code>const</code> Member Functions</h4>
+<p>A member function can promise not to modify the object by appending <code>const</code> to its signature. Inside such a function, <code>this</code> is a pointer-to-<code>const</code>, so any attempt to change a member is a compile error. This is the member-function counterpart to the <code>const</code> references you use for cheap read-only parameters:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Account <span class="op">{</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span>  balance<span class="op">()</span> <span class="at">const</span> <span class="op">{</span> <span class="cf">return</span> <span class="va">balance_</span><span class="op">;</span> <span class="op">}</span>   <span class="co">// read-only: promises not to mutate</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> deposit<span class="op">(</span><span class="dt">int</span> amount<span class="op">)</span> <span class="op">{</span> <span class="va">balance_</span> <span class="op">+=</span> amount<span class="op">;</span> <span class="op">}</span>   <span class="co">// non-const: allowed to mutate</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> <span class="va">balance_</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> Account frozen<span class="op">;</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>frozen<span class="op">.</span>balance<span class="op">();</span>        <span class="co">// OK: const method on a const object</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>frozen<span class="op">.</span>deposit<span class="op">(</span><span class="dv">100</span><span class="op">);</span>     <span class="co">// compile error: can't call a non-const method on a const object</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The rule is strict and it propagates: you may call only <code>const</code> member functions on a <code>const</code> object. This is why marking every non-mutating method <code>const</code> matters in practice; omit it and callers holding a <code>const</code> reference to your object cannot use the method at all. Mark member functions <code>const</code> whenever they do not modify the object; it costs nothing and it is what makes <code>const</code>-correctness work across an entire codebase.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Modern footnote: explicit object parameters (C++23)">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Modern footnote: explicit object parameters (C++23)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>For decades <code>this</code> was strictly a hidden pointer you could not name in the parameter list. C++23 added <strong>explicit object parameters</strong> (“deducing <code>this</code>”), letting you write the object parameter out by name: <code>int balance(this const Account&amp; self) { return self.balance_; }</code>. It is a specialist feature, useful for removing <code>const</code>/non-<code>const</code> duplication and for recursive lambdas, and it does not change anything above; the implicit <code>this</code> remains the everyday form. It is worth knowing the name exists so the syntax is not a surprise if you meet it.</p>
+</div>
+</div>
+</section>
 </section>
 <section id="access-control" class="level3">
 <h3 class="anchored" data-anchor-id="access-control">Access Control</h3>
@@ -914,18 +1087,158 @@ Python's convention-only privacy. -->
 </section>
 <section id="constructors-and-destructors" class="level3">
 <h3 class="anchored" data-anchor-id="constructors-and-destructors">Constructors and Destructors</h3>
-<!-- Default/parameterized/copy/move constructors, destructor, initializer lists.
-Set up RAII, which gets its own section because it's the keystone idea. -->
+<div class="subheading">
+<p>Building and tearing down objects</p>
+</div>
+<p>A <strong>constructor</strong> is a special member function that runs when an object comes into being; a <strong>destructor</strong> runs when it goes away. This much you already know if you learned C++ in the 1990s, and the core mechanics are unchanged. What has changed, and changed profoundly, is the cast of constructors the compiler recognizes. C++98 defined the <em>special member functions</em> as the default constructor, the copy constructor, the copy-assignment operator, and the destructor. C++11 added two more, the <strong>move constructor</strong> and <strong>move-assignment operator</strong>, and those additions are what turned the copy-heavy C++ you remember into something far leaner. We will build up to them.</p>
+<section id="constructors" class="level4">
+<h4 class="anchored" data-anchor-id="constructors">Constructors</h4>
+<p>A constructor has the class’s name and no return type. A class may have several, distinguished by their parameters (ordinary <a href="#operator-overloading">overloading</a>):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Point <span class="op">{</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    Point<span class="op">()</span> <span class="op">:</span> <span class="va">x_</span><span class="op">(</span><span class="dv">0</span><span class="op">),</span> <span class="va">y_</span><span class="op">(</span><span class="dv">0</span><span class="op">)</span> <span class="op">{}</span>                    <span class="co">// default constructor</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    Point<span class="op">(</span><span class="dt">int</span> x<span class="op">,</span> <span class="dt">int</span> y<span class="op">)</span> <span class="op">:</span> <span class="va">x_</span><span class="op">(</span>x<span class="op">),</span> <span class="va">y_</span><span class="op">(</span>y<span class="op">)</span> <span class="op">{}</span>        <span class="co">// parameterized constructor</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> <span class="va">x_</span><span class="op">,</span> <span class="va">y_</span><span class="op">;</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>Point origin<span class="op">;</span>          <span class="co">// calls Point()</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>Point p<span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="dv">4</span><span class="op">);</span>         <span class="co">// calls Point(int, int)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>: x_(0), y_(0)</code> part is the <strong>member initializer list</strong>, and it is worth dwelling on because it is not the same as assigning inside the body. Members in the initializer list are <em>constructed</em> with those values directly; members assigned in the body are first default-constructed and then overwritten. For <code>int</code> the difference is negligible, but for class-type members (a <code>std::string</code>, another object) it is the difference between one construction and two operations. It is also the <em>only</em> way to initialize <code>const</code> members and references, which cannot be assigned after the fact. Prefer the initializer list.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Modern change: initialization got safer and less surprising">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Modern change: initialization got safer and less surprising
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Two C++11 additions smoothed over classic constructor traps.</p>
+<ul>
+<li><strong>In-class member initializers</strong> let you give a member a default right where it is declared (<code>int x_ = 0;</code>), so every constructor need not repeat it.</li>
+<li><strong>uniform (brace) initialization</strong>, covered under <a href="#uniform-initialization">Uniform Initialization</a>, lets you write <code>Point p{3, 4};</code>; it sidesteps the “most vexing parse” (where <code>Point p();</code> is read as a <em>function declaration</em>, not an object) and forbids narrowing conversions that the old <code>()</code> syntax silently allowed.</li>
+</ul>
+<p>For new code, brace-init is the default choice.</p>
+</div>
+</div>
+<p>A constructor taking a single argument doubles as an <em>implicit conversion</em>, which is occasionally handy and frequently a trap. Marking it <code>explicit</code> (as on the <code>File</code> constructor in the RAII section) disables that implicit conversion, so <code>File f = "path";</code> will not silently compile. Reach for <code>explicit</code> by default on single-argument constructors.</p>
+</section>
+<section id="destructors" class="level4">
+<h4 class="anchored" data-anchor-id="destructors">Destructors</h4>
+<p>The destructor is <code>~ClassName()</code>, takes no parameters, and there is exactly one. It runs automatically when the object’s lifetime ends: at the closing brace for a stack object, or at <code>delete</code> for a heap object. As the <a href="#raii">RAII section</a> laid out, this automatic, guaranteed invocation is the hook the entire resource-management story hangs on. If your class owns a resource, the destructor is where you give it back:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="op">~</span>File<span class="op">()</span> <span class="op">{</span> <span class="cf">if</span> <span class="op">(</span><span class="va">handle_</span><span class="op">)</span> <span class="bu">std::</span>fclose<span class="op">(</span><span class="va">handle_</span><span class="op">);</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>One rule from your era still bites and is worth restating: if a class is meant to be inherited from and deleted through a base-class pointer, its destructor must be <code>virtual</code>. Otherwise <code>delete base_ptr;</code> runs only the base destructor and silently skips the derived one, leaking whatever the derived class owned.</p>
+</section>
+<section id="copy" class="level4">
+<h4 class="anchored" data-anchor-id="copy">Copy</h4>
+<div class="subheading">
+<p>the Constructor and the Assignment Operator</p>
+</div>
+<p>Here is the part you remember unfondly, and your instinct was sound. By default the compiler writes a <strong>copy constructor</strong> and a <strong>copy-assignment operator</strong> for you, and they perform a <em>member-wise</em> copy:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>Point a<span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="dv">4</span><span class="op">);</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>Point b <span class="op">=</span> a<span class="op">;</span>    <span class="co">// copy constructor: b is built as a copy of a</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>Point c<span class="op">;</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>c <span class="op">=</span> a<span class="op">;</span>          <span class="co">// copy-assignment operator: existing c is overwritten from a</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For a <code>Point</code> holding two <code>int</code>s, member-wise copy is exactly right. The trouble, the trouble you ran into, arrives when a class owns a resource through a raw pointer. A member-wise copy duplicates the <em>pointer</em>, not what it points at, so two objects now believe they own the same buffer. Both destructors free it (a double-free), and a write through one corrupts the other. This is the classic reason to hand-write a copy constructor that performs a <strong>deep copy</strong>, allocating its own buffer, which is fiddly, easy to get wrong, and the source of the reference-counting machinery you recall disliking.</p>
+<p>Modern C++ largely dissolves this problem, in two ways. First, <strong>you rarely write these by hand anymore</strong>, because you no longer hold resources through raw pointers; you hold them through RAII types (<code>std::vector</code>, <code>std::string</code>, <code>std::unique_ptr</code>) that already know how to copy or move themselves correctly. A class built out of such members gets a correct compiler-generated copy for free, which is the <a href="#the-rule-of-three-five-zero">Rule of Zero</a> of the next section. Second, when copying really is the wrong default, C++11 lets you <em>say so</em> rather than fake it with private undefined functions the way C++98 forced you to:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Widget <span class="op">{</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    Widget<span class="op">(</span><span class="at">const</span> Widget<span class="op">&amp;)</span> <span class="op">=</span> <span class="kw">delete</span><span class="op">;</span>             <span class="co">// this type cannot be copied...</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    Widget<span class="op">&amp;</span> <span class="kw">operator</span><span class="op">=(</span><span class="at">const</span> Widget<span class="op">&amp;)</span> <span class="op">=</span> <span class="kw">delete</span><span class="op">;</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    Widget<span class="op">(</span>Widget<span class="op">&amp;&amp;)</span> <span class="op">=</span> <span class="cf">default</span><span class="op">;</span>                 <span class="co">// ...but it can be moved (see below)</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    Widget<span class="op">&amp;</span> <span class="kw">operator</span><span class="op">=(</span>Widget<span class="op">&amp;&amp;)</span> <span class="op">=</span> <span class="cf">default</span><span class="op">;</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>= default</code> and <code>= delete</code> specifiers are themselves a C++11 addition: <code>= default</code> asks for the compiler’s version explicitly, and <code>= delete</code> removes a function outright, turning a misuse into a compile error instead of a link error.</p>
+</section>
+<section id="move" class="level4">
+<h4 class="anchored" data-anchor-id="move">Move</h4>
+<div class="subheading">
+<p>the Modern Answer to Needless Copies</p>
+</div>
+<p>The headline change since your time is <strong>move semantics</strong> (C++11). The insight is simple once stated: when you copy from a temporary or from an object you are finished with, deep-copying its resources is pure waste, because the source is about to be destroyed anyway. Instead of duplicating the buffer, you can <em>steal</em> it: transfer the pointer to the new object and leave the source holding nothing, so its now-trivial destructor harms nothing.</p>
+<p>A <strong>move constructor</strong> and <strong>move-assignment operator</strong> implement exactly this transfer. Returning a large <code>std::vector</code> from a function, once a potential deep copy of every element, is now a near-free pointer handoff:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;</span> build<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;</span> result<span class="op">(</span><span class="dv">1'000'000</span><span class="op">);</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ...fill it...</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result<span class="op">;</span>         <span class="co">// moved out, not copied: O(1), not O(n)</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;</span> data <span class="op">=</span> build<span class="op">();</span>   <span class="co">// the million ints are never duplicated</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>You almost never write move constructors yourself, for the same reason you rarely write copy constructors: the RAII types you build from already implement them. The full mechanics, <code>std::move</code>, rvalue references (<code>&amp;&amp;</code>), and <em>why</em> returning by value is now cheap, get their own treatment under <a href="#move-semantics">Move Semantics</a>. For now the takeaway is the one that answers your question directly: the copy-everywhere overhead that made 1990s C++ feel heavy is largely gone, replaced by moves that transfer ownership instead of duplicating it, and by RAII members that make the whole family of special functions something you configure rather than hand-code.</p>
+</section>
 </section>
 <section id="raii" class="level3">
 <h3 class="anchored" data-anchor-id="raii">RAII</h3>
 <div class="subheading">
 <p>The keystone idea</p>
 </div>
-<!-- Resource Acquisition Is Initialization: tie resource lifetime to object
-lifetime; destructor releases. Compare directly to C's manual free/goto-cleanup
-ladder (from c.qmd's goto section) and to Rust's ownership/Drop. This is THE
-concept that distinguishes C++ from C; give it room. -->
+<p>If you take one idea away from this chapter, make it this one. <strong>RAII</strong> stands for <em>Resource Acquisition Is Initialization</em>, which is a famously bad name for a genuinely great idea. The name emphasizes the wrong half; what matters is the <em>release</em>, not the acquisition. Stated in plain terms: <span class="hl-blue">tie the lifetime of a resource to the lifetime of an object, so that the resource is released automatically when the object is destroyed.</span> A resource is anything you acquire and must later give back: heap memory, an open file, a lock, a socket, a database handle.</p>
+<p>The mechanism rests on one guarantee the C++ language makes and C does not: <strong>when an object goes out of scope, its destructor runs automatically, and it always runs.</strong> A destructor is the special member function named <code>~ClassName()</code>; it is C++’s counterpart to a constructor, invoked not when you build the object but when you tear it down. So the recipe is to acquire the resource in the constructor and release it in the destructor. After that, correct cleanup is not something the programmer has to remember; it is something the compiler emits.</p>
+<section id="the-problem-it-solves" class="level4">
+<h4 class="anchored" data-anchor-id="the-problem-it-solves">The Problem It Solves</h4>
+<p>Recall from the <a href="./c.html#goto">C chapter</a> the cleanup ladder: because C has no destructors and no <code>finally</code>, a function that acquires several resources must unwind them by hand, usually through a chain of <code>goto fail_*</code> labels. It works, but every early return is a chance to leak, and a <code>throw</code> (once exceptions enter the picture) skips the cleanup entirely. Here is the C shape of the problem:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="dt">FILE</span><span class="op">*</span> file <span class="op">=</span> fopen<span class="op">(</span><span class="st">"data.txt"</span><span class="op">,</span> <span class="st">"r"</span><span class="op">);</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(!</span>file<span class="op">)</span> <span class="cf">return</span> <span class="op">-</span><span class="dv">1</span><span class="op">;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span><span class="op">*</span> buffer <span class="op">=</span> malloc<span class="op">(</span><span class="dv">1024</span><span class="op">);</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(!</span>buffer<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    fclose<span class="op">(</span>file<span class="op">);</span>        <span class="co">// must remember to undo the fopen...</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span><span class="dv">1</span><span class="op">;</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>parse<span class="op">(</span>file<span class="op">,</span> buffer<span class="op">)</span> <span class="op">!=</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>    free<span class="op">(</span>buffer<span class="op">);</span>        <span class="co">// ...and undo both, in the right order, on every exit path</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    fclose<span class="op">(</span>file<span class="op">);</span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span><span class="dv">1</span><span class="op">;</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>free<span class="op">(</span>buffer<span class="op">);</span>            <span class="co">// and again on the success path</span></span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>fclose<span class="op">(</span>file<span class="op">);</span></span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Every exit from this function repeats the teardown, and the burden of getting it right, on every path, forever, is entirely on you. Miss one and you have a leak; get the order wrong and you have a bug.</p>
+</section>
+<section id="the-raii-version" class="level4">
+<h4 class="anchored" data-anchor-id="the-raii-version">The RAII Version</h4>
+<p>Wrap each resource in an object whose destructor releases it, and the ladder disappears. The cleanup code is written <em>once</em>, in the destructor, and the compiler inserts the call at every point the object leaves scope, including exits by exception:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> File <span class="op">{</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">explicit</span> File<span class="op">(</span><span class="at">const</span> <span class="dt">char</span><span class="op">*</span> path<span class="op">)</span> <span class="op">:</span> <span class="va">handle_</span><span class="op">(</span><span class="bu">std::</span>fopen<span class="op">(</span>path<span class="op">,</span> <span class="st">"r"</span><span class="op">))</span> <span class="op">{</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span><span class="va">handle_</span><span class="op">)</span> <span class="cf">throw</span> <span class="bu">std::</span>runtime_error<span class="op">(</span><span class="st">"cannot open file"</span><span class="op">);</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">~</span>File<span class="op">()</span> <span class="op">{</span> <span class="cf">if</span> <span class="op">(</span><span class="va">handle_</span><span class="op">)</span> <span class="bu">std::</span>fclose<span class="op">(</span><span class="va">handle_</span><span class="op">);</span> <span class="op">}</span>   <span class="co">// release, automatically</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>FILE<span class="op">*</span> get<span class="op">()</span> <span class="at">const</span> <span class="op">{</span> <span class="cf">return</span> <span class="va">handle_</span><span class="op">;</span> <span class="op">}</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>FILE<span class="op">*</span> <span class="va">handle_</span><span class="op">;</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> process<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>    File file<span class="op">(</span><span class="st">"data.txt"</span><span class="op">);</span>           <span class="co">// acquired here</span></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">char</span><span class="op">&gt;</span> buffer<span class="op">(</span><span class="dv">1024</span><span class="op">);</span>  <span class="co">// also RAII: frees its own memory</span></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>    parse<span class="op">(</span>file<span class="op">.</span>get<span class="op">(),</span> buffer<span class="op">);</span></span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span>   <span class="co">// &lt;-- file's destructor runs here, closing the handle; buffer's frees the memory.</span></span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">//     This happens on normal return AND if parse() throws.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>There is no <code>fclose</code>, no <code>free</code>, and no cleanup ladder, because there is nothing to remember. Note that both objects are torn down in <strong>reverse order of construction</strong> (<code>buffer</code> first, then <code>file</code>), which is exactly what you want when later resources depend on earlier ones.</p>
+<p>This is why the STL containers you met earlier need no manual cleanup: <code>std::vector</code>, <code>std::string</code>, and <code>std::map</code> are RAII types. Their constructors allocate and their destructors free, so <code>std::vector&lt;char&gt; buffer(1024)</code> above is complete and leak-proof on its own. The smart pointers covered <a href="#smart-pointers">later</a> (<code>std::unique_ptr</code>, <code>std::shared_ptr</code>) are RAII wrappers around raw <code>new</code>, which is precisely why modern C++ tells you to prefer them over bare <code>new</code>/<code>delete</code>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="RAII and Rust's ownership are the same idea, differently enforced">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>RAII and Rust’s ownership are the same idea, differently enforced
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If you have read the Rust chapters, RAII will feel deeply familiar, because Rust took it directly from C++ and made it the center of the language. Rust’s <code>Drop</code> trait is the destructor; a value’s <code>drop</code> runs when it goes out of scope, exactly as a C++ destructor does. The difference is enforcement. C++ gives you RAII as a <em>pattern</em> you must apply correctly (and can circumvent: a raw <code>new</code> with no wrapper still leaks). Rust promotes the same lifetime discipline into the <em>type system</em> via ownership and the borrow checker, so the compiler forces it on you and rejects the code that would leak or use-after-free. Same mechanism, tie cleanup to scope; C++ trusts you to reach for it, Rust makes it inescapable.</p>
+</div>
+</div>
+<p>The Rule of Three/Five/Zero below is really a corollary of RAII: once an object owns a resource, you must decide what copying and moving that object mean, which is the subject of the next section.</p>
+</section>
 </section>
 <section id="the-rule-of-three-five-zero" class="level3">
 <h3 class="anchored" data-anchor-id="the-rule-of-three-five-zero">The Rule of Three / Five / Zero</h3>
@@ -952,8 +1265,11 @@ Rust generics (bounded by traits) and C's macro-based genericity. -->
 <h3 class="anchored" data-anchor-id="template-specialization">Template Specialization</h3>
 <!-- Full and partial specialization; when and why. -->
 </section>
-<section id="concepts-c20" class="level3">
-<h3 class="anchored" data-anchor-id="concepts-c20">Concepts (C++20)</h3>
+<section id="concepts" class="level3">
+<h3 class="anchored" data-anchor-id="concepts">Concepts</h3>
+<div class="subheading">
+<p>C++20</p>
+</div>
 <!-- Constraints on template parameters — the long-awaited answer to inscrutable
 template error messages. Direct parallel to Rust trait bounds. -->
 </section>
@@ -987,10 +1303,10 @@ template error messages. Direct parallel to Rust trait bounds. -->
 <table class="caption-top table">
 <colgroup>
 <col style="width: 16%">
-<col style="width: 9%">
-<col style="width: 19%">
-<col style="width: 33%">
+<col style="width: 11%">
 <col style="width: 21%">
+<col style="width: 31%">
+<col style="width: 17%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1076,25 +1392,25 @@ template error messages. Direct parallel to Rust trait bounds. -->
 </table>
 <p><code>std::stack</code>, <code>std::queue</code>, and <code>std::priority_queue</code> round out the list as adaptors: each wraps one of the above (a <code>deque</code> by default) and exposes only a restricted interface, so a <code>std::stack</code> offers <code>push</code>/<code>pop</code>/<code>top</code> and nothing else. Between these nine-or-so types, <code>std::vector</code> is the overwhelming default. Its contiguous storage is cache-friendly and its append is amortized <span class="math inline">\(O(1)\)</span>; reach for something else only when you have a specific reason (<code>map</code> for sorted keys, <code>unordered_map</code> for raw lookup speed, <code>list</code> for cheap middle-insertion).</p>
 <p>Here is a compact tour of the two you will use most, written in idiomatic modern C++:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;vector&gt;</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;map&gt;</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;string&gt;</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="bu">std::</span>string<span class="op">&gt;</span> names<span class="op">{</span><span class="st">"ada"</span><span class="op">,</span> <span class="st">"grace"</span><span class="op">,</span> <span class="st">"linus"</span><span class="op">};</span>   <span class="co">// brace-init, three elements</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>names<span class="op">.</span>push_back<span class="op">(</span><span class="st">"dennis"</span><span class="op">);</span>            <span class="co">// append a copy</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>names<span class="op">.</span>emplace_back<span class="op">(</span><span class="st">"bjarne"</span><span class="op">);</span>         <span class="co">// construct in place (avoids a temporary)</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>string first <span class="op">=</span> names<span class="op">[</span><span class="dv">0</span><span class="op">];</span>         <span class="co">// "ada"  -- fast, but no bounds check</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>string last  <span class="op">=</span> names<span class="op">.</span>at<span class="op">(</span><span class="dv">4</span><span class="op">);</span>      <span class="co">// "bjarne" -- bounds-checked; throws on overrun</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>size_t count <span class="op">=</span> names<span class="op">.</span>size<span class="op">();</span>     <span class="co">// 5</span></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>map<span class="op">&lt;</span><span class="bu">std::</span>string<span class="op">,</span> <span class="dt">int</span><span class="op">&gt;</span> ages<span class="op">;</span>      <span class="co">// keys kept sorted</span></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>ages<span class="op">[</span><span class="st">"ada"</span><span class="op">]</span>   <span class="op">=</span> <span class="dv">36</span><span class="op">;</span>                   <span class="co">// insert or overwrite by key</span></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>ages<span class="op">[</span><span class="st">"grace"</span><span class="op">]</span> <span class="op">=</span> <span class="dv">85</span><span class="op">;</span></span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>ages<span class="op">.</span>contains<span class="op">(</span><span class="st">"ada"</span><span class="op">))</span> <span class="op">{</span>           <span class="co">// C++20; before that, ages.count("ada") &gt; 0</span></span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> a <span class="op">=</span> ages<span class="op">.</span>at<span class="op">(</span><span class="st">"ada"</span><span class="op">);</span>           <span class="co">// 36</span></span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;vector&gt;</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;map&gt;</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;string&gt;</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="bu">std::</span>string<span class="op">&gt;</span> names<span class="op">{</span><span class="st">"ada"</span><span class="op">,</span> <span class="st">"grace"</span><span class="op">,</span> <span class="st">"linus"</span><span class="op">};</span>   <span class="co">// brace-init, three elements</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>names<span class="op">.</span>push_back<span class="op">(</span><span class="st">"dennis"</span><span class="op">);</span>            <span class="co">// append a copy</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>names<span class="op">.</span>emplace_back<span class="op">(</span><span class="st">"bjarne"</span><span class="op">);</span>         <span class="co">// construct in place (avoids a temporary)</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>string first <span class="op">=</span> names<span class="op">[</span><span class="dv">0</span><span class="op">];</span>         <span class="co">// "ada"  -- fast, but no bounds check</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>string last  <span class="op">=</span> names<span class="op">.</span>at<span class="op">(</span><span class="dv">4</span><span class="op">);</span>      <span class="co">// "bjarne" -- bounds-checked; throws on overrun</span></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>size_t count <span class="op">=</span> names<span class="op">.</span>size<span class="op">();</span>     <span class="co">// 5</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>map<span class="op">&lt;</span><span class="bu">std::</span>string<span class="op">,</span> <span class="dt">int</span><span class="op">&gt;</span> ages<span class="op">;</span>      <span class="co">// keys kept sorted</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>ages<span class="op">[</span><span class="st">"ada"</span><span class="op">]</span>   <span class="op">=</span> <span class="dv">36</span><span class="op">;</span>                   <span class="co">// insert or overwrite by key</span></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>ages<span class="op">[</span><span class="st">"grace"</span><span class="op">]</span> <span class="op">=</span> <span class="dv">85</span><span class="op">;</span></span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>ages<span class="op">.</span>contains<span class="op">(</span><span class="st">"ada"</span><span class="op">))</span> <span class="op">{</span>           <span class="co">// C++20; before that, ages.count("ada") &gt; 0</span></span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> a <span class="op">=</span> ages<span class="op">.</span>at<span class="op">(</span><span class="st">"ada"</span><span class="op">);</span>           <span class="co">// 36</span></span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The <code>[]</code> on a <code>std::map</code> is worth a note for the C programmer: it <em>inserts</em> a default-constructed value if the key is absent, so <code>ages["nobody"]</code> silently creates an entry. Use <code>.at()</code> or <code>.contains()</code>/<code>.find()</code> when you mean only to read.</p>
 </section>
 <section id="iterators" class="level3">
@@ -1125,9 +1441,9 @@ template error messages. Direct parallel to Rust trait bounds. -->
 <p>Not every iterator supports every operation. A <code>std::vector</code> iterator can jump to <code>it + 5</code> in one step; a <code>std::list</code> iterator can only shuffle forward or backward one node at a time; a <code>std::istream</code> iterator can be read once and never rewound. The library formalizes these differences into five categories, each a superset of the one before it. An algorithm advertises the weakest category it needs, and any iterator that meets or exceeds it will work.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 19%">
-<col style="width: 53%">
-<col style="width: 27%">
+<col style="width: 16%">
+<col style="width: 46%">
+<col style="width: 37%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1170,22 +1486,22 @@ template error messages. Direct parallel to Rust trait bounds. -->
 <h4 class="anchored" data-anchor-id="the-various-ways-to-iterate">The Various Ways to Iterate</h4>
 <p>There are several ways to walk a container, and they are not merely stylistic choices; they differ in which containers they support and how much they ask of you. Here they are from lowest-level to highest, over the same <code>std::vector&lt;int&gt;</code>.</p>
 <p><strong>1. The index loop.</strong> The C way: count an integer from <code>0</code> to <code>size()</code>. It works <em>only</em> on random-access containers (you cannot index a <code>std::list</code>), and it is the most error-prone (off-by-ones, signed/unsigned mismatches).</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>size_t i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> v<span class="op">.</span>size<span class="op">();</span> <span class="op">++</span>i<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> v<span class="op">[</span>i<span class="op">]</span> <span class="op">&lt;&lt;</span> <span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">;</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>size_t i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> v<span class="op">.</span>size<span class="op">();</span> <span class="op">++</span>i<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> v<span class="op">[</span>i<span class="op">]</span> <span class="op">&lt;&lt;</span> <span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">;</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>2. The explicit iterator loop.</strong> The general form. This is the half-open range spelled out by hand, and unlike the index loop it works with <em>every</em> container, because it asks only for <code>begin</code>/<code>end</code>/<code>++</code>/<code>*</code>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span> it <span class="op">=</span> v<span class="op">.</span>begin<span class="op">();</span> it <span class="op">!=</span> v<span class="op">.</span>end<span class="op">();</span> <span class="op">++</span>it<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">*</span>it <span class="op">&lt;&lt;</span> <span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">;</span>   <span class="co">// *it reads the element; assign to it to write</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span> it <span class="op">=</span> v<span class="op">.</span>begin<span class="op">();</span> it <span class="op">!=</span> v<span class="op">.</span>end<span class="op">();</span> <span class="op">++</span>it<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">*</span>it <span class="op">&lt;&lt;</span> <span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">;</span>   <span class="co">// *it reads the element; assign to it to write</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>3. The range-based <code>for</code>.</strong> C++11 sugar that is nothing more than loop #2 written for you: the compiler expands <code>for (x : v)</code> into an iterator loop over <code>v.begin()</code>/<code>v.end()</code>. This is the idiomatic default; prefer it unless you specifically need the iterator itself (say, to <code>erase</code> while looping). The choice of <code>auto</code> qualifier matters exactly as it did in the <a href="#auto-and-type-deduction"><code>auto</code> section</a>: <code>auto</code> copies each element, <code>auto&amp;</code> binds a mutable reference to it, and <code>const auto&amp;</code> binds a cheap read-only reference.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> x <span class="op">:</span> v<span class="op">)</span> <span class="op">{</span> <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> x <span class="op">&lt;&lt;</span> <span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">;</span> <span class="op">}</span>  <span class="co">// read-only, no copy: the default</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span><span class="op">&amp;</span> x <span class="op">:</span> v<span class="op">)</span>       <span class="op">{</span> x <span class="op">*=</span> <span class="dv">2</span><span class="op">;</span> <span class="op">}</span>                   <span class="co">// mutate elements in place</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> x <span class="op">:</span> v<span class="op">)</span> <span class="op">{</span> <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> x <span class="op">&lt;&lt;</span> <span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">;</span> <span class="op">}</span>  <span class="co">// read-only, no copy: the default</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span><span class="op">&amp;</span> x <span class="op">:</span> v<span class="op">)</span>       <span class="op">{</span> x <span class="op">*=</span> <span class="dv">2</span><span class="op">;</span> <span class="op">}</span>                   <span class="co">// mutate elements in place</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>4. <code>const</code> and reverse iterators.</strong> <code>cbegin()</code>/<code>cend()</code> yield iterators that forbid writing through them, documenting read-only intent. <code>rbegin()</code>/<code>rend()</code> yield <strong>reverse iterators</strong> that walk the container back-to-front while still using <code>++</code>; the iterator quietly moves backward under the hood.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span> it <span class="op">=</span> v<span class="op">.</span>rbegin<span class="op">();</span> it <span class="op">!=</span> v<span class="op">.</span>rend<span class="op">();</span> <span class="op">++</span>it<span class="op">)</span> <span class="op">{</span>   <span class="co">// last element to first</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">*</span>it <span class="op">&lt;&lt;</span> <span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">;</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span> it <span class="op">=</span> v<span class="op">.</span>rbegin<span class="op">();</span> it <span class="op">!=</span> v<span class="op">.</span>rend<span class="op">();</span> <span class="op">++</span>it<span class="op">)</span> <span class="op">{</span>   <span class="co">// last element to first</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">*</span>it <span class="op">&lt;&lt;</span> <span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">;</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>5. Handing the range to an algorithm.</strong> Once you have <code>begin()</code> and <code>end()</code>, you rarely need to write the loop at all. Pass the pair to a standard algorithm and let it do the walking. This is the payoff the whole design was built for, and it leads directly into the next section.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>sort<span class="op">(</span>v<span class="op">.</span>begin<span class="op">(),</span> v<span class="op">.</span>end<span class="op">());</span>                        <span class="co">// the algorithm owns the loop</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>sort<span class="op">(</span>v<span class="op">.</span>begin<span class="op">(),</span> v<span class="op">.</span>end<span class="op">());</span>                        <span class="co">// the algorithm owns the loop</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="callout callout-style-default callout-warning callout-titled" title="Iterator invalidation is the classic footgun">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -1197,9 +1513,9 @@ template error messages. Direct parallel to Rust trait bounds. -->
 </div>
 <div class="callout-body-container callout-body">
 <p>An iterator points <em>into</em> a container’s storage, so operations that move that storage can leave outstanding iterators dangling, and using one afterward is undefined behavior. The textbook case is a <code>std::vector</code> that reallocates: a <code>push_back</code> that exceeds capacity moves every element to a new block, and every iterator (and pointer, and reference) you were holding now points at freed memory. <code>erase</code> invalidates iterators at and after the removal point. Each container documents its own invalidation rules.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> it <span class="op">=</span> v<span class="op">.</span>begin<span class="op">();</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>v<span class="op">.</span>push_back<span class="op">(</span><span class="dv">99</span><span class="op">);</span>     <span class="co">// may reallocate...</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">*</span>it<span class="op">;</span>    <span class="co">// ...and now `it` may dangle -- undefined behavior</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> it <span class="op">=</span> v<span class="op">.</span>begin<span class="op">();</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>v<span class="op">.</span>push_back<span class="op">(</span><span class="dv">99</span><span class="op">);</span>     <span class="co">// may reallocate...</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="op">*</span>it<span class="op">;</span>    <span class="co">// ...and now `it` may dangle -- undefined behavior</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This is exactly the class of bug Rust’s borrow checker rejects at compile time: it will not let you hold an immutable borrow (the iterator) across a mutating call (<code>push_back</code>). C++ leaves the discipline to you. If you must modify a container while traversing it, use the iterator that the container’s own <code>erase</code>/<code>insert</code> <em>returns</em>, which is guaranteed valid.</p>
 </div>
 </div>
@@ -1211,12 +1527,12 @@ template error messages. Direct parallel to Rust trait bounds. -->
 <p>Free functions that speak iterators</p>
 </div>
 <p>Because every algorithm is written against iterators rather than a specific container, the <code>&lt;algorithm&gt;</code> and <code>&lt;numeric&gt;</code> headers give you a large catalog of operations that work uniformly across containers. You pass a half-open <code>[begin, end)</code> range and the algorithm does the walking. A handful see constant use: <code>std::sort</code> orders a range, <code>std::find</code> locates a value, <code>std::transform</code> maps a function over one range into another, and <code>std::accumulate</code> folds a range down to a single value.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;algorithm&gt;</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;numeric&gt;</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>sort<span class="op">(</span>v<span class="op">.</span>begin<span class="op">(),</span> v<span class="op">.</span>end<span class="op">());</span>                              <span class="co">// order ascending</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> it  <span class="op">=</span> <span class="bu">std::</span>find<span class="op">(</span>v<span class="op">.</span>begin<span class="op">(),</span> v<span class="op">.</span>end<span class="op">(),</span> <span class="dv">42</span><span class="op">);</span>              <span class="co">// first element == 42, or v.end()</span></span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span>  sum <span class="op">=</span> <span class="bu">std::</span>accumulate<span class="op">(</span>v<span class="op">.</span>begin<span class="op">(),</span> v<span class="op">.</span>end<span class="op">(),</span> <span class="dv">0</span><span class="op">);</span>         <span class="co">// fold with + starting from 0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;algorithm&gt;</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;numeric&gt;</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>sort<span class="op">(</span>v<span class="op">.</span>begin<span class="op">(),</span> v<span class="op">.</span>end<span class="op">());</span>                              <span class="co">// order ascending</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> it  <span class="op">=</span> <span class="bu">std::</span>find<span class="op">(</span>v<span class="op">.</span>begin<span class="op">(),</span> v<span class="op">.</span>end<span class="op">(),</span> <span class="dv">42</span><span class="op">);</span>              <span class="co">// first element == 42, or v.end()</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span>  sum <span class="op">=</span> <span class="bu">std::</span>accumulate<span class="op">(</span>v<span class="op">.</span>begin<span class="op">(),</span> v<span class="op">.</span>end<span class="op">(),</span> <span class="dv">0</span><span class="op">);</span>         <span class="co">// fold with + starting from 0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The full <code>&lt;algorithm&gt;</code> catalog and the C++20 <code>ranges</code> library (which lets you write <code>std::ranges::sort(v)</code> on the whole container, and chain lazy views like <code>v | std::views::filter(...) | std::views::transform(...)</code>) are a topic for a later pass. If you have read the Rust chapter, ranges are C++’s answer to <a href="./rust-ho.html#iterators">Rust’s iterator adapters</a>, and both play the role that list comprehensions play in Python: a declarative pipeline over a sequence, in place of a hand-written loop.</p>
 </section>
 </section>

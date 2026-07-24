@@ -284,9 +284,118 @@ The through-line: C++ hands you fine-grained, explicit control and expects you t
 arrays. Compare to Rust/Python tuple unpacking and to the `std::tie` idiom it
 replaced. Full prose in a later pass. -->
 ### `constexpr` and `if constexpr`
-<!-- Compile-time evaluation: `constexpr` functions/variables, and C++17
-`if constexpr` for compile-time branch selection in templates (replacing much
-SFINAE and tag dispatch). Cross-link to Concepts. Full prose in a later pass. -->
+::: {.subheading}
+Moving work from run time to compile time
+:::
+
+`constexpr` is the keyword that lets you say "evaluate this during compilation." An expression marked `constexpr`, or built entirely from `constexpr` ingredients, is computed by the compiler, and its result is baked into the binary as a literal rather than calculated when the program runs. The payoff is twofold: work the machine would otherwise repeat on every execution is done exactly once, at build time, and a value known at compile time can be used in the places the language *requires* a compile-time constant, such as an array bound or a template argument.
+
+A C programmer already reaches for compile-time constants, but only through blunt tools. A `#define BUFFER_SIZE 256` is a textual substitution handled by the [preprocessor](c.qmd#preprocessing): it has no type, obeys no scope, and is invisible to the debugger. The other classic trick, the "enum hack" (`enum { BufferSize = 256 };`), buys you a scoped, typed integer but works only for integers. `constexpr` subsumes both. It is a typed, scoped, general facility that extends to any type and to whole functions, all while remaining part of the language proper rather than a layer bolted on top of it.
+
+#### `constexpr` Variables
+The distinction between `constexpr` and `const` trips up nearly everyone, and it is worth stating sharply because the two are not synonyms. `const` is a promise about *mutability*: this name may not be modified through this handle. `constexpr` is a promise about *when the value is known*: it can be computed at compile time. A `const` value may well be a runtime value that simply happens to be read-only:
+
+```cpp
+const int runtime = std::rand();      // const, but NOT known until the program runs
+constexpr int compile = 256;          // known at compile time; usable as a constant expression
+```
+
+The difference has teeth exactly where the language demands a constant expression. Array bounds, template arguments, `case` labels, and `static_assert` conditions all require a value the compiler can see, and only `constexpr` qualifies:
+
+```cpp
+constexpr int size = 16;
+int buffer[size];                     // OK: size is a constant expression
+
+const int n = read_config();          // a runtime const
+int other[n];                         // error: n is not a constant expression (and this isn't even legal C++)
+```
+
+A `constexpr` variable is implicitly `const` as well, so the read-only guarantee comes along for free. The rule of thumb: if a value is knowable when you compile and you want it usable as a constant, mark it `constexpr`; reach for plain `const` when you only mean "do not let this be changed."
+
+#### `constexpr` Functions
+The feature becomes powerful when it extends from values to *functions*. A `constexpr` function is one the compiler is allowed to evaluate at compile time, provided you call it with arguments that are themselves constant expressions. Call it with runtime arguments instead and it degrades gracefully into an ordinary function executed at run time. One definition serves both worlds:
+
+```cpp
+constexpr int factorial(int n) {
+    return n <= 1 ? 1 : n * factorial(n - 1);
+}
+
+constexpr int fac5 = factorial(5);    // computed at compile time -> the literal 120
+int k = read_int();
+int fack = factorial(k);              // same function, run at run time because k isn't constant
+```
+
+`factorial(5)` never executes at run time; the compiler folds it to `120` and stores that. `factorial(k)` cannot be, because `k` is not known until execution, so it compiles to an ordinary call. The programmer writes the logic once and the compiler picks the moment.
+
+What a `constexpr` function may *contain* has loosened dramatically across the standards, and this history explains why older advice sounds so restrictive. In C++11 a `constexpr` function was limited to essentially a single `return` statement, which is why early examples all lean on the ternary-recursion trick above. C++14 relaxed the rules to allow loops, local variables, and ordinary branching, so you could finally write a `constexpr` function that reads like normal code. C++20 went further still, permitting things once unthinkable at compile time: `try`/`catch`, and even dynamic allocation, so that `std::vector` and `std::string` can now be used inside `constexpr` evaluation. The trend is unmistakable and ongoing: more of the language becomes available at compile time with each revision.
+
+```cpp
+constexpr int sum_to(int n) {         // legal since C++14: loop + local variable
+    int total = 0;
+    for (int i = 1; i <= n; ++i) total += i;
+    return total;
+}
+static_assert(sum_to(100) == 5050);   // checked entirely at compile time
+```
+
+The `static_assert` on that last line is `constexpr`'s natural companion: it evaluates a constant expression at compile time and aborts the build if it is false, turning invariants you would otherwise test at run time into compile errors.
+
+#### `if constexpr`
+::: {.subheading}
+Compile-time branch selection (C++17)
+:::
+
+An ordinary `if` chooses a branch at run time; both branches are compiled, and one is skipped during execution. `if constexpr`, introduced in C++17, chooses at *compile time*, and the branch not taken is not merely skipped but **discarded before it is compiled**. This distinction is what makes the feature indispensable inside templates: each branch may contain code that is valid only for *some* instantiations, and the compiler never checks the branch that does not apply.
+
+Consider a function template that must behave differently for pointer and non-pointer types:
+
+```cpp
+template <typename T>
+void describe(T value) {
+    if constexpr (std::is_pointer_v<T>) {
+        std::cout << "points at " << *value << '\n';   // only compiled when T is a pointer
+    } else {
+        std::cout << "value is " << value << '\n';      // only compiled when T is not
+    }
+}
+
+describe(42);        // instantiates the else branch; the *value dereference is never seen
+describe(&some_obj); // instantiates the if branch
+```
+
+With a plain `if`, the `*value` dereference would be compiled even for `describe(42)`, where `T` is `int`, and dereferencing an `int` is an error. `if constexpr` throws that branch away for the `int` instantiation, so it never has to type-check. Before C++17, achieving this meant reaching for **SFINAE** (writing multiple overloads gated on `std::enable_if`) or **tag dispatch** (dispatching to helper overloads on a dummy type argument), both of which are verbose, obscure, and notoriously hard to read. `if constexpr` replaces the bulk of that machinery with a construct that reads like ordinary code.
+
+`if constexpr` decides *which code to compile*; the C++20 [Concepts](#concepts-c20) feature decides *which types a template will accept at all*, and produces far clearer errors when a caller violates the constraint. The two are complementary tools for taming templates, and modern generic code uses both.
+
+#### `consteval` and `constinit`
+::: {.subheading}
+The C++20 refinements
+:::
+
+C++20 added two keywords that sharpen the picture. A `constexpr` function *may* run at compile time; sometimes you want to insist that it *must*. That is `consteval`, which marks an **immediate function**: every call is evaluated at compile time, and any call that cannot be is a compile error. It is the strict sibling of `constexpr`, useful when a function only makes sense as a compile-time computation and you want the compiler to enforce that.
+
+```cpp
+consteval int square(int n) { return n * n; }
+
+constexpr int a = square(8);   // OK: 64, computed at compile time
+int r = read_int();
+int b = square(r);             // error: consteval call with a runtime argument
+```
+
+`constinit`, the other addition, addresses a different problem: the notorious **static initialization order fiasco**, where two global objects in different translation units depend on each other and the order they are initialized is unspecified. `constinit` guarantees that a static or thread-local variable is initialized at compile time, before any runtime code can observe it, eliminating that race. Crucially it does *not* imply `const`: the variable is initialized at compile time but may still be modified afterward.
+
+Four keywords now cluster around this idea, and keeping them straight is half the battle:
+
+| Keyword      | Guarantees                                                             | Implies `const`? |
+|:-------------|:----------------------------------------------------------------------|:----------------:|
+| `const`      | Not modifiable through this name; value may be a runtime value.        |       n/a        |
+| `constexpr`  | Usable as a constant expression; *may* be evaluated at compile time.   |       yes        |
+| `consteval`  | (Functions only) *must* be evaluated at compile time.                  |        no        |
+| `constinit`  | Static/thread-local variable is initialized at compile time.           |        no        |
+
+::: {.callout-note title="Rust's `const fn` is the direct analog"}
+If you have read the Rust chapters, `constexpr` functions map almost exactly onto Rust's [`const fn`](rust-ho.qmd), and Rust's `const` and `static` items play the role of `constexpr` variables. The parallel even extends to the history: like C++'s `constexpr`, Rust's `const fn` began tightly restricted and has steadily gained the ability to run more of the language at compile time across editions. The chief difference is emphasis. Rust evaluates const contexts eagerly and treats the const/runtime split as an ordinary part of the type system, whereas C++ exposes the finer gradations (`constexpr` vs. `consteval` vs. `constinit`) as distinct keywords you choose between. C, by contrast, has nothing comparable: its only compile-time constants come from the preprocessor's `#define` and the `enum` hack, neither of which is typed, scoped, or able to run a function.
+:::
 ## Types and Declarations
 ### References
 ::: {.subheading}

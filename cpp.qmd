@@ -397,19 +397,279 @@ Four keywords now cluster around this idea, and keeping them straight is half th
 If you have read the Rust chapters, `constexpr` functions map almost exactly onto Rust's [`const fn`](rust-ho.qmd), and Rust's `const` and `static` items play the role of `constexpr` variables. The parallel even extends to the history: like C++'s `constexpr`, Rust's `const fn` began tightly restricted and has steadily gained the ability to run more of the language at compile time across editions. The chief difference is emphasis. Rust evaluates const contexts eagerly and treats the const/runtime split as an ordinary part of the type system, whereas C++ exposes the finer gradations (`constexpr` vs. `consteval` vs. `constinit`) as distinct keywords you choose between. C, by contrast, has nothing comparable: its only compile-time constants come from the preprocessor's `#define` and the `enum` hack, neither of which is typed, scoped, or able to run a function.
 :::
 ## Types and Declarations
+::: {.subheading}
+The type system C++ layers over C's
+:::
+
+Three additions here change how C++ code reads at the smallest scale: references, which give you pass-by-reference without pointer syntax; scoped enumerations, which close the type holes in C's `enum`; and brace initialization, which unifies a half-dozen initialization syntaxes into one. None of them is difficult, but all three are pervasive, so they are worth getting exactly right before the class machinery arrives.
+
 ### References
 ::: {.subheading}
 Aliases, not pointers
 :::
 
-<!-- `int&` — a reference must bind on declaration, can't be reseated, no null.
-Contrast with pointers. Pass-by-reference vs. C's pass-a-pointer idiom.
-const references as the idiom for cheap read-only parameters. -->
+A **reference** is another name for an existing object. `int& ref = value;` does not create storage or a pointer; it makes `ref` an alias, so from that point on `ref` *is* `value`, and every use of one is a use of the other.
+
+```cpp
+int value = 10;
+int& ref  = value;    // ref is another name for value
+
+ref = 20;             // no dereference operator needed
+// value is now 20
+
+int* ptr = &value;    // the C way, for contrast
+*ptr = 30;            // explicit dereference required
+```
+
+Three rules define references, and each one removes a class of pointer bug:
+
+1. **A reference must be initialized when declared.** `int& ref;` will not compile. A pointer may be left uninitialized and pointing at garbage.
+2. **A reference cannot be reseated.** After `int& ref = value;`, writing `ref = other;` assigns *to* `value`; it does not repoint `ref`. A pointer may be reassigned at any time.
+3. **A reference cannot be null.** There is no `nullref`. A pointer may be null, and forgetting to check is the most common crash in C.
+
+Together these make a reference *guaranteed to refer to a valid object*, which is the whole point. Where a pointer parameter forces a caller and reader to ask "may this be null, and who owns it?", a reference parameter answers both questions in advance.
+
+#### Pass by Reference
+
+The visible payoff is in function parameters. C has only pass-by-value, so modifying a caller's variable means passing its address and dereferencing throughout:
+
+```c
+void increment(int* value) { (*value)++; }   // C: pointer, and * everywhere
+
+int count = 0;
+increment(&count);                            // caller must remember the &
+```
+
+```cpp
+void increment(int& value) { value++; }      // C++: reads like a plain variable
+
+int count = 0;
+increment(count);                             // no & at the call site
+```
+
+The C++ version has no `*`, no `&` at the call site, and no possibility of a null argument. That last clause is the reason to prefer it, but the missing `&` at the call site has a cost worth naming: **you cannot tell from the call whether `count` will be modified.** In C, `increment(&count)` announces itself. This is the standing tradeoff of references, and it is why the convention below matters so much.
+
+#### `const&`: The Default for Parameters
+
+The most common use of references is not to modify anything. Passing a large object by value copies it; passing it by `const` reference passes an alias and forbids modification through it:
+
+```cpp
+void print(const std::string& text);   // no copy, and cannot modify: the default
+void modify(std::string& text);        // no copy, may modify: rarer, and deliberate
+void consume(std::string text);        // copies (or moves): only when you need your own
+```
+
+Read those three signatures as a vocabulary, because experienced C++ programmers read them exactly that way. The convention is: **pass by `const&` for anything bigger than a machine word that you only need to read.** For small types (`int`, `double`, a pointer) pass by value, since a copy is cheaper than the indirection a reference introduces.
+
+A `const&` has one further property that surprises people: it may bind to a temporary, and doing so extends that temporary's lifetime to match the reference. This is what lets `print("literal")` work, constructing a temporary `std::string` that survives the call.
+
+::: {.callout-note title="References are usually pointers underneath"}
+The abstraction is not magic. Compilers typically implement a reference as a pointer that is automatically dereferenced on every use. The difference is entirely in what the *language* permits: the compiler enforces initialization, forbids reseating, and assumes non-null, which in turn lets it optimize more aggressively than it could around a pointer. You get pointer performance with a restricted, safer interface.
+
+The parallel to Rust is close enough to be worth stating: C++'s `T&` and `const T&` correspond to Rust's `&mut T` and `&T`. Rust's spelling makes mutability the marked case (`&T` is the read-only default), while C++ makes it the unmarked one (`T&` is mutable, `const T&` is not), which is a small design decision with large consequences for which one people reach for by habit. The deeper difference is that Rust's borrow checker verifies that no reference outlives what it points at. C++ does not check this, so a reference to a destroyed object is a dangling reference, and every bit as undefined as a dangling pointer:
+
+```cpp
+const std::string& dangling() {
+    std::string local = "gone";
+    return local;              // local dies here; the reference is garbage
+}
+```
+:::
+
 ### `enum class`
-<!-- Scoped, type-safe enums — the fix for C's leaky enums covered in c.qmd. -->
+::: {.subheading}
+Enumerations that are actually types
+:::
+
+C's `enum`, as the [C chapter](c.qmd#enum) noted, is little more than a naming convention for integers. C++ inherited it unchanged, along with all three of its defects, and then added a fixed version in C++11.
+
+The unscoped enum you know from C leaks in three ways:
+
+```cpp
+enum Color  { RED, GREEN, BLUE };            // C-style, still legal C++
+enum Status { OK, ERROR, RED };              // ERROR: RED already declared!
+
+Color color = RED;
+int  number = color;                         // implicit conversion to int: allowed
+if (color == 2) { }                          // comparing to an int: allowed
+if (color == OK) { }                         // comparing across enums: allowed!
+```
+
+1. **The names leak into the enclosing scope.** `RED` is not `Color::RED`, it is just `RED`, which is why C code is full of `COLOR_RED` prefixes to avoid collisions.
+2. **They implicitly convert to `int`.** So an enum is interchangeable with any integer, and the type carries no guarantee.
+3. **They compare freely with other enums and integers**, so a whole category of nonsense compiles silently.
+
+`enum class` (equivalently `enum struct`) fixes all three:
+
+```cpp
+enum class Color  { Red, Green, Blue };
+enum class Status { Ok, Error, Red };        // fine: no collision, different scopes
+
+Color color = Color::Red;                    // scope qualification required
+// int number = color;                       // ERROR: no implicit conversion
+// if (color == 2) { }                       // ERROR: no comparison with int
+// if (color == Status::Red) { }             // ERROR: different types
+
+int number = static_cast<int>(color);        // explicit conversion still available
+```
+
+The names are now scoped, so the `COLOR_` prefixes disappear. There is no implicit conversion, so an enum value can only be used as what it is. And the type is distinct, so mixing two enumerations is a compile error rather than a silent bug. You may still get an integer out with `static_cast`, which is the C++ philosophy in miniature: the conversion is available, but you have to say so.
+
+Both forms let you specify the underlying type, which matters for hardware registers, serialization, and forward declaration:
+
+```cpp
+enum class Opcode : std::uint8_t { Read = 0x01, Write = 0x02, Reset = 0xFF };
+enum class State  : std::uint16_t;           // forward declaration, size known
+```
+
+The guidance is simple: **use `enum class` by default.** Reach for a plain `enum` only when you specifically want the implicit integer conversion, which in practice means bit-flag sets and interfacing with C headers.
+
+#### But Rust's Enums Are Something Else Entirely
+
+Here is where your instinct is correct, and it is worth being precise about *why*, because the two languages use the same word for two genuinely different features.
+
+`enum class` fixes C's enum. It does not do what [Rust's enum](rust-ho.qmd#rust-enums) does. A C++ enumeration, scoped or not, is still *a name for one of several integer values*. A Rust enum is a **sum type** (an *algebraic data type*, or *tagged union*): each variant may carry its own payload of its own type, and the compiler tracks which variant is active.
+
+```rust
+enum Shape {                          // Rust
+    Circle(f64),
+    Rectangle(f64, f64),
+    Triangle { base: f64, height: f64 },
+}
+```
+
+There is no C++ enumeration that expresses this. The idea is older than Rust, going back to ML in the 1970s and inherited through Haskell and OCaml, but Rust was the language that brought it into the systems world, and it is the single feature most C++ programmers envy after using it. C++ has two answers, neither as good.
+
+**The C answer, which C++ inherits: a hand-rolled tagged union.** You write the tag and the payload separately, and you maintain the invariant between them yourself:
+
+```cpp
+struct Shape {
+    enum class Kind { Circle, Rectangle, Triangle } kind;
+    union {
+        struct { double radius; }                circle;
+        struct { double width, height; }         rectangle;
+        struct { double base, height; }          triangle;
+    };
+};
+
+Shape s;
+s.kind = Shape::Kind::Circle;
+s.circle.radius = 5.0;
+double wrong = s.rectangle.width;   // compiles fine; reads garbage
+```
+
+The union stores one member at a time in overlapping memory, and the enum records which. Everything about the correspondence is on you: nothing stops you setting `kind` to `Circle` and then reading `rectangle`, nothing forces your `switch` to handle every case, and if a member has a constructor or destructor (a `std::string`, say) you must invoke them by hand with placement `new`. This is the C idiom, it is everywhere in real code, and it is exactly the failure mode Rust's design eliminates.
+
+**The C++17 answer: `std::variant`.** A library type that does the bookkeeping for you, type-safely:
+
+```cpp
+#include <variant>
+
+struct Circle    { double radius; };
+struct Rectangle { double width, height; };
+struct Triangle  { double base, height; };
+
+using Shape = std::variant<Circle, Rectangle, Triangle>;
+
+Shape shape = Circle{5.0};
+
+double area(const Shape& shape) {
+    if (const auto* circle = std::get_if<Circle>(&shape))
+        return std::numbers::pi * circle->radius * circle->radius;
+    if (const auto* rect = std::get_if<Rectangle>(&shape))
+        return rect->width * rect->height;
+    // ...
+}
+```
+
+`std::variant` is a genuine sum type: it knows which alternative it holds, it throws `std::bad_variant_access` if you ask for the wrong one, and it runs the correct destructor. `std::visit` will even dispatch over the alternatives and fail to compile if you miss one, which recovers the exhaustiveness checking:
+
+```cpp
+// The helper the standard library does not provide: bundles several lambdas
+// into one object with an overloaded operator().
+template <typename... Ts>
+struct overloaded : Ts... { using Ts::operator()...; };
+
+double area(const Shape& shape) {
+    return std::visit(overloaded {
+        [](const Circle& c)    { return std::numbers::pi * c.radius * c.radius; },
+        [](const Rectangle& r) { return r.width * r.height; },
+        [](const Triangle& t)  { return 0.5 * t.base * t.height; }
+    }, shape);
+}
+```
+
+That four-line helper, incidentally, is a small tour of the [variadic templates](#variadic-templates) you just covered: it inherits from every lambda passed to it and pulls each one's `operator()` into scope with a pack expansion.
+
+So C++ *can* do it. But compare that to the Rust version and the difference in ergonomics is stark: the alternatives must be separately declared types, they are identified by type rather than by name (so `variant<double, double>` is ambiguous and must be indexed positionally), `overloaded` is not in the standard library and you have to write the helper yourself, and none of it participates in pattern matching because C++ has no pattern matching. The capability is bolted on as a library; in Rust it is the grain of the language, which is why `Option` and `Result` feel natural there and `std::optional` and `std::expected` feel like utilities in C++.
+
+::: {.callout-note title="Has C advanced here? Essentially no."}
+Since you asked directly: **C has not moved toward this, and shows no sign of doing so.** C23, the most recent standard, made only modest repairs in this area:
+
+- Enumerations may now specify an underlying type (`enum Color : unsigned char { ... }`), matching what C++11 offered.
+- Enumerators may exceed the range of `int`.
+- `bool`, `true`, `false`, and `nullptr` became real keywords rather than macros, which is C catching up to C++98.
+
+That is the extent of it. A C enum is still a set of `int` constants, still leaks its names into the enclosing scope, and still converts implicitly to any integer. C has no `enum class`, no `std::variant`, no sum type of any kind, and no pattern matching. Tagged unions in C are what they were in 1978: a `struct` holding an `enum` and a `union`, with the correspondence maintained by discipline.
+
+This is not an oversight so much as a statement of purpose. C's committee is deliberately conservative, prioritizing stability, a tiny specification, and the ability to compile the language on anything. Sum types would require the compiler to track variant state and enforce exhaustiveness, which is the kind of type-system machinery C has consistently declined to take on. The practical consequence for you: [the tagged-union idiom in the C chapter is not a legacy pattern to be replaced, it is still the state of the art in C.]{.hl-blue} If you want compiler-enforced sum types in a systems language, C++ gives you an awkward library approximation and Rust gives you the real thing.
+:::
+
 ### Uniform Initialization
-<!-- Brace-init `{}`, initializer lists, the most-vexing-parse it solves and the
-narrowing it forbids. -->
+::: {.subheading}
+One syntax to replace several
+:::
+
+C++ accumulated an embarrassing number of ways to initialize a variable: parentheses for constructors, `=` for copy-initialization, braces for aggregates and arrays, and nothing at all for members. C++11 introduced **brace initialization** (also called *uniform initialization* or *list initialization*) to work everywhere:
+
+```cpp
+int         value  {42};
+double      ratio  {3.14};
+std::string name   {"Curtis"};
+Point       point  {3, 4};                    // calls Point(int, int)
+int         array[]{1, 2, 3};
+std::vector<int> numbers {1, 2, 3, 4, 5};     // initializer list
+std::map<std::string, int> ages {{"a", 1}, {"b", 2}};
+
+int   zero  {};                               // value-initialized: 0
+Point origin{};                               // default constructor
+```
+
+Beyond consistency, braces buy two concrete safety properties.
+
+**They forbid narrowing conversions.** The silent truncations C permits become compile errors:
+
+```cpp
+int    truncated = 3.99;    // legal C and C++: silently becomes 3
+int    rejected  {3.99};    // ERROR: narrowing conversion
+char   overflow  {300};     // ERROR: 300 does not fit in a char
+```
+
+**They defeat the most vexing parse.** This is C++'s most notorious syntactic trap: anything that *can* be parsed as a function declaration *is*.
+
+```cpp
+Widget a();       // NOT a Widget. This declares a function taking nothing,
+                  // returning Widget. Calling a.method() then fails bizarrely.
+Widget b{};       // unambiguously a default-constructed Widget
+```
+
+The trap gets worse with arguments (`Widget w(Gadget());` declares a function taking a function pointer), and braces eliminate the entire category.
+
+::: {.callout-warning title="The `initializer_list` gotcha"}
+Uniform initialization is not perfectly uniform, and this is the one place it bites. If a type has a constructor taking `std::initializer_list`, that constructor **wins over every other overload** when you use braces:
+
+```cpp
+std::vector<int> a(5, 10);   // parens: 5 elements, each with value 10
+std::vector<int> b{5, 10};   // braces: 2 elements, values 5 and 10
+std::vector<int> c(5);       // parens: 5 elements, each 0
+std::vector<int> d{5};       // braces: 1 element, value 5
+```
+
+These are entirely different vectors from nearly identical syntax. The rule to remember: **use braces by default, but use parentheses when you mean to call a constructor whose arguments are counts or sizes rather than contents.**
+:::
+
+The recommended habit, and the one the C++ Core Guidelines endorse: prefer `{}` everywhere, falling back to `()` for the sizing case above. It gives you narrowing protection and immunity to the vexing parse at no cost.
+
 ## Classes and Objects
 ### From `struct` to `class`
 <!-- The only default difference (public vs. private), then everything member

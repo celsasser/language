@@ -719,8 +719,78 @@ If you have read the Rust chapters, RAII will feel deeply familiar, because Rust
 The Rule of Three/Five/Zero below is really a corollary of RAII: once an object owns a resource, you must decide what copying and moving that object mean, which is the subject of the next section.
 
 ### The Rule of Three / Five / Zero
-<!-- If you define one of destructor/copy-ctor/copy-assign you probably need all
-three; move semantics make it five; RAII wrapper types let you aim for zero. -->
+::: {.subheading}
+How many special members you owe the compiler
+:::
+
+The special member functions are not independent. They are three (now five) views of a single question: *what does it mean for this object to own its resource?* The rules below are the accumulated folklore about answering that question consistently, and they are worth knowing by their names because C++ programmers cite them constantly.
+
+**The Rule of Three** (C++98). If you find yourself writing any one of the destructor, the copy constructor, or the copy-assignment operator, you almost certainly need all three. The reasoning is that you only write a destructor when the object owns something; and the moment it owns something, the compiler's member-wise copy is wrong, because it duplicates the handle rather than the resource. A class with a hand-written destructor and compiler-generated copies is the classic double-free waiting to happen:
+
+```cpp
+class Buffer {                       // BROKEN: Rule of Three violated
+public:
+    explicit Buffer(std::size_t n) : data_(new int[n]), size_(n) {}
+    ~Buffer() { delete[] data_; }    // a destructor, so ownership is in play...
+    // ...but no copy constructor and no copy-assignment, so the compiler
+    //    writes member-wise ones that copy the *pointer*.
+private:
+    int* data_;
+    std::size_t size_;
+};
+
+Buffer a(100);
+Buffer b = a;    // b.data_ == a.data_; both destructors will delete[] it.
+```
+
+**The Rule of Five** (C++11). Move semantics added two more special members, so the set became five: destructor, copy constructor, copy assignment, move constructor, move assignment. The rule is the same in spirit: declaring any of them suppresses or complicates the others, so declare them as a coherent group. The suppression rules are genuinely subtle, and are the reason the rule is stated so bluntly:
+
+- Declaring a **destructor**, a copy constructor, or a copy-assignment operator **suppresses the implicit move operations entirely**. The class still compiles and still works, but every "move" silently falls back to a copy. This is a performance bug with no diagnostic, and it is the single most common way a class ends up slower than its author believes.
+- Declaring either **move** operation deletes the implicit copy operations.
+
+```cpp
+class Buffer {                       // Rule of Five, written out
+public:
+    explicit Buffer(std::size_t n) : data_(new int[n]), size_(n) {}
+    ~Buffer()                                  { delete[] data_; }
+
+    Buffer(const Buffer& other)                            // copy: deep
+        : data_(new int[other.size_]), size_(other.size_) {
+        std::copy(other.data_, other.data_ + size_, data_);
+    }
+    Buffer& operator=(const Buffer& other) { /* copy-and-swap; see below */ }
+
+    Buffer(Buffer&& other) noexcept                        // move: steal
+        : data_(other.data_), size_(other.size_) {
+        other.data_ = nullptr;
+        other.size_ = 0;
+    }
+    Buffer& operator=(Buffer&& other) noexcept { /* ... */ }
+
+private:
+    int* data_;
+    std::size_t size_;
+};
+```
+
+**The Rule of Zero** (modern practice, and the one to actually follow). Look at that class again and notice that all of it exists to manage one raw `new[]`. Now replace the raw pointer with a member that already manages itself:
+
+```cpp
+class Buffer {                       // Rule of Zero
+public:
+    explicit Buffer(std::size_t n) : data_(n) {}
+    // no destructor, no copy, no move: all five are correct by default
+private:
+    std::vector<int> data_;
+};
+```
+
+Every special member the compiler generates is now correct, because each one simply defers to `std::vector`'s, which is itself correct: copying deep-copies, moving steals, destruction frees. [The best number of special member functions to write is zero, and you achieve it by owning resources through types that already know how to own them]{.hl-blue}: `std::vector`, `std::string`, `std::unique_ptr`, `std::shared_ptr`. Write the Rule of Five only when you are *implementing* such an ownership type, which is rare, or wrapping a C API handle that has no existing wrapper.
+
+::: {.callout-note title="Rust states this rule as a type-system law"}
+Rust has no equivalent folklore because the question cannot arise. Moving is the default for every type, and it is the compiler that moves, so no move constructor exists to forget. Copying is opt-in: a type is duplicable only if it derives `Clone` (explicit `.clone()`) or `Copy` (implicit, and only for types that are trivially bit-copyable). Cleanup is the `Drop` trait, and implementing `Drop` does not silently disable anything. The Rule of Three/Five is, in effect, C++ asking you to maintain by hand an invariant that Rust made unbreakable by construction.
+:::
+
 ### Operator Overloading
 <!-- Making user types behave like built-ins. Compare to Rust trait impls
 (`std::ops`) and Python dunder methods. Cautionary notes on overuse. -->
@@ -1184,14 +1254,385 @@ int  sum = std::accumulate(v.begin(), v.end(), 0);         // fold with + starti
 The full `<algorithm>` catalog and the C++20 `ranges` library (which lets you write `std::ranges::sort(v)` on the whole container, and chain lazy views like `v | std::views::filter(...) | std::views::transform(...)`) are a topic for a later pass. If you have read the Rust chapter, ranges are C++'s answer to [Rust's iterator adapters](rust-ho.qmd#iterators), and both play the role that list comprehensions play in Python: a declarative pipeline over a sequence, in place of a hand-written loop.
 
 ## Memory Management
+::: {.subheading}
+Owning the heap without owning the bookkeeping
+:::
+
+C gives you `malloc` and `free` and trusts you to pair them. C++ inherits that machinery, adds a typed version of it, and then spends most of its modern effort convincing you never to touch either one directly. This section walks that arc: what `new` and `delete` actually do, why raw ownership is now considered a defect rather than a style choice, the smart pointers that replaced it, and finally the move semantics that make the whole scheme efficient enough to be the default.
+
 ### `new` / `delete`
-<!-- vs. C's malloc/free; why raw new/delete is now discouraged. -->
+::: {.subheading}
+Typed allocation, and why you should stop using it
+:::
+
+`new` and `delete` are C++'s built-in allocation operators. They do what `malloc` and `free` do, plus the thing `malloc` cannot: run constructors and destructors.
+
+```cpp
+int*    value  = new int(42);        // allocate + initialize
+Point*  point  = new Point(3, 4);    // allocate + run Point's constructor
+int*    array  = new int[100];       // allocate an array of 100 ints
+
+delete   value;                      // run destructor (if any), then free
+delete   point;
+delete[] array;                      // note: [] form, and it must match new[]
+```
+
+The differences from C are worth stating precisely, because they are the reason `new` exists at all rather than C++ simply keeping `malloc`.
+
+| | C | C++ |
+|---|---|---|
+| Allocation | `malloc(sizeof(Point))` | `new Point(3, 4)` |
+| Size | you compute it | compiler computes it |
+| Type | returns `void*`, needs a cast | returns `Point*`, already typed |
+| Initialization | none; memory is garbage | constructor runs |
+| Failure | returns `NULL` | throws `std::bad_alloc` |
+| Release | `free(p)` | `delete p` (destructor runs first) |
+| Array release | `free(p)` | `delete[] p` |
+
+Two of those rows are traps in their own right. Because `new` **throws** on failure rather than returning null, the `if (!p) return -1;` check you would write in C is dead code in C++; failure arrives as an exception, and the RAII objects on the stack unwind. (There is a `new (std::nothrow) T` form that returns null instead, used in codebases that compile without exceptions.) And because `delete` and `delete[]` are distinct operators, mismatching them (`delete` on a `new[]` allocation) is undefined behavior, not a merely-suboptimal choice: the array form has to run *n* destructors and needs the count that `new[]` stashed alongside the block.
+
+Mixing families is likewise undefined. Memory from `new` must go to `delete`, memory from `malloc` must go to `free`, and never crosswise, because the two allocators need not share bookkeeping and only one of them knows about destructors.
+
+::: {.callout-warning title="Raw `new`/`delete` is a code smell in modern C++"}
+The C++ Core Guidelines are unambiguous here: [in application code, a raw `new` or `delete` should be rare, and a raw owning pointer rarer still.]{.hl-blue} Every hazard you remember from C survives into C++ unchanged: forgetting the `delete` leaks, running it twice corrupts the allocator, using the pointer afterward is a dangling read, and any early `return` or `throw` between the `new` and the `delete` skips the cleanup entirely.
+
+That last one is the decisive argument. Exceptions make manual `delete` genuinely unwriteable in the general case:
+
+```cpp
+void process() {
+    Widget* w = new Widget;
+    do_work(w);        // if this throws, we never reach the delete: leak
+    delete w;
+}
+```
+
+There is no `finally` in C++, so the only correct fix is either a `try`/`catch` around every such block or, far better, an object whose destructor does the `delete` for you. That object is a smart pointer, and it is why the rest of this section exists.
+:::
+
+`new` and `delete` are not deprecated, and they never will be: something has to sit at the bottom. But they belong *inside* the ownership types below, or inside `std::make_unique`, not in the code you write day to day.
+
 ### Smart Pointers
-<!-- unique_ptr (owning, move-only), shared_ptr (refcounted), weak_ptr. The
-modern answer to manual delete. Compare to Rust Box/Rc/Arc — nearly 1:1. -->
+::: {.subheading}
+RAII applied to the heap
+:::
+
+A **smart pointer** is a class template that holds a raw pointer, behaves like one (`*` and `->` are overloaded), and deletes what it points at in its destructor. That is the whole idea: it is the [`File` wrapper from the RAII section](#raii), generalized over any heap-allocated type. Three of them live in `<memory>`, and they differ only in what ownership model they encode.
+
+#### `std::unique_ptr<T>`
+::: {.subheading}
+Exclusive ownership, zero overhead
+:::
+
+`unique_ptr` says *exactly one owner, and it is me*. It cannot be copied (that would create a second owner), only moved (which transfers ownership). It is the default choice, and it should be the one you reach for unless you have a specific reason not to.
+
+```cpp
+#include <memory>
+
+auto widget = std::make_unique<Widget>(arg1, arg2);   // preferred construction
+widget->method();                                     // -> works as expected
+Widget& ref = *widget;                                // * works as expected
+
+// std::unique_ptr<Widget> copy = widget;             // ERROR: cannot copy
+auto moved = std::move(widget);                       // OK: ownership transfers
+                                                      // widget is now null;
+                                                      // moved's destructor deletes
+```
+
+Prefer `std::make_unique<T>(args...)` over `std::unique_ptr<T>(new T(args...))`. It is shorter, it names `T` once instead of twice, and it is exception-safe in argument lists where the raw form has a subtle leak window.
+
+The remarkable property of `unique_ptr` is that it costs *nothing*. It is the size of a raw pointer, and with optimization enabled it compiles to the same instructions as hand-written `new`/`delete`, because the destructor call is inlined away to precisely the `delete` you would have written. There is no performance argument for the raw pointer; you are giving up correctness for free.
+
+Because it is move-only, `unique_ptr` also documents ownership in your function signatures, which raw pointers cannot do:
+
+```cpp
+void consumes(std::unique_ptr<Widget> w);   // takes ownership; caller must move
+void observes(const Widget& w);             // borrows; caller keeps ownership
+void observes(Widget* w);                   // borrows, may be null; no ownership
+```
+
+That first signature is unforgeable documentation: the caller *has* to write `std::move`, so the transfer is visible at the call site.
+
+#### `std::shared_ptr<T>`
+::: {.subheading}
+Shared ownership by reference count
+:::
+
+`shared_ptr` is for the case where ownership genuinely is shared and you cannot say in advance which owner will finish last. It keeps a reference count in a separately allocated *control block*; copying increments it, destruction decrements it, and the object is deleted when the count reaches zero.
+
+```cpp
+auto first  = std::make_shared<Widget>();   // use_count() == 1
+{
+    auto second = first;                    // copy: use_count() == 2
+}                                           // second dies: use_count() == 1
+                                            // first dies at its scope end: deleted
+```
+
+This is the tool you remember building by hand, and disliking. Note the costs, because they are real and they are why it is not the default: a `shared_ptr` is two pointers wide rather than one, construction allocates a control block (`make_shared` folds it into the same allocation as the object, which is one reason to prefer it), and the count is updated *atomically* so it is thread-safe, which means every copy is a synchronized operation.
+
+::: {.callout-warning title="Thread safety of `shared_ptr` is narrower than it looks"}
+The *reference count* is atomic; the *pointed-to object* is not protected at all. Two threads may safely copy and destroy `shared_ptr`s to the same object, but if they both write to that object you still need a mutex. `shared_ptr` manages the lifetime, not the data race.
+:::
+
+#### `std::weak_ptr<T>`
+::: {.subheading}
+A non-owning observer, and the cycle breaker
+:::
+
+Reference counting has one structural failure: a cycle. If A holds a `shared_ptr` to B and B holds one back to A, neither count ever reaches zero and both leak, even though nothing outside can reach either. `weak_ptr` is the escape hatch. It points at a `shared_ptr`-managed object *without* contributing to the count, so it does not keep the object alive. Because the object may therefore die at any moment, you cannot dereference a `weak_ptr` directly; you must ask it for a temporary `shared_ptr` via `lock()`, which returns null if the object is gone.
+
+```cpp
+std::weak_ptr<Node> parent;                  // does not keep the parent alive
+
+if (auto locked = parent.lock()) {           // null if the parent was destroyed
+    locked->method();                        // safe: locked holds it alive here
+}
+```
+
+The canonical use is exactly the one implied above: in a tree, children are owned by their parent through `shared_ptr`, and each child points back at its parent through `weak_ptr`. Ownership flows one way, observation flows the other, and no cycle forms.
+
+#### Choosing Between Them
+
+| Need | Use |
+|---|---|
+| One owner (the usual case) | `std::unique_ptr<T>` |
+| Genuinely shared, unclear last owner | `std::shared_ptr<T>` |
+| Observe without owning; break a cycle | `std::weak_ptr<T>` |
+| Observe, non-null, no ownership | `T&` |
+| Observe, may be null, no ownership | `T*` (raw, non-owning) |
+| A value, not a pointer | just `T` (prefer this over all of the above) |
+
+Two habits follow from that table. First, a raw pointer is still perfectly respectable in modern C++ as a *non-owning observer*; what is discouraged is the raw *owning* pointer. Second, when a smart pointer must be handed to an old C API, `get()` returns the underlying raw pointer without surrendering ownership, and `release()` surrenders ownership without deleting.
+
+::: {.callout-note title="The Rust mapping is nearly one-to-one"}
+If you have read the Rust chapters this whole section is a translation exercise, which is no accident: Rust took these types from C++ and made them the only option.
+
+| C++ | Rust | Difference |
+|---|---|---|
+| `std::unique_ptr<T>` | [`Box<T>`](rust-ho.qmd#boxt) | `Box` cannot be null; `unique_ptr` can |
+| `std::shared_ptr<T>` | [`Rc<T>`](rust-ho.qmd#rct) / [`Arc<T>`](rust-ho.qmd#arct) | Rust splits non-atomic `Rc` from atomic `Arc`; C++ always pays for atomics |
+| `std::weak_ptr<T>` | `rc::Weak<T>` | same design, same purpose |
+| raw `T*` observer | `&T` | Rust's reference is checked by the borrow checker |
+
+The interesting split is `Rc` versus `Arc`. C++'s `shared_ptr` makes one choice for everyone (atomic, therefore thread-safe, therefore slower in single-threaded code), while Rust lets you pick and then uses the type system to guarantee you cannot send an `Rc` across threads by mistake. It is the recurring theme of the two languages in miniature: C++ picks a safe-enough default, Rust makes the distinction visible and enforces it.
+:::
+
 ### Move Semantics
-<!-- lvalues/rvalues, `std::move`, move constructors; why they exist (avoid deep
-copies) and how they underpin unique_ptr and efficient container growth. -->
+::: {.subheading}
+The C++11 change that ended the copying
+:::
+
+Now we can properly answer the question that has been deferred twice. Move semantics is the largest single change C++11 made to the language's performance character, and it is what separates the copy-heavy C++ of the 1990s from the C++ you are learning now. The [Move subsection](#move) sketched the idea; here is the machinery.
+
+#### The Problem
+
+Before C++11, C++ had no way to distinguish *this object will be needed afterward* from *this object is about to be destroyed*. Every initialization from another object was a copy, so returning a large container from a function deep-copied every element, and immediately destroyed the original:
+
+```cpp
+std::vector<std::string> load();       // returns 10,000 strings
+
+std::vector<std::string> data = load();
+// Pre-C++11: 10,000 string copies (each a heap allocation), then the
+// temporary is destroyed, freeing all 10,000 originals. Pure waste.
+```
+
+The workarounds were the awkward idioms you may remember: output parameters (`void load(std::vector<std::string>& out)`), returning raw owning pointers, or reference-counted copy-on-write string classes. All of them distorted interfaces to dodge a language limitation.
+
+#### Value Categories: lvalues and rvalues
+
+The fix required teaching the language to tell the two situations apart, and the vocabulary for that is **value categories**. You already know the terms from C, where they described what may sit on the left of an assignment.
+
+- An **lvalue** has an identity: a name, a stable location in memory, something you can take the address of. `x`, `vec[0]`, `*ptr`, and a function returning `T&` are all lvalues. It has a name, so it may be used again after this expression, so it is *not* safe to plunder.
+- An **rvalue** has no identity you can refer to. It is a temporary: the result of `x + y`, a literal `42`, a function returning `T` by value. Nothing else in the program can name it, so it will be destroyed at the end of the full expression, so it *is* safe to plunder.
+
+```cpp
+int   x     = 10;
+int*  p     = &x;          // fine: x is an lvalue, it has an address
+// int* q   = &(x + 1);    // ERROR: x + 1 is an rvalue, no address to take
+
+std::string name = "Curtis";
+std::string greeting = name + "!";   // name is an lvalue; name + "!" is an rvalue
+```
+
+That is the whole insight. "Is this a temporary?" is the same question as "may I steal from it?", and C++11 made it answerable in the type system.
+
+::: {.callout-note title="The formal taxonomy, in case you meet it"}
+C++11 refined the two categories into three, and you will see the names in compiler diagnostics. A **glvalue** ("generalized lvalue") has identity; an **rvalue** may be moved from. The leaves are: **lvalue** (has identity, cannot be moved from), **prvalue** ("pure rvalue", a temporary: no identity, can be moved from), and **xvalue** ("expiring value": has identity *and* can be moved from, which is precisely what `std::move(x)` produces). For everyday work, "named thing" versus "temporary" carries you almost all the way; the third category exists to name the thing `std::move` creates.
+:::
+
+#### Rvalue References `&&`
+
+The syntax that makes it usable is a new kind of reference. `T&` is the lvalue reference you know; `T&&` is an **rvalue reference**, and it binds only to rvalues. This lets you overload on the distinction:
+
+```cpp
+void consume(const std::string& s);   // binds lvalues: "I will read it, not touch it"
+void consume(std::string&& s);        // binds rvalues: "it is a temporary, I may gut it"
+
+std::string name = "Curtis";
+consume(name);              // lvalue  -> const std::string&  overload
+consume(name + "!");        // rvalue  -> std::string&&       overload
+consume("literal");         // rvalue  -> std::string&&       overload
+```
+
+When both overloads exist, the compiler picks the `&&` one for temporaries automatically. No caller has to know; the optimization is invisible at the call site. Apply this pattern to constructors and assignment operators and you get the move constructor and move-assignment operator.
+
+::: {.callout-warning title="A named rvalue reference is an lvalue"}
+This trips up everyone once. Inside `void consume(std::string&& s)`, the parameter `s` *has a name*, so within the function body `s` is an **lvalue**, even though its type is an rvalue reference. Passing `s` along to another function copies it unless you write `std::move(s)` again. The rule is worth memorizing in that compressed form: [if it has a name, it is an lvalue.]{.hl-blue}
+:::
+
+#### `std::move`
+
+`std::move` is the most badly named function in the standard library, because [it does not move anything.]{.hl-blue} It is a cast, nothing more: it takes an lvalue and returns an rvalue reference to it, which is to say it produces an expression that the overload resolution above will route to the `&&` version. Its entire implementation is a `static_cast`.
+
+```cpp
+std::string source = "a long string that owns a heap buffer";
+std::string target = std::move(source);   // move constructor: buffer is stolen
+// source is now valid but unspecified: do not read it, but it will destruct fine
+```
+
+So `std::move` is best read as *"I promise I am done with this; feel free to take it apart."* The actual work happens in whatever move constructor or move-assignment operator that promise routes you to. If the type has none, the promise is silently ignored and you get a copy: `std::move` on a `const` object or a copy-only type compiles perfectly and does nothing.
+
+#### The Moved-From State
+
+After a move, the source object is in a state the standard describes as **valid but unspecified**. That phrase is precise and matters:
+
+- **Valid** means the object is not corrupt. Its destructor will run correctly, and you may assign a new value to it. It is not a dangling husk.
+- **Unspecified** means you may not assume *what* value it holds. In practice a moved-from `std::string` is usually empty and a moved-from `std::vector` usually has size zero, but the standard does not require it, and small-string optimization means short strings may still hold their old contents.
+
+The operational rule: after moving from an object, either assign to it or let it die. Do not read it.
+
+```cpp
+std::vector<int> source = {1, 2, 3};
+std::vector<int> target = std::move(source);
+
+// source.size();      // legal, but the answer is unspecified: don't
+source = {4, 5, 6};    // fine: assigning to a moved-from object is well defined
+source.clear();        // also fine: clear() has no preconditions
+```
+
+::: {.callout-note title="Rust deletes this entire hazard"}
+Rust's move is the same operation, but the compiler tracks it. After `let target = source;`, `source` is *statically unusable*; touching it is a compile error ("use of moved value"), not an unspecified read. C++ cannot do this because the moved-from object still has to be destroyed by the same scope that created it, so it must remain in *some* valid state. That single requirement, destructors run unconditionally, is why C++ moves leave a husk behind and Rust moves do not. It is a fair summary of the two languages' relationship: identical idea, C++ retrofitted it around existing rules, Rust built the rules around it.
+:::
+
+#### Writing a Move Constructor
+
+The Rule of Zero means you will rarely write one, but seeing it makes everything above concrete. A move constructor takes `T&&`, takes the source's resources, and nulls the source out so its destructor becomes harmless:
+
+```cpp
+class Buffer {
+public:
+    explicit Buffer(std::size_t n) : data_(new int[n]), size_(n) {}
+    ~Buffer() { delete[] data_; }
+
+    Buffer(Buffer&& other) noexcept                  // MOVE constructor
+        : data_(other.data_), size_(other.size_) {   // 1. take the pointer
+        other.data_ = nullptr;                       // 2. null the source, so its
+        other.size_ = 0;                             //    destructor does nothing
+    }
+
+    Buffer& operator=(Buffer&& other) noexcept {     // MOVE assignment
+        if (this != &other) {                        // 1. guard self-assignment
+            delete[] data_;                          // 2. release what we hold
+            data_ = other.data_;                     // 3. take theirs
+            size_ = other.size_;
+            other.data_ = nullptr;                   // 4. null the source
+            other.size_ = 0;
+        }
+        return *this;                                // 5. always return *this
+    }
+
+    Buffer(const Buffer& other)                      // COPY, for contrast
+        : data_(new int[other.size_]), size_(other.size_) {
+        std::copy(other.data_, other.data_ + size_, data_);   // O(n), allocates
+    }
+
+private:
+    int* data_;
+    std::size_t size_;
+};
+```
+
+Compare the two constructors and the entire performance story is visible in six lines: the copy allocates and touches *n* elements, the move assigns two words. Move assignment carries the extra bookkeeping because it must release its existing resource first, and must not corrupt itself if someone writes `x = std::move(x)`.
+
+#### `noexcept` Is Not Optional Here
+
+Notice the `noexcept` on both. It is not decoration, and omitting it quietly costs you the optimization you just wrote.
+
+The reason is `std::vector`'s reallocation. When a vector outgrows its capacity it allocates a larger block and relocates the existing elements, and it must provide the **strong exception guarantee**: if something throws partway through, the vector must be left exactly as it was. Copying gives it that for free, since the originals stay untouched until the copy succeeds. Moving does not: if the fourth move throws, the first three elements have already been gutted and the original is unrecoverable.
+
+So `std::vector` uses `std::move_if_noexcept`, which reads as exactly what it says. If your move constructor is marked `noexcept`, the vector moves, because a move that cannot throw cannot leave it half-destroyed. If it is not, the vector **copies**, to preserve the guarantee.
+
+```cpp
+Buffer(Buffer&& other) noexcept;   // vector growth moves: O(1) per element
+Buffer(Buffer&& other);            // vector growth copies: O(n) per element
+```
+
+The rule is simple: **a move constructor and move-assignment operator should be `noexcept`**, and a correct one nearly always can be, because stealing pointers does not allocate and therefore has nothing to throw.
+
+#### Copy Elision and RVO
+
+There is a further twist, and it is a happy one: much of the time even the move does not happen, because the compiler skips constructing the temporary at all. This is **copy elision**, and its most common form is the **return value optimization** (RVO).
+
+```cpp
+std::vector<int> build() {
+    std::vector<int> result(1'000'000);
+    return result;                     // no copy, and usually not even a move
+}
+
+std::vector<int> data = build();       // result was constructed in data all along
+```
+
+The compiler is permitted to construct `result` directly in the caller's storage, so the "return" is a bookkeeping fiction. Since C++17 this elision is **mandatory** for returning an unnamed temporary (`return std::vector<int>(1'000'000);`), meaning it is guaranteed by the standard rather than left to the optimizer. For a *named* local like `result` above the compiler is merely permitted to elide, but every mainstream compiler does; when it cannot, it falls back to a move, not a copy.
+
+This has a practical corollary that reverses old advice:
+
+::: {.callout-warning title="Do not write `return std::move(x);`"}
+It looks like a helpful hint and it is actively harmful. Naming the local in a `return` statement already triggers RVO, or a move if RVO does not apply. Wrapping it in `std::move` produces an expression that is no longer eligible for elision, so you have *forced* a move where the compiler was going to elide the operation entirely. Just `return x;`.
+
+The same reasoning applies to returning by value in general. The old habit of taking an output parameter to avoid a copy is obsolete: [return by value, and let elision and moves make it cheap.]{.hl-blue}
+:::
+
+#### Perfect Forwarding
+
+One last piece, and it is the one that looks most like a violation of everything above. Consider writing a wrapper that passes its arguments through to a constructor, exactly what `std::make_unique` does. It must preserve value category: an lvalue argument should arrive as an lvalue (copied), an rvalue as an rvalue (moved). Taking `T` by value copies; taking `const T&` forces a copy at the far end; taking `T&&` refuses lvalues. None of the tools so far can express "pass it along exactly as it came."
+
+The answer relies on a special case in the rules. When `T&&` appears where `T` is a **deduced template parameter**, it is not an rvalue reference at all; it is a **forwarding reference** (older texts say *universal reference*), and it binds to anything, remembering which it got:
+
+```cpp
+template <typename T>
+void wrapper(T&& arg) {           // forwarding reference: binds lvalues AND rvalues
+    target(std::forward<T>(arg)); // pass along with the original value category
+}
+```
+
+This works through **reference collapsing**: when an lvalue is passed, `T` deduces to `Widget&` and `T&& == Widget& && == Widget&`; when an rvalue is passed, `T` deduces to `Widget` and `T&&` stays `Widget&&`. `std::forward<T>` is then a conditional cast, casting to rvalue only when `T` indicates the argument arrived as one. This is why `make_unique` and `emplace_back` can construct any object from any argument list without ever inserting a spurious copy:
+
+```cpp
+std::vector<std::string> v;
+v.push_back(std::string("temp"));   // constructs a string, then moves it in
+v.emplace_back("temp");             // forwards the char*; constructs in place
+```
+
+::: {.callout-warning title="`T&&` means two different things"}
+The distinction is entirely about whether `T` is being deduced *at that spot*:
+
+```cpp
+void f(std::string&& s);                    // rvalue reference: rvalues only
+
+template <typename T> void g(T&& x);        // forwarding reference: anything
+
+template <typename T>
+class Widget {
+    void h(T&& x);                          // rvalue reference! T was already
+};                                          // fixed when Widget was instantiated
+```
+
+And the pairing is fixed: use `std::move` on rvalue references, `std::forward<T>` on forwarding references. `std::move` on a forwarding reference will happily gut a caller's lvalue.
+:::
+
+#### Putting It Together
+
+Move semantics is why so much of modern C++ advice inverts what you learned in the 1990s. Return large objects by value, because elision and moves make it free. Store objects in containers rather than pointers to objects, because growth relocates by moving. Prefer `unique_ptr` to raw pointers, because a move-only type expresses transfer of ownership with no runtime cost at all. The copy-everywhere overhead that made C++ feel heavy was not inherent to the language; it was a missing distinction in the type system, and C++11 supplied it.
+
 ## Error Handling
 ### Exceptions
 <!-- try/catch/throw, stack unwinding + RAII interplay, exception safety

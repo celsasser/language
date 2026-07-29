@@ -386,16 +386,17 @@ int b = square(r);             // error: consteval call with a runtime argument
 
 Four keywords now cluster around this idea, and keeping them straight is half the battle:
 
-| Keyword      | Guarantees                                                             | Implies `const`? |
-|:-------------|:----------------------------------------------------------------------|:----------------:|
-| `const`      | Not modifiable through this name; value may be a runtime value.        |       n/a        |
-| `constexpr`  | Usable as a constant expression; *may* be evaluated at compile time.   |       yes        |
-| `consteval`  | (Functions only) *must* be evaluated at compile time.                  |        no        |
-| `constinit`  | Static/thread-local variable is initialized at compile time.           |        no        |
+| Keyword     | Guarantees                                                           | Implies `const`? |
+|:------------|:---------------------------------------------------------------------|:----------------:|
+| `const`     | Not modifiable through this name; value may be a runtime value.      | n/a              |
+| `constexpr` | Usable as a constant expression; *may* be evaluated at compile time. | yes              |
+| `consteval` | (Functions only) *must* be evaluated at compile time.                | no               |
+| `constinit` | Static/thread-local variable is initialized at compile time.         | no               |
 
 ::: {.callout-note title="Rust's `const fn` is the direct analog"}
 If you have read the Rust chapters, `constexpr` functions map almost exactly onto Rust's [`const fn`](rust-ho.qmd), and Rust's `const` and `static` items play the role of `constexpr` variables. The parallel even extends to the history: like C++'s `constexpr`, Rust's `const fn` began tightly restricted and has steadily gained the ability to run more of the language at compile time across editions. The chief difference is emphasis. Rust evaluates const contexts eagerly and treats the const/runtime split as an ordinary part of the type system, whereas C++ exposes the finer gradations (`constexpr` vs. `consteval` vs. `constinit`) as distinct keywords you choose between. C, by contrast, has nothing comparable: its only compile-time constants come from the preprocessor's `#define` and the `enum` hack, neither of which is typed, scoped, or able to run a function.
 :::
+
 ## Types and Declarations
 ::: {.subheading}
 The type system C++ layers over C's
@@ -430,7 +431,6 @@ Three rules define references, and each one removes a class of pointer bug:
 Together these make a reference *guaranteed to refer to a valid object*, which is the whole point. Where a pointer parameter forces a caller and reader to ask "may this be null, and who owns it?", a reference parameter answers both questions in advance.
 
 #### Pass by Reference
-
 The visible payoff is in function parameters. C has only pass-by-value, so modifying a caller's variable means passing its address and dereferencing throughout:
 
 ```c
@@ -525,7 +525,6 @@ enum class State  : std::uint16_t;           // forward declaration, size known
 The guidance is simple: **use `enum class` by default.** Reach for a plain `enum` only when you specifically want the implicit integer conversion, which in practice means bit-flag sets and interfacing with C headers.
 
 #### But Rust's Enums Are Something Else Entirely
-
 Here is where your instinct is correct, and it is worth being precise about *why*, because the two languages use the same word for two genuinely different features.
 
 `enum class` fixes C's enum. It does not do what [Rust's enum](rust-ho.qmd#rust-enums) does. A C++ enumeration, scoped or not, is still *a name for one of several integer values*. A Rust enum is a **sum type** (an *algebraic data type*, or *tagged union*): each variant may carry its own payload of its own type, and the compiler tracks which variant is active.
@@ -612,7 +611,7 @@ Since you asked directly: **C has not moved toward this, and shows no sign of do
 
 That is the extent of it. A C enum is still a set of `int` constants, still leaks its names into the enclosing scope, and still converts implicitly to any integer. C has no `enum class`, no `std::variant`, no sum type of any kind, and no pattern matching. Tagged unions in C are what they were in 1978: a `struct` holding an `enum` and a `union`, with the correspondence maintained by discipline.
 
-This is not an oversight so much as a statement of purpose. C's committee is deliberately conservative, prioritizing stability, a tiny specification, and the ability to compile the language on anything. Sum types would require the compiler to track variant state and enforce exhaustiveness, which is the kind of type-system machinery C has consistently declined to take on. The practical consequence for you: [the tagged-union idiom in the C chapter is not a legacy pattern to be replaced, it is still the state of the art in C.]{.hl-blue} If you want compiler-enforced sum types in a systems language, C++ gives you an awkward library approximation and Rust gives you the real thing.
+This is not an oversight so much as a statement of purpose. C's committee is deliberately conservative, prioritizing stability, a tiny specification, and the ability to compile the language on anything. Sum types would require the compiler to track variant state and enforce exhaustiveness, which is the kind of type-system machinery C has consistently declined to take on. The practical consequence for you: [the tagged-union idiom in the C chapter is not a legacy pattern to be replaced, it is still the state of the art in C.]{.hl-default} If you want compiler-enforced sum types in a systems language, C++ gives you an awkward library approximation and Rust gives you the real thing.
 :::
 
 ### Uniform Initialization
@@ -672,8 +671,65 @@ The recommended habit, and the one the C++ Core Guidelines endorse: prefer `{}` 
 
 ## Classes and Objects
 ### From `struct` to `class`
-<!-- The only default difference (public vs. private), then everything member
-functions add. Anchor to C's "struct + free functions operating on it" pattern. -->
+::: {.subheading}
+One keyword, one default, and a change of intent
+:::
+
+Start with the fact that surprises people: in C++, `struct` and `class` are **the same feature**. There is exactly one difference between them, and it is the default access level.
+
+```cpp
+struct Point { int x; int y; };     // members public by default
+class  Point { int x; int y; };     // members private by default
+
+struct Widget {                     // a struct may have everything a class has:
+    Widget() {}                     // constructors
+    ~Widget() {}                    // destructors
+    virtual void draw();            // virtual functions
+private:                            // and explicit access control
+    int state_;
+};
+```
+
+Anything you can write in a `class` you can write in a `struct`, including constructors, destructors, member functions, inheritance, and `virtual`. The keywords are interchangeable, and even the inheritance default follows the same rule (`struct` inherits publicly, `class` privately).
+
+Since the compiler barely distinguishes them, the distinction that survives is one of **convention**, and it is a strong one:
+
+- Use `struct` for a passive aggregate: public data, no invariant to maintain, no behavior beyond maybe a constructor. A `Point`, a configuration bundle, a return value carrying two fields.
+- Use `class` when the type maintains an **invariant**, something that must always be true of its data, which it enforces by keeping that data private and exposing only operations that preserve it.
+
+That word *invariant* is the real dividing line, and it is the whole reason C++ has access control at all. A `std::vector` must always satisfy `size <= capacity` and `data` must point at a block of at least `capacity` elements. If those members were public, any code anywhere could break them, and no amount of care inside the vector's own functions would help. Making them private means the invariant can only be violated by the class's own code, which is a small, reviewable amount of code.
+
+#### What This Adds to C
+The C idiom is a `struct` plus a family of free functions that operate on it, which the [C chapter](c.qmd#structures) covers:
+
+```c
+typedef struct { int balance; } Account;
+
+void account_deposit(Account* acct, int amount);
+int  account_balance(const Account* acct);
+```
+
+This works, and large C systems are built this way. What it cannot do is *enforce* anything. Nothing stops a caller writing `acct.balance = -500;` directly, bypassing every rule `account_deposit` might apply. The convention that you go through the functions is real, but it is documentation, not a guarantee. C++ turns that convention into a compiler-checked rule: make `balance` private and the direct write does not compile.
+
+So the progression from C is not mainly about syntax (`acct.deposit(100)` instead of `account_deposit(&acct, 100)`) but about who is responsible for correctness. In C, every caller shares that responsibility. In C++, the class holds it alone.
+
+#### Three Kinds of Class
+Stroustrup organizes classes into three kinds in *A Tour of C++*, and the taxonomy is worth adopting early because it tells you which C++ features a given type should use. Most classes you write should be the first kind.
+
+**Concrete types** behave like built-in types. Their representation is part of their definition, so they can be placed on the stack, copied and moved as values, and manipulated without indirection. `std::vector`, `std::string`, a `Point`, a `complex` number: you create one, use it, and it is destroyed at the end of scope. There is no inheritance, no `virtual`, and therefore no per-object or per-call overhead. [Concrete types are the default, and the great majority of well-designed C++ classes are concrete.]{.hl-default} Everything covered so far in this chapter, constructors, RAII, the Rule of Zero, move semantics, is the machinery of building good concrete types.
+
+**Abstract types** decouple the interface from the implementation. The class declares *what* operations exist without specifying how they are carried out or how the object is laid out, so callers work through a pointer or reference and the actual type is chosen at run time. This is what C++ means by object-oriented programming, and it requires the `virtual` machinery.
+
+**Class hierarchies** arrange related types into an inheritance tree, where a base expresses what the family has in common and derived classes extend or specialize it. The classic example is a GUI toolkit or a shape hierarchy.
+
+The second and third kinds both rest on inheritance and virtual functions, which are the subject of [Inheritance and Polymorphism](#inheritance-and-polymorphism) below. The ordering here is deliberate and matches modern practice: concrete types first, because that is what you will mostly write, and the hierarchy machinery afterward, because it is the specialist tool.
+
+::: {.callout-note title="Coming from 1990s C++ or Java, this ordering may look backwards"}
+The C++ of your era taught inheritance as the point of the language: you learned classes in order to learn hierarchies, and "object-oriented" was treated as a synonym for "good design." Java, arriving in the same period, hard-wired that view by making every class part of one tree rooted at `Object`.
+
+Modern C++ has moved away from this decisively. Inheritance is now understood as one tool for one job (run-time polymorphism, when you genuinely do not know the type until run time), and it is the wrong tool for code reuse, which composition and templates handle better without the coupling. Compile-time polymorphism through [templates](#templates) covers many cases that would once have called for a base class, and at no run-time cost. If you internalized "prefer inheritance" in the 1990s, the modern guidance is closer to **prefer concrete types; use inheritance when you need a run-time-varying interface, not to share code.**
+:::
+
 ### Member Functions, `this`, and `const` Methods
 ::: {.subheading}
 Functions that belong to an object
@@ -761,11 +817,11 @@ Trailing underscore (`value_`), yes; *leading* underscore (`_value`), no. Identi
 
 The following is forbidden by the official C++ Language Standard:
 
-| Pattern                            | Scope                 | Rule / Consequence                                                      | Example                                 |
-|:---------------------------|:------------------------|----------------------------------------------------------------|-----------------------------------------|
-| **Double Underscore (`__`)**       | Anywhere in the name  | Completely Reserved for the implementation.                             | `__myVar`, `my__Var`                    |
-| **Leading `_` + `[A-Z]+`** | Anywhere in the code  | Completely Reserved (often used for internal library macros).           | `_MyVariable`                           |
-| **Leading `_` + `[a-z]+`** | Global Namespace only | Reserved; can conflict with OS-specific or runtime environment symbols. | `int _variable;` (at file/global scope) |
+| Pattern                      | Scope                 | Rule / Consequence                                                      | Example                                 |
+|:-----------------------------|:----------------------|-------------------------------------------------------------------------|-----------------------------------------|
+| **Double Underscore (`__`)** | Anywhere in the name  | Completely Reserved for the implementation.                             | `__myVar`, `my__Var`                    |
+| **Leading `_` + `[A-Z]+`**   | Anywhere in the code  | Completely Reserved (often used for internal library macros).           | `_MyVariable`                           |
+| **Leading `_` + `[a-z]+`**   | Global Namespace only | Reserved; can conflict with OS-specific or runtime environment symbols. | `int _variable;` (at file/global scope) |
 
 ##### The One Exception
 ::: {.subheading}
@@ -809,8 +865,63 @@ For decades `this` was strictly a hidden pointer you could not name in the param
 :::
 
 ### Access Control
-<!-- public / private / protected; encapsulation as enforced-by-compiler, unlike
-Python's convention-only privacy. -->
+::: {.subheading}
+Encapsulation the compiler enforces
+:::
+
+Three labels control who may touch a member. They apply to everything that follows them until the next label, and you may use each as many times as you like.
+
+```cpp
+class Account {
+public:                              // anyone
+    void deposit(int amount);
+    int  balance() const;
+
+protected:                           // this class and its derived classes
+    void audit_log(const char* event);
+
+private:                             // this class only (the default for `class`)
+    int  balance_ = 0;
+    bool validate(int amount) const;
+};
+```
+
+| Label       | Accessible from                    | Use for                                        |
+|-------------|------------------------------------|------------------------------------------------|
+| `public`    | anywhere                           | the interface: what callers may do             |
+| `protected` | the class and derived classes      | hooks for subclasses; rare outside hierarchies |
+| `private`   | the class (and its `friend`s) only | representation and helpers: everything else    |
+
+The guidance is to keep **all data private** and expose behavior through public member functions. This is not ceremony. A private member can only be modified by the class's own functions, so the invariant discussed above is enforceable: to know that `size_ <= capacity_` always holds, you only need to audit the vector's own code, not every use of it in the program. Public data destroys that property instantly, because the set of code that can break it becomes the entire program.
+
+`protected` deserves a caution. It looks like a gentle middle ground, but it is closer to public than to private: any subclass, including ones written years later by other people, gains access, and you can no longer change the member without breaking them. Prefer `private` data with a `protected` (or `private`) virtual hook when a derived class needs to participate.
+
+#### `friend`
+A `friend` declaration grants one specific outside function or class access to the private members:
+
+```cpp
+class Matrix {
+public:
+    // ...
+private:
+    double* data_;
+    friend Matrix operator*(const Matrix&, const Matrix&);   // needs data_
+    friend class MatrixIterator;
+};
+```
+
+`friend` is often taught as "breaking encapsulation," which misreads it. The class chooses its friends by name, in its own definition, so friendship *is* part of the interface and cannot be granted from outside. It exists for cases where a function is logically part of the type's interface but cannot be a member: the canonical examples are binary operators needing access to both operands' internals, and `operator<<` for stream output, whose left operand is the stream rather than your class. Used sparingly and deliberately, it is legitimate; used to paper over a bad interface, it is the smell people warn about.
+
+::: {.callout-note title="Compare: enforced, conventional, and none at all"}
+Access control is a good lens on how much three languages trust you.
+
+- **C** has no mechanism at all inside a translation unit. The nearest thing is `static` at file scope, which hides a name from other translation units, and the "opaque pointer" idiom where a header declares `typedef struct Account Account;` and only the `.c` file sees the definition. That genuinely works, but it is coarse: callers cannot put the object on the stack, since its size is unknown.
+- **Python** has no enforcement whatsoever. A leading underscore (`_balance`) means "internal, do not touch," and the language does nothing to stop you. Even the double-underscore name mangling is a namespacing trick, not a barrier. Encapsulation there is entirely a matter of convention and adult behavior.
+- **C++ and Rust** both enforce at compile time. Rust's default is stricter: everything is private to its module unless marked `pub`, whereas a C++ `struct` is public by default. Rust also scopes privacy to the *module* rather than the type, so items in the same module see each other's private fields, which is roughly what C++ achieves with `friend` but without needing a declaration.
+
+One shared caveat: in C++ and Rust alike, access control is a **compile-time** construct, not a security boundary. It stops mistakes, not attackers; a `reinterpret_cast` or a raw memory write reaches private data just fine.
+:::
+
 ### Constructors and Destructors
 ::: {.subheading}
 Building and tearing down objects
@@ -913,7 +1024,7 @@ You almost never write move constructors yourself, for the same reason you rarel
 The keystone idea
 :::
 
-If you take one idea away from this chapter, make it this one. **RAII** stands for *Resource Acquisition Is Initialization*, which is a famously bad name for a genuinely great idea. The name emphasizes the wrong half; what matters is the *release*, not the acquisition. Stated in plain terms: [tie the lifetime of a resource to the lifetime of an object, so that the resource is released automatically when the object is destroyed.]{.hl-blue} A resource is anything you acquire and must later give back: heap memory, an open file, a lock, a socket, a database handle.
+If you take one idea away from this chapter, make it this one. **RAII** stands for *Resource Acquisition Is Initialization*, which is a famously bad name for a genuinely great idea. The name emphasizes the wrong half; what matters is the *release*, not the acquisition. Stated in plain terms: [tie the lifetime of a resource to the lifetime of an object, so that the resource is released automatically when the object is destroyed.]{.hl-default} A resource is anything you acquire and must later give back: heap memory, an open file, a lock, a socket, a database handle.
 
 The mechanism rests on one guarantee the C++ language makes and C does not: **when an object goes out of scope, its destructor runs automatically, and it always runs.** A destructor is the special member function named `~ClassName()`; it is C++'s counterpart to a constructor, invoked not when you build the object but when you tear it down. So the recipe is to acquire the resource in the constructor and release it in the destructor. After that, correct cleanup is not something the programmer has to remember; it is something the compiler emits.
 
@@ -1045,15 +1156,332 @@ private:
 };
 ```
 
-Every special member the compiler generates is now correct, because each one simply defers to `std::vector`'s, which is itself correct: copying deep-copies, moving steals, destruction frees. [The best number of special member functions to write is zero, and you achieve it by owning resources through types that already know how to own them]{.hl-blue}: `std::vector`, `std::string`, `std::unique_ptr`, `std::shared_ptr`. Write the Rule of Five only when you are *implementing* such an ownership type, which is rare, or wrapping a C API handle that has no existing wrapper.
+Every special member the compiler generates is now correct, because each one simply defers to `std::vector`'s, which is itself correct: copying deep-copies, moving steals, destruction frees. [The best number of special member functions to write is zero, and you achieve it by owning resources through types that already know how to own them]{.hl-default}: `std::vector`, `std::string`, `std::unique_ptr`, `std::shared_ptr`. Write the Rule of Five only when you are *implementing* such an ownership type, which is rare, or wrapping a C API handle that has no existing wrapper.
 
 ::: {.callout-note title="Rust states this rule as a type-system law"}
 Rust has no equivalent folklore because the question cannot arise. Moving is the default for every type, and it is the compiler that moves, so no move constructor exists to forget. Copying is opt-in: a type is duplicable only if it derives `Clone` (explicit `.clone()`) or `Copy` (implicit, and only for types that are trivially bit-copyable). Cleanup is the `Drop` trait, and implementing `Drop` does not silently disable anything. The Rule of Three/Five is, in effect, C++ asking you to maintain by hand an invariant that Rust made unbreakable by construction.
 :::
 
 ### Operator Overloading
-<!-- Making user types behave like built-ins. Compare to Rust trait impls
-(`std::ops`) and Python dunder methods. Cautionary notes on overuse. -->
+::: {.subheading}
+Making your types behave like built-in ones
+:::
+
+C++ lets you define what the built-in operators mean for your own types. This is the feature that lets `std::string` support `+`, `std::vector` support `[]`, and `std::cout` support `<<`. It is not decoration: it is what makes user-defined types feel like part of the language rather than bolted on, and it is central to the "concrete types behave like built-in types" goal from earlier.
+
+An operator is just a function with a funny name. `a + b` is a call to `operator+(a, b)`, and defining that function defines the operator:
+
+```cpp
+class Vector2 {
+public:
+    Vector2(double x, double y) : x_(x), y_(y) {}
+
+    Vector2 operator+(const Vector2& rhs) const {      // member form
+        return Vector2(x_ + rhs.x_, y_ + rhs.y_);
+    }
+
+    Vector2& operator+=(const Vector2& rhs) {          // compound assignment
+        x_ += rhs.x_;
+        y_ += rhs.y_;
+        return *this;                                  // return ref for chaining
+    }
+
+    double operator[](std::size_t index) const {       // subscript
+        return index == 0 ? x_ : y_;
+    }
+
+private:
+    double x_, y_;
+};
+
+Vector2 a(1, 2), b(3, 4);
+Vector2 sum = a + b;        // a.operator+(b)
+a += b;                     // a.operator+=(b)
+double first = a[0];        // a.operator[](0)
+```
+
+#### Member or Free Function?
+An operator may be a member function (left operand is `this`) or a free function (both operands are parameters). The choice is not arbitrary:
+
+- **Must be a member:** `=`, `[]`, `()`, `->`, and conversion operators. The language requires it.
+- **Should be a member:** operators that modify the left operand, chiefly the compound assignments `+=`, `-=`, `*=`.
+- **Should be free:** symmetric binary operators such as `+`, `-`, `==`, `<`. Making these free functions means the left operand gets the same implicit-conversion treatment as the right, so `2.0 * vec` works as well as `vec * 2.0`. As a member, only the right operand can convert, and the first form fails.
+- **Must be free:** operators whose left operand is not your type, most importantly `operator<<` for stream output, since the left operand is `std::ostream`.
+
+The idiomatic pattern is to implement the compound assignment as a member and define the binary operator in terms of it:
+
+```cpp
+class Vector2 {
+public:
+    Vector2& operator+=(const Vector2& rhs) { /* ... */ return *this; }
+    // ...
+};
+
+// free function, defined in terms of the member: no duplicated logic
+Vector2 operator+(Vector2 lhs, const Vector2& rhs) {
+    lhs += rhs;        // lhs is a by-value copy we are free to modify
+    return lhs;
+}
+```
+
+Taking `lhs` by value looks wasteful but is deliberate: the copy is needed anyway, and taking it as a parameter lets the caller's temporary be *moved* in rather than copied when the left operand is an rvalue.
+
+#### Stream Output
+`operator<<` is the one nearly every class wants, and its shape is fixed by the fact that the stream is the left operand:
+
+```cpp
+std::ostream& operator<<(std::ostream& os, const Vector2& v) {
+    return os << '(' << v.x() << ", " << v.y() << ')';
+}
+
+std::cout << a << '\n';    // operator<<(std::cout, a)
+```
+
+Return the stream by reference so calls chain. If the operator needs private members, declare it a `friend` inside the class.
+
+#### Comparison and the Spaceship Operator
+Before C++20, giving a type full comparison support meant writing six nearly identical functions (`==`, `!=`, `<`, `<=`, `>`, `>=`). C++20 collapses that to one. The **three-way comparison operator** `<=>` (universally called the *spaceship operator*) returns an ordering, and the compiler synthesizes the relational operators from it:
+
+```cpp
+class Version {
+public:
+    auto operator<=>(const Version& rhs) const = default;   // all six, generated
+    bool operator==(const Version& rhs) const = default;    // == is separate
+
+private:
+    int major_, minor_, patch_;    // compared in declaration order, lexicographically
+};
+
+Version a{1, 2, 0}, b{1, 3, 0};
+bool earlier = a < b;              // synthesized from <=>
+```
+
+`= default` here gives you member-wise lexicographic comparison, which is exactly right surprisingly often. You can also write the body yourself when the ordering is not simply member-wise. Note that `==` is defaulted separately, because equality can frequently be computed faster than ordering (comparing two strings' lengths first, for instance), so the language keeps them independent.
+
+#### The Rules and the Limits
+Not everything is overloadable, and the restrictions matter:
+
+- You **cannot invent new operators** (no `**` for exponentiation) and cannot change precedence, associativity, or arity. `+` binds tighter than `<<` for your types exactly as it does for `int`, whatever you make it mean.
+- `::`, `.`, `.*`, `?:`, and `sizeof` cannot be overloaded at all.
+- At least one operand must be a user-defined type, so you cannot redefine `int + int`.
+
+::: {.callout-warning title="The discipline: preserve expected meaning"}
+Operator overloading is the C++ feature most easily abused, and the abuse is always the same mistake: giving an operator a meaning nobody would guess. If `+` on your type does anything other than something addition-like, or if `operator==` has side effects, every reader of the code is now misled by familiar syntax, which is worse than an unfamiliar function name would have been.
+
+The working rules:
+
+1. **Overload only when there is a conventional meaning.** Arithmetic on a vector or matrix, `+` on a string, `[]` on a container, `<<` on a stream. If you have to explain what your `%` means, use a named function.
+2. **Preserve expected semantics.** `a + b` should not modify `a`. `a == b` should be reflexive, symmetric, and free of side effects. `a += b` should be equivalent to `a = a + b`.
+3. **Preserve expected return types.** `+` returns a new value; `+=` returns a reference to `*this` so it chains.
+4. **Do not surprise on cost.** Users assume operators are cheap. An `operator[]` that performs a database query violates a reasonable expectation.
+
+The cautionary tale most often cited is C++'s own `>>` and `<<` for streams, which reuse the bit-shift operators for I/O. It reads nicely, but it is precisely the "unconventional meaning" the rules warn against, and it has real costs: the precedence is wrong for the job, so `std::cout << a & b` does not parse as anyone expects.
+:::
+
+::: {.callout-note title="Compare: traits, dunders, and nothing"}
+All three of your other languages take a position on this.
+
+- **C** has no operator overloading whatsoever, which is why its math libraries are full of `complex_add(a, b)` and matrix code reads as nested function calls.
+- **Python** overloads through **dunder methods**: `__add__`, `__eq__`, `__getitem__`, `__lt__`. The mechanism is dynamic (looked up at run time on the type), and the [Python chapter](python.qmd#dunder-methods) covers it. Same capability, resolved later, with the associated cost.
+- **Rust** overloads through **traits** in `std::ops`: you `impl Add for Vector2` and write an `add` method, which gives `+` meaning for your type. This is the most structured of the three, and it has a property C++ lacks: because each operator is a named trait with an associated output type, generic code can *require* it (`T: Add<Output = T>`), which is exactly what C++ needed [concepts](#concepts) to express. Rust also deliberately refuses to let you overload some things C++ allows, notably `&&`, `||`, and the assignment operator, on the grounds that their short-circuiting and ownership semantics should not be user-redefinable.
+
+The shared insight across all three is that an operator is a function with special syntax. C++ says so most literally, since `operator+` really is just its name.
+:::
+
+## Inheritance and Polymorphism
+::: {.subheading}
+Abstract types and class hierarchies
+:::
+
+Everything so far has been about concrete types. This section covers the other two of Stroustrup's three kinds, and the `virtual` machinery both depend on. Take the ordering as a hint about frequency: this material is genuinely important, and it is also the part of C++ that modern practice reaches for least.
+
+The problem inheritance solves is **run-time polymorphism**: you have a collection of objects of different types, you do not know which is which until the program runs, and you want to treat them uniformly. Templates cannot help, because they resolve at compile time.
+
+### Base and Derived Classes
+A derived class inherits the members of its base and may add its own:
+
+```cpp
+class Shape {                              // base class
+public:
+    explicit Shape(std::string name) : name_(std::move(name)) {}
+    const std::string& name() const { return name_; }
+
+private:
+    std::string name_;
+};
+
+class Circle : public Shape {              // derived: "a Circle is-a Shape"
+public:
+    explicit Circle(double radius) : Shape("circle"), radius_(radius) {}
+    double radius() const { return radius_; }
+
+private:
+    double radius_;
+};
+```
+
+The derived class's constructor must initialize its base, which it does in the member initializer list (`Shape("circle")`) before its own members. Construction runs base-first, destruction runs derived-first, mirroring the reverse-order rule you saw with scoped objects.
+
+That `public` in `class Circle : public Shape` is the **inheritance access specifier**, and public is what you almost always want; it means "a `Circle` is-a `Shape`" and lets a `Circle` be used wherever a `Shape` is expected. Private inheritance (the default for `class`) means "implemented in terms of," which composition expresses more clearly, so it is rare.
+
+### `virtual` Functions
+Inheritance alone gives you shared members. What makes polymorphism work is the `virtual` keyword, which says *the correct function to call is determined by the object's actual type at run time, not by the type of the pointer or reference you are calling through.*
+
+```cpp
+class Shape {
+public:
+    virtual double area() const { return 0.0; }     // virtual: may be replaced
+    virtual ~Shape() = default;                     // see the warning below
+};
+
+class Circle : public Shape {
+public:
+    explicit Circle(double radius) : radius_(radius) {}
+    double area() const override {                  // override: replaces the base
+        return std::numbers::pi * radius_ * radius_;
+    }
+private:
+    double radius_;
+};
+
+class Square : public Shape {
+public:
+    explicit Square(double side) : side_(side) {}
+    double area() const override { return side_ * side_; }
+private:
+    double side_;
+};
+
+void report(const Shape& shape) {
+    std::cout << shape.area() << '\n';    // which area()? depends on the object
+}
+
+Circle circle(1.0);
+Square square(2.0);
+report(circle);        // 3.14159  -> Circle::area
+report(square);        // 4        -> Square::area
+```
+
+`report` is compiled once, knows nothing about `Circle` or `Square`, and still calls the right function. Remove `virtual` and both calls print `0`, because the call would bind to `Shape::area` at compile time based on the parameter's declared type. That distinction, **dynamic dispatch** versus **static dispatch**, is the entire point.
+
+The `override` keyword (C++11) is not required but should be treated as mandatory. It asks the compiler to verify that you really are overriding something:
+
+```cpp
+class Circle : public Shape {
+    double area() override;          // ERROR: base is `area() const`, this isn't
+};                                   // without `override`, this would silently
+                                     // create a NEW function and dispatch would
+                                     // quietly call the base version
+```
+
+That silent failure, a subtly mismatched signature creating an unrelated function instead of an override, was one of the classic C++ bugs before `override` existed. Its counterpart `final` closes a class or function to further overriding.
+
+### How It Works
+::: {.subheading}
+the vtable
+:::
+
+The mechanism is worth knowing because it explains the costs. A class with virtual functions gets a compiler-generated table of function pointers, the **vtable**, one per class. Each object of that class carries a hidden pointer, the **vptr**, to its class's vtable. A virtual call loads the vptr, indexes the table, and calls through the pointer.
+
+```
+circle object          Circle vtable
+┌──────────────┐      ┌────────────────────┐
+│ vptr         │─────>│ &Circle::area      │
+│ radius_ = 1.0│      │ &Circle::~Circle   │
+└──────────────┘      └────────────────────┘
+```
+
+The costs follow directly, and they are exactly what "you don't pay for what you don't use" predicts:
+
+| Cost                         | Magnitude                                                      |
+|------------------------------|----------------------------------------------------------------|
+| One vptr per object          | one pointer of extra size, per object                          |
+| Indirection per virtual call | one extra load, then an indirect call                          |
+| Inlining                     | usually prevented, since the target is unknown at compile time |
+
+The lost inlining is typically the larger cost, not the indirection itself. A class with *no* virtual functions has no vptr and is exactly as compact as the equivalent C struct, which is why a `Point` with two `int`s is eight bytes and can be `memcpy`'d.
+
+::: {.callout-warning title="A base class needs a virtual destructor"}
+This bears repeating from the [Destructors](#destructors) section because the consequence is a silent leak:
+
+```cpp
+Shape* shape = new Circle(1.0);
+delete shape;      // without `virtual ~Shape()`, only ~Shape runs.
+                   // ~Circle never runs: undefined behavior, and anything
+                   // Circle owned is leaked.
+```
+
+The rule: **if a class has any virtual function, give it a virtual destructor.** The usual spelling is `virtual ~Shape() = default;`. The modern alternative, if you never delete through a base pointer, is to make the destructor `protected` and non-virtual, which makes the dangerous delete a compile error.
+:::
+
+### Abstract Classes and Pure Virtual Functions
+Often a base has no sensible default implementation. What is the area of a generic `Shape`? The honest answer is that the question is malformed: there is no such thing as a generic shape, only circles and squares. A **pure virtual** function says exactly that, by declaring an operation with no implementation:
+
+```cpp
+class Shape {
+public:
+    virtual double area() const = 0;          // pure virtual: no implementation
+    virtual void   draw() const = 0;
+    virtual ~Shape() = default;
+};
+```
+
+The `= 0` makes `Shape` an **abstract class**, and abstract classes cannot be instantiated:
+
+```cpp
+// Shape shape;                  // ERROR: cannot instantiate abstract class
+Circle circle(1.0);              // fine: Circle implements both pure virtuals
+Shape& ref = circle;             // fine: use through reference or pointer
+std::unique_ptr<Shape> owned = std::make_unique<Circle>(1.0);   // or smart pointer
+```
+
+A derived class that does not implement every pure virtual is itself abstract. This is how C++ expresses an **interface**: a class with only pure virtual functions and a virtual destructor, no data, defining a contract that implementers must satisfy.
+
+```cpp
+class Drawable {                              // pure interface
+public:
+    virtual void draw(Canvas&) const = 0;
+    virtual ~Drawable() = default;
+};
+```
+
+This is Stroustrup's *abstract type*: the interface is completely decoupled from the representation. Callers depend only on `Drawable`, and implementations can be added, changed, or loaded from a plugin without recompiling any of them.
+
+### Slicing
+One trap has no analogue in Java or Rust and catches C++ programmers regularly. Because C++ objects are values, assigning a derived object to a base *variable* copies only the base part and discards the rest:
+
+```cpp
+Circle circle(1.0);
+Shape  shape = circle;      // SLICED: radius_ is gone, and so is the vtable
+std::cout << shape.area();  // calls Shape::area, not Circle::area
+
+void by_value(Shape s);     // any call to this slices its argument
+void by_ref(const Shape& s); // correct: no copy, polymorphism preserved
+```
+
+The object was "sliced" down to its base subobject. This is why **polymorphism requires a pointer or a reference**, always. Pass base-class parameters as `const Base&`, and store polymorphic objects as `std::unique_ptr<Base>` rather than `Base`. A `std::vector<Shape>` cannot hold circles; a `std::vector<std::unique_ptr<Shape>>` can.
+
+### When Not to Use Inheritance
+Modern C++ reaches for inheritance far less than 1990s C++ did, and it is worth knowing the alternatives, because most cases that look like inheritance problems are not.
+
+- **For code reuse, use composition.** If your class needs a `Logger`, give it a `Logger` member. Inheriting from `Logger` claims your class *is-a* logger, which is almost certainly false and permanently couples you to its interface.
+- **For compile-time variation, use [templates](#templates).** If the type is known when you compile, a template gives the same flexibility with no vptr, no indirection, and full inlining.
+- **For a closed set of types, use [`std::variant`](#but-rusts-enums-are-something-else-entirely).** If you know at design time that a shape is a circle, square, or triangle and that list will not grow, a variant is a sum type with no inheritance, no heap allocation, and no virtual dispatch. Inheritance is for *open* sets, where new types can be added later, possibly by other people.
+- **For a single stored callable, use `std::function` or a template parameter** rather than an abstract base with one method.
+
+Use inheritance when you genuinely need an open-ended set of types sharing an interface, chosen at run time. Plugin architectures, GUI widget trees, and abstract device drivers are the real cases.
+
+::: {.callout-note title="Rust took the interface and left the hierarchy"}
+Rust has no class inheritance at all, which is a deliberate design decision rather than an omission. It splits C++'s single mechanism into two:
+
+- **Interfaces become [traits](rust-ho.qmd#traits).** A trait declares required methods exactly as an abstract class does, and `dyn Trait` gives you dynamic dispatch through a vtable, essentially identical to C++'s under the hood. `Box<dyn Shape>` is `std::unique_ptr<Shape>`.
+- **Code reuse becomes composition plus default trait methods.** A trait can supply a default implementation that implementers inherit, which covers the legitimate reuse case without an is-a relationship.
+
+What Rust deliberately does not provide is inheriting *data* from a base class, which is the source of the fragile-base-class problem, of deep hierarchies that are hard to reason about, and of the diamond problem C++ needs `virtual` inheritance to untangle. The design bet is that data inheritance was never the valuable part.
+
+Two practical consequences: slicing cannot happen in Rust, because a `dyn Trait` is unsized and can only be used behind a pointer, so the compiler simply rejects the code that would slice. And the choice of dispatch is explicit at every use, `impl Trait` for static and `dyn Trait` for dynamic, where C++ makes `virtual` a property of the function's declaration instead.
+:::
+
 ## Templates
 ::: {.subheading}
 Generic programming
@@ -1267,6 +1695,10 @@ One piece is deliberately deferred. Those forwarding examples are usually writte
 Constraining templates (C++20)
 :::
 
+::: {.note data-label="Out of constraints, good things come"}
+There's real history behind that instinct. The demoscene built a whole culture on it, and going further back, the Apollo Guidance Computer ran the lunar descent in 36K of rope memory with about 2K of RAM. Constraints don't just limit what you build, they change what counts as a good idea.
+:::
+
 Every template written so far accepts *any* type at all, and this is the loose end left dangling by the whole section. Our `max` will happily be instantiated for a type that has no `operator>`, and only then, deep inside the instantiated body, does the compiler discover the mistake. The error it reports points at the failing expression buried in the template, not at the call that supplied the wrong type, which is the origin of the infamous walls of template error text that C++ was long mocked for. **Concepts**, added in C++20, are the fix: they let you state up front what a template parameter must be able to do, so a bad call is rejected *at the call site* with a message that names the requirement it failed.
 
 A concept is at heart a compile-time predicate on types, a named `constexpr bool` that answers "does this type satisfy these requirements?" The standard library ships a catalog of them (`std::integral`, `std::floating_point`, `std::copyable`, `std::sortable`, and many more), and you can write your own.
@@ -1336,6 +1768,7 @@ So while *constraints* proper are a template feature, the `requires` expression 
 ::: {.callout-note title="Concepts are C++'s answer to Rust's trait bounds"}
 If you have read the Rust chapters, concepts will feel like familiar ground reached by a different road. Rust's [trait bounds](rust-ho.qmd#generics-and-trait-bounds) (`fn half<T: Integer>(value: T)`) do exactly what a concept does: constrain a generic parameter to types that provide a required capability, and report violations clearly at the call site. The deep difference is *how the requirement is defined*. A Rust trait bound is **nominal**: a type satisfies `Integer` only if it explicitly `impl`s that trait, an opt-in the author must write. A C++ concept is **structural**: a type satisfies `Addable` purely because `a + b` happens to compile for it, with no declaration of intent required. This mirrors the older split between Rust's trait-based generics and C++'s original duck-typed templates; concepts keep C++'s structural, opt-out-free flavor while finally adding the clear diagnostics that trait bounds always had. C, of course, has nothing of the sort: its only genericity is [macro-based](c.qmd#preprocessing) text substitution, with no notion of constraining what a type can do.
 :::
+
 ## The Standard Template Library
 ::: {.subheading}
 Containers, iterators, algorithms
@@ -1411,7 +1844,7 @@ The `[]` on a `std::map` is worth a note for the C programmer: it *inserts* a de
 A generalized pointer into a container
 :::
 
-Here is the concept the rest of the STL is built on, stated as plainly as it can be: [an iterator is an object that behaves like a pointer into a container.]{.hl-blue} That is not an analogy for teaching purposes; it is close to the literal truth. An iterator supports exactly the operations you already use on a C pointer walking an array:
+Here is the concept the rest of the STL is built on, stated as plainly as it can be: [an iterator is an object that behaves like a pointer into a container.]{.hl-default} That is not an analogy for teaching purposes; it is close to the literal truth. An iterator supports exactly the operations you already use on a C pointer walking an array:
 
 - `*it` **dereferences** it to get the element it currently refers to (read or write).
 - `++it` **advances** it to the next element.
@@ -1539,23 +1972,21 @@ delete[] array;                      // note: [] form, and it must match new[]
 
 The differences from C are worth stating precisely, because they are the reason `new` exists at all rather than C++ simply keeping `malloc`.
 
-| | C | C++ |
-|---|---|---|
-| Allocation | `malloc(sizeof(Point))` | `new Point(3, 4)` |
-| Size | you compute it | compiler computes it |
-| Type | returns `void*`, needs a cast | returns `Point*`, already typed |
-| Initialization | none; memory is garbage | constructor runs |
-| Failure | returns `NULL` | throws `std::bad_alloc` |
-| Release | `free(p)` | `delete p` (destructor runs first) |
-| Array release | `free(p)` | `delete[] p` |
+|                | C                             | C++                                |
+|----------------|-------------------------------|------------------------------------|
+| Allocation     | `malloc(sizeof(Point))`       | `new Point(3, 4)`                  |
+| Size           | you compute it                | compiler computes it               |
+| Type           | returns `void*`, needs a cast | returns `Point*`, already typed    |
+| Initialization | none; memory is garbage       | constructor runs                   |
+| Failure        | returns `NULL`                | throws `std::bad_alloc`            |
+| Release        | `free(p)`                     | `delete p` (destructor runs first) |
+| Array release  | `free(p)`                     | `delete[] p`                       |
 
 Two of those rows are traps in their own right. Because `new` **throws** on failure rather than returning null, the `if (!p) return -1;` check you would write in C is dead code in C++; failure arrives as an exception, and the RAII objects on the stack unwind. (There is a `new (std::nothrow) T` form that returns null instead, used in codebases that compile without exceptions.) And because `delete` and `delete[]` are distinct operators, mismatching them (`delete` on a `new[]` allocation) is undefined behavior, not a merely-suboptimal choice: the array form has to run *n* destructors and needs the count that `new[]` stashed alongside the block.
 
 Mixing families is likewise undefined. Memory from `new` must go to `delete`, memory from `malloc` must go to `free`, and never crosswise, because the two allocators need not share bookkeeping and only one of them knows about destructors.
 
 ::: {.callout-warning title="Raw `new`/`delete` is a code smell in modern C++"}
-The C++ Core Guidelines are unambiguous here: [in application code, a raw `new` or `delete` should be rare, and a raw owning pointer rarer still.]{.hl-blue} Every hazard you remember from C survives into C++ unchanged: forgetting the `delete` leaks, running it twice corrupts the allocator, using the pointer afterward is a dangling read, and any early `return` or `throw` between the `new` and the `delete` skips the cleanup entirely.
-
 That last one is the decisive argument. Exceptions make manual `delete` genuinely unwriteable in the general case:
 
 ```cpp
@@ -1651,27 +2082,26 @@ if (auto locked = parent.lock()) {           // null if the parent was destroyed
 The canonical use is exactly the one implied above: in a tree, children are owned by their parent through `shared_ptr`, and each child points back at its parent through `weak_ptr`. Ownership flows one way, observation flows the other, and no cycle forms.
 
 #### Choosing Between Them
-
-| Need | Use |
-|---|---|
-| One owner (the usual case) | `std::unique_ptr<T>` |
-| Genuinely shared, unclear last owner | `std::shared_ptr<T>` |
-| Observe without owning; break a cycle | `std::weak_ptr<T>` |
-| Observe, non-null, no ownership | `T&` |
-| Observe, may be null, no ownership | `T*` (raw, non-owning) |
-| A value, not a pointer | just `T` (prefer this over all of the above) |
+| Need                                  | Use                                          |
+|---------------------------------------|----------------------------------------------|
+| One owner (the usual case)            | `std::unique_ptr<T>`                         |
+| Genuinely shared, unclear last owner  | `std::shared_ptr<T>`                         |
+| Observe without owning; break a cycle | `std::weak_ptr<T>`                           |
+| Observe, non-null, no ownership       | `T&`                                         |
+| Observe, may be null, no ownership    | `T*` (raw, non-owning)                       |
+| A value, not a pointer                | just `T` (prefer this over all of the above) |
 
 Two habits follow from that table. First, a raw pointer is still perfectly respectable in modern C++ as a *non-owning observer*; what is discouraged is the raw *owning* pointer. Second, when a smart pointer must be handed to an old C API, `get()` returns the underlying raw pointer without surrendering ownership, and `release()` surrenders ownership without deleting.
 
 ::: {.callout-note title="The Rust mapping is nearly one-to-one"}
 If you have read the Rust chapters this whole section is a translation exercise, which is no accident: Rust took these types from C++ and made them the only option.
 
-| C++ | Rust | Difference |
-|---|---|---|
-| `std::unique_ptr<T>` | [`Box<T>`](rust-ho.qmd#boxt) | `Box` cannot be null; `unique_ptr` can |
+| C++                  | Rust                                                      | Difference                                                                 |
+|----------------------|-----------------------------------------------------------|----------------------------------------------------------------------------|
+| `std::unique_ptr<T>` | [`Box<T>`](rust-ho.qmd#boxt)                              | `Box` cannot be null; `unique_ptr` can                                     |
 | `std::shared_ptr<T>` | [`Rc<T>`](rust-ho.qmd#rct) / [`Arc<T>`](rust-ho.qmd#arct) | Rust splits non-atomic `Rc` from atomic `Arc`; C++ always pays for atomics |
-| `std::weak_ptr<T>` | `rc::Weak<T>` | same design, same purpose |
-| raw `T*` observer | `&T` | Rust's reference is checked by the borrow checker |
+| `std::weak_ptr<T>`   | `rc::Weak<T>`                                             | same design, same purpose                                                  |
+| raw `T*` observer    | `&T`                                                      | Rust's reference is checked by the borrow checker                          |
 
 The interesting split is `Rc` versus `Arc`. C++'s `shared_ptr` makes one choice for everyone (atomic, therefore thread-safe, therefore slower in single-threaded code), while Rust lets you pick and then uses the type system to guarantee you cannot send an `Rc` across threads by mistake. It is the recurring theme of the two languages in miniature: C++ picks a safe-enough default, Rust makes the distinction visible and enforces it.
 :::
@@ -1684,7 +2114,6 @@ The C++11 change that ended the copying
 Now we can properly answer the question that has been deferred twice. Move semantics is the largest single change C++11 made to the language's performance character, and it is what separates the copy-heavy C++ of the 1990s from the C++ you are learning now. The [Move subsection](#move) sketched the idea; here is the machinery.
 
 #### The Problem
-
 Before C++11, C++ had no way to distinguish *this object will be needed afterward* from *this object is about to be destroyed*. Every initialization from another object was a copy, so returning a large container from a function deep-copied every element, and immediately destroyed the original:
 
 ```cpp
@@ -1697,7 +2126,10 @@ std::vector<std::string> data = load();
 
 The workarounds were the awkward idioms you may remember: output parameters (`void load(std::vector<std::string>& out)`), returning raw owning pointers, or reference-counted copy-on-write string classes. All of them distorted interfaces to dodge a language limitation.
 
-#### Value Categories: lvalues and rvalues
+#### Value Categories
+::: {.subheading}
+lvalues and rvalues
+:::
 
 The fix required teaching the language to tell the two situations apart, and the vocabulary for that is **value categories**. You already know the terms from C, where they described what may sit on the left of an assignment.
 
@@ -1720,7 +2152,6 @@ C++11 refined the two categories into three, and you will see the names in compi
 :::
 
 #### Rvalue References `&&`
-
 The syntax that makes it usable is a new kind of reference. `T&` is the lvalue reference you know; `T&&` is an **rvalue reference**, and it binds only to rvalues. This lets you overload on the distinction:
 
 ```cpp
@@ -1736,12 +2167,11 @@ consume("literal");         // rvalue  -> std::string&&       overload
 When both overloads exist, the compiler picks the `&&` one for temporaries automatically. No caller has to know; the optimization is invisible at the call site. Apply this pattern to constructors and assignment operators and you get the move constructor and move-assignment operator.
 
 ::: {.callout-warning title="A named rvalue reference is an lvalue"}
-This trips up everyone once. Inside `void consume(std::string&& s)`, the parameter `s` *has a name*, so within the function body `s` is an **lvalue**, even though its type is an rvalue reference. Passing `s` along to another function copies it unless you write `std::move(s)` again. The rule is worth memorizing in that compressed form: [if it has a name, it is an lvalue.]{.hl-blue}
+This trips up everyone once. Inside `void consume(std::string&& s)`, the parameter `s` *has a name*, so within the function body `s` is an **lvalue**, even though its type is an rvalue reference. Passing `s` along to another function copies it unless you write `std::move(s)` again. The rule is worth memorizing in that compressed form: [if it has a name, it is an lvalue.]{.hl-default}
 :::
 
 #### `std::move`
-
-`std::move` is the most badly named function in the standard library, because [it does not move anything.]{.hl-blue} It is a cast, nothing more: it takes an lvalue and returns an rvalue reference to it, which is to say it produces an expression that the overload resolution above will route to the `&&` version. Its entire implementation is a `static_cast`.
+`std::move` is the most badly named function in the standard library, because [it does not move anything.]{.hl-default} It is a cast, nothing more: it takes an lvalue and returns an rvalue reference to it, which is to say it produces an expression that the overload resolution above will route to the `&&` version. Its entire implementation is a `static_cast`.
 
 ```cpp
 std::string source = "a long string that owns a heap buffer";
@@ -1752,7 +2182,6 @@ std::string target = std::move(source);   // move constructor: buffer is stolen
 So `std::move` is best read as *"I promise I am done with this; feel free to take it apart."* The actual work happens in whatever move constructor or move-assignment operator that promise routes you to. If the type has none, the promise is silently ignored and you get a copy: `std::move` on a `const` object or a copy-only type compiles perfectly and does nothing.
 
 #### The Moved-From State
-
 After a move, the source object is in a state the standard describes as **valid but unspecified**. That phrase is precise and matters:
 
 - **Valid** means the object is not corrupt. Its destructor will run correctly, and you may assign a new value to it. It is not a dangling husk.
@@ -1774,7 +2203,6 @@ Rust's move is the same operation, but the compiler tracks it. After `let target
 :::
 
 #### Writing a Move Constructor
-
 The Rule of Zero means you will rarely write one, but seeing it makes everything above concrete. A move constructor takes `T&&`, takes the source's resources, and nulls the source out so its destructor becomes harmless:
 
 ```cpp
@@ -1814,7 +2242,6 @@ private:
 Compare the two constructors and the entire performance story is visible in six lines: the copy allocates and touches *n* elements, the move assigns two words. Move assignment carries the extra bookkeeping because it must release its existing resource first, and must not corrupt itself if someone writes `x = std::move(x)`.
 
 #### `noexcept` Is Not Optional Here
-
 Notice the `noexcept` on both. It is not decoration, and omitting it quietly costs you the optimization you just wrote.
 
 The reason is `std::vector`'s reallocation. When a vector outgrows its capacity it allocates a larger block and relocates the existing elements, and it must provide the **strong exception guarantee**: if something throws partway through, the vector must be left exactly as it was. Copying gives it that for free, since the originals stay untouched until the copy succeeds. Moving does not: if the fourth move throws, the first three elements have already been gutted and the original is unrecoverable.
@@ -1829,7 +2256,6 @@ Buffer(Buffer&& other);            // vector growth copies: O(n) per element
 The rule is simple: **a move constructor and move-assignment operator should be `noexcept`**, and a correct one nearly always can be, because stealing pointers does not allocate and therefore has nothing to throw.
 
 #### Copy Elision and RVO
-
 There is a further twist, and it is a happy one: much of the time even the move does not happen, because the compiler skips constructing the temporary at all. This is **copy elision**, and its most common form is the **return value optimization** (RVO).
 
 ```cpp
@@ -1848,11 +2274,10 @@ This has a practical corollary that reverses old advice:
 ::: {.callout-warning title="Do not write `return std::move(x);`"}
 It looks like a helpful hint and it is actively harmful. Naming the local in a `return` statement already triggers RVO, or a move if RVO does not apply. Wrapping it in `std::move` produces an expression that is no longer eligible for elision, so you have *forced* a move where the compiler was going to elide the operation entirely. Just `return x;`.
 
-The same reasoning applies to returning by value in general. The old habit of taking an output parameter to avoid a copy is obsolete: [return by value, and let elision and moves make it cheap.]{.hl-blue}
+The same reasoning applies to returning by value in general. The old habit of taking an output parameter to avoid a copy is obsolete: [return by value, and let elision and moves make it cheap.]{.hl-default}
 :::
 
 #### Perfect Forwarding
-
 One last piece, and it is the one that looks most like a violation of everything above. Consider writing a wrapper that passes its arguments through to a constructor, exactly what `std::make_unique` does. It must preserve value category: an lvalue argument should arrive as an lvalue (copied), an rvalue as an rvalue (moved). Taking `T` by value copies; taking `const T&` forces a copy at the far end; taking `T&&` refuses lvalues. None of the tools so far can express "pass it along exactly as it came."
 
 The answer relies on a special case in the rules. When `T&&` appears where `T` is a **deduced template parameter**, it is not an rvalue reference at all; it is a **forwarding reference** (older texts say *universal reference*), and it binds to anything, remembering which it got:
@@ -1890,7 +2315,6 @@ And the pairing is fixed: use `std::move` on rvalue references, `std::forward<T>
 :::
 
 #### Putting It Together
-
 Move semantics is why so much of modern C++ advice inverts what you learned in the 1990s. Return large objects by value, because elision and moves make it free. Store objects in containers rather than pointers to objects, because growth relocates by moving. Prefer `unique_ptr` to raw pointers, because a move-only type expresses transfer of ownership with no runtime cost at all. The copy-everywhere overhead that made C++ feel heavy was not inherent to the language; it was a missing distinction in the type system, and C++11 supplied it.
 
 ## Error Handling
@@ -1905,10 +2329,313 @@ Result-as-the-only-way. -->
 <!-- Organizing names; `using` declarations vs. directives; the C++ answer to
 C's file-static and prefix conventions. Anchor to c.qmd's translation-unit model. -->
 ## Compilation and the Build
-<!-- What differs from the C build (c.qmd's "The Build"): name mangling, the
-ODR, templates and header-only libraries, why C++ builds are slow, modules
-(C++20) as the intended fix. Toolchain: g++, clang++, CMake as the de facto
-build system. Keep short; cross-reference c.qmd rather than repeat. -->
+::: {.subheading}
+What changes when the language gets bigger
+:::
+
+The four stages from the [C chapter's build section](c.qmd#the-build), preprocess, compile, assemble, link, are unchanged in C++. The same `#include` mechanism, the same translation units, the same object files fed to the same linker. What changes is that C++ asks far more of each stage, and the consequences (slow builds, cryptic linker errors, header-only libraries) are things you will meet immediately.
+
+### Name Mangling
+C++ has function overloading, so `void draw(int)` and `void draw(double)` must coexist. The linker, however, is a C-era tool that matches symbols by name alone and knows nothing about types. C++ resolves this by **name mangling**: the compiler encodes the parameter types, namespace, and class into the symbol name.
+
+```cpp
+namespace gfx { void draw(int); void draw(double); }
+```
+
+```bash
+$ nm -C build/draw.o        # -C demangles
+0000000000000000 T gfx::draw(int)
+0000000000000020 T gfx::draw(double)
+
+$ nm build/draw.o           # the actual symbols
+0000000000000000 T _ZN3gfx4drawEi
+0000000000000020 T _ZN3gfx4drawEd
+```
+
+`_ZN3gfx4drawEi` reads as: namespace `gfx` (3 characters), function `draw` (4 characters), parameter `i` for `int`. [The scheme is compiler-specific, which is why GCC-compiled and MSVC-compiled C++ libraries cannot be linked together, a limitation C does not have.]{.hl-default}
+
+The practical consequence you will hit is **calling C from C++**. C symbols are unmangled, so the C++ compiler must be told not to mangle its references to them:
+
+```cpp
+extern "C" {
+#include "pico/stdlib.h"        // C header: symbols must not be mangled
+}
+
+extern "C" void isr_handler(void);   // a symbol C or assembly will call by name
+```
+
+That second line matters on bare metal. An interrupt vector table written in C or assembly refers to your handler by its plain name, so a mangled C++ handler will not be found, and the vector will silently point somewhere useless. Most vendor SDK headers, including the Pico SDK's, already wrap themselves in `#ifdef __cplusplus / extern "C"`, so including them from C++ just works. Your own handlers are your responsibility.
+
+### The One Definition Rule
+The **ODR** says that every function or variable may be *declared* many times but *defined* exactly once across the whole program; and that a class or template may be defined once per translation unit, with all definitions identical. Violating it is undefined behavior, and the compiler is not required to detect it.
+
+The failure mode is memorable: a function defined in a header without `inline` gets a copy compiled into every `.cpp` that includes it, and the linker reports "multiple definition of...". The fix:
+
+```cpp
+// widget.hpp
+inline int helper() { return 42; }    // `inline` permits multiple identical definitions
+constexpr int LIMIT = 100;            // constexpr implies inline for variables
+inline int counter = 0;               // C++17 inline variable: one shared instance
+```
+
+`inline` today means "may be defined in multiple translation units, and the linker should keep one," which is nearly unrelated to its original meaning of "please expand this at the call site." Compilers make inlining decisions on their own and have for decades.
+
+### Templates Live in Headers
+This is the structural difference that shapes C++ codebases most. As [Instantiation and Monomorphization](#instantiation-and-monomorphization) explained, a template is a pattern, not code. The compiler cannot generate `max<int>` until it sees both the template *and* the request for `int`, so the full definition must be visible in every translation unit that uses it.
+
+The result is that C++ libraries are frequently **header-only**: there is no `.cpp` to compile or link, you just `#include` and go. Convenient to consume, but it means every user recompiles the library's entire implementation, and any change to the header triggers a rebuild of everything downstream.
+
+### Why C++ Builds Are Slow
+Combine the above and the reason is clear enough. Each translation unit independently reprocesses every header it includes, and in C++ those headers contain not just declarations but full class and template definitions. Including `<vector>` and `<string>` pulls in tens of thousands of lines *per file*, then the compiler instantiates templates for each type used, and finally the linker discards the resulting mountain of duplicate instantiations. Work proportional to files × headers, mostly thrown away.
+
+The established mitigations, roughly in order of effort:
+
+| Technique            | What it does                                                                                   |
+|----------------------|------------------------------------------------------------------------------------------------|
+| Forward declarations | `class Widget;` instead of `#include "widget.hpp"` where only a pointer or reference is needed |
+| The pimpl idiom      | Hide members behind a pointer to an implementation class, so the header stops changing         |
+| Precompiled headers  | Parse the stable system headers once, reuse the result                                         |
+| `ccache`             | Cache object files keyed by preprocessed input; huge for repeated clean builds                 |
+| Unity builds         | Concatenate many `.cpp` files so shared headers are parsed once                                |
+| Parallelism          | `make -j$(nproc)`, or `ninja`, which parallelizes better than Make                             |
+
+### Modules
+::: {.subheading}
+C++20
+:::
+
+Modules are the intended structural fix. Instead of textual inclusion, a module is compiled once into a binary artifact that importers read directly:
+
+```cpp
+// math.cppm
+export module math;
+export int add(int a, int b) { return a + b; }
+```
+
+```cpp
+import math;         // no preprocessor, no re-parsing, no macro leakage
+int main() { return add(2, 3); }
+```
+
+Beyond speed, modules give real encapsulation: only `export`ed names are visible, and macros do not leak across the boundary. The catch as of 2026 is tooling maturity. Compiler support is good (GCC 14+, Clang 17+, MSVC), CMake support arrived in 3.28, but build systems, package managers, and the standard library's own modularization are still settling. Treat modules as the direction of travel rather than today's default, and expect header-based builds to remain normal for years.
+
+### The Toolchain
+`g++` and `clang++` are the compilers; use those drivers rather than `gcc`/`clang` for C++, since they link the standard library automatically.
+
+```bash
+g++ -std=c++20 -Wall -Wextra -O2 -c widget.cpp -o widget.o
+g++ widget.o main.o -o app
+```
+
+**CMake** is the de facto build system. It does not build anything itself; it generates build files (Makefiles, Ninja) from a description of your targets:
+
+```cmake
+cmake_minimum_required(VERSION 3.20)
+project(app LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_executable(app src/main.cpp src/widget.cpp)
+target_include_directories(app PRIVATE include)
+target_link_libraries(app PRIVATE fmt::fmt)
+```
+
+CMake is widely criticized for its language, and the criticism is fair, but it is what the ecosystem uses; the Pico SDK is CMake-based, as is nearly every vendor SDK you will meet. The one piece of advice that saves the most pain: use **targets**, not global variables. `target_include_directories(app PRIVATE ...)` rather than `include_directories(...)`, because target properties propagate correctly to dependents and global settings do not. This is "modern CMake," and it is a genuine improvement over the 2010-era style you will still find in tutorials.
+
+### Cross-Compilation and Bare Metal
+::: {.subheading}
+Building for a machine that is not the one you are typing on
+:::
+
+Everything above assumed the program runs where it was built. Building for a Pico or similar breaks that assumption, and the consequences are worth spelling out, because this is the part that is genuinely unfamiliar the first time.
+
+#### Host, Target, and the Toolchain Triple
+Two machines are now in play. The **host** is where the compiler runs (your Mac). The **target** is where the output runs (a Cortex-M0+ on the RP2040). A **cross-compiler** runs on the host and emits code for the target, and it is a physically different binary from your system compiler:
+
+```bash
+g++              main.cpp     # host compiler: produces an ARM/x86 macOS binary
+arm-none-eabi-g++ main.cpp    # cross-compiler: produces a Cortex-M binary
+```
+
+That prefix is a **target triple**, and reading it tells you what you have:
+
+| Component | Value        | Meaning                                             |
+|-----------|--------------|-----------------------------------------------------|
+| `arm`     | architecture | 32-bit ARM                                          |
+| `none`    | vendor       | no vendor                                           |
+| `eabi`    | ABI/OS       | Embedded ABI, and crucially **no operating system** |
+
+`arm-none-eabi` is *bare metal*: no OS, no kernel, no `main` being called by a loader. Compare `arm-linux-gnueabihf`, which targets ARM chips running Linux and has an entirely different runtime story. Picking the wrong one produces code that builds and then does nothing.
+
+The immediate practical consequence: **you cannot run what you build.** No executing the binary to test, no printf-to-terminal unless you have wired up a UART or USB serial, and no debugger unless you attach one over SWD. Your feedback loop now runs through flashing hardware, which is the single biggest adjustment coming from host development.
+
+#### Freestanding vs. Hosted
+The standard defines two conformance levels, and this is the formal name for what you are doing.
+
+A **hosted** implementation has an OS underneath: the full standard library, `main()` called by the runtime, a filesystem, a heap. A **freestanding** implementation does not. Only a subset of the library is guaranteed, roughly the headers that require no OS support: `<cstddef>`, `<cstdint>`, `<limits>`, `<type_traits>`, `<atomic>`, `<bit>`, and their kin. Absent are `<iostream>`, `<fstream>`, `<thread>`, and anything else needing a kernel.
+
+```bash
+arm-none-eabi-g++ -ffreestanding -fno-exceptions -fno-rtti -nostdlib ...
+```
+
+The good news is that a large fraction of C++ still works: templates, constexpr, classes, RAII, references, `std::array`, `std::span`, `<type_traits>`, and most of `<algorithm>` need no runtime support at all. What you lose is the parts that need an OS or a heap.
+
+#### The Memory Map and the Linker Script
+On a hosted system the linker uses a built-in default layout and the OS loader places your program wherever it likes. On bare metal there is no loader, so **you** must state exactly where everything goes, because the addresses are physical and fixed by the silicon. That statement is the **linker script**.
+
+```
+MEMORY {
+    FLASH (rx)  : ORIGIN = 0x10000000, LENGTH = 2048K   /* nonvolatile, read-only */
+    RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 264K    /* volatile, writable */
+}
+
+SECTIONS {
+    .text : { *(.vectors) *(.text*) *(.rodata*) } > FLASH
+    .data : { *(.data*) } > RAM AT> FLASH               /* note: two regions */
+    .bss  : { *(.bss*)  } > RAM
+}
+```
+
+The sections are the same ones the C chapter described, but now their placement is the whole point:
+
+| Section    | Contents                      | Lives in                              |
+|------------|-------------------------------|---------------------------------------|
+| `.text`    | code                          | FLASH                                 |
+| `.rodata`  | `const` data, string literals | FLASH                                 |
+| `.data`    | initialized globals           | RAM, **copied from FLASH at startup** |
+| `.bss`     | zero-initialized globals      | RAM, **zeroed at startup**            |
+| `.vectors` | interrupt vector table        | FLASH, at a fixed address             |
+
+That `.data` line is the one worth understanding, since it explains a whole class of bugs. An initialized global like `int counter = 42;` must be writable, so it must live in RAM; but RAM is volatile and empty at power-on, so the value 42 has to be stored somewhere nonvolatile. It is therefore stored in FLASH and **copied into RAM before `main` runs**. `AT> FLASH` is what says "this section's permanent home is FLASH, its runtime address is RAM."
+
+#### Startup Code and the C++ Runtime
+Doing that copy is the job of the startup code, which runs before `main`. On a hosted system the C runtime (`crt0`) does this invisibly. On bare metal it is a reset handler in the vector table, and C++ adds a step C does not have:
+
+```c
+void Reset_Handler(void) {
+    // 1. copy .data from its FLASH image into RAM
+    for (uint32_t* src = &_sidata, *dst = &_sdata; dst < &_edata; )
+        *dst++ = *src++;
+
+    // 2. zero .bss
+    for (uint32_t* dst = &_sbss; dst < &_ebss; )
+        *dst++ = 0;
+
+    // 3. C++ ONLY: run constructors for global/static objects
+    for (void (**ctor)() = &__init_array_start; ctor < &__init_array_end; ++ctor)
+        (*ctor)();
+
+    main();
+    while (1) { }        // main must never return: there is nothing to return to
+}
+```
+
+Step 3 is the C++-specific one. Every global object with a non-trivial constructor registers a pointer in `.init_array`, and if the startup code fails to walk that array your global objects are never constructed. They will be zero-filled (they are in `.bss`), which often *looks* like it works until it does not. If you write your own startup file rather than using the SDK's, this is the step most commonly forgotten.
+
+::: {.callout-warning title="Static initialization order is a real hazard here"}
+Within a single translation unit, globals are constructed in declaration order. **Across** translation units the order is unspecified, and if one global's constructor uses another that has not been constructed yet, you read zeros. This is the *static initialization order fiasco*, and on a desktop it usually produces a crash you can debug. On bare metal it produces a device that silently misbehaves at boot.
+
+The reliable fix is to avoid non-trivial global constructors entirely, which is good embedded practice anyway. Where you need a global, either make it `constexpr` (initialized at compile time, no constructor runs, and it lands in FLASH rather than RAM) or use the function-local static idiom, which constructs on first use:
+
+```cpp
+Peripheral& uart() {
+    static Peripheral instance{UART0};   // constructed on first call, in order
+    return instance;
+}
+```
+
+One caveat on that idiom: the compiler emits a thread-safe guard around it, which on bare metal may pull in `__cxa_guard_acquire` and fail to link. `-fno-threadsafe-statics` removes the guard, which is safe if the first call cannot be preempted.
+:::
+
+#### Which C++ Features Cost You
+This is the heart of C++ on small devices. The zero-overhead principle means most of the language is genuinely free, but a few features carry runtime or size costs that matter when you have 264K of RAM and no OS.
+
+| Feature                             | Cost on bare metal                           | Verdict                                        |
+|-------------------------------------|----------------------------------------------|------------------------------------------------|
+| Classes, member functions           | none                                         | use freely                                     |
+| Templates, `constexpr`              | compile-time only; often *reduces* code size | use freely                                     |
+| RAII, destructors                   | none beyond the code you would write anyway  | use freely, it is the best reason to be here   |
+| References, `enum class`, `auto`    | none                                         | use freely                                     |
+| Virtual functions                   | vptr per object, indirect call, no inlining  | fine in moderation                             |
+| `new` / `delete`                    | needs a heap; fragmentation is unrecoverable | avoid; prefer static or pool allocation        |
+| **Exceptions**                      | large unwind tables in FLASH, nonzero cost   | usually disabled                               |
+| **RTTI** (`dynamic_cast`, `typeid`) | type-info tables in FLASH                    | usually disabled                               |
+| `<iostream>`                        | pulls in enormous machinery                  | never; use a lightweight printf or SDK logging |
+
+Hence the near-universal embedded flags:
+
+```
+-fno-exceptions -fno-rtti -fno-threadsafe-statics -fno-use-cxa-atexit
+```
+
+Disabling exceptions has a design consequence worth stating: without them, constructors have no way to report failure. The standard response is two-phase initialization, a trivial constructor plus an `init()` returning a status code, or a factory function returning `std::optional`.
+
+::: {.callout-note title="Why C++ on bare metal at all?"}
+The case is stronger than it may look, and it is not about objects.
+
+**RAII** is the headline. A peripheral, a lock, a DMA channel, or a critical section that releases itself when it leaves scope removes exactly the class of bug that dominates embedded C: the missed cleanup on an early return path. That is a correctness win with zero runtime cost.
+
+**`constexpr`** moves work to compile time. Filter coefficients, lookup tables, and CRC tables computed by a `constexpr` function land in FLASH as data, with no startup cost and no code to compute them.
+
+**Templates** give type-safe abstraction with no indirection. A `Register<0x40014000, uint32_t>` or a `RingBuffer<uint8_t, 64>` compiles to the same instructions as hand-written C, while making misuse a compile error.
+
+**`enum class` and strong types** catch unit and identifier mix-ups at compile time, which on a device with no debugger is worth a great deal.
+
+The judgment most embedded shops land on is "C++ minus exceptions, RTTI, and the heap," sometimes called *Embedded C++* in spirit if not the failed formal standard of that name. You keep the abstraction, you skip the runtime.
+:::
+
+#### CMake Toolchain Files
+Cross-compiling in CMake means supplying a **toolchain file**, which tells it to use the cross-compiler and not to probe the host:
+
+```cmake
+# arm-none-eabi.cmake
+set(CMAKE_SYSTEM_NAME      Generic)        # "Generic" means bare metal, no OS
+set(CMAKE_SYSTEM_PROCESSOR arm)
+
+set(CMAKE_C_COMPILER   arm-none-eabi-gcc)
+set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
+
+# the compiler cannot link a host test program, so relax the check
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)   # find host programs on the host
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)    # find libraries only in the sysroot
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+```
+
+```bash
+cmake -B build -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi.cmake
+```
+
+`CMAKE_SYSTEM_NAME Generic` is the flag that says bare metal. The `TRY_COMPILE` line addresses a specific first-time failure: CMake normally validates a compiler by building and linking a small program, which cannot link for a target with no runtime, so the configure step fails before it starts. Setting the probe to build a static library instead skips the link.
+
+The Pico SDK handles all of this for you through `pico_sdk_import.cmake`, which is why a Pico project's own `CMakeLists.txt` looks almost ordinary. Enabling C++ is a matter of listing `CXX` in `project(... LANGUAGES C CXX ASM)` and naming `.cpp` files in your target.
+
+#### From ELF to Device
+The linker produces an **ELF** file, which contains your program plus symbol and debug information. The device wants only the raw bytes, in whatever format its bootloader accepts:
+
+```bash
+arm-none-eabi-objcopy -O binary  app.elf app.bin    # raw image
+arm-none-eabi-objcopy -O ihex    app.elf app.hex    # Intel HEX
+arm-none-eabi-size app.elf                          # how much FLASH and RAM you used
+```
+
+```
+   text    data     bss     dec     hex filename
+  24680     108    4312   29100    71ac app.elf
+```
+
+Read that as: `text + data` is your FLASH footprint (the `.data` initializers must be stored there too), and `data + bss` is your static RAM use, before any stack or heap. Watching those two numbers after a change is the fastest way to catch a feature that unexpectedly pulled in the world; enabling exceptions or touching `<iostream>` shows up here immediately.
+
+The RP2040 is slightly unusual in shipping a `.uf2` file, which the on-board bootloader accepts as a mass-storage drag-and-drop, which is why flashing a Pico feels like copying a file. Keep the ELF regardless: it is what a debugger needs for symbols.
+
+::: {.callout-note title="A note on Rust here, since the comparison is instructive"}
+Rust targets bare metal through the same LLVM backends and the same triples (`thumbv6m-none-eabi` for the RP2040). The equivalents map cleanly: `#![no_std]` is `-ffreestanding`, `#![no_main]` replaces the standard entry point, and `core` is the freestanding subset of the library while `alloc` is opt-in if you supply an allocator.
+
+Two differences are worth noting. Rust's `no_std` split is *cleaner* than C++'s: `core` is a defined subset that is guaranteed to work without an OS, whereas C++'s freestanding guarantees have historically been vague enough that what actually works depends on your toolchain. And Rust never had exceptions or RTTI to disable, so there is no equivalent of the `-fno-*` flag pile; `panic` behavior is chosen explicitly with a `panic_handler`. The `embassy` and `rp-hal` projects are the mature Pico options if you ever want to compare.
+:::
+
 ## Key Differences from C
 <!-- Summary table for the C programmer: what to unlearn, what carries over.
 Pass-by-value still holds; but references, RAII, overloading, and templates

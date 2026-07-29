@@ -250,6 +250,149 @@ done
 Always quote it: `"$@"` is the only form that preserves arguments exactly, each as a separate word even when it contains spaces. Bare `$@` and `$*` word-split, and unquoted `$*` collapses everything into one string. This is the same quoting hazard from the [Quoting](#quoting-and-expansion) section, now applied to a script's own inputs.
 :::
 
+### Arrays
+A shell variable holds text. An **array** holds an ordered list of values, which matters because the alternative, jamming a list into one string and splitting it later, is exactly the practice the [quoting](#quoting-and-expansion) section warns against. A path with a space in it survives an array intact and does not survive a space-separated string.
+
+```bash
+files=(report.txt "my notes.md" data.csv)     # zsh and bash both
+
+echo "$files[2]"        # my notes.md      (zsh: 1-based)
+echo "${#files}"        # 3                (zsh: element count)
+echo "$files[@]"        # all elements
+```
+
+::: {.callout-warning title="Arrays are where zsh and bash genuinely differ"}
+Most of this guide applies to both shells. Arrays are the exception, and the differences bite immediately.
+
+|                         | zsh                          | bash                       |
+|-------------------------|------------------------------|----------------------------|
+| First index             | **1**                        | **0**                      |
+| All elements            | `"$arr[@]"` or `"${arr[@]}"` | `"${arr[@]}"`              |
+| Element count           | `${#arr}`                    | `${#arr[@]}`               |
+| Braces around subscript | optional                     | **required**               |
+| Associative arrays      | `typeset -A`                 | `declare -A`, bash 4+ only |
+
+The 1-based indexing is the one that catches people, and it is deliberate: zsh follows the tradition of `awk` and the positional parameters (`$1` is the first argument, not `$0`). Note also that `${#arr}` means different things in the two shells: element count in zsh, but in bash it is the *string length of the first element*, which is a silent wrong answer rather than an error.
+
+For portable scripts, write bash syntax with braces everywhere and 0-based indices. For your own `.zshrc`, use zsh's.
+:::
+
+#### Building and Iterating
+```bash
+files=()                          # empty
+files+=(newfile.txt)              # append
+files=("${files[@]}" prepended)   # prepend, the clumsy way
+
+for file in "$files[@]"; do       # quoted: each element stays one word
+    echo "processing: $file"
+done
+```
+
+Quoting the expansion matters for the same reason it always does. `"$files[@]"` yields one word per element regardless of spaces; unquoted, each element is re-split on whitespace and `my notes.md` becomes two arguments.
+
+A common source of arrays is a command's output, and here the shells diverge again:
+
+```bash
+lines=("${(@f)$(ls)}")            # zsh: split on newlines only
+mapfile -t lines < <(ls)          # bash 4+: read lines into an array
+```
+
+The zsh `(@f)` is a **parameter expansion flag**, splitting on newlines rather than all whitespace, which is what you want for filenames. Splitting command output on spaces is the classic way to break on a file named `my notes.md`.
+
+#### Associative Arrays
+An associative array maps string keys to values, a dictionary rather than a list. It must be declared before use:
+
+```bash
+typeset -A config                 # zsh   (declare -A in bash 4+)
+config[host]="localhost"
+config[port]="8080"
+
+echo "$config[host]"              # localhost
+echo "${(k)config}"               # keys:   host port
+echo "${(v)config}"               # values: localhost 8080
+```
+
+`(k)` and `(v)` are two more zsh expansion flags, yielding keys and values respectively. In bash the equivalents are `"${!config[@]}"` for keys and `"${config[@]}"` for values.
+
+#### Testing Whether a Key Exists
+::: {.subheading}
+the `$+` You Found
+:::
+
+Now to the thing that sent you looking. Your search turned up `$+aliases[run-help]`, and the `+` is the piece worth understanding, because it answers a question ordinary expansion cannot.
+
+`${+name}` is zsh's **set test**. It expands to `1` if the parameter is set and `0` if it is not, and it never expands the value itself:
+
+```bash
+name="curtis"
+echo ${+name}          # 1
+echo ${+nonexistent}   # 0
+```
+
+The reason this exists as its own operator is that **unset and empty are different states**, and plain expansion cannot tell them apart:
+
+```bash
+empty=""
+echo "[${empty}]"      # []     <- looks identical to unset
+echo "[${nope}]"       # []     <- but this one was never set
+echo ${+empty}         # 1      <- set, holding an empty string
+echo ${+nope}          # 0      <- genuinely not set
+```
+
+For an ordinary variable that distinction is often academic. For an associative array it is the whole question: *is there an entry under this key?* An empty result could mean "no such key" or "a key whose value is empty," and `$+` separates them.
+
+Which brings us to what you were actually testing. zsh exposes several of its internal tables as associative arrays you can read like any other:
+
+| Array         | Contains                                          |
+|---------------|---------------------------------------------------|
+| `$aliases`    | all defined aliases, keyed by name                |
+| `$functions`  | all defined shell functions, keyed by name        |
+| `$parameters` | all parameters, keyed by name                     |
+| `$commands`   | external commands found on `$PATH`, keyed by name |
+| `$options`    | shell options and their on/off state              |
+| `$builtins`   | built-in commands                                 |
+
+So the recipe you found reads directly:
+
+```bash
+if (( ${+aliases[run-help]} )); then
+    echo "run-help is aliased to: $aliases[run-help]"
+fi
+```
+
+`${+aliases[run-help]}` is `1` if an alias named `run-help` exists, `0` otherwise. The `(( ... ))` is arithmetic evaluation, which treats nonzero as true, so the whole thing reads as "if the alias exists." And because `$aliases` is an ordinary associative array, you can read the definition out of it, list every alias with `${(k)aliases}`, or even assign to it to *create* an alias.
+
+::: {.callout-note title="The portable alternative"}
+`$+` and the `$aliases` table are zsh-specific. In bash, `${var+set}` is the POSIX cousin, expanding to the word `set` when the parameter exists and to nothing when it does not:
+
+```bash
+[[ -n "${config[host]+x}" ]] && echo "key exists"   # bash 4+, works in zsh too
+```
+
+For aliases specifically, the portable test is to ask the shell rather than inspect a table:
+
+```bash
+alias run-help >/dev/null 2>&1 && echo "defined"
+```
+
+That works everywhere. The zsh table is nicer when you are already in zsh and want the value, not just its existence.
+:::
+
+#### Why `$PATH` Is Both
+One array in particular you have already been using without noticing. zsh ties `$PATH` (the colon-separated string) to `$path` (an array), keeping them synchronized:
+
+```bash
+echo "$PATH"           # /usr/local/bin:/usr/bin:/bin
+echo "$path[1]"        # /usr/local/bin   (the same data, indexable)
+echo "${#path}"        # 3                (how many entries, without counting colons)
+
+path+=(/opt/homebrew/bin)      # append via the array; $PATH updates to match
+```
+
+Changing either one updates the other, which is what "tied" means.
+
+This is much pleasanter than the `export PATH="$PATH:/opt/bin"` string surgery from earlier, and it is why zsh users often manipulate `$path` instead. The pairing is called a **tied parameter**, created with `typeset -T`, and you can make your own. `$PATH` stays a colon-separated string because that is what the environment must contain for child processes to read it; `$path` is the same data in a form the shell can index.
+
 ## Parameter Expansion
 ::: {.subheading}
 `${...}` is a tiny string-editing language built into the shell.
@@ -331,7 +474,6 @@ Substitution (`${var/from/to}`) is the in-shell `sed s///` for the common case, 
 ::: {.subheading}
 The Real-World Loop: where parameter expansion, `case`, and `shift` come together.
 :::
-
 
 Nearly every hand-written CLI parser is the same shape: a `while` loop over the positional arguments, a `case` that dispatches on the current one, and `shift` to advance. Here is the pattern in full, the kind of loop you will find at the top of countless real scripts:
 
@@ -919,7 +1061,131 @@ zsh and bash also provide `[[ ]]`, a shell *keyword* rather than a program. Beca
 [[ "$n" -gt 0 && "$n" -lt 100 ]]   # combine numeric tests
 ```
 
-Prefer `[[ ]]` for new code in bash/zsh: it does what you mean with fewer footguns. Reach for the older `[ ]` only when you need POSIX portability (e.g. scripts that must run under `sh`/`dash`).
+[Prefer `[[ ]]` for new code in bash/zsh: it does what you mean with fewer footguns. Reach for the older `[ ]` only when you need POSIX portability (e.g. scripts that must run under `sh`/`dash`).]{.hl-default}
+
+### Arithmetic: `(( ))`
+::: {.subheading}
+Where numbers behave like numbers
+:::
+
+There is a third bracket, and it exists because the two above are fundamentally *text* tools. [`[ ]` and `[[ ]]` compare strings, and their numeric operators (`-gt`, `-lt`) are a lettered workaround bolted on for the cases where you need arithmetic.] `(( ))` inverts that: inside it, everything is a number and C's operators mean what they mean in C.
+
+```bash
+n=5
+
+if (( n > 0 )); then           # reads exactly like C
+    echo "positive"
+fi
+
+(( count = 10 * 3 ))           # assignment, no $ and no spaces problem
+(( count += 5 ))               # compound assignment
+(( i++ ))                      # increment
+```
+
+Three things are immediately different from the bracket forms, and each is a reason Google kept suggesting it:
+
+1. **The operators are C's.** `>`, `<`, `>=`, `==`, `!=`, `&&`, `||`, `%`, `*`, `+` all work directly. No `-gt`, no `-a`, no remembering which family a given test belongs to.
+2. **No `$` is needed on variable names.** Inside `(( ))` a bare word is read as a parameter, so `(( n > 0 ))` works. `$n` also works and is harmless.
+3. **No quoting hazard.** Word splitting does not happen inside `(( ))`, so the "always quote your variables" rule that dominates `[ ]` simply does not apply.
+
+#### Why Prefer It Over `[ ]` for Numbers
+The strongest argument is not convenience, it is a correctness bug that `[[ ]]` will hand you silently:
+
+```bash
+[[ 10 > 9 ]]  && echo true || echo false     # false  <- !!
+(( 10 > 9 ))  && echo true || echo false     # true
+```
+
+Inside `[[ ]]`, `>` is a **string** comparison, so it compares `"10"` and `"9"` lexicographically, and `"1"` sorts before `"9"`. The test is not an error and produces no warning; it just quietly gives you the wrong answer. Every number that crosses a digit-count boundary is affected, which means the bug tends to appear only once your counter passes 9 or your version number reaches 10.
+
+Inside `[[ ]]` you must write `[[ 10 -gt 9 ]]` to get numeric comparison. Inside `(( ))`, `>` is arithmetic and there is nothing to get wrong. Hence the rule:
+
+| Testing                    | Use     |
+|----------------------------|---------|
+| Numbers                    | `(( ))` |
+| Strings, files, patterns   | `[[ ]]` |
+| POSIX portability required | `[ ]`   |
+
+#### The Exit Status Inversion
+`(( ))` is a command like any other, so it produces an exit status, and here it does something that looks backwards until you see why:
+
+```bash
+(( 1 )); echo $?        # 0   (success)
+(( 0 )); echo $?        # 1   (failure)
+```
+
+The rule is that `(( expr ))` succeeds when the expression evaluates to **nonzero**. This is C's notion of truth (nonzero is true) being translated into the shell's notion of success (zero is success), so the two conventions get bridged at exactly this boundary. It is why `(( ${+aliases[run-help]} ))` from the [arrays section](#arrays) reads naturally: `$+` yields `1` for "exists," `(( ))` treats `1` as true, and the `if` sees success.
+
+A useful consequence is that a bare variable is a truth test:
+
+```bash
+if (( count )); then           # true when count is nonzero
+    echo "we have $count items"
+fi
+```
+
+::: {.callout-warning title="`(( i++ ))` can kill a script under `set -e`"}
+This one is genuinely nasty and worth knowing before it bites. Post-increment evaluates to the variable's *old* value, so when `i` is `0`, `(( i++ ))` evaluates to `0`, which is a **failed** exit status. Under [`set -e`](#fail-loudly), which exits on any failure, the script dies on a line that looks incapable of failing:
+
+```bash
+set -e
+i=0
+(( i++ ))         # evaluates to 0 -> exit status 1 -> script exits here
+echo "never reached"
+```
+
+Three fixes, in rough order of preference:
+
+```bash
+(( ++i ))         # pre-increment: evaluates to the NEW value, 1, so it succeeds
+(( i++ )) || true # explicitly discard the status
+i=$(( i + 1 ))    # use the expansion form, which has no exit status at all
+```
+
+The same hazard applies to any arithmetic that legitimately evaluates to zero, such as `(( total = a - b ))` when the two are equal.
+:::
+
+#### `$(( ))`: the Expansion Form
+You have already seen its sibling, back in the `while` loop: `$(( ))` with a leading `$` is **arithmetic expansion**, which computes a value and substitutes it into the command line rather than producing an exit status.
+
+```bash
+n=$(( 3 + 4 * 2 ))         # 11   (normal precedence)
+echo "$(( n / 2 ))"        # 5    (integer division)
+echo "$(( n % 3 ))"        # 2    (modulo)
+```
+
+The distinction is worth stating plainly, since the two forms look nearly identical:
+
+| Form          | Purpose                                 | Yields                       |
+|---------------|-----------------------------------------|------------------------------|
+| `(( expr ))`  | evaluate for a condition or side effect | an exit status               |
+| `$(( expr ))` | evaluate for a value                    | the computed number, as text |
+
+So `(( i++ ))` is a statement, while `i=$(( i + 1 ))` is an assignment. Use the first in conditions, the second when you need the number itself.
+
+#### The C-Style `for` Loop
+This is the construct you remembered seeing, and now it should read plainly. The `for (( ))` form uses arithmetic evaluation for all three clauses, giving the shell a genuine counting loop:
+
+```bash
+for (( i = 0; i < 5; i++ )); do
+    echo "$i"
+done
+```
+
+Note it is `for ((` with the double parens, not `for (`. This is the exception to the "the shell's `for` is a for-each" rule from the [`for` section](#for): when you genuinely need to count, this is the readable way. Reach for it sparingly, though, since iterating over a glob or a list is more idiomatic shell, and a loop counting to a fixed number is often a sign that a list would serve better.
+
+::: {.callout-note title="Limits: integers only (mostly)"}
+Shell arithmetic is **integer** arithmetic. `$(( 7 / 2 ))` is `3`, not `3.5`, and the fractional part is discarded rather than rounded.
+
+zsh is the partial exception: it supports floating point in `(( ))`, so `(( 3.5 > 2 ))` works there. **bash does not**, and the same line is a syntax error. Since this is one of the wider zsh/bash gaps, portable scripts needing real numbers hand the job to a tool that has them:
+
+```bash
+echo "scale=2; 7 / 2" | bc      # 3.50   (bc: an arbitrary-precision calculator)
+awk 'BEGIN { print 7 / 2 }'     # 3.5    (awk does floating point natively)
+```
+
+Since you have already met [`awk`](#columns-and-computation), it is usually the more convenient of the two, and it is already in your toolkit.
+:::
 
 ### `if` / `elif` / `else`
 With conditions understood, the branching itself is unremarkable:
@@ -944,7 +1210,7 @@ The `then` can share a line with `if` if you separate them with a semicolon (`if
 n=5
 while [ "$n" -gt 0 ]; do
     echo "$n"
-    n=$((n - 1))        # $(( )) is arithmetic expansion
+    n=$((n - 1))        # $(( )) is arithmetic expansion; see (( )) below
 done
 
 # Wait for a service to come up
@@ -978,7 +1244,7 @@ for branch in $(git branch --format='%(refname:short)'); do
 done
 
 # C-style counter, when you genuinely need numbers (bash/zsh)
-for ((i = 0; i < 5; i++)); do
+for ((i = 0; i < 5; i++)); do        # see Arithmetic: (( ))
     echo "$i"
 done
 ```

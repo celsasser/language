@@ -61,14 +61,14 @@ A **linker** is a utility program that takes one or more object files generated 
 ## A Short History of the Standard
 C is old, and it has evolved. Code you encounter in the wild may target any one of several standards, and knowing which is which explains why some features are present in one codebase and absent in another. Each revision was largely additive and backward-compatible, so newer compilers still happily compile decades-old code.
 
-| Standard         | Year | Common name   | What it introduced |
-|:-------------|:-----:|:--------------:|:----------------------------------------------------------------------------|
-| K&R C            | 1978 | "K&R"         | The original language from Kernighan & Ritchie's book. No function prototypes; loose typing.                                                                                   |
-| ANSI C / ISO C90 | 1989 | C89 / C90 | The first standard. Function prototypes, the standard library, `void`, `const`, `volatile`. The lowest common denominator; still the baseline many embedded toolchains assume. |
-| C99              | 1999 | C99       | `//` line comments, `stdint.h` fixed-width types, `bool` (`stdbool.h`), `inline`, designated initializers, variable-length arrays, mixed declarations and code, `long long`.   |
-| C11              | 2011 | C11       | `_Static_assert`, `_Generic`, atomics (`stdatomic.h`), threads (`threads.h`), anonymous structs/unions.                                                                        |
-| C17 / C18        | 2017 | C17       | A bug-fix release. No new features; clarifications only.                                                                                                                       |
-| C23              | 2023 | C23       | `true`/`false`/`bool` as keywords, `nullptr`, `constexpr`, binary literals (`0b1010`), `#embed`, `typeof`.                                                                     |
+| Standard         | Year | Common name | What it introduced                                                                                                                                                             |
+|:-----------------|:----:|:-----------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| K&R C            | 1978 | "K&R"       | The original language from Kernighan & Ritchie's book. No function prototypes; loose typing.                                                                                   |
+| ANSI C / ISO C90 | 1989 | C89 / C90   | The first standard. Function prototypes, the standard library, `void`, `const`, `volatile`. The lowest common denominator; still the baseline many embedded toolchains assume. |
+| C99              | 1999 | C99         | `//` line comments, `stdint.h` fixed-width types, `bool` (`stdbool.h`), `inline`, designated initializers, variable-length arrays, mixed declarations and code, `long long`.   |
+| C11              | 2011 | C11         | `_Static_assert`, `_Generic`, atomics (`stdatomic.h`), threads (`threads.h`), anonymous structs/unions.                                                                        |
+| C17 / C18        | 2017 | C17         | A bug-fix release. No new features; clarifications only.                                                                                                                       |
+| C23              | 2023 | C23         | `true`/`false`/`bool` as keywords, `nullptr`, `constexpr`, binary literals (`0b1010`), `#embed`, `typeof`.                                                                     |
 
 ::: {.callout-note title="You are probably writing C99 already"}
 Several conveniences this chapter uses are C99 features, not original C: the fixed-width types `int16_t`/`uint8_t` (from `<stdint.h>`), `//` comments, declaring a loop variable inside `for`, and declaring variables partway through a function rather than only at the top of a block. If a codebase forbids these, it is targeting C89, which is still common in conservative or safety-critical embedded work. Compilers select a standard with a flag such as `-std=c99` or `-std=c11`.
@@ -865,11 +865,11 @@ defined in `<stdlib.h>`
 Beyond the allocation functions already covered under [Memory Management](#memory-management), `<stdlib.h>` is a grab-bag of utility functions: converting strings to numbers, sorting and searching generic arrays, controlling program termination, and generating pseudo-random numbers.
 
 ##### Numeric Conversion
-| Function                | Purpose                                                          |
-|:-------------------------|:-----------------------------------------------------------------|
-| `atoi(s)` / `atof(s)`    | Convert a string to `int` / `double`. No error reporting: invalid input silently returns 0. |
+| Function                  | Purpose                                                                                       |
+|:--------------------------|:----------------------------------------------------------------------------------------------|
+| `atoi(s)` / `atof(s)`     | Convert a string to `int` / `double`. No error reporting: invalid input silently returns 0.   |
 | `strtol(s, endptr, base)` | Convert a string to `long`, in any base from 2 to 36 (or 0 to auto-detect `0x`/`0` prefixes). |
-| `strtod(s, endptr)`      | Convert a string to `double`, with the same error-detection mechanism. |
+| `strtod(s, endptr)`       | Convert a string to `double`, with the same error-detection mechanism.                        |
 
 `strtol` and `strtod` are strictly better than `atoi`/`atof` because they report failure. The `endptr` parameter is set to point at the first character that didn't parse; if it still points at the start of the string, nothing was converted.
 
@@ -907,11 +907,11 @@ int *found = bsearch(&target, samples, 5, sizeof(int), compare_ints);
 Both functions operate through `void *`, so the comparator must cast back to the real element type before dereferencing. `bsearch` requires the array to already be sorted (ascending, by the same comparator) or its binary search will silently return wrong results.
 
 ##### Program Control
-| Function        | Purpose                                                                 |
-|:-----------------|:-------------------------------------------------------------------------|
-| `exit(status)`   | Terminate the program immediately: flushes and closes open streams, runs any `atexit` handlers, then returns `status` to the environment. |
-| `abort(void)`    | Terminate immediately without cleanup, raising `SIGABRT`. Used for unrecoverable errors. |
-| `atexit(func)`   | Register a function to run automatically when the program exits normally. |
+| Function       | Purpose                                                                                                                                   |
+|:---------------|:------------------------------------------------------------------------------------------------------------------------------------------|
+| `exit(status)` | Terminate the program immediately: flushes and closes open streams, runs any `atexit` handlers, then returns `status` to the environment. |
+| `abort(void)`  | Terminate immediately without cleanup, raising `SIGABRT`. Used for unrecoverable errors.                                                  |
+| `atexit(func)` | Register a function to run automatically when the program exits normally.                                                                 |
 
 ```c
 void cleanup(void) {
@@ -952,11 +952,11 @@ Two independent questions shape every I/O call. First, what the call does with t
 #### Buffered vs. Unbuffered I/O
 Every stream buffers by one of three strategies:
 
-| Mode              | Behavior                                              | Typical Use            |
-|:-------------------|:--------------------------------------------------------|:-------------------------|
-| **Fully buffered** | Data accumulates until the buffer fills, then is flushed in one system call. | Files: `fopen`'d streams default to this. |
-| **Line buffered**  | Data flushes whenever a newline is written.              | Interactive terminals: `stdout` defaults to this when connected to a terminal. |
-| **Unbuffered**     | Every write happens immediately.                          | `stderr`, by convention, so error messages appear even if the program crashes before a buffer would otherwise flush. |
+| Mode               | Behavior                                                                     | Typical Use                                                                                                          |
+|:-------------------|:-----------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------|
+| **Fully buffered** | Data accumulates until the buffer fills, then is flushed in one system call. | Files: `fopen`'d streams default to this.                                                                            |
+| **Line buffered**  | Data flushes whenever a newline is written.                                  | Interactive terminals: `stdout` defaults to this when connected to a terminal.                                       |
+| **Unbuffered**     | Every write happens immediately.                                             | `stderr`, by convention, so error messages appear even if the program crashes before a buffer would otherwise flush. |
 
 `setvbuf(stream, buf, mode, size)` overrides the default, and `fflush(stream)` forces a flush of a fully- or line-buffered stream on demand:
 
@@ -973,7 +973,6 @@ The dsPIC has no filesystem and no OS-level buffered writes. When `printf` is re
 :::
 
 #### Buffered
-
 ##### Formatted I/O
 The `printf`/`scanf` family, already introduced in the [Overview](#the-standard-library-and-i-o): `printf`/`fprintf`/`sprintf` for output, `scanf`/`fscanf`/`sscanf` for input, each parsing or producing text according to a format string. `sprintf`/`sscanf` work against an in-memory buffer instead of a stream, which is how C formats or parses strings without a `<sstream>`-style abstraction.
 
@@ -994,12 +993,12 @@ sprintf(line, "%s: %d", name, age);   // format into memory, no stream involved
 `fp` and `in` are both file streams, so each defaults to fully buffered with its own private buffer: the `fprintf` and `fscanf` calls above go through the C library rather than triggering a system call apiece.
 
 ##### Unformatted (Binary) I/O
-| Function                          | Purpose                                            |
-|:-----------------------------------|:-----------------------------------------------------|
-| `fgetc(stream)` / `fputc(c, stream)` | Read or write a single byte.                     |
-| `fgets(buf, n, stream)`            | Read a line (or up to `n - 1` bytes), null-terminated. |
-| `fread(ptr, size, count, stream)`  | Read `count` objects of `size` bytes each into `ptr`. |
-| `fwrite(ptr, size, count, stream)` | Write `count` objects of `size` bytes each from `ptr`. |
+| Function                             | Purpose                                                |
+|:-------------------------------------|:-------------------------------------------------------|
+| `fgetc(stream)` / `fputc(c, stream)` | Read or write a single byte.                           |
+| `fgets(buf, n, stream)`              | Read a line (or up to `n - 1` bytes), null-terminated. |
+| `fread(ptr, size, count, stream)`    | Read `count` objects of `size` bytes each into `ptr`.  |
+| `fwrite(ptr, size, count, stream)`   | Write `count` objects of `size` bytes each from `ptr`. |
 
 `fread`/`fwrite` move raw bytes without interpreting them, the natural choice for binary formats (structs, sample buffers) where `printf`'s text formatting would be both slower and lossy for floating-point precision.
 
@@ -1052,13 +1051,13 @@ declared in `<unistd.h>` and `<fcntl.h>`, POSIX only, not part of ISO C
 
 The genuinely unbuffered layer is the one stdio is built on. POSIX exposes the raw system calls directly, operating on an `int` **file descriptor** rather than a `FILE *`:
 
-| Buffered (ISO C stdio) | Unbuffered (POSIX)      | Purpose                        |
-|:------------------------|:-------------------------|:--------------------------------|
-| `fopen`                 | `open`                   | Open a file.                   |
-| `fread`                 | `read`                   | Read bytes.                    |
-| `fwrite`                | `write`                  | Write bytes.                   |
-| `fclose`                | `close`                  | Close a file.                   |
-| `fseek`                 | `lseek`                  | Reposition the offset.          |
+| Buffered (ISO C stdio) | Unbuffered (POSIX) | Purpose                |
+|:-----------------------|:-------------------|:-----------------------|
+| `fopen`                | `open`             | Open a file.           |
+| `fread`                | `read`             | Read bytes.            |
+| `fwrite`               | `write`            | Write bytes.           |
+| `fclose`               | `close`            | Close a file.          |
+| `fseek`                | `lseek`            | Reposition the offset. |
 
 ```c
 #include <fcntl.h>
@@ -1091,15 +1090,15 @@ The tradeoff is throughput. A system call costs on the order of a microsecond, a
 #### File Management
 `fopen`'s mode string controls direction, truncation, and translation:
 
-| Mode   | Behavior                                                                 |
-|:--------|:--------------------------------------------------------------------------|
-| `"r"`   | Read only. Fails if the file does not exist.                             |
-| `"w"`   | Write only. Creates the file, or **truncates it to zero length** if it exists. |
-| `"a"`   | Append. Creates the file if needed; every write goes to the end.          |
-| `"r+"`  | Read and write. Fails if the file does not exist; does not truncate.      |
-| `"w+"`  | Read and write, truncating as `"w"` does.                                 |
-| `"a+"`  | Read anywhere, but all writes still go to the end.                        |
-| `…"b"`  | Appended to any of the above (`"rb"`, `"w+b"`) for binary mode.            |
+| Mode   | Behavior                                                                       |
+|:-------|:-------------------------------------------------------------------------------|
+| `"r"`  | Read only. Fails if the file does not exist.                                   |
+| `"w"`  | Write only. Creates the file, or **truncates it to zero length** if it exists. |
+| `"a"`  | Append. Creates the file if needed; every write goes to the end.               |
+| `"r+"` | Read and write. Fails if the file does not exist; does not truncate.           |
+| `"w+"` | Read and write, truncating as `"w"` does.                                      |
+| `"a+"` | Read anywhere, but all writes still go to the end.                             |
+| `…"b"` | Appended to any of the above (`"rb"`, `"w+b"`) for binary mode.                |
 
 ```c
 FILE *fp = fopen("config.txt", "r+");   // read and write, must already exist
@@ -1172,12 +1171,12 @@ defined in `<regex.h>`, POSIX only, not part of ISO C
 
 Unlike everything else in this section, `<regex.h>` is a POSIX extension, not part of the ISO C standard. It provides POSIX-flavored regular expression matching in four functions:
 
-| Function                              | Purpose                                       |
-|:----------------------------------------|:-------------------------------------------------|
-| `regcomp(preg, pattern, flags)`         | Compile a pattern string into a `regex_t`.        |
-| `regexec(preg, string, nmatch, matches, flags)` | Match a compiled pattern against a string.        |
-| `regfree(preg)`                         | Release resources held by a compiled pattern.     |
-| `regerror(code, preg, buf, size)`       | Translate an error code into a human-readable message. |
+| Function                                        | Purpose                                                |
+|:------------------------------------------------|:-------------------------------------------------------|
+| `regcomp(preg, pattern, flags)`                 | Compile a pattern string into a `regex_t`.             |
+| `regexec(preg, string, nmatch, matches, flags)` | Match a compiled pattern against a string.             |
+| `regfree(preg)`                                 | Release resources held by a compiled pattern.          |
+| `regerror(code, preg, buf, size)`               | Translate an error code into a human-readable message. |
 
 ```c
 #include <regex.h>

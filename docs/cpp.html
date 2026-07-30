@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-07-29">
+<meta name="dcterms.date" content="2026-07-30">
 
 <title>The C++ Language – Computer Language Notebook</title>
 <style>
@@ -568,7 +568,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 29, 2026</p>
+      <p class="date">July 30, 2026</p>
     </div>
   </div>
   
@@ -581,9 +581,6 @@ window.Quarto = {
 
 
 <!--
-SKELETON — outline only. Section headers and orienting notes are in place;
-prose and code examples are to be written in a later pass.
-
 Audience: experienced C/C++-adjacent readers, same as the C and Rust chapters.
 Anchor every concept to what the reader knows from C, and contrast with Rust
 where the comparison illuminates (RAII vs. ownership, templates vs. generics,
@@ -697,14 +694,14 @@ Contrast with Rust's safety-first and Python's programmer-time-first stances. --
 <!-- Orienting section: the reader knows C. Enumerate at a high level what C++
 layers on, each expanded in its own section below. This is the "map." -->
 <ul>
-<li>References (<code>&amp;</code>) vs.&nbsp;pointers</li>
-<li><code>class</code> / access control / member functions</li>
-<li>Constructors, destructors, and RAII</li>
-<li>Function and operator overloading</li>
-<li>Templates (generic programming)</li>
-<li>The Standard Template Library (STL)</li>
-<li>Exceptions</li>
-<li>Namespaces</li>
+<li><a href="#references">References</a> (<code>&amp;</code>) vs.&nbsp;<a href="./c.html#pointers">pointers</a></li>
+<li><a href="#classes-and-objects"><code>class</code></a> / <a href="#access-control">access control</a> / <a href="#member-functions-this-and-const-methods">member functions</a></li>
+<li><a href="#constructors">Constructors</a>, <a href="#destructors">destructors</a>, and <a href="#raii">RAII</a></li>
+<li>Function and <a href="#operator-overloading">operator overloading</a></li>
+<li><a href="#templates">Templates</a> (generic programming)</li>
+<li><a href="#the-standard-template-library">The Standard Template Library</a></li>
+<li><a href="#exceptions">Exceptions</a></li>
+<li><a href="#namespaces">Namespaces</a></li>
 <li>Stronger type safety (<code>nullptr</code>, <code>enum class</code>, <code>static_cast</code> family)</li>
 </ul>
 <section id="small-but-pervasive-differences" class="level3">
@@ -720,7 +717,7 @@ names as types without typedef, function overloading changing name-mangling,
 <div class="subheading">
 <p>Anonymous functions and the C++11-and-later additions</p>
 </div>
-<p>Several of the features that define modern C++ are additions layered on top of the C++98 core rather than replacements for it. This section houses them. We start with <code>auto</code>, since it underpins how the others read, then move to the <strong>lambda</strong>: an anonymous function you can write inline and pass around like a value. Other members of this cluster (structured bindings, <code>constexpr</code>) get their own sub-sections later; the <a href="#concepts"><code>concepts</code></a> that constrain templates live under <a href="#templates">Templates</a>, since that is where they do their work.</p>
+<p>Several of the features that define modern C++ are additions layered on top of the C++98 core rather than replacements for it. This section houses them. We start with <a href="#auto-and-type-deduction"><code>auto</code></a>, since it underpins how the others read, then move to the <a href="#lambdas">lambda</a>: an anonymous function you can write inline and pass around like a value. Other members of this cluster (structured bindings, <a href="#consteval-and-constinit"><code>constexpr</code></a>) get their own sub-sections later; the <a href="#concepts"><code>concepts</code></a> that constrain templates live under <a href="#templates">Templates</a>, since that is where they do their work.</p>
 <section id="auto-and-type-deduction" class="level3">
 <h3 class="anchored" data-anchor-id="auto-and-type-deduction"><code>auto</code> and Type Deduction</h3>
 <div class="subheading">

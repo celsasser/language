@@ -4,9 +4,6 @@ subtitle: "From C to a multi-paradigm systems language"
 ---
 
 <!--
-SKELETON — outline only. Section headers and orienting notes are in place;
-prose and code examples are to be written in a later pass.
-
 Audience: experienced C/C++-adjacent readers, same as the C and Rust chapters.
 Anchor every concept to what the reader knows from C, and contrast with Rust
 where the comparison illuminates (RAII vs. ownership, templates vs. generics,
@@ -54,14 +51,14 @@ Contrast with Rust's safety-first and Python's programmer-time-first stances. --
 ## What C++ Adds to C
 <!-- Orienting section: the reader knows C. Enumerate at a high level what C++
 layers on, each expanded in its own section below. This is the "map." -->
-- References (`&`) vs. pointers
-- `class` / access control / member functions
-- Constructors, destructors, and RAII
-- Function and operator overloading
-- Templates (generic programming)
-- The Standard Template Library (STL)
-- Exceptions
-- Namespaces
+- [References](#references) (`&`) vs. [pointers](c.qmd#pointers)
+- [`class`](#classes-and-objects) / [access control](#access-control) / [member functions](#member-functions-this-and-const-methods)
+- [Constructors](#constructors), [destructors](#destructors), and [RAII](#raii)
+- Function and [operator overloading](#operator-overloading)
+- [Templates](#templates) (generic programming)
+- [The Standard Template Library](#the-standard-template-library)
+- [Exceptions](#exceptions)
+- [Namespaces](#namespaces)
 - Stronger type safety (`nullptr`, `enum class`, `static_cast` family)
 
 ### Small but Pervasive Differences
@@ -74,7 +71,7 @@ names as types without typedef, function overloading changing name-mangling,
 Anonymous functions and the C++11-and-later additions
 :::
 
-Several of the features that define modern C++ are additions layered on top of the C++98 core rather than replacements for it. This section houses them. We start with `auto`, since it underpins how the others read, then move to the **lambda**: an anonymous function you can write inline and pass around like a value. Other members of this cluster (structured bindings, `constexpr`) get their own sub-sections later; the [`concepts`](#concepts) that constrain templates live under [Templates](#templates), since that is where they do their work.
+Several of the features that define modern C++ are additions layered on top of the C++98 core rather than replacements for it. This section houses them. We start with [`auto`](#auto-and-type-deduction), since it underpins how the others read, then move to the [lambda](#lambdas): an anonymous function you can write inline and pass around like a value. Other members of this cluster (structured bindings, [`constexpr`](#consteval-and-constinit)) get their own sub-sections later; the [`concepts`](#concepts) that constrain templates live under [Templates](#templates), since that is where they do their work.
 
 ### `auto` and Type Deduction
 ::: {.subheading}

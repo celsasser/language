@@ -1446,87 +1446,16 @@ __attribute__((space(dma))) int16_t buffer[128];
 :::
 
 ### Make
-**Make** is a build automation tool that automatically builds executable programs and libraries from source code by reading files called **Makefiles**.
+**Make** is a build automation tool that builds programs and libraries by reading a file, conventionally named `Makefile`, that describes which outputs depend on which inputs and how to produce them.
 
-It is essential because it tracks dependencies. If you modify one `.c` file in a project with 50 files, Make knows to only recompile that specific file and then re-link, rather than rebuilding everything from scratch.
-
-A simple rule in a Makefile looks like this:
+It matters here because it tracks dependencies. If you modify one `.c` file in a project with 50 of them, Make recompiles that one file and re-links, rather than rebuilding everything. A rule states a target, the prerequisites it is built from, and the recipe that produces it:
 
 ```makefile
-target: prerequisites
-    recipe
-```
-
-- **Target**: The file to be generated (e.g., `main.o`).
-- **Prerequisites**: The files the target depends on (e.g., `main.c`, `main.h`).
-- **Recipe**: The command to create the target (e.g., `xc16-gcc -c main.c ...`).
-
-#### Example
-::: {.subheading}
-A Text Processor
-:::
-
-Here is a complete example of a C program that reads text from standard input, converts it to uppercase, and writes it to standard output. We also provide the Makefile to build it.
-
-##### The Source Code
-::: {.subheading}
-`upper.c`
-:::
-
-```c
-#include <stdio.h>
-#include <ctype.h>
-
-int main(void) {
-    int c;
-
-    // Read until End-Of-File (EOF)
-    // getchar() returns the next character or EOF
-    while ((c = getchar()) != EOF) {
-        // Transform the character
-        int upper = toupper(c);
-
-        // Write the character back to stdout
-        putchar(upper);
-    }
-
-    return 0;
-}
-```
-
-##### The Makefile
-::: {.subheading}
-`Makefile`
-:::
-
-::: {.callout-important title="Tabs over Spaces"}
-In standard `make`, recipe lines must start with a tab (unless `.RECIPEPREFIX` is changed). As written, this example will fail to run. So, use tabs to indent your make files and all will be well. Be smart and use tabs to indent everything.
-
-"So why didn't the author just use tabs?" He did, but unfortunately when it gets converted to HTML, they are converted to spaces. No doubt there is a work around for it. The author lacks patience.
-:::
-
-```makefile
-# Define the compiler to use
-CC = gcc
-
-# Define flags: -Wall enables all common warnings
-CFLAGS = -Wall -O2
-
-# The default target to build when just 'make' is run
-all: processor
-
-# Link step: creates the executable 'processor' from the object file 'upper.o'
 processor: upper.o
 	$(CC) $(CFLAGS) -o processor upper.o
-
-# Compile step: creates 'upper.o' from 'upper.c'
-upper.o: upper.c
-	$(CC) $(CFLAGS) -c upper.c
-
-# Clean target: removes built files to start fresh
-clean:
-	rm -f processor upper.o
 ```
+
+That is the whole model, and for a small C project it is nearly all you need. Make is a language in its own right, though, with variables, pattern rules, functions, and an evaluation order that surprises people. It gets full treatment in the [Makefile chapter](make.qmd), including the auto-generated header dependencies that a correct C build depends on.
 
 ## Optimization
 Optimization allows the compiler to adjust the code to improve performance or reduce size, often at the expense of compilation time and debuggability.

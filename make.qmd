@@ -1,0 +1,813 @@
+---
+title: "Makefile Language"
+subtitle: "The dependency graph that build systems keep reinventing"
+---
+
+<!--
+Audience: the same systems reader as the C and C++ chapters. Many will have
+written makefiles years ago and half-remember them. Anchor to that: explain the
+model, not just the syntax, so the rules stop looking arbitrary.
+
+Dialect is GNU Make throughout. Note POSIX divergence only where it actually
+bites (pattern rules, $(shell), conditionals), not as a parallel track.
+
+The chapter's spine is the "three languages in one file" thesis. Keep returning
+to it: most Make confusion is not knowing whether you are reading the rule
+language, the macro language, or the shell.
+
+Examples span three flavors: hosted C/C++ builds, cross-compiled embedded
+(matching c.qmd and assembly.qmd), and Make as a task runner.
+-->
+## Overview
+![](images/make-00.svg){width=2in style="float: left; padding: 0 2em 0 1em"}
+
+<br/>**Make** is a build automation tool, and more interestingly, a small declarative language for describing *dependency graphs*. You tell it which files are built from which other files and how, and it works out what is stale and what needs to run. That is the whole idea. Everything else in this chapter is detail layered on top of it.
+
+Make has survived since 1976, outliving nearly all of its contemporaries, and the reason is worth stating plainly: the problem it solves does not go away. Any project with more than a handful of source files needs to know what to rebuild after a change, and rebuilding everything is too slow. Modern tools (CMake, Ninja, Bazel, Cargo) have not replaced that idea; they have reimplemented it with better ergonomics, and several of them still emit makefiles as their final output. Learning Make means learning the model that all of them share.
+
+It also has a reputation for being cryptic, and the reputation is earned. Make is not one language but three sharing a single file, with an evaluation order that is not obvious from reading top to bottom. Once you can see which of the three you are looking at, the syntax stops being arbitrary and starts being merely terse.
+
+::: {style="clear: both"}
+
+:::
+
+### A Short History
+Make was written by **Stuart Feldman** at Bell Labs in 1976, reportedly after a colleague lost a morning of debugging to a program that was not being rebuilt from the source he was editing. The tool that came out of that afternoon is still recognizable in the one you run today, which is either a testament to the design or an indictment of the industry, depending on your mood.
+
+| Era          | What happened                                                                                                                                                        |
+|:------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1976         | Feldman writes Make at Bell Labs for Unix v7. The core model (targets, prerequisites, recipes, timestamp comparison) arrives essentially complete.                   |
+| 1980s        | Make ships with every Unix, and every vendor extends it incompatibly. Writing a portable makefile becomes genuinely hard.                                            |
+| 1988         | POSIX standardizes a common core, deliberately small: suffix rules, basic macros, no conditionals, no functions.                                                     |
+| 1988 onward  | **GNU Make** adds what the standard left out: pattern rules, a real function library, conditionals, `include`, and parallel builds. It becomes the de facto dialect. |
+| 1990s        | Autotools builds a code-generation layer on top of Make to paper over portability. `./configure && make && make install` enters the culture.                         |
+| 2000s onward | CMake, Ninja, Bazel and language-native tools (Cargo, Go's toolchain) take over new projects, most of them generating or reimplementing Make's graph.                |
+
+::: {.callout-note title="Which make is on your machine?"}
+On Linux, `make` is almost always GNU Make. On macOS, `/usr/bin/make` is GNU Make 3.81 from 2006, kept at that version for licensing reasons, and it is missing newer features. BSD systems ship a genuinely different `make` with incompatible syntax. When portability matters, `gmake` is the conventional name for GNU Make where it is not the default. This chapter assumes GNU Make and flags the places where that assumption shows.
+:::
+
+<!-- The tab story belongs in "Tabs, and Why" below, not here. Feldman's own
+quote about having "a dozen users" and not wanting to break them is the payoff
+there. -->
+
+### The Make Philosophy
+::: {.subheading}
+Three decisions that explain everything else
+:::
+
+Make rests on three design decisions. Each one buys something significant, and each one costs something you will eventually trip over. Knowing both halves is most of what it takes to use Make well.
+
+#### You Describe Relationships, Not Order
+A shell script is imperative: it runs top to bottom and does the same work every time. A makefile is **declarative**. You state which files depend on which other files, and Make derives the build order itself by walking the resulting graph.
+
+The difference shows up the moment a project grows. A build script has to be written in a correct order, and that order has to be maintained by hand as the project changes. A makefile has no order to maintain. Rules can appear in any sequence, because the dependencies, not the layout of the file, determine what runs when.
+
+That declarative structure is also what makes `make -j8` possible. Once Make knows the graph, it knows which targets are independent, and independent targets can compile simultaneously. You get parallelism for free from a description you wrote for a different reason. A shell script cannot offer this, because it has no idea which of its lines are related.
+
+The cost is that the graph has to be *true*. Make trusts what you declare. A dependency you failed to mention is a dependency Make will happily ignore, producing a build that is subtly stale and, under `-j`, unpredictably broken.
+
+#### Timestamps, Not Content
+Make decides a target is out of date by comparing modification times: if any prerequisite is newer than the target, the target is rebuilt. It does not read your files or hash them.
+
+This is cheap. A `stat` call per file is close to free, needs no database, no cache directory, and no state carried between runs. Make can be dropped into any directory and work immediately, which is a large part of why it spread and stayed.
+
+It is also the root of a whole family of failures, because a timestamp is a proxy for "has this changed" rather than an answer to it. The proxy fails in both directions. `touch` a file and Make rebuilds work that did not need doing. Restore a file with an old timestamp and Make skips work that did. Clock skew between machines on a network filesystem produces both at once. These are gathered in [When Timestamps Lie](#when-timestamps-lie).
+
+The newer generation of build tools made the opposite trade. Ninja, Bazel, and Cargo hash file contents, paying to read every input in exchange for knowing precisely what changed. That is the right call for large builds, and Make's approach is the right call for being able to type `make` in an unfamiliar directory and have it work.
+
+#### The Shell Is the Recipe Language
+Make knows nothing about compiling. It has no notion of C, no concept of an object file, no model of a linker. What it knows is how to decide *whether* a command should run. The command itself is handed to `/bin/sh`.
+
+This separation is why Make outlived the toolchains it was written for. Anything you can express as "these outputs come from those inputs, via this command" fits the model. Compiling C is one instance. So is rendering LaTeX to PDF, converting images, generating code from a schema, building a container, or rendering this notebook from `.qmd` to HTML. Make does not need to be taught any of these; it only needs to be told what depends on what.
+
+::: {.callout-note title="This is why Make is still here"}
+It is tempting to read Make's longevity as inertia. It is closer to the opposite. By refusing to know anything about the work it schedules, Make stayed useful across fifty years of tooling churn that obsoleted its more knowledgeable contemporaries. A tool that understood 1976's compilers deeply would have died with them.
+:::
+
+The cost arrives in the next section: because recipes are shell and everything above them is not, a makefile is not written in one language. It is written in three.
+
+## The Three Languages in One File
+::: {.subheading}
+The chapter's organizing idea
+:::
+
+Make has a reputation for being cryptic that its size does not justify. The syntax is genuinely small. What makes makefiles hard to read is that a single file interleaves three different languages, with different rules, evaluated at different times, and the file gives you almost no visual cue about which one you are looking at.
+
+Once you can identify the three on sight, the syntax stops being arbitrary. Nearly every baffling Make error is a *boundary* error: code written in one of the three languages that got evaluated as another.
+
+|     | Language   | What it does                                           | How to spot it                              |
+|:----|:-----------|:-------------------------------------------------------|:--------------------------------------------|
+| 1   | **Rules**  | Declares the dependency graph: what is built from what | `target: prerequisites`, at the left margin |
+| 2   | **Macros** | Text substitution: variables and functions             | `NAME = value`, and `$(...)` anywhere       |
+| 3   | **Shell**  | Does the actual work                                   | Any line starting with a tab                |
+
+Here is the same makefile with every line labeled by which language it belongs to:
+
+```makefile
+CC      := gcc                    # 2. macro: a variable definition
+CFLAGS  := -Wall -O2              # 2. macro
+OBJS    := main.o util.o          # 2. macro
+
+app: $(OBJS)                      # 1. rule, with 2. macro expansions in it
+	$(CC) $(CFLAGS) -o $@ $^      # 3. shell, after 2. macros are expanded
+
+%.o: %.c                          # 1. rule (a pattern rule)
+	$(CC) $(CFLAGS) -c $< -o $@   # 3. shell, after 2. macros are expanded
+```
+
+Note what the tab-indented lines are and are not. They are shell, but Make gets to them first: it expands every `$(...)` and *then* hands the resulting text to `/bin/sh`. Two languages occupy the same line, one after the other. That single fact generates a surprising number of bugs.
+
+#### Why This Framing Pays Off
+Three of the most common Make confusions are all the same confusion wearing different clothes. Each is treated fully later; the point here is that they share a cause.
+
+**Tabs are a language marker.** The rule that recipe lines must start with a tab looks like a pointless historical wart, and its origin genuinely was an accident. But it is doing real work: the tab is how the parser knows a line is *shell* rather than *macro or rule*. Indent with spaces and Make tries to parse your compiler invocation as a makefile construct, which is why the error reads `missing separator`. See [Tabs, and Why](#tabs-and-why).
+
+**`$` means different things on either side of the boundary.** Make consumes `$` for its own expansions, so a `$` that should survive into the shell has to be written `$$`. This is why a shell loop inside a recipe uses `$$i` and not `$i`: `$i` would be expanded by Make, find nothing, and hand the shell an empty string. See [Common Pitfalls](#common-pitfalls).
+
+**Macros and rules run at different times.** The macro language is fully evaluated before any recipe executes. So `$(shell date)` reports the moment Make parsed the file, not the moment your command ran, and a `$(wildcard build/*.o)` cannot see object files that a recipe is about to create. See [Two-Phase Evaluation](#two-phase-evaluation).
+
+::: {.callout-tip title="A diagnostic habit"}
+When a makefile does something inexplicable, the first question worth asking is not "what does this syntax mean" but **"which language is this line, and when does it get evaluated?"** That question resolves the majority of real-world Make problems, and it is the thread this chapter follows throughout.
+:::
+
+There is a fourth thing worth naming, though it is not a language: Make's macro layer has no types. Everything is text, and lists are just strings with spaces in them. There are no numbers, no arrays, no structures, and no local scope. Once you stop expecting a programming language and start reading it as a text preprocessor closer in spirit to `cpp` than to C, the function library in [Functions](#functions) becomes much easier to predict.
+
+## Anatomy of a Rule
+::: {.subheading}
+The one construct everything else decorates
+:::
+
+The rule is Make's only real idea. Variables, functions, pattern matching, and conditionals are all machinery for writing rules more compactly. Read this section carefully and the rest of the chapter is elaboration.
+
+### Targets, Prerequisites, Recipes
+A rule has three parts:
+
+```makefile
+target: prerequisites
+	recipe
+```
+
+- **Target**: what this rule produces. Usually a file, occasionally just a name (see [Phony Targets](#phony-targets)).
+- **Prerequisites**: what the target is built from. Also called *dependencies*. May be empty.
+- **Recipe**: the shell commands that turn prerequisites into the target. Every line must begin with a **tab**.
+
+Read a rule as a sentence with two clauses: *"`target` is built from `prerequisites`, and here is how."* The first clause is a fact Make uses to build its graph. The second is a command it runs only when it concludes the target is out of date.
+
+```makefile
+app: main.o util.o
+	gcc -o app main.o util.o
+```
+
+This says `app` depends on the two object files, and if either is newer than `app`, run `gcc`. Nothing more is implied. Make does not know that `gcc` produces `app`, or that these are C programs at all. It compares timestamps and runs the command you gave it.
+
+#### Multiple Prerequisites
+Prerequisites are a whitespace-separated list, and long lists are conventionally continued with a backslash:
+
+```makefile
+app: main.o util.o parser.o network.o \
+     config.o logging.o
+	gcc -o app $^
+```
+
+Order within the list does not matter for correctness. Make may build them in any order, and under `-j` it will build them simultaneously. If two prerequisites genuinely must be built in sequence, that ordering has to come from a dependency between *them*, not from their position in this list. Assuming left-to-right order is one of the most common ways a makefile works serially and then fails under `make -j8`.
+
+#### Multiple Targets
+A rule may name several targets. The meaning is probably not what you would guess:
+
+```makefile
+a.o b.o: shared.h
+	@echo "rebuilding for $@"
+```
+
+This is shorthand for writing the same rule once per target, and the recipe runs **once for each** out-of-date target, not once in total. For the common case of one command producing several files at once, this is the wrong construct; GNU Make 4.3 added `&:` (grouped targets) for that, and older makefiles fake it with a stamp file.
+
+#### Multi-Line Recipes
+Each line of a recipe is passed to the shell, and every line gets **its own shell process**:
+
+```makefile
+report.txt:
+	echo "building"
+	date > report.txt
+```
+
+Two lines, two separate `sh` invocations. This is the source of a classic frustration:
+
+```makefile
+# BROKEN: the cd does not persist to the second line
+install:
+	cd build
+	cp app /usr/local/bin/
+```
+
+The `cd` affects only the shell that ran it, which exits immediately. The `cp` runs in the original directory. The fix is to make it one shell command:
+
+```makefile
+install:
+	cd build && cp app /usr/local/bin/
+```
+
+GNU Make's `.ONESHELL` special target changes this globally so that an entire recipe runs in a single shell. It is convenient and it is also a portability tradeoff, discussed in [Special Targets](#special-targets).
+
+#### Recipe Line Prefixes
+Two characters at the start of a recipe line modify how Make treats it:
+
+| Prefix | Effect                                    | Typical use                                                 |
+|:------:|:------------------------------------------|:------------------------------------------------------------|
+| `@`    | Do not echo the command before running it | `@echo` messages, keeping output readable                   |
+| `-`    | Ignore a non-zero exit status             | `-rm -f` in a `clean` target, cleanup that may find nothing |
+
+```makefile
+clean:
+	@echo "Cleaning..."
+	-rm -f app *.o
+```
+
+By default Make prints each command as it runs it, which is genuinely useful and worth keeping for real build steps. Reserve `@` for messages, not for hiding compiler invocations that you will want to see when a build breaks.
+
+::: {.callout-warning title="`-` hides real failures"}
+Ignoring exit status means Make continues even when a step failed. That is correct for `rm -f` on a file that may not exist, and dangerous almost everywhere else, because a failed build step will not stop the build. Use it deliberately and narrowly.
+:::
+
+#### Rules Without Recipes
+A rule may declare prerequisites and no recipe at all:
+
+```makefile
+main.o: config.h defs.h
+```
+
+This adds `config.h` and `defs.h` to whatever `main.o` already depends on, leaving the recipe to be supplied elsewhere, typically by a pattern rule. It is pure graph information: *"also rebuild `main.o` when these headers change."*
+
+This form matters more than it first appears. It is exactly what compiler-generated dependency files contain, which is the mechanism behind [Auto-Generated Dependencies](#auto-generated-dependencies), the idiom that makes a C build genuinely correct.
+
+#### A Complete Small Makefile
+Putting it together, here is a working build for a two-file program:
+
+```makefile
+app: main.o util.o
+	gcc -o app main.o util.o
+
+main.o: main.c util.h
+	gcc -Wall -c main.c
+
+util.o: util.c util.h
+	gcc -Wall -c util.c
+
+clean:
+	-rm -f app *.o
+```
+
+Everything in this chapter after this point is about writing that same build with less repetition and more correctness. The variables in [Variables](#variables) remove the duplicated `gcc -Wall`. The pattern rules in [Pattern Rules](#pattern-rules) collapse the two nearly identical `.o` rules into one. The automatic dependency generation in [Auto-Generated Dependencies](#auto-generated-dependencies) replaces the hand-written `util.h` prerequisites, which are already a maintenance liability at this size and hopeless at a hundred files.
+
+### Tabs, and Why
+Recipe lines must begin with a literal tab character. Not spaces. Not a mix. A tab.
+
+This is Make's most notorious wart, and it is worth understanding rather than merely suffering, because it follows directly from the [three-languages](#the-three-languages-in-one-file) structure. Make needs to know whether a line is shell to be executed or a makefile construct to be parsed. It uses leading whitespace as the signal, and specifically the tab.
+
+Indent with spaces and you get the error that has confused programmers for five decades:
+
+```
+Makefile:5: *** missing separator.  Stop.
+```
+
+The message is unhelpful because Make is not reporting "you used spaces." It tried to parse your `gcc` command as a variable assignment or a rule, found neither a `=` nor a `:`, and reported the absence of the separator it was looking for. The error names the symptom of a failed parse, not the cause.
+
+::: {.callout-important title="Tabs do not survive this web page"}
+Code blocks in this chapter are rendered to HTML, and the tabs in them become spaces along the way. **Makefiles copied from the rendered page will fail** with `missing separator` until you convert the recipe indentation back to tabs. This is a limitation of the rendering, not of the examples.
+:::
+
+The origin is an accident that its author has been apologizing for ever since. Stuart Feldman added the tab rule early in Make's development, before the tool spread, and by the time the problem was obvious it was too late:
+
+> Why the tab in column 1? Yacc was new, Lex was brand new. I hadn't tried either, so I figured this would be a good excuse to learn. After getting frustrated with the mking of Lex, I just did something simple with the pattern newline-tab. It worked, it stayed. And then a few weeks later I had a user population of about a dozen, most of them friends, and I didn't want to screw up my embedded base. The rest, sadly, is history.
+>
+> — Stuart Feldman
+
+GNU Make offers an escape hatch. `.RECIPEPREFIX` changes the character that introduces a recipe line:
+
+```makefile
+.RECIPEPREFIX = >
+app: main.o
+> gcc -o app main.o
+```
+
+It works, and it is rarely used. A makefile written this way surprises every reader and every tool that expects the convention, which is usually a worse problem than the one it solves. The practical answer is to configure your editor: tell it not to expand tabs in makefiles. Most editors already know to do this for files named `Makefile`, and an `.editorconfig` entry makes it explicit:
+
+```ini
+[{Makefile,*.mk}]
+indent_style = tab
+```
+
+### The Default Goal
+Running `make` with no arguments builds the **default goal**: the first target in the file that is not a special target and does not begin with a period. Nothing else about being first matters, and nothing about the name `all` is magic.
+
+```makefile
+all: app docs        # this is the default goal, because it comes first
+
+app: main.o
+	gcc -o app main.o
+
+docs:
+	quarto render
+```
+
+Convention puts a target named `all` at the top, listing everything the project normally builds as its prerequisites. It is a convention worth following: it means `make` alone does the obvious thing, and it survives someone later adding a rule above it only if they know the rule. Which is why GNU Make lets you state it explicitly instead of relying on file position:
+
+```makefile
+.DEFAULT_GOAL := all
+```
+
+With that line, `all` is the default no matter where it sits in the file or what gets added above it. In a makefile of any size this is worth writing.
+
+You can also name goals on the command line, and Make builds them in the order given:
+
+```bash
+make clean app        # clean first, then build app
+make -j8 app docs     # build both, in parallel where the graph allows
+```
+
+::: {.callout-note title="`make` with no target is not `make all`"}
+It is easy to assume `make` means "build everything." It means "build the first target," which is only the same thing because of a convention you are free to break by accident. If someone adds a debugging rule at the top of a makefile, plain `make` silently starts building that instead. `.DEFAULT_GOAL` prevents it.
+:::
+
+### Phony Targets
+Most targets name a file. Some name an *action*: `clean`, `test`, `install`, `all`. These are **phony targets**, and they need to be declared as such:
+
+```makefile
+.PHONY: all clean test install
+```
+
+Without that declaration, they are a bug waiting for the right filename. Consider:
+
+```makefile
+clean:
+	-rm -f app *.o
+```
+
+This works until the day a file or directory named `clean` exists in the project. Then:
+
+```bash
+$ make clean
+make: 'clean' is up to date.
+```
+
+Make did exactly what it was told. It found a target named `clean`, found a file named `clean`, saw the rule had no prerequisites newer than that file, and concluded there was nothing to do. The build system stops working, and the reason is invisible unless you know to look for it. A `docs/` directory silently breaking `make docs` is the same failure and is considerably more likely.
+
+Declaring the target phony tells Make that the name does not refer to a file, so it should never be compared against one:
+
+```makefile
+.PHONY: clean
+clean:
+	-rm -f app *.o
+```
+
+Now `make clean` runs its recipe unconditionally, whatever happens to exist on disk.
+
+`.PHONY` has a second, smaller benefit. For a normal target, Make searches its [built-in rules](#built-in-rules-and-why-to-disable-them) for a way to build the file, which is wasted work for a target that is not a file. Marking it phony skips the search.
+
+Two conventions for where to write it. Declaring them together at the top is compact and easy to audit:
+
+```makefile
+.PHONY: all clean test install docs
+```
+
+Declaring each next to its rule keeps the pair visible and never drifts, at the cost of repetition:
+
+```makefile
+.PHONY: clean
+clean:
+	-rm -f app *.o
+
+.PHONY: test
+test: app
+	./run-tests.sh
+```
+
+Either is fine. The failure mode to avoid is a `.PHONY` list at the top that someone forgets to update when adding a target, which is exactly the case where the bug lies dormant until a filename collides. Phony targets carry most of the weight in [Make as a Task Runner](#make-as-a-task-runner), where essentially every target is one.
+
+## The Dependency Graph
+### How Make Decides What to Rebuild
+<!-- The central mechanism, stated precisely: a target is out of date if it
+does not exist, or if any prerequisite has a NEWER modification time. Recurse
+depth-first through the graph, rebuild bottom-up.
+
+Worth a Mermaid diagram of a small graph (main.c/util.c -> .o -> binary) with
+one source marked dirty and the affected nodes highlighted.
+
+Then the consequence: Make compares mtimes, it does not hash content. A
+touched-but-unchanged file triggers a rebuild; a changed file with an old
+timestamp does not. -->
+### Graph Traversal and Ordering
+<!-- Make derives order from the graph, not from file position. Rules can
+appear in any order. This is the declarative payoff and the thing that
+distinguishes Make from a build script. Sets up why parallelism works. -->
+### Order-Only Prerequisites
+<!-- The | separator: prerequisites that must exist but whose timestamps are
+ignored. The canonical use is a build directory, since a directory's mtime
+changes every time a file lands in it, which would otherwise rebuild
+everything. Show the `$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)` idiom. -->
+### When Timestamps Lie
+<!-- The failure family that follows from mtime-based staleness:
+  - clock skew on network filesystems and in VMs/containers
+  - `touch` as both a tool and a hazard
+  - checkouts that reset mtimes (git sets them to checkout time)
+  - sub-second resolution and fast successive builds
+  - generated files whose timestamps do not reflect content change
+Contrast briefly with content-hash systems (Ninja, Bazel, Cargo) and note the
+tradeoff: hashing costs a read of every file but is correct. -->
+## Variables
+### The Two Flavors
+::: {.subheading}
+The highest-value thing to understand in Make
+:::
+
+<!-- = is recursively expanded: the right-hand side is stored as text and
+re-expanded at every use. := is simply expanded: evaluated once at definition.
+
+Show the two behaving differently with a $(shell) call or a self-reference.
+The classic: FOO = $(BAR) picks up a BAR defined LATER in the file, which is
+either exactly what you want or a deep confusion. Also note that `A = $(A) x`
+is an infinite loop Make will diagnose, while `A := $(A) x` is fine.
+
+Recommendation to state plainly: prefer := unless you specifically need
+deferred expansion. Note ::= as the POSIX-blessed spelling of :=. -->
+
+### `?=` and `+=` {#conditional-and-append-assignment}
+<!-- ?= assigns only if not already set, which is how you write overridable
+defaults (CC ?= gcc). += appends, and its expansion flavor is inherited from
+how the variable was first defined, which is a subtle gotcha worth showing. -->
+### Where Values Come From
+<!-- Precedence, highest to lowest: command line (make CC=clang) > environment
+with -e > makefile > environment > built-in defaults. `override` to win against
+the command line. `export` to push a variable into recipe environments, and
+why recipes do NOT see makefile variables unless exported or expanded.
+A table is the right form here. -->
+### Target-Specific and Pattern-Specific Variables
+<!-- `debug: CFLAGS += -g -O0` and how the value applies to the target and
+everything below it in the graph. This is how debug/release variants are
+usually done without duplicating rules. Pattern-specific (%.o: CFLAGS += ...)
+as the generalization. -->
+### Automatic Variables
+<!-- $@ target, $< first prerequisite, $^ all prerequisites (deduped),
+$+ all with duplicates, $? those newer than the target, $* the pattern stem,
+$| order-only prerequisites. Plus the $(@D)/$(@F) directory/file variants.
+
+Quick-reference table, then a worked pattern rule using several at once.
+Emphasize that these only have meaning inside a recipe. -->
+## Two-Phase Evaluation
+::: {.subheading}
+Why makefiles do not read top to bottom
+:::
+
+<!-- The model that explains the remaining mysteries.
+
+PHASE 1 (read): Make reads all makefiles, expands variables on the left of
+assignments and in rule lines, evaluates conditionals and $(shell) calls, and
+builds the dependency graph. Nothing is built yet.
+
+PHASE 2 (run): Make walks the graph and expands + executes recipes as needed.
+
+Consequences to spell out:
+  - $(shell date) in a simple-expanded variable runs ONCE, at parse time,
+    before any compilation. A timestamp captured this way is the parse time.
+  - Recipe lines are expanded in phase 2, so $$ is needed to pass a literal $
+    to the shell; shell variables and loops need $$i, not $i.
+  - Conditionals are decided in phase 1 and cannot depend on anything a recipe
+    produced.
+  - $(eval) is the escape hatch for generating rules during phase 1.
+
+This section deserves a diagram: a timeline with the two phases and which
+constructs fire in each. -->
+## Pattern Rules and Implicit Rules
+### Suffix Rules
+<!-- The POSIX-era form (.c.o:) shown briefly for reading old makefiles, then
+set aside as superseded. Note .SUFFIXES and why you might clear it. -->
+### Pattern Rules
+<!-- The modern form: %.o: %.c with the stem matched by %. How Make chooses
+among candidates, chained inference, and why one pattern rule replaces N
+hand-written rules. This is where a real build starts to get short. -->
+### Built-in Rules and Why to Disable Them
+<!-- GNU Make ships with a large set of built-in rules and variables, visible
+via `make -p`. They cause surprising builds (a stray .c compiled by a rule you
+did not write) and slow down every target lookup. -r / --no-builtin-rules,
+MAKEFLAGS += -r, and .SUFFIXES: to clear. Recommend disabling in serious
+makefiles. -->
+### Static Pattern Rules
+<!-- targets: target-pattern: prereq-pattern. The controlled form: applies the
+pattern to an explicit list rather than to anything that matches. Preferred
+when you know your source list, because a typo becomes an error instead of a
+silently-skipped rule. -->
+### `VPATH` and `vpath`
+<!-- Searching for prerequisites in other directories. Honest treatment: it
+solves a real problem for out-of-tree builds but interacts badly with pattern
+rules and $@, and many projects are better off constructing explicit paths.
+Say so rather than presenting it neutrally. -->
+## Functions
+<!-- Frame the set: Make's functions are text transformations over
+space-separated word lists. There are no numbers, no data structures, no
+scoping. Everything is a string. Once that lands, the function library is
+small and predictable. -->
+### Text Manipulation
+<!-- subst, patsubst (and the $(VAR:.c=.o) shorthand), strip, findstring,
+filter, filter-out, sort (which also dedupes, a common idiom), word, wordlist,
+words, firstword, lastword. Table plus a few worked lines. -->
+### Filenames
+<!-- wildcard, dir, notdir, basename, suffix, addprefix, addsuffix, join,
+realpath, abspath. Note that $(wildcard) is evaluated at parse time, so it
+cannot see files a recipe has not created yet: a real and common bug. -->
+### Control and Iteration
+<!-- foreach, if, or, and, call (user-defined functions with $(1) $(2)),
+value, and eval for generating rules programmatically. Keep eval short but
+show one legitimate use, e.g. defining parallel rules for a list of targets.
+Warn that heavy eval is where makefiles become unmaintainable. -->
+### `shell`, and When It Runs
+<!-- $(shell ...) runs a command at EXPANSION time and captures stdout with
+newlines converted to spaces. The two-phase trap deserves its own worked
+example here. Also := vs = changing how many times the command runs, and the
+cost of shelling out on every expansion. Cross-ref two-phase evaluation. -->
+### `error`, `warning`, `info`
+<!-- Make's only real diagnostics. $(info) for tracing values, $(warning) with
+its file:line prefix, $(error) to fail fast on a missing toolchain or
+unset required variable. Show the "guard clause" idiom:
+    ifndef TOOLCHAIN
+    $(error TOOLCHAIN is not set)
+    endif -->
+## Conditionals
+<!-- ifeq, ifneq, ifdef, ifndef, else, endif. Emphasize that despite looking
+like the C preprocessor, these are Make constructs evaluated in phase 1, and
+they are NOT indented with tabs (a tab would make them a recipe line).
+The difference between ifdef (defined and non-empty) and a POSIX-portable
+alternative. Common use: platform detection via $(shell uname -s), debug vs
+release, toolchain selection. -->
+## Multiple Files
+### `include` and `-include` {#include-and-include}
+<!-- Splitting a build across files; a shared config.mk of variables. The
+leading dash suppresses the error when the file does not exist yet, which is
+exactly what auto-generated dependency files need. Note that Make will try to
+BUILD a missing include target and then restart itself, which is the mechanism
+the next section relies on. -->
+### Auto-Generated Dependencies
+::: {.subheading}
+The idiom that makes a C build actually correct
+:::
+
+<!-- The most important practical section in the chapter.
+
+The problem: `main.o: main.c` is a lie. main.c includes headers, and editing a
+header must rebuild the objects that include it. Hand-maintaining that list is
+hopeless and always drifts.
+
+The solution: the compiler already knows the include graph. -MMD -MP makes gcc
+and clang emit a .d file containing exactly the rule Make needs, and
+-include $(OBJS:.o=.d) pulls them in. -MP adds phony targets for each header
+so that DELETING a header does not break the build with "no rule to make
+target".
+
+Show the complete four-line pattern. This is the thing most half-remembered
+makefile knowledge is missing, and it is what separates a build that works
+from one that needs `make clean` to be trusted. -->
+### Recursive Make
+<!-- $(MAKE) -C subdir, why it was the standard structure for decades, and the
+jobserver that lets -j work across the recursion boundary. Then the critique:
+Peter Miller's 1997 "Recursive Make Considered Harmful". Each sub-make sees
+only a fragment of the graph, so cross-directory dependencies are invisible,
+builds are wrong in ways that hide behind clean rebuilds, and parallelism is
+limited. Present the argument fairly and note that it is why CMake/Ninja build
+one flat graph. -->
+### Non-Recursive Make
+<!-- The alternative: per-directory .mk fragments that are `include`d into a
+single top-level graph. Show the shape and the variable-namespacing discipline
+it requires. Honest about the ergonomic cost. -->
+## Real Makefiles
+<!-- Three complete, working examples. Each fully annotated, each building on
+the machinery already introduced. These are the reference material readers
+will actually come back for. -->
+### A Hosted C/C++ Project
+<!-- The one most readers need. Multi-directory sources, out-of-tree build
+directory, pattern rules, auto-generated dependencies, debug/release via
+target-specific variables, phony all/clean/test. Around 40 lines, every line
+justified.
+
+Open with the minimal case, migrated out of c.qmd when that section was
+trimmed to a cross-reference. `upper.c` reads stdin, uppercases it, writes
+stdout:
+
+    #include <stdio.h>
+    #include <ctype.h>
+
+    int main(void) {
+        int c;
+        while ((c = getchar()) != EOF) {
+            putchar(toupper(c));
+        }
+        return 0;
+    }
+
+built by a makefile with CC/CFLAGS variables, an `all` default goal, explicit
+compile and link rules, and a `clean` target. Then rebuild the same thing with
+pattern rules and auto-deps to show what the machinery buys. -->
+### A Cross-Compiled Embedded Target
+<!-- Matching the dsPIC/ARM focus of c.qmd and assembly.qmd: toolchain prefix
+variables (CROSS_COMPILE ?= arm-none-eabi-), separate CFLAGS/LDFLAGS with the
+linker script, objcopy to .hex and .bin, arm-none-eabi-size for the flash/RAM
+budget, and a `flash` phony target invoking the programmer. Note what changes
+versus the hosted case and why. -->
+### Make as a Task Runner
+<!-- The modern non-compilation use: the makefile as a project's command menu.
+All targets phony, no dependency graph to speak of, `make` alone prints help.
+Show the self-documenting help target that greps ## comments out of the file.
+Honest note on why people reach for Make here (it is everywhere, tab-complete
+works, no dependencies) and where it strains (arguments, dashes in names). -->
+## Parallelism
+<!-- -j N and why it is nearly free speedup, given a correct graph. Then the
+catch: -j exposes every missing dependency as a nondeterministic failure, so a
+makefile that "works" serially can fail at -j8 and pass on retry. That is
+almost always a missing prerequisite, not a Make bug.
+
+Also: -O (--output-sync) to stop interleaved output, .NOTPARALLEL, .WAIT for
+ordering in newer versions, and the jobserver's role across recursive make. -->
+## Special Targets
+<!-- Reference table with the ones that matter:
+  .PHONY, .DEFAULT_GOAL, .DELETE_ON_ERROR, .SECONDARY, .INTERMEDIATE,
+  .PRECIOUS, .ONESHELL, .SUFFIXES, .NOTPARALLEL, .SILENT, .EXPORT_ALL_VARIABLES
+
+Call out .DELETE_ON_ERROR specifically and recommend it: without it, a recipe
+that fails partway leaves a corrupt output file with a fresh timestamp, and
+the next make considers it up to date. This is a silent correctness bug in a
+large fraction of real makefiles. -->
+## Debugging Makefiles
+<!-- The toolkit, roughly in order of use:
+  -n / --just-print   show commands without running them
+  --trace             show why each recipe is being run
+  -p / --print-data-base   dump all rules and variables (huge; pipe it)
+  -d / --debug=b,v,i  decision-level tracing at varying volume
+  $(info)/$(warning)  printf debugging in phase 1
+  make -pn -f/dev/null  see the built-in rules alone
+  $(VAR) vs $(origin VAR) and $(flavor VAR) to ask where a value came from
+
+Then a short worked session: a target that rebuilds every time, diagnosed with
+--trace. That symptom is the most common real complaint and deserves a
+demonstrated fix. -->
+## Common Pitfalls
+<!-- Callout-heavy section, each item stated as symptom then cause then fix:
+  - "missing separator" = spaces where a tab belongs
+  - trailing whitespace in a variable, invisible and load-bearing
+  - $ vs $$ crossing the macro/shell boundary; shell loops needing $$i
+  - each recipe line is a separate shell, so `cd` does not persist
+    (fix: && continuation, or .ONESHELL)
+  - recursive variable self-reference looping
+  - $(wildcard) at parse time missing files a recipe will create
+  - a failed recipe leaving a stale target (see .DELETE_ON_ERROR)
+  - missing prerequisites that only surface under -j
+  - `clean` breaking because a file named clean exists (see .PHONY)
+Every one of these ties back to the three-languages or two-phase model. Say so
+explicitly; that is what makes the chapter cohere. -->
+## Make and CMake
+::: {.subheading}
+What generates the makefiles you were never meant to read
+:::
+
+If you have worked in a modern C++ project, you have probably met a tree with a `CMakeLists.txt` in nearly every directory and wondered what collects them. That question has a clean answer, but it starts with a correction.
+
+::: {.callout-important title="`CMakeLists.txt` is not a makefile"}
+CMake is a **separate language** with its own syntax and semantics. It shares nothing with Make beyond a problem domain. If you read `CMakeLists.txt` expecting makefile constructs, nothing will parse: there are no tab-indented recipes, no `$(VAR)` expansions with Make's meaning, and no `target: prerequisites` rules.
+:::
+
+More importantly, CMake is not a build tool at all. It is a **generator**. It reads your `CMakeLists.txt` tree once, at *configure time*, and writes out real build files for some other tool to execute. By default on Unix that other tool is Make, so the thing that actually builds your project is a set of generated makefiles that no human wrote and no human should edit.
+
+```bash
+cmake -S . -B build      # configure: read CMakeLists.txt, generate build/
+cmake --build build      # build: run the generated makefiles
+```
+
+That two-step split is the whole architecture. Everything else follows from it.
+
+### How the Tree Is Collected
+The mechanism is `add_subdirectory()`. The top-level `CMakeLists.txt` names its children, each child is read in turn, and each may name children of its own:
+
+```cmake
+# CMakeLists.txt (top level)
+cmake_minimum_required(VERSION 3.16)
+project(demo C)
+
+add_subdirectory(lib)
+add_subdirectory(src)
+```
+
+```cmake
+# lib/CMakeLists.txt
+add_library(util util.c)
+target_include_directories(util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+```
+
+```cmake
+# src/CMakeLists.txt
+add_executable(app main.c)
+target_link_libraries(app PRIVATE util)
+```
+
+Reading is recursive, but the *result* is not. Every directory contributes its targets to one global picture, and CMake emits a single flat build graph covering the entire project.
+
+```{mermaid}
+flowchart TD
+    A["CMakeLists.txt<br/>add_subdirectory(lib)<br/>add_subdirectory(src)"] --> B["lib/CMakeLists.txt<br/>add_library(util)"]
+    A --> C["src/CMakeLists.txt<br/>add_executable(app)"]
+    B --> D["One global build graph<br/>util → app"]
+    C --> D
+    D --> E["Generated makefiles<br/>in build/"]
+```
+
+This distinction is the one that matters, because the directory layout looks exactly like [recursive make](#recursive-make) and behaves like its opposite:
+
+|                              | Recursive Make                     | CMake                           |
+|:-----------------------------|:-----------------------------------|:--------------------------------|
+| Per-directory file           | A real makefile, executed          | Input read at configure time    |
+| Resulting graph              | One fragment per directory         | One graph for the whole project |
+| Cross-directory dependencies | Invisible to each sub-make         | Fully known                     |
+| Parallelism                  | Limited by the recursion structure | Across the entire project       |
+
+Recursive make suffers because each sub-make sees only its own fragment. CMake reads a tree and produces a whole, which is precisely the fix Peter Miller argued for.
+
+::: {.callout-note title="The generated makefiles are not recursive either"}
+CMake does write a `Makefile` into each mirrored build directory, which makes it look recursive. Those are thin conveniences: each one immediately `cd`s to the build root and delegates to a single `CMakeFiles/Makefile2` holding the real graph. Running `make` from a subdirectory still builds against complete dependency information.
+:::
+
+### The Concept Map
+Most Make concepts have a CMake counterpart, with one genuine conceptual leap at the end.
+
+| Make                                      | CMake                                                      |
+|:------------------------------------------|:-----------------------------------------------------------|
+| A rule producing a binary                 | `add_executable(app main.c)`                               |
+| A rule producing a library                | `add_library(util util.c)`                                 |
+| `CFLAGS`                                  | `target_compile_options()`, `target_compile_definitions()` |
+| `-I` include paths                        | `target_include_directories()`                             |
+| `LDFLAGS`, `-l`                           | `target_link_libraries()`                                  |
+| `VAR = value`                             | `set(VAR value)`, scoped to the directory and below        |
+| Cross-compile variable block              | A toolchain file, `-DCMAKE_TOOLCHAIN_FILE=...`             |
+| Hand-written `-MMD` dependency generation | Automatic                                                  |
+
+The leap is that a CMake **target is an object with properties**, not just a name in a graph. Those properties propagate along the link graph according to a keyword you choose:
+
+- **`PRIVATE`**: needed to build this target, not exposed to its consumers.
+- **`PUBLIC`**: needed to build this target *and* by anything that links it.
+- **`INTERFACE`**: not needed by this target, only by its consumers (typical for header-only libraries).
+
+In the example above, `lib/CMakeLists.txt` declares its include directory `PUBLIC`. So when `src/CMakeLists.txt` says `target_link_libraries(app PRIVATE util)`, the compile line for `main.c` picks up `-I/path/to/lib` automatically. Nothing in `src/CMakeLists.txt` mentions that path. The dependency carried its own build requirements along with it.
+
+This has no equivalent in Make, where include paths are a global `CFLAGS` string that every rule shares and every developer edits by hand. It is the main reason large projects moved to CMake, and the main thing to internalize when reading one.
+
+### Reading a CMake Project
+A few things make a generated build tractable when you need to debug it.
+
+**See the real compiler command.** The default output shows progress, not invocations:
+
+```bash
+make -C build VERBOSE=1        # or: cmake --build build --verbose
+```
+
+**Generate a compile database.** Configuring with `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` writes `build/compile_commands.json`, containing the exact command for every source file. Language servers such as `clangd` consume this, and it is the fastest way to answer "what flags is this file actually being compiled with."
+
+**Know where the real rules live.** In a Makefiles build, the per-target rules are in `build/<dir>/CMakeFiles/<target>.dir/build.make`, and the flags are split out into `flags.make` next to it. Worth reading once, to see that the generated output is ordinary Make using the same `-MD` dependency mechanism described in [Auto-Generated Dependencies](#auto-generated-dependencies).
+
+**You do not re-run `cmake` by hand.** The generated makefiles depend on the `CMakeLists.txt` files, so editing one causes the next `make` to re-run CMake automatically. This is the [`include` restart mechanism](#include-and-include) applied at project scale.
+
+**Never edit anything in `build/`.** It is output. The next configure overwrites it, and deleting the directory entirely is a normal, safe operation.
+
+### Make or Ninja
+CMake's default generator on Unix is Unix Makefiles, but Ninja is the better choice for anything large:
+
+```bash
+cmake -S . -B build -G Ninja
+```
+
+Ninja was designed for exactly this role: a build language nobody writes by hand, optimized for a generator to emit and for a machine to execute quickly. It parallelizes by default, and its no-op builds are dramatically faster than Make's on large projects, which matters because a no-op build is the one you run most. The `CMakeLists.txt` files do not change; only the generated output does.
+
+::: {.see-more}
+- [CMake Documentation](https://cmake.org/cmake/help/latest/){target="_blank" rel="noopener noreferrer"}
+- [Modern CMake](https://cliutils.gitlab.io/modern-cmake/){target="_blank" rel="noopener noreferrer"}, the best guide to target-based CMake
+- [Ninja](https://ninja-build.org/){target="_blank" rel="noopener noreferrer"}
+:::
+
+## Where Make Sits Today
+<!-- An honest closing assessment rather than a defense.
+
+Still wins at: being installed everywhere, zero configuration, small projects,
+task running, gluing heterogeneous tools (LaTeX, Quarto, containers, codegen),
+and being readable in full by one person.
+
+Lost to newer tools at: large C/C++ projects (CMake for configuration and
+portability, Ninja for speed), correctness under change (content hashing beats
+timestamps), hermetic and distributed builds (Bazel), and anything with a
+language-native toolchain (Cargo, Go).
+
+The idea that outlived the tool: the dependency graph. Every successor
+implements it. A reader who understands Make's model can read any of them.
+Tie back to the Overview. -->
+## Further Reading
+<!-- .see-more div:
+  - GNU Make Manual (the reference; genuinely well written)
+  - Robert Mecklenburg, "Managing Projects with GNU Make" (3rd ed.)
+  - Peter Miller, "Recursive Make Considered Harmful" (1997)
+  - John Graham-Cumming, "GNU Make Standard Library" and his makefile debugging
+    writing
+  - CMake documentation, for the section above
+All external links need {target="_blank" rel="noopener noreferrer"}. -->

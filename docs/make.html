@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2026-07-30">
+
+<title>Makefile Language – Computer Language Notebook</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./rust-in.html" rel="next">
+<link href="./cpp.html" rel="prev">
+<link href="././favicon.png" rel="icon" type="image/png">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f876f781226a33a7a2f77a56c5ae090f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": true,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Computer Language Notebook</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Languages</a></li><li class="breadcrumb-item"><a href="./make.html">The Makefile Language</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="./index.html" class="sidebar-logo-link">
+      <img src="././images/logo.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="././images/logo.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Languages</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./assembly.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./c.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The C Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cpp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The C++ Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./make.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">The Makefile Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">The Rust Language</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-in.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-ho.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Hands On</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-cc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cargo and Crates</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-out.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Places You’ll Go</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./python.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Python Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./css.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CSS Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./matlab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The MATLAB Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shell.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Shell Scripting</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">The Ecosystem</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./ecosystem.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./git.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Git Version Control</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">Briefs</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./b-pyperf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Python Performance Analysis</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text">Reference</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/assembly-pc.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PC Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-general.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Web Guide</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-selectors.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Selector Guide</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">Appendix</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossary</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a>
+  <ul>
+  <li><a href="#a-short-history" id="toc-a-short-history" class="nav-link" data-scroll-target="#a-short-history">A Short History</a></li>
+  <li><a href="#the-make-philosophy" id="toc-the-make-philosophy" class="nav-link" data-scroll-target="#the-make-philosophy">The Make Philosophy</a>
+  <ul class="collapse">
+  <li><a href="#you-describe-relationships-not-order" id="toc-you-describe-relationships-not-order" class="nav-link" data-scroll-target="#you-describe-relationships-not-order">You Describe Relationships, Not Order</a></li>
+  <li><a href="#timestamps-not-content" id="toc-timestamps-not-content" class="nav-link" data-scroll-target="#timestamps-not-content">Timestamps, Not Content</a></li>
+  <li><a href="#the-shell-is-the-recipe-language" id="toc-the-shell-is-the-recipe-language" class="nav-link" data-scroll-target="#the-shell-is-the-recipe-language">The Shell Is the Recipe Language</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#the-three-languages-in-one-file" id="toc-the-three-languages-in-one-file" class="nav-link" data-scroll-target="#the-three-languages-in-one-file">The Three Languages in One File</a>
+  <ul>
+  <li><a href="#why-this-framing-pays-off" id="toc-why-this-framing-pays-off" class="nav-link" data-scroll-target="#why-this-framing-pays-off">Why This Framing Pays Off</a></li>
+  </ul></li>
+  <li><a href="#anatomy-of-a-rule" id="toc-anatomy-of-a-rule" class="nav-link" data-scroll-target="#anatomy-of-a-rule">Anatomy of a Rule</a>
+  <ul>
+  <li><a href="#targets-prerequisites-recipes" id="toc-targets-prerequisites-recipes" class="nav-link" data-scroll-target="#targets-prerequisites-recipes">Targets, Prerequisites, Recipes</a>
+  <ul class="collapse">
+  <li><a href="#multiple-prerequisites" id="toc-multiple-prerequisites" class="nav-link" data-scroll-target="#multiple-prerequisites">Multiple Prerequisites</a></li>
+  <li><a href="#multiple-targets" id="toc-multiple-targets" class="nav-link" data-scroll-target="#multiple-targets">Multiple Targets</a></li>
+  <li><a href="#multi-line-recipes" id="toc-multi-line-recipes" class="nav-link" data-scroll-target="#multi-line-recipes">Multi-Line Recipes</a></li>
+  <li><a href="#recipe-line-prefixes" id="toc-recipe-line-prefixes" class="nav-link" data-scroll-target="#recipe-line-prefixes">Recipe Line Prefixes</a></li>
+  <li><a href="#rules-without-recipes" id="toc-rules-without-recipes" class="nav-link" data-scroll-target="#rules-without-recipes">Rules Without Recipes</a></li>
+  <li><a href="#a-complete-small-makefile" id="toc-a-complete-small-makefile" class="nav-link" data-scroll-target="#a-complete-small-makefile">A Complete Small Makefile</a></li>
+  </ul></li>
+  <li><a href="#tabs-and-why" id="toc-tabs-and-why" class="nav-link" data-scroll-target="#tabs-and-why">Tabs, and Why</a></li>
+  <li><a href="#the-default-goal" id="toc-the-default-goal" class="nav-link" data-scroll-target="#the-default-goal">The Default Goal</a></li>
+  <li><a href="#phony-targets" id="toc-phony-targets" class="nav-link" data-scroll-target="#phony-targets">Phony Targets</a></li>
+  </ul></li>
+  <li><a href="#the-dependency-graph" id="toc-the-dependency-graph" class="nav-link" data-scroll-target="#the-dependency-graph">The Dependency Graph</a>
+  <ul>
+  <li><a href="#how-make-decides-what-to-rebuild" id="toc-how-make-decides-what-to-rebuild" class="nav-link" data-scroll-target="#how-make-decides-what-to-rebuild">How Make Decides What to Rebuild</a></li>
+  <li><a href="#graph-traversal-and-ordering" id="toc-graph-traversal-and-ordering" class="nav-link" data-scroll-target="#graph-traversal-and-ordering">Graph Traversal and Ordering</a></li>
+  <li><a href="#order-only-prerequisites" id="toc-order-only-prerequisites" class="nav-link" data-scroll-target="#order-only-prerequisites">Order-Only Prerequisites</a></li>
+  <li><a href="#when-timestamps-lie" id="toc-when-timestamps-lie" class="nav-link" data-scroll-target="#when-timestamps-lie">When Timestamps Lie</a></li>
+  </ul></li>
+  <li><a href="#variables" id="toc-variables" class="nav-link" data-scroll-target="#variables">Variables</a>
+  <ul>
+  <li><a href="#the-two-flavors" id="toc-the-two-flavors" class="nav-link" data-scroll-target="#the-two-flavors">The Two Flavors</a></li>
+  <li><a href="#conditional-and-append-assignment" id="toc-conditional-and-append-assignment" class="nav-link" data-scroll-target="#conditional-and-append-assignment"><code>?=</code> and <code>+=</code></a></li>
+  <li><a href="#where-values-come-from" id="toc-where-values-come-from" class="nav-link" data-scroll-target="#where-values-come-from">Where Values Come From</a></li>
+  <li><a href="#target-specific-and-pattern-specific-variables" id="toc-target-specific-and-pattern-specific-variables" class="nav-link" data-scroll-target="#target-specific-and-pattern-specific-variables">Target-Specific and Pattern-Specific Variables</a></li>
+  <li><a href="#automatic-variables" id="toc-automatic-variables" class="nav-link" data-scroll-target="#automatic-variables">Automatic Variables</a></li>
+  </ul></li>
+  <li><a href="#two-phase-evaluation" id="toc-two-phase-evaluation" class="nav-link" data-scroll-target="#two-phase-evaluation">Two-Phase Evaluation</a></li>
+  <li><a href="#pattern-rules-and-implicit-rules" id="toc-pattern-rules-and-implicit-rules" class="nav-link" data-scroll-target="#pattern-rules-and-implicit-rules">Pattern Rules and Implicit Rules</a>
+  <ul>
+  <li><a href="#suffix-rules" id="toc-suffix-rules" class="nav-link" data-scroll-target="#suffix-rules">Suffix Rules</a></li>
+  <li><a href="#pattern-rules" id="toc-pattern-rules" class="nav-link" data-scroll-target="#pattern-rules">Pattern Rules</a></li>
+  <li><a href="#built-in-rules-and-why-to-disable-them" id="toc-built-in-rules-and-why-to-disable-them" class="nav-link" data-scroll-target="#built-in-rules-and-why-to-disable-them">Built-in Rules and Why to Disable Them</a></li>
+  <li><a href="#static-pattern-rules" id="toc-static-pattern-rules" class="nav-link" data-scroll-target="#static-pattern-rules">Static Pattern Rules</a></li>
+  <li><a href="#vpath-and-vpath" id="toc-vpath-and-vpath" class="nav-link" data-scroll-target="#vpath-and-vpath"><code>VPATH</code> and <code>vpath</code></a></li>
+  </ul></li>
+  <li><a href="#functions" id="toc-functions" class="nav-link" data-scroll-target="#functions">Functions</a>
+  <ul>
+  <li><a href="#text-manipulation" id="toc-text-manipulation" class="nav-link" data-scroll-target="#text-manipulation">Text Manipulation</a></li>
+  <li><a href="#filenames" id="toc-filenames" class="nav-link" data-scroll-target="#filenames">Filenames</a></li>
+  <li><a href="#control-and-iteration" id="toc-control-and-iteration" class="nav-link" data-scroll-target="#control-and-iteration">Control and Iteration</a></li>
+  <li><a href="#shell-and-when-it-runs" id="toc-shell-and-when-it-runs" class="nav-link" data-scroll-target="#shell-and-when-it-runs"><code>shell</code>, and When It Runs</a></li>
+  <li><a href="#error-warning-info" id="toc-error-warning-info" class="nav-link" data-scroll-target="#error-warning-info"><code>error</code>, <code>warning</code>, <code>info</code></a></li>
+  </ul></li>
+  <li><a href="#conditionals" id="toc-conditionals" class="nav-link" data-scroll-target="#conditionals">Conditionals</a></li>
+  <li><a href="#multiple-files" id="toc-multiple-files" class="nav-link" data-scroll-target="#multiple-files">Multiple Files</a>
+  <ul>
+  <li><a href="#include-and-include" id="toc-include-and-include" class="nav-link" data-scroll-target="#include-and-include"><code>include</code> and <code>-include</code></a></li>
+  <li><a href="#auto-generated-dependencies" id="toc-auto-generated-dependencies" class="nav-link" data-scroll-target="#auto-generated-dependencies">Auto-Generated Dependencies</a></li>
+  <li><a href="#recursive-make" id="toc-recursive-make" class="nav-link" data-scroll-target="#recursive-make">Recursive Make</a></li>
+  <li><a href="#non-recursive-make" id="toc-non-recursive-make" class="nav-link" data-scroll-target="#non-recursive-make">Non-Recursive Make</a></li>
+  </ul></li>
+  <li><a href="#real-makefiles" id="toc-real-makefiles" class="nav-link" data-scroll-target="#real-makefiles">Real Makefiles</a>
+  <ul>
+  <li><a href="#a-hosted-cc-project" id="toc-a-hosted-cc-project" class="nav-link" data-scroll-target="#a-hosted-cc-project">A Hosted C/C++ Project</a></li>
+  <li><a href="#a-cross-compiled-embedded-target" id="toc-a-cross-compiled-embedded-target" class="nav-link" data-scroll-target="#a-cross-compiled-embedded-target">A Cross-Compiled Embedded Target</a></li>
+  <li><a href="#make-as-a-task-runner" id="toc-make-as-a-task-runner" class="nav-link" data-scroll-target="#make-as-a-task-runner">Make as a Task Runner</a></li>
+  </ul></li>
+  <li><a href="#parallelism" id="toc-parallelism" class="nav-link" data-scroll-target="#parallelism">Parallelism</a></li>
+  <li><a href="#special-targets" id="toc-special-targets" class="nav-link" data-scroll-target="#special-targets">Special Targets</a></li>
+  <li><a href="#debugging-makefiles" id="toc-debugging-makefiles" class="nav-link" data-scroll-target="#debugging-makefiles">Debugging Makefiles</a></li>
+  <li><a href="#common-pitfalls" id="toc-common-pitfalls" class="nav-link" data-scroll-target="#common-pitfalls">Common Pitfalls</a></li>
+  <li><a href="#make-and-cmake" id="toc-make-and-cmake" class="nav-link" data-scroll-target="#make-and-cmake">Make and CMake</a>
+  <ul>
+  <li><a href="#how-the-tree-is-collected" id="toc-how-the-tree-is-collected" class="nav-link" data-scroll-target="#how-the-tree-is-collected">How the Tree Is Collected</a></li>
+  <li><a href="#the-concept-map" id="toc-the-concept-map" class="nav-link" data-scroll-target="#the-concept-map">The Concept Map</a></li>
+  <li><a href="#reading-a-cmake-project" id="toc-reading-a-cmake-project" class="nav-link" data-scroll-target="#reading-a-cmake-project">Reading a CMake Project</a></li>
+  <li><a href="#make-or-ninja" id="toc-make-or-ninja" class="nav-link" data-scroll-target="#make-or-ninja">Make or Ninja</a></li>
+  </ul></li>
+  <li><a href="#where-make-sits-today" id="toc-where-make-sits-today" class="nav-link" data-scroll-target="#where-make-sits-today">Where Make Sits Today</a></li>
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further Reading</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Languages</a></li><li class="breadcrumb-item"><a href="./make.html">The Makefile Language</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Makefile Language</h1>
+<p class="subtitle lead">The dependency graph that build systems keep reinventing</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 30, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Audience: the same systems reader as the C and C++ chapters. Many will have
+written makefiles years ago and half-remember them. Anchor to that: explain the
+model, not just the syntax, so the rules stop looking arbitrary.
+
+Dialect is GNU Make throughout. Note POSIX divergence only where it actually
+bites (pattern rules, $(shell), conditionals), not as a parallel track.
+
+The chapter's spine is the "three languages in one file" thesis. Keep returning
+to it: most Make confusion is not knowing whether you are reading the rule
+language, the macro language, or the shell.
+
+Examples span three flavors: hosted C/C++ builds, cross-compiled embedded
+(matching c.qmd and assembly.qmd), and Make as a task runner.
+-->
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p><img src="images/make-00.svg" class="img-fluid" style="float: left; padding: 0 2em 0 1em;width:2in"></p>
+<p><br><strong>Make</strong> is a build automation tool, and more interestingly, a small declarative language for describing <em>dependency graphs</em>. You tell it which files are built from which other files and how, and it works out what is stale and what needs to run. That is the whole idea. Everything else in this chapter is detail layered on top of it.</p>
+<p>Make has survived since 1976, outliving nearly all of its contemporaries, and the reason is worth stating plainly: the problem it solves does not go away. Any project with more than a handful of source files needs to know what to rebuild after a change, and rebuilding everything is too slow. Modern tools (CMake, Ninja, Bazel, Cargo) have not replaced that idea; they have reimplemented it with better ergonomics, and several of them still emit makefiles as their final output. Learning Make means learning the model that all of them share.</p>
+<p>It also has a reputation for being cryptic, and the reputation is earned. Make is not one language but three sharing a single file, with an evaluation order that is not obvious from reading top to bottom. Once you can see which of the three you are looking at, the syntax stops being arbitrary and starts being merely terse.</p>
+<div style="clear: both">
+
+</div>
+<section id="a-short-history" class="level3">
+<h3 class="anchored" data-anchor-id="a-short-history">A Short History</h3>
+<p>Make was written by <strong>Stuart Feldman</strong> at Bell Labs in 1976, reportedly after a colleague lost a morning of debugging to a program that was not being rebuilt from the source he was editing. The tool that came out of that afternoon is still recognizable in the one you run today, which is either a testament to the design or an indictment of the industry, depending on your mood.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 89%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Era</th>
+<th style="text-align: left;">What happened</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1976</td>
+<td style="text-align: left;">Feldman writes Make at Bell Labs for Unix v7. The core model (targets, prerequisites, recipes, timestamp comparison) arrives essentially complete.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1980s</td>
+<td style="text-align: left;">Make ships with every Unix, and every vendor extends it incompatibly. Writing a portable makefile becomes genuinely hard.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1988</td>
+<td style="text-align: left;">POSIX standardizes a common core, deliberately small: suffix rules, basic macros, no conditionals, no functions.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1988 onward</td>
+<td style="text-align: left;"><strong>GNU Make</strong> adds what the standard left out: pattern rules, a real function library, conditionals, <code>include</code>, and parallel builds. It becomes the de facto dialect.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1990s</td>
+<td style="text-align: left;">Autotools builds a code-generation layer on top of Make to paper over portability. <code>./configure &amp;&amp; make &amp;&amp; make install</code> enters the culture.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2000s onward</td>
+<td style="text-align: left;">CMake, Ninja, Bazel and language-native tools (Cargo, Go’s toolchain) take over new projects, most of them generating or reimplementing Make’s graph.</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled" title="Which make is on your machine?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Which make is on your machine?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>On Linux, <code>make</code> is almost always GNU Make. On macOS, <code>/usr/bin/make</code> is GNU Make 3.81 from 2006, kept at that version for licensing reasons, and it is missing newer features. BSD systems ship a genuinely different <code>make</code> with incompatible syntax. When portability matters, <code>gmake</code> is the conventional name for GNU Make where it is not the default. This chapter assumes GNU Make and flags the places where that assumption shows.</p>
+</div>
+</div>
+<!-- The tab story belongs in "Tabs, and Why" below, not here. Feldman's own
+quote about having "a dozen users" and not wanting to break them is the payoff
+there. -->
+</section>
+<section id="the-make-philosophy" class="level3">
+<h3 class="anchored" data-anchor-id="the-make-philosophy">The Make Philosophy</h3>
+<div class="subheading">
+<p>Three decisions that explain everything else</p>
+</div>
+<p>Make rests on three design decisions. Each one buys something significant, and each one costs something you will eventually trip over. Knowing both halves is most of what it takes to use Make well.</p>
+<section id="you-describe-relationships-not-order" class="level4">
+<h4 class="anchored" data-anchor-id="you-describe-relationships-not-order">You Describe Relationships, Not Order</h4>
+<p>A shell script is imperative: it runs top to bottom and does the same work every time. A makefile is <strong>declarative</strong>. You state which files depend on which other files, and Make derives the build order itself by walking the resulting graph.</p>
+<p>The difference shows up the moment a project grows. A build script has to be written in a correct order, and that order has to be maintained by hand as the project changes. A makefile has no order to maintain. Rules can appear in any sequence, because the dependencies, not the layout of the file, determine what runs when.</p>
+<p>That declarative structure is also what makes <code>make -j8</code> possible. Once Make knows the graph, it knows which targets are independent, and independent targets can compile simultaneously. You get parallelism for free from a description you wrote for a different reason. A shell script cannot offer this, because it has no idea which of its lines are related.</p>
+<p>The cost is that the graph has to be <em>true</em>. Make trusts what you declare. A dependency you failed to mention is a dependency Make will happily ignore, producing a build that is subtly stale and, under <code>-j</code>, unpredictably broken.</p>
+</section>
+<section id="timestamps-not-content" class="level4">
+<h4 class="anchored" data-anchor-id="timestamps-not-content">Timestamps, Not Content</h4>
+<p>Make decides a target is out of date by comparing modification times: if any prerequisite is newer than the target, the target is rebuilt. It does not read your files or hash them.</p>
+<p>This is cheap. A <code>stat</code> call per file is close to free, needs no database, no cache directory, and no state carried between runs. Make can be dropped into any directory and work immediately, which is a large part of why it spread and stayed.</p>
+<p>It is also the root of a whole family of failures, because a timestamp is a proxy for “has this changed” rather than an answer to it. The proxy fails in both directions. <code>touch</code> a file and Make rebuilds work that did not need doing. Restore a file with an old timestamp and Make skips work that did. Clock skew between machines on a network filesystem produces both at once. These are gathered in <a href="#when-timestamps-lie">When Timestamps Lie</a>.</p>
+<p>The newer generation of build tools made the opposite trade. Ninja, Bazel, and Cargo hash file contents, paying to read every input in exchange for knowing precisely what changed. That is the right call for large builds, and Make’s approach is the right call for being able to type <code>make</code> in an unfamiliar directory and have it work.</p>
+</section>
+<section id="the-shell-is-the-recipe-language" class="level4">
+<h4 class="anchored" data-anchor-id="the-shell-is-the-recipe-language">The Shell Is the Recipe Language</h4>
+<p>Make knows nothing about compiling. It has no notion of C, no concept of an object file, no model of a linker. What it knows is how to decide <em>whether</em> a command should run. The command itself is handed to <code>/bin/sh</code>.</p>
+<p>This separation is why Make outlived the toolchains it was written for. Anything you can express as “these outputs come from those inputs, via this command” fits the model. Compiling C is one instance. So is rendering LaTeX to PDF, converting images, generating code from a schema, building a container, or rendering this notebook from <code>.qmd</code> to HTML. Make does not need to be taught any of these; it only needs to be told what depends on what.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="This is why Make is still here">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>This is why Make is still here
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>It is tempting to read Make’s longevity as inertia. It is closer to the opposite. By refusing to know anything about the work it schedules, Make stayed useful across fifty years of tooling churn that obsoleted its more knowledgeable contemporaries. A tool that understood 1976’s compilers deeply would have died with them.</p>
+</div>
+</div>
+<p>The cost arrives in the next section: because recipes are shell and everything above them is not, a makefile is not written in one language. It is written in three.</p>
+</section>
+</section>
+</section>
+<section id="the-three-languages-in-one-file" class="level2">
+<h2 class="anchored" data-anchor-id="the-three-languages-in-one-file">The Three Languages in One File</h2>
+<div class="subheading">
+<p>The chapter’s organizing idea</p>
+</div>
+<p>Make has a reputation for being cryptic that its size does not justify. The syntax is genuinely small. What makes makefiles hard to read is that a single file interleaves three different languages, with different rules, evaluated at different times, and the file gives you almost no visual cue about which one you are looking at.</p>
+<p>Once you can identify the three on sight, the syntax stops being arbitrary. Nearly every baffling Make error is a <em>boundary</em> error: code written in one of the three languages that got evaluated as another.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 10%">
+<col style="width: 47%">
+<col style="width: 38%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Language</th>
+<th style="text-align: left;">What it does</th>
+<th style="text-align: left;">How to spot it</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;"><strong>Rules</strong></td>
+<td style="text-align: left;">Declares the dependency graph: what is built from what</td>
+<td style="text-align: left;"><code>target: prerequisites</code>, at the left margin</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2</td>
+<td style="text-align: left;"><strong>Macros</strong></td>
+<td style="text-align: left;">Text substitution: variables and functions</td>
+<td style="text-align: left;"><code>NAME = value</code>, and <code>$(...)</code> anywhere</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3</td>
+<td style="text-align: left;"><strong>Shell</strong></td>
+<td style="text-align: left;">Does the actual work</td>
+<td style="text-align: left;">Any line starting with a tab</td>
+</tr>
+</tbody>
+</table>
+<p>Here is the same makefile with every line labeled by which language it belongs to:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">CC</span>      <span class="ch">:=</span><span class="st"> gcc                    </span><span class="co"># 2. macro: a variable definition</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">CFLAGS</span>  <span class="ch">:=</span><span class="st"> -Wall -O2              </span><span class="co"># 2. macro</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="dt">OBJS</span>    <span class="ch">:=</span><span class="st"> main.o util.o          </span><span class="co"># 2. macro</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="dv">app:</span><span class="dt"> </span><span class="ch">$(</span><span class="dt">OBJS</span><span class="ch">)</span><span class="dt">                      </span><span class="co"># 1. rule, with 2. macro expansions in it</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> <span class="ch">$(</span><span class="dt">CFLAGS</span><span class="ch">)</span> -o <span class="ch">$@</span> <span class="ch">$^</span>      <span class="co"># 3. shell, after 2. macros are expanded</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="dv">%.o:</span><span class="dt"> %.c                          </span><span class="co"># 1. rule (a pattern rule)</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> <span class="ch">$(</span><span class="dt">CFLAGS</span><span class="ch">)</span> -c <span class="ch">$&lt;</span> -o <span class="ch">$@</span>   <span class="co"># 3. shell, after 2. macros are expanded</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Note what the tab-indented lines are and are not. They are shell, but Make gets to them first: it expands every <code>$(...)</code> and <em>then</em> hands the resulting text to <code>/bin/sh</code>. Two languages occupy the same line, one after the other. That single fact generates a surprising number of bugs.</p>
+<section id="why-this-framing-pays-off" class="level4">
+<h4 class="anchored" data-anchor-id="why-this-framing-pays-off">Why This Framing Pays Off</h4>
+<p>Three of the most common Make confusions are all the same confusion wearing different clothes. Each is treated fully later; the point here is that they share a cause.</p>
+<p><strong>Tabs are a language marker.</strong> The rule that recipe lines must start with a tab looks like a pointless historical wart, and its origin genuinely was an accident. But it is doing real work: the tab is how the parser knows a line is <em>shell</em> rather than <em>macro or rule</em>. Indent with spaces and Make tries to parse your compiler invocation as a makefile construct, which is why the error reads <code>missing separator</code>. See <a href="#tabs-and-why">Tabs, and Why</a>.</p>
+<p><strong><code>$</code> means different things on either side of the boundary.</strong> Make consumes <code>$</code> for its own expansions, so a <code>$</code> that should survive into the shell has to be written <code>$$</code>. This is why a shell loop inside a recipe uses <code>$$i</code> and not <code>$i</code>: <code>$i</code> would be expanded by Make, find nothing, and hand the shell an empty string. See <a href="#common-pitfalls">Common Pitfalls</a>.</p>
+<p><strong>Macros and rules run at different times.</strong> The macro language is fully evaluated before any recipe executes. So <code>$(shell date)</code> reports the moment Make parsed the file, not the moment your command ran, and a <code>$(wildcard build/*.o)</code> cannot see object files that a recipe is about to create. See <a href="#two-phase-evaluation">Two-Phase Evaluation</a>.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="A diagnostic habit">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>A diagnostic habit
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>When a makefile does something inexplicable, the first question worth asking is not “what does this syntax mean” but <strong>“which language is this line, and when does it get evaluated?”</strong> That question resolves the majority of real-world Make problems, and it is the thread this chapter follows throughout.</p>
+</div>
+</div>
+<p>There is a fourth thing worth naming, though it is not a language: Make’s macro layer has no types. Everything is text, and lists are just strings with spaces in them. There are no numbers, no arrays, no structures, and no local scope. Once you stop expecting a programming language and start reading it as a text preprocessor closer in spirit to <code>cpp</code> than to C, the function library in <a href="#functions">Functions</a> becomes much easier to predict.</p>
+</section>
+</section>
+<section id="anatomy-of-a-rule" class="level2">
+<h2 class="anchored" data-anchor-id="anatomy-of-a-rule">Anatomy of a Rule</h2>
+<div class="subheading">
+<p>The one construct everything else decorates</p>
+</div>
+<p>The rule is Make’s only real idea. Variables, functions, pattern matching, and conditionals are all machinery for writing rules more compactly. Read this section carefully and the rest of the chapter is elaboration.</p>
+<section id="targets-prerequisites-recipes" class="level3">
+<h3 class="anchored" data-anchor-id="targets-prerequisites-recipes">Targets, Prerequisites, Recipes</h3>
+<p>A rule has three parts:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dv">target:</span><span class="dt"> prerequisites</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>recipe</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong>Target</strong>: what this rule produces. Usually a file, occasionally just a name (see <a href="#phony-targets">Phony Targets</a>).</li>
+<li><strong>Prerequisites</strong>: what the target is built from. Also called <em>dependencies</em>. May be empty.</li>
+<li><strong>Recipe</strong>: the shell commands that turn prerequisites into the target. Every line must begin with a <strong>tab</strong>.</li>
+</ul>
+<p>Read a rule as a sentence with two clauses: <em>“<code>target</code> is built from <code>prerequisites</code>, and here is how.”</em> The first clause is a fact Make uses to build its graph. The second is a command it runs only when it concludes the target is out of date.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dv">app:</span><span class="dt"> main.o util.o</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>gcc -o app main.o util.o</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This says <code>app</code> depends on the two object files, and if either is newer than <code>app</code>, run <code>gcc</code>. Nothing more is implied. Make does not know that <code>gcc</code> produces <code>app</code>, or that these are C programs at all. It compares timestamps and runs the command you gave it.</p>
+<section id="multiple-prerequisites" class="level4">
+<h4 class="anchored" data-anchor-id="multiple-prerequisites">Multiple Prerequisites</h4>
+<p>Prerequisites are a whitespace-separated list, and long lists are conventionally continued with a backslash:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dv">app:</span><span class="dt"> main.o util.o parser.o network.o </span><span class="ch">\</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="dt">     config.o logging.o</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>gcc -o app <span class="ch">$^</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Order within the list does not matter for correctness. Make may build them in any order, and under <code>-j</code> it will build them simultaneously. If two prerequisites genuinely must be built in sequence, that ordering has to come from a dependency between <em>them</em>, not from their position in this list. Assuming left-to-right order is one of the most common ways a makefile works serially and then fails under <code>make -j8</code>.</p>
+</section>
+<section id="multiple-targets" class="level4">
+<h4 class="anchored" data-anchor-id="multiple-targets">Multiple Targets</h4>
+<p>A rule may name several targets. The meaning is probably not what you would guess:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dv">a.o b.o:</span><span class="dt"> shared.h</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">@</span><span class="fu">echo </span><span class="st">"rebuilding for </span><span class="ch">$@</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is shorthand for writing the same rule once per target, and the recipe runs <strong>once for each</strong> out-of-date target, not once in total. For the common case of one command producing several files at once, this is the wrong construct; GNU Make 4.3 added <code>&amp;:</code> (grouped targets) for that, and older makefiles fake it with a stamp file.</p>
+</section>
+<section id="multi-line-recipes" class="level4">
+<h4 class="anchored" data-anchor-id="multi-line-recipes">Multi-Line Recipes</h4>
+<p>Each line of a recipe is passed to the shell, and every line gets <strong>its own shell process</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dv">report.txt:</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>echo <span class="st">"building"</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    date &gt; report.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Two lines, two separate <code>sh</code> invocations. This is the source of a classic frustration:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># BROKEN: the cd does not persist to the second line</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="dv">install:</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>cd build</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    cp app /usr/local/bin/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>cd</code> affects only the shell that ran it, which exits immediately. The <code>cp</code> runs in the original directory. The fix is to make it one shell command:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dv">install:</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>cd build &amp;&amp; cp app /usr/local/bin/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>GNU Make’s <code>.ONESHELL</code> special target changes this globally so that an entire recipe runs in a single shell. It is convenient and it is also a portability tradeoff, discussed in <a href="#special-targets">Special Targets</a>.</p>
+</section>
+<section id="recipe-line-prefixes" class="level4">
+<h4 class="anchored" data-anchor-id="recipe-line-prefixes">Recipe Line Prefixes</h4>
+<p>Two characters at the start of a recipe line modify how Make treats it:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 38%">
+<col style="width: 54%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Prefix</th>
+<th style="text-align: left;">Effect</th>
+<th style="text-align: left;">Typical use</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><code>@</code></td>
+<td style="text-align: left;">Do not echo the command before running it</td>
+<td style="text-align: left;"><code>@echo</code> messages, keeping output readable</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><code>-</code></td>
+<td style="text-align: left;">Ignore a non-zero exit status</td>
+<td style="text-align: left;"><code>-rm -f</code> in a <code>clean</code> target, cleanup that may find nothing</td>
+</tr>
+</tbody>
+</table>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="dv">clean:</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">@</span><span class="fu">echo </span><span class="st">"Cleaning..."</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="ch">-</span><span class="fu">rm -f app *.o</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>By default Make prints each command as it runs it, which is genuinely useful and worth keeping for real build steps. Reserve <code>@</code> for messages, not for hiding compiler invocations that you will want to see when a build breaks.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="`-` hides real failures">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>-</code> hides real failures
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Ignoring exit status means Make continues even when a step failed. That is correct for <code>rm -f</code> on a file that may not exist, and dangerous almost everywhere else, because a failed build step will not stop the build. Use it deliberately and narrowly.</p>
+</div>
+</div>
+</section>
+<section id="rules-without-recipes" class="level4">
+<h4 class="anchored" data-anchor-id="rules-without-recipes">Rules Without Recipes</h4>
+<p>A rule may declare prerequisites and no recipe at all:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="dv">main.o:</span><span class="dt"> config.h defs.h</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This adds <code>config.h</code> and <code>defs.h</code> to whatever <code>main.o</code> already depends on, leaving the recipe to be supplied elsewhere, typically by a pattern rule. It is pure graph information: <em>“also rebuild <code>main.o</code> when these headers change.”</em></p>
+<p>This form matters more than it first appears. It is exactly what compiler-generated dependency files contain, which is the mechanism behind <a href="#auto-generated-dependencies">Auto-Generated Dependencies</a>, the idiom that makes a C build genuinely correct.</p>
+</section>
+<section id="a-complete-small-makefile" class="level4">
+<h4 class="anchored" data-anchor-id="a-complete-small-makefile">A Complete Small Makefile</h4>
+<p>Putting it together, here is a working build for a two-file program:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="dv">app:</span><span class="dt"> main.o util.o</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>gcc -o app main.o util.o</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="dv">main.o:</span><span class="dt"> main.c util.h</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>gcc -Wall -c main.c</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="dv">util.o:</span><span class="dt"> util.c util.h</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>gcc -Wall -c util.c</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="dv">clean:</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">-</span><span class="fu">rm -f app *.o</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Everything in this chapter after this point is about writing that same build with less repetition and more correctness. The variables in <a href="#variables">Variables</a> remove the duplicated <code>gcc -Wall</code>. The pattern rules in <a href="#pattern-rules">Pattern Rules</a> collapse the two nearly identical <code>.o</code> rules into one. The automatic dependency generation in <a href="#auto-generated-dependencies">Auto-Generated Dependencies</a> replaces the hand-written <code>util.h</code> prerequisites, which are already a maintenance liability at this size and hopeless at a hundred files.</p>
+</section>
+</section>
+<section id="tabs-and-why" class="level3">
+<h3 class="anchored" data-anchor-id="tabs-and-why">Tabs, and Why</h3>
+<p>Recipe lines must begin with a literal tab character. Not spaces. Not a mix. A tab.</p>
+<p>This is Make’s most notorious wart, and it is worth understanding rather than merely suffering, because it follows directly from the <a href="#the-three-languages-in-one-file">three-languages</a> structure. Make needs to know whether a line is shell to be executed or a makefile construct to be parsed. It uses leading whitespace as the signal, and specifically the tab.</p>
+<p>Indent with spaces and you get the error that has confused programmers for five decades:</p>
+<pre><code>Makefile:5: *** missing separator.  Stop.</code></pre>
+<p>The message is unhelpful because Make is not reporting “you used spaces.” It tried to parse your <code>gcc</code> command as a variable assignment or a rule, found neither a <code>=</code> nor a <code>:</code>, and reported the absence of the separator it was looking for. The error names the symptom of a failed parse, not the cause.</p>
+<div class="callout callout-style-default callout-important callout-titled" title="Tabs do not survive this web page">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Tabs do not survive this web page
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Code blocks in this chapter are rendered to HTML, and the tabs in them become spaces along the way. <strong>Makefiles copied from the rendered page will fail</strong> with <code>missing separator</code> until you convert the recipe indentation back to tabs. This is a limitation of the rendering, not of the examples.</p>
+</div>
+</div>
+<p>The origin is an accident that its author has been apologizing for ever since. Stuart Feldman added the tab rule early in Make’s development, before the tool spread, and by the time the problem was obvious it was too late:</p>
+<blockquote class="blockquote">
+<p>Why the tab in column 1? Yacc was new, Lex was brand new. I hadn’t tried either, so I figured this would be a good excuse to learn. After getting frustrated with the mking of Lex, I just did something simple with the pattern newline-tab. It worked, it stayed. And then a few weeks later I had a user population of about a dozen, most of them friends, and I didn’t want to screw up my embedded base. The rest, sadly, is history.</p>
+<p>— Stuart Feldman</p>
+</blockquote>
+<p>GNU Make offers an escape hatch. <code>.RECIPEPREFIX</code> changes the character that introduces a recipe line:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="dt">.RECIPEPREFIX</span> <span class="ch">=</span><span class="st"> &gt;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="dv">app:</span><span class="dt"> main.o</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>&gt; gcc -o app main.o</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>It works, and it is rarely used. A makefile written this way surprises every reader and every tool that expects the convention, which is usually a worse problem than the one it solves. The practical answer is to configure your editor: tell it not to expand tabs in makefiles. Most editors already know to do this for files named <code>Makefile</code>, and an <code>.editorconfig</code> entry makes it explicit:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode ini code-with-copy"><code class="sourceCode ini"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[{Makefile,*.mk}]</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="dt">indent_style </span><span class="ot">=</span><span class="st"> tab</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="the-default-goal" class="level3">
+<h3 class="anchored" data-anchor-id="the-default-goal">The Default Goal</h3>
+<p>Running <code>make</code> with no arguments builds the <strong>default goal</strong>: the first target in the file that is not a special target and does not begin with a period. Nothing else about being first matters, and nothing about the name <code>all</code> is magic.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="dv">all:</span><span class="dt"> app docs        </span><span class="co"># this is the default goal, because it comes first</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="dv">app:</span><span class="dt"> main.o</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>gcc -o app main.o</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="dv">docs:</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>quarto render</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convention puts a target named <code>all</code> at the top, listing everything the project normally builds as its prerequisites. It is a convention worth following: it means <code>make</code> alone does the obvious thing, and it survives someone later adding a rule above it only if they know the rule. Which is why GNU Make lets you state it explicitly instead of relying on file position:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="dt">.DEFAULT_GOAL</span> <span class="ch">:=</span><span class="st"> all</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>With that line, <code>all</code> is the default no matter where it sits in the file or what gets added above it. In a makefile of any size this is worth writing.</p>
+<p>You can also name goals on the command line, and Make builds them in the order given:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> clean app        <span class="co"># clean first, then build app</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-j8</span> app docs     <span class="co"># build both, in parallel where the graph allows</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-note callout-titled" title="`make` with no target is not `make all`">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span><code>make</code> with no target is not <code>make all</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>It is easy to assume <code>make</code> means “build everything.” It means “build the first target,” which is only the same thing because of a convention you are free to break by accident. If someone adds a debugging rule at the top of a makefile, plain <code>make</code> silently starts building that instead. <code>.DEFAULT_GOAL</code> prevents it.</p>
+</div>
+</div>
+</section>
+<section id="phony-targets" class="level3">
+<h3 class="anchored" data-anchor-id="phony-targets">Phony Targets</h3>
+<p>Most targets name a file. Some name an <em>action</em>: <code>clean</code>, <code>test</code>, <code>install</code>, <code>all</code>. These are <strong>phony targets</strong>, and they need to be declared as such:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.PHONY:</span><span class="dt"> all clean test install</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Without that declaration, they are a bug waiting for the right filename. Consider:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="dv">clean:</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">-</span><span class="fu">rm -f app *.o</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This works until the day a file or directory named <code>clean</code> exists in the project. Then:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> make clean</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="ex">make:</span> <span class="st">'clean'</span> is up to date.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Make did exactly what it was told. It found a target named <code>clean</code>, found a file named <code>clean</code>, saw the rule had no prerequisites newer than that file, and concluded there was nothing to do. The build system stops working, and the reason is invisible unless you know to look for it. A <code>docs/</code> directory silently breaking <code>make docs</code> is the same failure and is considerably more likely.</p>
+<p>Declaring the target phony tells Make that the name does not refer to a file, so it should never be compared against one:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.PHONY:</span><span class="dt"> clean</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="dv">clean:</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">-</span><span class="fu">rm -f app *.o</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Now <code>make clean</code> runs its recipe unconditionally, whatever happens to exist on disk.</p>
+<p><code>.PHONY</code> has a second, smaller benefit. For a normal target, Make searches its <a href="#built-in-rules-and-why-to-disable-them">built-in rules</a> for a way to build the file, which is wasted work for a target that is not a file. Marking it phony skips the search.</p>
+<p>Two conventions for where to write it. Declaring them together at the top is compact and easy to audit:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.PHONY:</span><span class="dt"> all clean test install docs</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Declaring each next to its rule keeps the pair visible and never drifts, at the cost of repetition:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.PHONY:</span><span class="dt"> clean</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="dv">clean:</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">-</span><span class="fu">rm -f app *.o</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="ot">.PHONY:</span><span class="dt"> test</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="dv">test:</span><span class="dt"> app</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>./run-tests.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Either is fine. The failure mode to avoid is a <code>.PHONY</code> list at the top that someone forgets to update when adding a target, which is exactly the case where the bug lies dormant until a filename collides. Phony targets carry most of the weight in <a href="#make-as-a-task-runner">Make as a Task Runner</a>, where essentially every target is one.</p>
+</section>
+</section>
+<section id="the-dependency-graph" class="level2">
+<h2 class="anchored" data-anchor-id="the-dependency-graph">The Dependency Graph</h2>
+<section id="how-make-decides-what-to-rebuild" class="level3">
+<h3 class="anchored" data-anchor-id="how-make-decides-what-to-rebuild">How Make Decides What to Rebuild</h3>
+<!-- The central mechanism, stated precisely: a target is out of date if it
+does not exist, or if any prerequisite has a NEWER modification time. Recurse
+depth-first through the graph, rebuild bottom-up.
+
+Worth a Mermaid diagram of a small graph (main.c/util.c -> .o -> binary) with
+one source marked dirty and the affected nodes highlighted.
+
+Then the consequence: Make compares mtimes, it does not hash content. A
+touched-but-unchanged file triggers a rebuild; a changed file with an old
+timestamp does not. -->
+</section>
+<section id="graph-traversal-and-ordering" class="level3">
+<h3 class="anchored" data-anchor-id="graph-traversal-and-ordering">Graph Traversal and Ordering</h3>
+<!-- Make derives order from the graph, not from file position. Rules can
+appear in any order. This is the declarative payoff and the thing that
+distinguishes Make from a build script. Sets up why parallelism works. -->
+</section>
+<section id="order-only-prerequisites" class="level3">
+<h3 class="anchored" data-anchor-id="order-only-prerequisites">Order-Only Prerequisites</h3>
+<!-- The | separator: prerequisites that must exist but whose timestamps are
+ignored. The canonical use is a build directory, since a directory's mtime
+changes every time a file lands in it, which would otherwise rebuild
+everything. Show the `$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)` idiom. -->
+</section>
+<section id="when-timestamps-lie" class="level3">
+<h3 class="anchored" data-anchor-id="when-timestamps-lie">When Timestamps Lie</h3>
+<!-- The failure family that follows from mtime-based staleness:
+  - clock skew on network filesystems and in VMs/containers
+  - `touch` as both a tool and a hazard
+  - checkouts that reset mtimes (git sets them to checkout time)
+  - sub-second resolution and fast successive builds
+  - generated files whose timestamps do not reflect content change
+Contrast briefly with content-hash systems (Ninja, Bazel, Cargo) and note the
+tradeoff: hashing costs a read of every file but is correct. -->
+</section>
+</section>
+<section id="variables" class="level2">
+<h2 class="anchored" data-anchor-id="variables">Variables</h2>
+<section id="the-two-flavors" class="level3">
+<h3 class="anchored" data-anchor-id="the-two-flavors">The Two Flavors</h3>
+<div class="subheading">
+<p>The highest-value thing to understand in Make</p>
+</div>
+<!-- = is recursively expanded: the right-hand side is stored as text and
+re-expanded at every use. := is simply expanded: evaluated once at definition.
+
+Show the two behaving differently with a $(shell) call or a self-reference.
+The classic: FOO = $(BAR) picks up a BAR defined LATER in the file, which is
+either exactly what you want or a deep confusion. Also note that `A = $(A) x`
+is an infinite loop Make will diagnose, while `A := $(A) x` is fine.
+
+Recommendation to state plainly: prefer := unless you specifically need
+deferred expansion. Note ::= as the POSIX-blessed spelling of :=. -->
+</section>
+<section id="conditional-and-append-assignment" class="level3">
+<h3 class="anchored" data-anchor-id="conditional-and-append-assignment"><code>?=</code> and <code>+=</code></h3>
+<!-- ?= assigns only if not already set, which is how you write overridable
+defaults (CC ?= gcc). += appends, and its expansion flavor is inherited from
+how the variable was first defined, which is a subtle gotcha worth showing. -->
+</section>
+<section id="where-values-come-from" class="level3">
+<h3 class="anchored" data-anchor-id="where-values-come-from">Where Values Come From</h3>
+<!-- Precedence, highest to lowest: command line (make CC=clang) > environment
+with -e > makefile > environment > built-in defaults. `override` to win against
+the command line. `export` to push a variable into recipe environments, and
+why recipes do NOT see makefile variables unless exported or expanded.
+A table is the right form here. -->
+</section>
+<section id="target-specific-and-pattern-specific-variables" class="level3">
+<h3 class="anchored" data-anchor-id="target-specific-and-pattern-specific-variables">Target-Specific and Pattern-Specific Variables</h3>
+<!-- `debug: CFLAGS += -g -O0` and how the value applies to the target and
+everything below it in the graph. This is how debug/release variants are
+usually done without duplicating rules. Pattern-specific (%.o: CFLAGS += ...)
+as the generalization. -->
+</section>
+<section id="automatic-variables" class="level3">
+<h3 class="anchored" data-anchor-id="automatic-variables">Automatic Variables</h3>
+<!-- $@ target, $< first prerequisite, $^ all prerequisites (deduped),
+$+ all with duplicates, $? those newer than the target, $* the pattern stem,
+$| order-only prerequisites. Plus the $(@D)/$(@F) directory/file variants.
+
+Quick-reference table, then a worked pattern rule using several at once.
+Emphasize that these only have meaning inside a recipe. -->
+</section>
+</section>
+<section id="two-phase-evaluation" class="level2">
+<h2 class="anchored" data-anchor-id="two-phase-evaluation">Two-Phase Evaluation</h2>
+<div class="subheading">
+<p>Why makefiles do not read top to bottom</p>
+</div>
+<!-- The model that explains the remaining mysteries.
+
+PHASE 1 (read): Make reads all makefiles, expands variables on the left of
+assignments and in rule lines, evaluates conditionals and $(shell) calls, and
+builds the dependency graph. Nothing is built yet.
+
+PHASE 2 (run): Make walks the graph and expands + executes recipes as needed.
+
+Consequences to spell out:
+  - $(shell date) in a simple-expanded variable runs ONCE, at parse time,
+    before any compilation. A timestamp captured this way is the parse time.
+  - Recipe lines are expanded in phase 2, so $$ is needed to pass a literal $
+    to the shell; shell variables and loops need $$i, not $i.
+  - Conditionals are decided in phase 1 and cannot depend on anything a recipe
+    produced.
+  - $(eval) is the escape hatch for generating rules during phase 1.
+
+This section deserves a diagram: a timeline with the two phases and which
+constructs fire in each. -->
+</section>
+<section id="pattern-rules-and-implicit-rules" class="level2">
+<h2 class="anchored" data-anchor-id="pattern-rules-and-implicit-rules">Pattern Rules and Implicit Rules</h2>
+<section id="suffix-rules" class="level3">
+<h3 class="anchored" data-anchor-id="suffix-rules">Suffix Rules</h3>
+<!-- The POSIX-era form (.c.o:) shown briefly for reading old makefiles, then
+set aside as superseded. Note .SUFFIXES and why you might clear it. -->
+</section>
+<section id="pattern-rules" class="level3">
+<h3 class="anchored" data-anchor-id="pattern-rules">Pattern Rules</h3>
+<!-- The modern form: %.o: %.c with the stem matched by %. How Make chooses
+among candidates, chained inference, and why one pattern rule replaces N
+hand-written rules. This is where a real build starts to get short. -->
+</section>
+<section id="built-in-rules-and-why-to-disable-them" class="level3">
+<h3 class="anchored" data-anchor-id="built-in-rules-and-why-to-disable-them">Built-in Rules and Why to Disable Them</h3>
+<!-- GNU Make ships with a large set of built-in rules and variables, visible
+via `make -p`. They cause surprising builds (a stray .c compiled by a rule you
+did not write) and slow down every target lookup. -r / --no-builtin-rules,
+MAKEFLAGS += -r, and .SUFFIXES: to clear. Recommend disabling in serious
+makefiles. -->
+</section>
+<section id="static-pattern-rules" class="level3">
+<h3 class="anchored" data-anchor-id="static-pattern-rules">Static Pattern Rules</h3>
+<!-- targets: target-pattern: prereq-pattern. The controlled form: applies the
+pattern to an explicit list rather than to anything that matches. Preferred
+when you know your source list, because a typo becomes an error instead of a
+silently-skipped rule. -->
+</section>
+<section id="vpath-and-vpath" class="level3">
+<h3 class="anchored" data-anchor-id="vpath-and-vpath"><code>VPATH</code> and <code>vpath</code></h3>
+<!-- Searching for prerequisites in other directories. Honest treatment: it
+solves a real problem for out-of-tree builds but interacts badly with pattern
+rules and $@, and many projects are better off constructing explicit paths.
+Say so rather than presenting it neutrally. -->
+</section>
+</section>
+<section id="functions" class="level2">
+<h2 class="anchored" data-anchor-id="functions">Functions</h2>
+<!-- Frame the set: Make's functions are text transformations over
+space-separated word lists. There are no numbers, no data structures, no
+scoping. Everything is a string. Once that lands, the function library is
+small and predictable. -->
+<section id="text-manipulation" class="level3">
+<h3 class="anchored" data-anchor-id="text-manipulation">Text Manipulation</h3>
+<!-- subst, patsubst (and the $(VAR:.c=.o) shorthand), strip, findstring,
+filter, filter-out, sort (which also dedupes, a common idiom), word, wordlist,
+words, firstword, lastword. Table plus a few worked lines. -->
+</section>
+<section id="filenames" class="level3">
+<h3 class="anchored" data-anchor-id="filenames">Filenames</h3>
+<!-- wildcard, dir, notdir, basename, suffix, addprefix, addsuffix, join,
+realpath, abspath. Note that $(wildcard) is evaluated at parse time, so it
+cannot see files a recipe has not created yet: a real and common bug. -->
+</section>
+<section id="control-and-iteration" class="level3">
+<h3 class="anchored" data-anchor-id="control-and-iteration">Control and Iteration</h3>
+<!-- foreach, if, or, and, call (user-defined functions with $(1) $(2)),
+value, and eval for generating rules programmatically. Keep eval short but
+show one legitimate use, e.g. defining parallel rules for a list of targets.
+Warn that heavy eval is where makefiles become unmaintainable. -->
+</section>
+<section id="shell-and-when-it-runs" class="level3">
+<h3 class="anchored" data-anchor-id="shell-and-when-it-runs"><code>shell</code>, and When It Runs</h3>
+<!-- $(shell ...) runs a command at EXPANSION time and captures stdout with
+newlines converted to spaces. The two-phase trap deserves its own worked
+example here. Also := vs = changing how many times the command runs, and the
+cost of shelling out on every expansion. Cross-ref two-phase evaluation. -->
+</section>
+<section id="error-warning-info" class="level3">
+<h3 class="anchored" data-anchor-id="error-warning-info"><code>error</code>, <code>warning</code>, <code>info</code></h3>
+<!-- Make's only real diagnostics. $(info) for tracing values, $(warning) with
+its file:line prefix, $(error) to fail fast on a missing toolchain or
+unset required variable. Show the "guard clause" idiom:
+    ifndef TOOLCHAIN
+    $(error TOOLCHAIN is not set)
+    endif -->
+</section>
+</section>
+<section id="conditionals" class="level2">
+<h2 class="anchored" data-anchor-id="conditionals">Conditionals</h2>
+<!-- ifeq, ifneq, ifdef, ifndef, else, endif. Emphasize that despite looking
+like the C preprocessor, these are Make constructs evaluated in phase 1, and
+they are NOT indented with tabs (a tab would make them a recipe line).
+The difference between ifdef (defined and non-empty) and a POSIX-portable
+alternative. Common use: platform detection via $(shell uname -s), debug vs
+release, toolchain selection. -->
+</section>
+<section id="multiple-files" class="level2">
+<h2 class="anchored" data-anchor-id="multiple-files">Multiple Files</h2>
+<section id="include-and-include" class="level3">
+<h3 class="anchored" data-anchor-id="include-and-include"><code>include</code> and <code>-include</code></h3>
+<!-- Splitting a build across files; a shared config.mk of variables. The
+leading dash suppresses the error when the file does not exist yet, which is
+exactly what auto-generated dependency files need. Note that Make will try to
+BUILD a missing include target and then restart itself, which is the mechanism
+the next section relies on. -->
+</section>
+<section id="auto-generated-dependencies" class="level3">
+<h3 class="anchored" data-anchor-id="auto-generated-dependencies">Auto-Generated Dependencies</h3>
+<div class="subheading">
+<p>The idiom that makes a C build actually correct</p>
+</div>
+<!-- The most important practical section in the chapter.
+
+The problem: `main.o: main.c` is a lie. main.c includes headers, and editing a
+header must rebuild the objects that include it. Hand-maintaining that list is
+hopeless and always drifts.
+
+The solution: the compiler already knows the include graph. -MMD -MP makes gcc
+and clang emit a .d file containing exactly the rule Make needs, and
+-include $(OBJS:.o=.d) pulls them in. -MP adds phony targets for each header
+so that DELETING a header does not break the build with "no rule to make
+target".
+
+Show the complete four-line pattern. This is the thing most half-remembered
+makefile knowledge is missing, and it is what separates a build that works
+from one that needs `make clean` to be trusted. -->
+</section>
+<section id="recursive-make" class="level3">
+<h3 class="anchored" data-anchor-id="recursive-make">Recursive Make</h3>
+<!-- $(MAKE) -C subdir, why it was the standard structure for decades, and the
+jobserver that lets -j work across the recursion boundary. Then the critique:
+Peter Miller's 1997 "Recursive Make Considered Harmful". Each sub-make sees
+only a fragment of the graph, so cross-directory dependencies are invisible,
+builds are wrong in ways that hide behind clean rebuilds, and parallelism is
+limited. Present the argument fairly and note that it is why CMake/Ninja build
+one flat graph. -->
+</section>
+<section id="non-recursive-make" class="level3">
+<h3 class="anchored" data-anchor-id="non-recursive-make">Non-Recursive Make</h3>
+<!-- The alternative: per-directory .mk fragments that are `include`d into a
+single top-level graph. Show the shape and the variable-namespacing discipline
+it requires. Honest about the ergonomic cost. -->
+</section>
+</section>
+<section id="real-makefiles" class="level2">
+<h2 class="anchored" data-anchor-id="real-makefiles">Real Makefiles</h2>
+<!-- Three complete, working examples. Each fully annotated, each building on
+the machinery already introduced. These are the reference material readers
+will actually come back for. -->
+<section id="a-hosted-cc-project" class="level3">
+<h3 class="anchored" data-anchor-id="a-hosted-cc-project">A Hosted C/C++ Project</h3>
+<!-- The one most readers need. Multi-directory sources, out-of-tree build
+directory, pattern rules, auto-generated dependencies, debug/release via
+target-specific variables, phony all/clean/test. Around 40 lines, every line
+justified.
+
+Open with the minimal case, migrated out of c.qmd when that section was
+trimmed to a cross-reference. `upper.c` reads stdin, uppercases it, writes
+stdout:
+
+    #include <stdio.h>
+    #include <ctype.h>
+
+    int main(void) {
+        int c;
+        while ((c = getchar()) != EOF) {
+            putchar(toupper(c));
+        }
+        return 0;
+    }
+
+built by a makefile with CC/CFLAGS variables, an `all` default goal, explicit
+compile and link rules, and a `clean` target. Then rebuild the same thing with
+pattern rules and auto-deps to show what the machinery buys. -->
+</section>
+<section id="a-cross-compiled-embedded-target" class="level3">
+<h3 class="anchored" data-anchor-id="a-cross-compiled-embedded-target">A Cross-Compiled Embedded Target</h3>
+<!-- Matching the dsPIC/ARM focus of c.qmd and assembly.qmd: toolchain prefix
+variables (CROSS_COMPILE ?= arm-none-eabi-), separate CFLAGS/LDFLAGS with the
+linker script, objcopy to .hex and .bin, arm-none-eabi-size for the flash/RAM
+budget, and a `flash` phony target invoking the programmer. Note what changes
+versus the hosted case and why. -->
+</section>
+<section id="make-as-a-task-runner" class="level3">
+<h3 class="anchored" data-anchor-id="make-as-a-task-runner">Make as a Task Runner</h3>
+<!-- The modern non-compilation use: the makefile as a project's command menu.
+All targets phony, no dependency graph to speak of, `make` alone prints help.
+Show the self-documenting help target that greps ## comments out of the file.
+Honest note on why people reach for Make here (it is everywhere, tab-complete
+works, no dependencies) and where it strains (arguments, dashes in names). -->
+</section>
+</section>
+<section id="parallelism" class="level2">
+<h2 class="anchored" data-anchor-id="parallelism">Parallelism</h2>
+<!-- -j N and why it is nearly free speedup, given a correct graph. Then the
+catch: -j exposes every missing dependency as a nondeterministic failure, so a
+makefile that "works" serially can fail at -j8 and pass on retry. That is
+almost always a missing prerequisite, not a Make bug.
+
+Also: -O (--output-sync) to stop interleaved output, .NOTPARALLEL, .WAIT for
+ordering in newer versions, and the jobserver's role across recursive make. -->
+</section>
+<section id="special-targets" class="level2">
+<h2 class="anchored" data-anchor-id="special-targets">Special Targets</h2>
+<!-- Reference table with the ones that matter:
+  .PHONY, .DEFAULT_GOAL, .DELETE_ON_ERROR, .SECONDARY, .INTERMEDIATE,
+  .PRECIOUS, .ONESHELL, .SUFFIXES, .NOTPARALLEL, .SILENT, .EXPORT_ALL_VARIABLES
+
+Call out .DELETE_ON_ERROR specifically and recommend it: without it, a recipe
+that fails partway leaves a corrupt output file with a fresh timestamp, and
+the next make considers it up to date. This is a silent correctness bug in a
+large fraction of real makefiles. -->
+</section>
+<section id="debugging-makefiles" class="level2">
+<h2 class="anchored" data-anchor-id="debugging-makefiles">Debugging Makefiles</h2>
+<!-- The toolkit, roughly in order of use:
+  -n / --just-print   show commands without running them
+  --trace             show why each recipe is being run
+  -p / --print-data-base   dump all rules and variables (huge; pipe it)
+  -d / --debug=b,v,i  decision-level tracing at varying volume
+  $(info)/$(warning)  printf debugging in phase 1
+  make -pn -f/dev/null  see the built-in rules alone
+  $(VAR) vs $(origin VAR) and $(flavor VAR) to ask where a value came from
+
+Then a short worked session: a target that rebuilds every time, diagnosed with
+--trace. That symptom is the most common real complaint and deserves a
+demonstrated fix. -->
+</section>
+<section id="common-pitfalls" class="level2">
+<h2 class="anchored" data-anchor-id="common-pitfalls">Common Pitfalls</h2>
+<!-- Callout-heavy section, each item stated as symptom then cause then fix:
+  - "missing separator" = spaces where a tab belongs
+  - trailing whitespace in a variable, invisible and load-bearing
+  - $ vs $$ crossing the macro/shell boundary; shell loops needing $$i
+  - each recipe line is a separate shell, so `cd` does not persist
+    (fix: && continuation, or .ONESHELL)
+  - recursive variable self-reference looping
+  - $(wildcard) at parse time missing files a recipe will create
+  - a failed recipe leaving a stale target (see .DELETE_ON_ERROR)
+  - missing prerequisites that only surface under -j
+  - `clean` breaking because a file named clean exists (see .PHONY)
+Every one of these ties back to the three-languages or two-phase model. Say so
+explicitly; that is what makes the chapter cohere. -->
+</section>
+<section id="make-and-cmake" class="level2">
+<h2 class="anchored" data-anchor-id="make-and-cmake">Make and CMake</h2>
+<div class="subheading">
+<p>What generates the makefiles you were never meant to read</p>
+</div>
+<p>If you have worked in a modern C++ project, you have probably met a tree with a <code>CMakeLists.txt</code> in nearly every directory and wondered what collects them. That question has a clean answer, but it starts with a correction.</p>
+<div class="callout callout-style-default callout-important callout-titled" title="`CMakeLists.txt` is not a makefile">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span><code>CMakeLists.txt</code> is not a makefile
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>CMake is a <strong>separate language</strong> with its own syntax and semantics. It shares nothing with Make beyond a problem domain. If you read <code>CMakeLists.txt</code> expecting makefile constructs, nothing will parse: there are no tab-indented recipes, no <code>$(VAR)</code> expansions with Make’s meaning, and no <code>target: prerequisites</code> rules.</p>
+</div>
+</div>
+<p>More importantly, CMake is not a build tool at all. It is a <strong>generator</strong>. It reads your <code>CMakeLists.txt</code> tree once, at <em>configure time</em>, and writes out real build files for some other tool to execute. By default on Unix that other tool is Make, so the thing that actually builds your project is a set of generated makefiles that no human wrote and no human should edit.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build      <span class="co"># configure: read CMakeLists.txt, generate build/</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build      <span class="co"># build: run the generated makefiles</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>That two-step split is the whole architecture. Everything else follows from it.</p>
+<section id="how-the-tree-is-collected" class="level3">
+<h3 class="anchored" data-anchor-id="how-the-tree-is-collected">How the Tree Is Collected</h3>
+<p>The mechanism is <code>add_subdirectory()</code>. The top-level <code>CMakeLists.txt</code> names its children, each child is read in turn, and each may name children of its own:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># CMakeLists.txt (top level)</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="kw">cmake_minimum_required</span>(<span class="ot">VERSION</span> <span class="dt">3.16</span>)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="kw">project</span>(demo <span class="ot">C</span>)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(lib)</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(src)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># lib/CMakeLists.txt</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> util.c)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_include_directories</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span> <span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># src/CMakeLists.txt</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> util)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Reading is recursive, but the <em>result</em> is not. Every directory contributes its targets to one global picture, and CMake emits a single flat build graph covering the entire project.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A["CMakeLists.txt&lt;br/&gt;add_subdirectory(lib)&lt;br/&gt;add_subdirectory(src)"] --&gt; B["lib/CMakeLists.txt&lt;br/&gt;add_library(util)"]
+    A --&gt; C["src/CMakeLists.txt&lt;br/&gt;add_executable(app)"]
+    B --&gt; D["One global build graph&lt;br/&gt;util → app"]
+    C --&gt; D
+    D --&gt; E["Generated makefiles&lt;br/&gt;in build/"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>This distinction is the one that matters, because the directory layout looks exactly like <a href="#recursive-make">recursive make</a> and behaves like its opposite:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 30%">
+<col style="width: 36%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Recursive Make</th>
+<th style="text-align: left;">CMake</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Per-directory file</td>
+<td style="text-align: left;">A real makefile, executed</td>
+<td style="text-align: left;">Input read at configure time</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Resulting graph</td>
+<td style="text-align: left;">One fragment per directory</td>
+<td style="text-align: left;">One graph for the whole project</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cross-directory dependencies</td>
+<td style="text-align: left;">Invisible to each sub-make</td>
+<td style="text-align: left;">Fully known</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Parallelism</td>
+<td style="text-align: left;">Limited by the recursion structure</td>
+<td style="text-align: left;">Across the entire project</td>
+</tr>
+</tbody>
+</table>
+<p>Recursive make suffers because each sub-make sees only its own fragment. CMake reads a tree and produces a whole, which is precisely the fix Peter Miller argued for.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="The generated makefiles are not recursive either">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The generated makefiles are not recursive either
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>CMake does write a <code>Makefile</code> into each mirrored build directory, which makes it look recursive. Those are thin conveniences: each one immediately <code>cd</code>s to the build root and delegates to a single <code>CMakeFiles/Makefile2</code> holding the real graph. Running <code>make</code> from a subdirectory still builds against complete dependency information.</p>
+</div>
+</div>
+</section>
+<section id="the-concept-map" class="level3">
+<h3 class="anchored" data-anchor-id="the-concept-map">The Concept Map</h3>
+<p>Most Make concepts have a CMake counterpart, with one genuine conceptual leap at the end.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 41%">
+<col style="width: 58%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Make</th>
+<th style="text-align: left;">CMake</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">A rule producing a binary</td>
+<td style="text-align: left;"><code>add_executable(app main.c)</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A rule producing a library</td>
+<td style="text-align: left;"><code>add_library(util util.c)</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>CFLAGS</code></td>
+<td style="text-align: left;"><code>target_compile_options()</code>, <code>target_compile_definitions()</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>-I</code> include paths</td>
+<td style="text-align: left;"><code>target_include_directories()</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>LDFLAGS</code>, <code>-l</code></td>
+<td style="text-align: left;"><code>target_link_libraries()</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>VAR = value</code></td>
+<td style="text-align: left;"><code>set(VAR value)</code>, scoped to the directory and below</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cross-compile variable block</td>
+<td style="text-align: left;">A toolchain file, <code>-DCMAKE_TOOLCHAIN_FILE=...</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hand-written <code>-MMD</code> dependency generation</td>
+<td style="text-align: left;">Automatic</td>
+</tr>
+</tbody>
+</table>
+<p>The leap is that a CMake <strong>target is an object with properties</strong>, not just a name in a graph. Those properties propagate along the link graph according to a keyword you choose:</p>
+<ul>
+<li><strong><code>PRIVATE</code></strong>: needed to build this target, not exposed to its consumers.</li>
+<li><strong><code>PUBLIC</code></strong>: needed to build this target <em>and</em> by anything that links it.</li>
+<li><strong><code>INTERFACE</code></strong>: not needed by this target, only by its consumers (typical for header-only libraries).</li>
+</ul>
+<p>In the example above, <code>lib/CMakeLists.txt</code> declares its include directory <code>PUBLIC</code>. So when <code>src/CMakeLists.txt</code> says <code>target_link_libraries(app PRIVATE util)</code>, the compile line for <code>main.c</code> picks up <code>-I/path/to/lib</code> automatically. Nothing in <code>src/CMakeLists.txt</code> mentions that path. The dependency carried its own build requirements along with it.</p>
+<p>This has no equivalent in Make, where include paths are a global <code>CFLAGS</code> string that every rule shares and every developer edits by hand. It is the main reason large projects moved to CMake, and the main thing to internalize when reading one.</p>
+</section>
+<section id="reading-a-cmake-project" class="level3">
+<h3 class="anchored" data-anchor-id="reading-a-cmake-project">Reading a CMake Project</h3>
+<p>A few things make a generated build tractable when you need to debug it.</p>
+<p><strong>See the real compiler command.</strong> The default output shows progress, not invocations:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-C</span> build VERBOSE=1        <span class="co"># or: cmake --build build --verbose</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Generate a compile database.</strong> Configuring with <code>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</code> writes <code>build/compile_commands.json</code>, containing the exact command for every source file. Language servers such as <code>clangd</code> consume this, and it is the fastest way to answer “what flags is this file actually being compiled with.”</p>
+<p><strong>Know where the real rules live.</strong> In a Makefiles build, the per-target rules are in <code>build/&lt;dir&gt;/CMakeFiles/&lt;target&gt;.dir/build.make</code>, and the flags are split out into <code>flags.make</code> next to it. Worth reading once, to see that the generated output is ordinary Make using the same <code>-MD</code> dependency mechanism described in <a href="#auto-generated-dependencies">Auto-Generated Dependencies</a>.</p>
+<p><strong>You do not re-run <code>cmake</code> by hand.</strong> The generated makefiles depend on the <code>CMakeLists.txt</code> files, so editing one causes the next <code>make</code> to re-run CMake automatically. This is the <a href="#include-and-include"><code>include</code> restart mechanism</a> applied at project scale.</p>
+<p><strong>Never edit anything in <code>build/</code>.</strong> It is output. The next configure overwrites it, and deleting the directory entirely is a normal, safe operation.</p>
+</section>
+<section id="make-or-ninja" class="level3">
+<h3 class="anchored" data-anchor-id="make-or-ninja">Make or Ninja</h3>
+<p>CMake’s default generator on Unix is Unix Makefiles, but Ninja is the better choice for anything large:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-G</span> Ninja</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Ninja was designed for exactly this role: a build language nobody writes by hand, optimized for a generator to emit and for a machine to execute quickly. It parallelizes by default, and its no-op builds are dramatically faster than Make’s on large projects, which matters because a no-op build is the one you run most. The <code>CMakeLists.txt</code> files do not change; only the generated output does.</p>
+<div class="see-more">
+<ul>
+<li><a href="https://cmake.org/cmake/help/latest/" target="_blank" rel="noopener noreferrer">CMake Documentation</a></li>
+<li><a href="https://cliutils.gitlab.io/modern-cmake/" target="_blank" rel="noopener noreferrer">Modern CMake</a>, the best guide to target-based CMake</li>
+<li><a href="https://ninja-build.org/" target="_blank" rel="noopener noreferrer">Ninja</a></li>
+</ul>
+</div>
+</section>
+</section>
+<section id="where-make-sits-today" class="level2">
+<h2 class="anchored" data-anchor-id="where-make-sits-today">Where Make Sits Today</h2>
+<!-- An honest closing assessment rather than a defense.
+
+Still wins at: being installed everywhere, zero configuration, small projects,
+task running, gluing heterogeneous tools (LaTeX, Quarto, containers, codegen),
+and being readable in full by one person.
+
+Lost to newer tools at: large C/C++ projects (CMake for configuration and
+portability, Ninja for speed), correctness under change (content hashing beats
+timestamps), hermetic and distributed builds (Bazel), and anything with a
+language-native toolchain (Cargo, Go).
+
+The idea that outlived the tool: the dependency graph. Every successor
+implements it. A reader who understands Make's model can read any of them.
+Tie back to the Overview. -->
+</section>
+<section id="further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="further-reading">Further Reading</h2>
+<!-- .see-more div:
+  - GNU Make Manual (the reference; genuinely well written)
+  - Robert Mecklenburg, "Managing Projects with GNU Make" (3rd ed.)
+  - Peter Miller, "Recursive Make Considered Harmful" (1997)
+  - John Graham-Cumming, "GNU Make Standard Library" and his makefile debugging
+    writing
+  - CMake documentation, for the section above
+All external links need {target="_blank" rel="noopener noreferrer"}. -->
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation column-body">
+  <div class="nav-page nav-page-previous">
+      <a href="./cpp.html" class="pagination-link" aria-label="The C++ Language">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">The C++ Language</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./rust-in.html" class="pagination-link" aria-label="Introduction">
+        <span class="nav-page-text">Introduction</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

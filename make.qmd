@@ -63,7 +63,7 @@ A shell script is imperative: it runs top to bottom and does the same work every
 
 The difference shows up the moment a project grows. A build script has to be written in a correct order, and that order has to be maintained by hand as the project changes. A makefile has no order to maintain. Rules can appear in any sequence, because the dependencies, not the layout of the file, determine what runs when.
 
-That declarative structure is also what makes `make -j8` possible. Once Make knows the graph, it knows which targets are independent, and independent targets can compile simultaneously. You get parallelism for free from a description you wrote for a different reason. A shell script cannot offer this, because it has no idea which of its lines are related.
+That declarative structure is also what makes `make -j8` (`--jobs=8`: compile in parallel by running up to 8 concurrent jobs (threads) simultaneously) possible. Once Make knows the graph, it knows which targets are independent, and independent targets can compile simultaneously. You get parallelism for free from a description you wrote for a different reason. A shell script cannot offer this, because it has no idea which of its lines are related.
 
 The cost is that the graph has to be *true*. Make trusts what you declare. A dependency you failed to mention is a dependency Make will happily ignore, producing a build that is subtly stale and, under `-j`, unpredictably broken.
 
@@ -77,7 +77,7 @@ It is also the root of a whole family of failures, because a timestamp is a prox
 The newer generation of build tools made the opposite trade. Ninja, Bazel, and Cargo hash file contents, paying to read every input in exchange for knowing precisely what changed. That is the right call for large builds, and Make's approach is the right call for being able to type `make` in an unfamiliar directory and have it work.
 
 #### The Shell Is the Recipe Language
-Make knows nothing about compiling. It has no notion of C, no concept of an object file, no model of a linker. What it knows is how to decide *whether* a command should run. The command itself is handed to `/bin/sh`.
+[Make knows nothing about compiling. It has no notion of C, no concept of an object file, no model of a linker. What it knows is how to decide *whether* a command should run. The command itself is handed to `/bin/sh`]{.hl-default}.
 
 This separation is why Make outlived the toolchains it was written for. Anything you can express as "these outputs come from those inputs, via this command" fits the model. Compiling C is one instance. So is rendering LaTeX to PDF, converting images, generating code from a schema, building a container, or rendering this notebook from `.qmd` to HTML. Make does not need to be taught any of these; it only needs to be told what depends on what.
 
@@ -105,18 +105,18 @@ Once you can identify the three on sight, the syntax stops being arbitrary. Near
 Here is the same makefile with every line labeled by which language it belongs to:
 
 ```makefile
-CC      := gcc                    # 2. macro: a variable definition
-CFLAGS  := -Wall -O2              # 2. macro
-OBJS    := main.o util.o          # 2. macro
+CC      := gcc                    # `macro`: a variable definition
+CFLAGS  := -Wall -O2              # `macro`
+OBJS    := main.o util.o          # `macro`
 
-app: $(OBJS)                      # 1. rule, with 2. macro expansions in it
-	$(CC) $(CFLAGS) -o $@ $^      # 3. shell, after 2. macros are expanded
+app: $(OBJS)                      # `rule`, with `macro` expansions in it
+	$(CC) $(CFLAGS) -o $@ $^      # `shell`, after `macros` are expanded
 
-%.o: %.c                          # 1. rule (a pattern rule)
-	$(CC) $(CFLAGS) -c $< -o $@   # 3. shell, after 2. macros are expanded
+%.o: %.c                          # `rule` (a pattern rule)
+	$(CC) $(CFLAGS) -c $< -o $@   # `shell`, after `macros` are expanded
 ```
 
-Note what the tab-indented lines are and are not. They are shell, but Make gets to them first: it expands every `$(...)` and *then* hands the resulting text to `/bin/sh`. Two languages occupy the same line, one after the other. That single fact generates a surprising number of bugs.
+Note what the tab-indented lines are and are not. They are shell, but Make gets to them first: [it expands every `$(...)` and *then* hands the resulting text to `/bin/sh`]{.hl-default}. Two languages occupy the same line, one after the other. That single fact generates a surprising number of bugs.
 
 #### Why This Framing Pays Off
 Three of the most common Make confusions are all the same confusion wearing different clothes. Each is treated fully later; the point here is that they share a cause.

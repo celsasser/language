@@ -30,7 +30,7 @@ The original ANSI C standard defined **32 keywords**. These are reserved words t
 | `unsigned` |                             |                 |            |
 
 ### The Standard Library and I/O
-C provides a rich [Standard Library](https://www.ibm.com/docs/en/i/7.5.0?topic=extensions-standard-c-library-functions-table-by-name){target="_blank" rel="noopener noreferrer"} (often referred to as `libc`). Unlike higher-level languages, C does not have built-in statements for Input/Output (I/O). Instead, I/O is handled by functions in the standard library, primarily defined in `<stdio.h>`.
+C provides a rich [Standard Library](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"} (often referred to as `libc`). Unlike higher-level languages, C does not have built-in statements for Input/Output (I/O). Instead, I/O is handled by functions in the standard library, primarily defined in `<stdio.h>`.
 
 - **`printf` / `scanf`**: The workhorses for formatted output and input.
 - **`fprintf` / `fscanf`**: Versions that work with file streams.
@@ -42,7 +42,7 @@ In an embedded context (like the dsPIC): There is no "screen" or "keyboard" by d
 ##### See Also
 - [Strings](#strings)
 - [IO](#io)
-- [IBM's Documentation](https://www.ibm.com/docs/en/i/7.5.0?topic=extensions-standard-c-library-functions-table-by-name){target="_blank" rel="noopener noreferrer"}
+- [C Standard Library headers](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"}
 
 ### The Compiler
 A **compiler** is a program that translates computer code written in one programming language (the source language, like C) into another language (the target language, usually machine code or assembly). For the dsPIC, we typically use the [XC16](https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers/xc16){target="_blank" rel="noopener noreferrer"} compiler.
@@ -849,6 +849,361 @@ Bitwise operators perform operations on the binary representations of integers. 
 | `~`      | NOT         | Inverts all bits                     | `~A` (`~0011 1100`)               | `-61` (`1100 0011`) |
 | `<<`     | Left Shift  | Shifts bits left (multiply by $2^n$) | `A << 2` (`0011 1100 << 2`)       | `240` (`1111 0000`) |
 | `>>`     | Right Shift | Shifts bits right (divide by $2^n$)  | `A >> 2` (`0011 1100 >> 2`)       | `15` (`0000 1111`)  |
+
+## The Standard Library
+The [**C standard library**](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"}) (`libc`) is not one library but a loose federation of headers, each covering a self-contained domain: string handling, memory, math, time, I/O, and more. A C program includes only the headers it needs, and a conforming compiler need not provide all of them. This chapter has already covered two corners of it in context: [The Standard String Functions](#the-standard-string-functions) (`<string.h>`) and the allocation functions under [Memory Management](#memory-management) (`<stdlib.h>`'s `malloc`/`calloc`/`realloc`/`free`). This section rounds out the tour with the rest of `<stdlib.h>`, then `<stdio.h>`, `<wchar.h>`, and `<regex.h>`.
+
+::: {.callout-note title="Hosted vs. Freestanding"}
+The C standard distinguishes two kinds of implementation. A **hosted** implementation assumes an operating system underneath it and provides the full standard library, including file I/O, wide characters, and (on POSIX systems) regular expressions. A **freestanding** implementation, the kind you get from an embedded toolchain like XC16 targeting a dsPIC with no OS, is only required to provide a minimal subset: `<stddef.h>`, `<stdint.h>`, `<stdbool.h>`, `<stdarg.h>`, `<float.h>`, `<limits.h>`, and `<iso646.h>`. Everything else, including most of what follows in this section, is present only if the vendor chose to implement or retarget it. `<stdlib.h>`'s conversion and sorting functions are pure computation and port easily to freestanding environments; `fopen`, wide-character I/O, and POSIX regex assume a filesystem or a POSIX environment that a bare-metal target simply does not have.
+:::
+
+### `stdlib.h`
+::: {.subheading}
+defined in `<stdlib.h>`
+:::
+
+Beyond the allocation functions already covered under [Memory Management](#memory-management), `<stdlib.h>` is a grab-bag of utility functions: converting strings to numbers, sorting and searching generic arrays, controlling program termination, and generating pseudo-random numbers.
+
+##### Numeric Conversion
+| Function                | Purpose                                                          |
+|:-------------------------|:-----------------------------------------------------------------|
+| `atoi(s)` / `atof(s)`    | Convert a string to `int` / `double`. No error reporting: invalid input silently returns 0. |
+| `strtol(s, endptr, base)` | Convert a string to `long`, in any base from 2 to 36 (or 0 to auto-detect `0x`/`0` prefixes). |
+| `strtod(s, endptr)`      | Convert a string to `double`, with the same error-detection mechanism. |
+
+`strtol` and `strtod` are strictly better than `atoi`/`atof` because they report failure. The `endptr` parameter is set to point at the first character that didn't parse; if it still points at the start of the string, nothing was converted.
+
+```c
+char *end;
+long value = strtol("42abc", &end, 10);
+if (end == "42abc") {
+    // nothing parsed: not a number at all
+}
+printf("parsed %ld, stopped at \"%s\"\n", value, end);   // parsed 42, stopped at "abc"
+```
+
+##### Sorting and Searching
+`qsort` and `bsearch` work on any array, of any element type, because they take a **comparator function pointer** rather than assuming a type, the same pattern covered in [Function Pointers](#function-pointers).
+
+```c
+int compare_ints(const void *a, const void *b) {
+    int arg1 = *(const int *)a;
+    int arg2 = *(const int *)b;
+    return (arg1 > arg2) - (arg1 < arg2);   // -1, 0, or 1
+}
+
+int samples[5] = {30, 10, 40, 20, 50};
+qsort(samples, 5, sizeof(int), compare_ints);
+// samples is now {10, 20, 30, 40, 50}
+
+int target = 40;
+int *found = bsearch(&target, samples, 5, sizeof(int), compare_ints);
+```
+
+Both functions operate through `void *`, so the comparator must cast back to the real element type before dereferencing. `bsearch` requires the array to already be sorted (ascending, by the same comparator) or its binary search will silently return wrong results.
+
+##### Program Control
+| Function        | Purpose                                                                 |
+|:-----------------|:-------------------------------------------------------------------------|
+| `exit(status)`   | Terminate the program immediately: flushes and closes open streams, runs any `atexit` handlers, then returns `status` to the environment. |
+| `abort(void)`    | Terminate immediately without cleanup, raising `SIGABRT`. Used for unrecoverable errors. |
+| `atexit(func)`   | Register a function to run automatically when the program exits normally. |
+
+```c
+void cleanup(void) {
+    printf("shutting down\n");
+}
+
+int main(void) {
+    atexit(cleanup);
+    // ... cleanup() runs automatically when main returns or exit() is called
+}
+```
+
+::: {.callout-note title="`exit` and `abort` on Embedded Systems"}
+On a bare-metal target there is no OS to return a status code to, and often no meaningful way to "exit" a program that's supposed to run forever. Embedded codebases frequently either omit `exit`/`abort` entirely or retarget them to something like an infinite loop plus a watchdog reset.
+:::
+
+##### Pseudo-Random Numbers
+```c
+srand(42);              // seed the generator (often with time(NULL) for variety)
+int r = rand() % 100;   // pseudo-random value in [0, 99]
+```
+
+`rand()`'s quality varies by implementation; older C libraries produce visibly patterned low-order bits (which is why `rand() % 100` is a better bet than masking), and none are suitable for anything security-related. `<stdlib.h>` has no cryptographically secure generator; that requires a platform-specific API or a dedicated library.
+
+##### See Also
+- [Memory Management](#memory-management)
+- [Function Pointers](#function-pointers)
+
+### `stdio.h`: Input and Output {#io}
+::: {.subheading}
+defined in `<stdio.h>`
+:::
+
+C has no built-in I/O statements; all of it goes through functions in `<stdio.h>`, operating on a `FILE *` **stream**. Three streams are open automatically: `stdin`, `stdout`, and `stderr`.
+
+Two independent questions shape every I/O call. First, what the call does with the bytes: interpret them against a format string (**formatted**) or move them verbatim (**unformatted**). Second, how the stream schedules them: accumulate in a buffer (**buffered**) or hand them to the OS immediately (**unbuffered**). The two axes are orthogonal; `fprintf` is formatted whether the stream buffers or not.
+
+#### Buffered vs. Unbuffered I/O
+Every stream buffers by one of three strategies:
+
+| Mode              | Behavior                                              | Typical Use            |
+|:-------------------|:--------------------------------------------------------|:-------------------------|
+| **Fully buffered** | Data accumulates until the buffer fills, then is flushed in one system call. | Files: `fopen`'d streams default to this. |
+| **Line buffered**  | Data flushes whenever a newline is written.              | Interactive terminals: `stdout` defaults to this when connected to a terminal. |
+| **Unbuffered**     | Every write happens immediately.                          | `stderr`, by convention, so error messages appear even if the program crashes before a buffer would otherwise flush. |
+
+`setvbuf(stream, buf, mode, size)` overrides the default, and `fflush(stream)` forces a flush of a fully- or line-buffered stream on demand:
+
+```c
+setvbuf(stdout, NULL, _IOFBF, 8192);   // force full buffering, 8 KB buffer
+printf("this may sit in the buffer...");
+fflush(stdout);                        // ...until this forces it out
+```
+
+Buffering matters because it trades latency for throughput: fewer, larger writes are far cheaper than many small ones, but data can be lost if the program crashes before a buffer is flushed, which is exactly why `stderr` opts out.
+
+::: {.callout-note title="Buffering on Embedded Systems"}
+The dsPIC has no filesystem and no OS-level buffered writes. When `printf` is retargeted to a UART (see [What is `stdout` on Embedded Systems?](#the-standard-library-and-i-o)), "buffering" is whatever the developer implements: often a small ring buffer (see [Ring Buffers](#ring-buffers)) that the UART's transmit interrupt drains one byte at a time. The standard library's notion of buffering modes is a hosted-environment concept; embedded code usually manages its own buffer explicitly instead of relying on `setvbuf`.
+:::
+
+#### Buffered
+
+##### Formatted I/O
+The `printf`/`scanf` family, already introduced in the [Overview](#the-standard-library-and-i-o): `printf`/`fprintf`/`sprintf` for output, `scanf`/`fscanf`/`sscanf` for input, each parsing or producing text according to a format string. `sprintf`/`sscanf` work against an in-memory buffer instead of a stream, which is how C formats or parses strings without a `<sstream>`-style abstraction.
+
+```c
+char name[32];
+int age;
+FILE *fp = fopen("people.txt", "a");
+
+fprintf(fp, "%s is %d years old\n", "Ada", 36);   // formatted write, buffered
+
+FILE *in = fopen("people.txt", "r");
+fscanf(in, "%31s is %d years old", name, &age);   // formatted read, buffered
+
+char line[64];
+sprintf(line, "%s: %d", name, age);   // format into memory, no stream involved
+```
+
+`fp` and `in` are both file streams, so each defaults to fully buffered with its own private buffer: the `fprintf` and `fscanf` calls above go through the C library rather than triggering a system call apiece.
+
+##### Unformatted (Binary) I/O
+| Function                          | Purpose                                            |
+|:-----------------------------------|:-----------------------------------------------------|
+| `fgetc(stream)` / `fputc(c, stream)` | Read or write a single byte.                     |
+| `fgets(buf, n, stream)`            | Read a line (or up to `n - 1` bytes), null-terminated. |
+| `fread(ptr, size, count, stream)`  | Read `count` objects of `size` bytes each into `ptr`. |
+| `fwrite(ptr, size, count, stream)` | Write `count` objects of `size` bytes each from `ptr`. |
+
+`fread`/`fwrite` move raw bytes without interpreting them, the natural choice for binary formats (structs, sample buffers) where `printf`'s text formatting would be both slower and lossy for floating-point precision.
+
+::: {.callout-warning title="`putc` vs. `fputc`: the macro trap"}
+Several stdio functions come in pairs that look redundant: `putc`/`fputc`, `getc`/`fgetc`. The `f` prefix does **not** mean "buffered"; both members of each pair are buffered identically, according to the stream's mode. The difference is that `fputc` and `fgetc` are guaranteed to be real functions, while `putc` and `getc` are permitted to be macros that evaluate their `stream` argument more than once.
+
+```c
+putc('x', streams[i++]);    // UNDEFINED: i may be incremented twice
+fputc('x', streams[i++]);   // safe: stream evaluated exactly once
+```
+
+The payoff for `putc`/`getc` is avoiding function-call overhead in tight loops; the cost is that any argument with side effects is a latent bug. `putchar(c)` and `getchar()` are simply `putc`/`getc` hardwired to `stdout`/`stdin`. Prefer the `f` versions unless you have measured a reason not to, and never pass them an expression that does more than name a stream.
+:::
+
+```c
+int16_t samples[256] = { /* ... */ };
+FILE *fp = fopen("samples.bin", "wb");
+
+fwrite(samples, sizeof(int16_t), 256, fp);   // one buffered bulk write
+fclose(fp);                                   // buffer flushes here if not already full
+
+FILE *in = fopen("samples.bin", "rb");
+int16_t loaded[256];
+size_t count = fread(loaded, sizeof(int16_t), 256, in);   // one buffered bulk read
+fclose(in);
+```
+
+A single `fwrite` call of 512 bytes still goes through the stream's internal buffer; the library only issues an actual `write()` system call when that buffer fills or the stream is flushed/closed, which is the whole point of buffering: many small logical writes collapse into few physical ones.
+
+#### Unbuffered
+There are two ways to get unbuffered behavior, and they sit at different levels.
+
+##### Turning Off a Stream's Buffer
+`stderr` is unbuffered by default, and any stream can be forced unbuffered with `setvbuf(stream, NULL, _IONBF, 0)`. Every write then goes straight through instead of accumulating:
+
+```c
+fprintf(stderr, "fatal: config file missing\n");   // appears immediately, no flush needed
+
+FILE *fp = fopen("audit.log", "w");
+setvbuf(fp, NULL, _IONBF, 0);   // force unbuffered, even though it's a file stream
+fprintf(fp, "user logged in\n");   // handed to the OS now, not at fclose
+```
+
+This is still stdio; you are just telling it to hold nothing back.
+
+##### Below stdio: File Descriptors
+::: {.subheading}
+declared in `<unistd.h>` and `<fcntl.h>`, POSIX only, not part of ISO C
+:::
+
+The genuinely unbuffered layer is the one stdio is built on. POSIX exposes the raw system calls directly, operating on an `int` **file descriptor** rather than a `FILE *`:
+
+| Buffered (ISO C stdio) | Unbuffered (POSIX)      | Purpose                        |
+|:------------------------|:-------------------------|:--------------------------------|
+| `fopen`                 | `open`                   | Open a file.                   |
+| `fread`                 | `read`                   | Read bytes.                    |
+| `fwrite`                | `write`                  | Write bytes.                   |
+| `fclose`                | `close`                  | Close a file.                   |
+| `fseek`                 | `lseek`                  | Reposition the offset.          |
+
+```c
+#include <fcntl.h>
+#include <unistd.h>
+
+int fd = open("samples.bin", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+if (fd < 0) {
+    perror("open");
+    return 1;
+}
+
+int16_t samples[256] = { /* ... */ };
+ssize_t written = write(fd, samples, sizeof(samples));   // one syscall, no userspace buffer
+if (written != (ssize_t)sizeof(samples)) {
+    // a short write is not an error: write() may transfer fewer bytes than requested
+}
+close(fd);
+```
+
+There is no userspace buffer anywhere in that sequence: `write` is a thin wrapper over the system call itself. `fwrite` is this plus a buffer, which is precisely what "buffered I/O" means.
+
+Two habits carry over from stdio and two do not. Error reporting still goes through `errno`/`perror`, but these functions signal failure with a negative return rather than `NULL` or `EOF`. And `write` is permitted to perform a **short write**, transferring fewer bytes than asked; robust code loops until the full count is written, a detail `fwrite` handles for you.
+
+::: {.callout-note title="Unbuffered is not the same as durable"}
+Turning off buffering means stdio (or your code) hands bytes to the kernel immediately. It does not mean those bytes are on the disk. The kernel's own page cache still holds them, so an unbuffered write survives a *process* crash but not a power loss. Getting data onto physical media requires `fsync(fd)` (or `fflush` followed by `fsync` when going through stdio). Audit logs and databases that must survive hardware failure use `fsync`; unbuffered alone is not enough.
+:::
+
+The tradeoff is throughput. A system call costs on the order of a microsecond, against tens of nanoseconds for a `memcpy` into a buffer, so writing a file one byte at a time through `write` is dramatically slower than through `fwrite`. Reach for the unbuffered layer when you need immediacy, exact control over syscall boundaries, or access to things stdio cannot express (sockets, `O_APPEND` semantics, non-blocking I/O), not as a default.
+
+#### File Management
+`fopen`'s mode string controls direction, truncation, and translation:
+
+| Mode   | Behavior                                                                 |
+|:--------|:--------------------------------------------------------------------------|
+| `"r"`   | Read only. Fails if the file does not exist.                             |
+| `"w"`   | Write only. Creates the file, or **truncates it to zero length** if it exists. |
+| `"a"`   | Append. Creates the file if needed; every write goes to the end.          |
+| `"r+"`  | Read and write. Fails if the file does not exist; does not truncate.      |
+| `"w+"`  | Read and write, truncating as `"w"` does.                                 |
+| `"a+"`  | Read anywhere, but all writes still go to the end.                        |
+| `…"b"`  | Appended to any of the above (`"rb"`, `"w+b"`) for binary mode.            |
+
+```c
+FILE *fp = fopen("config.txt", "r+");   // read and write, must already exist
+if (fp == NULL) {
+    perror("fopen failed");
+    return 1;
+}
+
+fseek(fp, 0, SEEK_END);        // reposition: end of file
+long size = ftell(fp);         // current offset, so: the file's size in bytes
+rewind(fp);                    // back to the start, equivalent to fseek(fp, 0, SEEK_SET)
+
+fclose(fp);
+```
+
+Two traps are worth internalizing. `"w"` silently destroys an existing file's contents the moment you open it, so reaching for it when you meant `"a"` or `"r+"` is unrecoverable. And the `"b"` suffix is a no-op on POSIX systems but essential for portability to Windows, where text mode silently rewrites `\n` to `\r\n` on the way out and back on the way in, corrupting any binary payload that happens to contain those byte values.
+
+#### Error Handling
+```c
+FILE *fp = fopen("data.txt", "r");
+if (fp == NULL) {
+    perror("fopen");        // prints a message based on errno
+    return 1;
+}
+
+int c;
+while ((c = fgetc(fp)) != EOF) {
+    putchar(c);
+}
+
+if (ferror(fp)) {
+    fprintf(stderr, "read error\n");
+} else if (feof(fp)) {
+    printf("reached end of file normally\n");
+}
+fclose(fp);
+```
+
+`feof`/`ferror` distinguish *why* a read loop stopped, since a function like `fgetc` returns the same `EOF` sentinel for both "end of file" and "an error occurred." This is the same `char`-vs-`int` subtlety already covered under [`char` vs. `int` from Input](#char-vs.-int-from-input): `EOF` must be distinguishable from every valid byte value.
+
+#### See Also
+- [The Standard Library and I/O](#the-standard-library-and-i-o)
+- [`char` vs. `int` from Input](#char-vs.-int-from-input)
+- [Ring Buffers](#ring-buffers)
+
+### `wchar.h`
+::: {.subheading}
+defined in `<wchar.h>`
+:::
+
+C's `char` is one byte, which is fine for ASCII but cannot hold most non-Latin characters directly. `<wchar.h>` introduces `wchar_t`, a wider integer type (commonly 16 or 32 bits, platform-dependent), along with wide analogues of familiar functions: `wprintf`/`wscanf` for formatted I/O, `wcslen`/`wcscpy`/`wcscmp` mirroring the `<string.h>` functions from [The Standard String Functions](#the-standard-string-functions).
+
+```c
+#include <wchar.h>
+#include <locale.h>
+
+wchar_t greeting[] = L"café";   // L prefix marks a wide string literal
+setlocale(LC_ALL, "");              // required before wide I/O behaves sensibly
+wprintf(L"%ls has %zu characters\n", greeting, wcslen(greeting));
+```
+
+::: {.callout-note title="C's Thin Unicode Story"}
+`<wchar.h>` predates Unicode's dominance and reflects an era when "wide character" meant "big enough for one locale's character set," not "a full Unicode code point." Compared to Rust's UTF-8-guaranteed `String` or Python's Unicode-native `str`, C's wide-character support is inconsistent across platforms (`wchar_t` is 16 bits on Windows, 32 on Linux) and rarely used in new code. In practice, most modern C code sidesteps `<wchar.h>` entirely and treats UTF-8 text as a plain `char` byte sequence, since UTF-8 is deliberately designed to be transparent to byte-oriented code (no embedded nulls, no ambiguity with ASCII). `<wchar.h>` is also irrelevant on the dsPIC-class embedded targets this book otherwise focuses on, where text handling, if it exists at all, is almost always raw ASCII bytes over a UART.
+:::
+
+### `regex.h`
+::: {.subheading}
+defined in `<regex.h>`, POSIX only, not part of ISO C
+:::
+
+Unlike everything else in this section, `<regex.h>` is a POSIX extension, not part of the ISO C standard. It provides POSIX-flavored regular expression matching in four functions:
+
+| Function                              | Purpose                                       |
+|:----------------------------------------|:-------------------------------------------------|
+| `regcomp(preg, pattern, flags)`         | Compile a pattern string into a `regex_t`.        |
+| `regexec(preg, string, nmatch, matches, flags)` | Match a compiled pattern against a string.        |
+| `regfree(preg)`                         | Release resources held by a compiled pattern.     |
+| `regerror(code, preg, buf, size)`       | Translate an error code into a human-readable message. |
+
+```c
+#include <regex.h>
+#include <stdio.h>
+
+regex_t pattern;
+if (regcomp(&pattern, "^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$", REG_EXTENDED) != 0) {
+    fprintf(stderr, "failed to compile pattern\n");
+    return 1;
+}
+
+const char *input = "192.168.1.1";
+int result = regexec(&pattern, input, 0, NULL, 0);
+if (result == 0) {
+    printf("%s looks like an IPv4 address\n", input);
+} else if (result == REG_NOMATCH) {
+    printf("%s does not match\n", input);
+}
+
+regfree(&pattern);
+```
+
+`regcomp` must be paired with `regfree` (compiling allocates internal state), the same discipline as `malloc`/`free` under [Memory Management](#memory-management). `REG_EXTENDED` selects POSIX Extended Regular Expressions (the more familiar `+`/`?`/`|` syntax); omitting it falls back to POSIX Basic Regular Expressions, an older and more awkward dialect.
+
+::: {.callout-note title="Availability"}
+Because `<regex.h>` is POSIX rather than ISO C, it is absent on Windows without a compatibility layer (MinGW, Cygwin, WSL) and virtually never available on embedded toolchains. C++ programmers reaching for pattern matching generally use `<regex>` instead, which is part of the C++ standard library proper and portable wherever a conforming C++ compiler runs.
+:::
+
+##### See Also
+- [C Standard Library headers](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"}
 
 ## The Build
 The "build" is the process of converting your entire project (source files, headers, configuration bits) into a machine-readable format. In an embedded context, this output is often a **HEX file**. This file is not run by an OS like an `.exe` on Windows; instead, it is "flashed" directly into the microcontroller's non-volatile program memory. The build process also generates a **Map File**, which is critical for debugging. It shows exactly where every function and variable is placed in the device's memory.

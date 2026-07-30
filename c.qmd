@@ -124,9 +124,9 @@ Prefer `int16_t` over `short` and `uint8_t` over `unsigned char` whenever the ex
 ```c
 sizeof(int)         // e.g. 4
 sizeof(uint16_t)    // 2
-int buf[64];
-sizeof(buf)         // 128  (64 elements × 2 bytes), NOT the pointer size
-sizeof(buf) / sizeof(buf[0])   // 64 — the idiom for array length
+int16_t buf[64];
+sizeof(buf)         // 128 (64 elements × 2 bytes), NOT the pointer size
+sizeof(buf) / sizeof(buf[0])   // 64: the idiom for array length
 ```
 
 That last idiom is the canonical way to compute an array's element count. Note it only works on a true array in scope, not on a pointer (a distinction developed in [Arrays and Pointers](#arrays-and-pointers)).
@@ -168,7 +168,7 @@ typedef struct Point Point;      // avoid writing 'struct Point' everywhere
 typedef int (*Comparator)(int, int);  // a name for a function-pointer type
 ```
 
-The `_t` suffix (as in `int16_t`, `size_t`, `State_t`) is a widespread convention marking a type name; note that POSIX reserves identifiers ending in `_t`, so many projects avoid using `_t` for their own typedefs.
+The `_t` suffix (as in `int16_t`, `size_t`, `State_t`) is a widespread convention marking a type name. Strictly, POSIX reserves `_t` for future additions to its own headers, so a name you invent today could in principle collide with a standard one tomorrow. In practice the convention is near-universal and the risk is small; this chapter uses it throughout (`State_t`, `CircularBuffer_t`). Projects that care about strict portability sidestep it with a project prefix instead, such as `dsp_state_t` or `AudioState`.
 
 ### Reading Declarations
 C's declaration syntax is famously puzzling. The guiding principle is *"declaration mirrors use"*: a declaration reads the way the variable is used in an expression. `int *p` declares `p` such that `*p` is an `int`.
@@ -261,7 +261,7 @@ int add(int a, int b) {
 ```
 
 ::: {.callout-warning title="Always write prototypes"}
-A function used before the compiler has seen a declaration is, in old C, assumed to return `int` with unchecked arguments. This "implicit declaration" is a rich source of bugs and is an error in C99 and later. Declare every function before use, and write `void` explicitly for an empty parameter list: `int get_value(void)`. An empty `()` in C means "unspecified arguments," *not* "no arguments", another trap C++ does not share.
+A function used before the compiler has seen a declaration is, in old C, assumed to return `int` with unchecked arguments. This "implicit declaration" is a rich source of bugs and is an error in C99 and later. Declare every function before use, and write `void` explicitly for an empty parameter list: `int get_value(void)`. An empty `()` in C means "unspecified arguments," *not* "no arguments"; another trap C++ does not share.
 :::
 
 **C is pass-by-value, always.** A function receives *copies* of its arguments. Assigning to a parameter changes only the local copy; the caller's variable is untouched.
@@ -474,14 +474,14 @@ All four expressions compile to identical machine code.
 Arrays and pointers are *not* the same:
 
 ```c
-int arr[10];
-int *ptr = arr;
+int16_t arr[10];
+int16_t *ptr = arr;
 
-sizeof(arr);  // Returns 40 (10 elements × 4 bytes each, on 32-bit)
-sizeof(ptr);  // Returns 4 (size of the pointer itself)
+sizeof(arr);  // 20 on any target: 10 elements × 2 bytes each
+sizeof(ptr);  // the size of a pointer: 2 on dsPIC, 8 on a 64-bit desktop
 
-&arr;  // Type: int (*)[10]  (pointer to array of 10 ints)
-&ptr;  // Type: int**          (pointer to pointer to int)
+&arr;  // Type: int16_t (*)[10]  (pointer to array of 10 int16_t)
+&ptr;  // Type: int16_t **       (pointer to pointer to int16_t)
 ```
 
 **Key distinction:** An array is a fixed-size block of memory. A pointer is a variable holding an address.
@@ -576,7 +576,7 @@ printf("Float bits: 0x%08X\n", x.u);
 ```
 
 ::: {.callout-warning title="Alignment Matters"}
-Structures and unions must be properly aligned for efficient access. The dsPIC requires 16-bit values to be at even addresses. Use `__attribute__((packed))` cautiously,it disables alignment, slowing access.
+Structures and unions must be properly aligned for efficient access. The dsPIC requires 16-bit values to be at even addresses. Use `__attribute__((packed))` cautiously: it disables alignment, slowing access.
 :::
 
 ### The `const` and `static` Keywords
@@ -851,7 +851,7 @@ Bitwise operators perform operations on the binary representations of integers. 
 | `>>`     | Right Shift | Shifts bits right (divide by $2^n$)  | `A >> 2` (`0011 1100 >> 2`)       | `15` (`0000 1111`)  |
 
 ## The Standard Library
-The [**C standard library**](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"}) (`libc`) is not one library but a loose federation of headers, each covering a self-contained domain: string handling, memory, math, time, I/O, and more. A C program includes only the headers it needs, and a conforming compiler need not provide all of them. This chapter has already covered two corners of it in context: [The Standard String Functions](#the-standard-string-functions) (`<string.h>`) and the allocation functions under [Memory Management](#memory-management) (`<stdlib.h>`'s `malloc`/`calloc`/`realloc`/`free`). This section rounds out the tour with the rest of `<stdlib.h>`, then `<stdio.h>`, `<wchar.h>`, and `<regex.h>`.
+The [**C standard library**](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"} (`libc`) is not one library but a loose federation of headers, each covering a self-contained domain: string handling, memory, math, time, I/O, and more. A C program includes only the headers it needs, and a conforming compiler need not provide all of them. This chapter has already covered two corners of it in context: [The Standard String Functions](#the-standard-string-functions) (`<string.h>`) and the allocation functions under [Memory Management](#memory-management) (`<stdlib.h>`'s `malloc`/`calloc`/`realloc`/`free`). This section rounds out the tour with the rest of `<stdlib.h>`, then `<stdio.h>`, `<wchar.h>`, and `<regex.h>`.
 
 ::: {.callout-note title="Hosted vs. Freestanding"}
 The C standard distinguishes two kinds of implementation. A **hosted** implementation assumes an operating system underneath it and provides the full standard library, including file I/O, wide characters, and (on POSIX systems) regular expressions. A **freestanding** implementation, the kind you get from an embedded toolchain like XC16 targeting a dsPIC with no OS, is only required to provide a minimal subset: `<stddef.h>`, `<stdint.h>`, `<stdbool.h>`, `<stdarg.h>`, `<float.h>`, `<limits.h>`, and `<iso646.h>`. Everything else, including most of what follows in this section, is present only if the vendor chose to implement or retarget it. `<stdlib.h>`'s conversion and sorting functions are pure computation and port easily to freestanding environments; `fopen`, wide-character I/O, and POSIX regex assume a filesystem or a POSIX environment that a bare-metal target simply does not have.
@@ -874,13 +874,17 @@ Beyond the allocation functions already covered under [Memory Management](#memor
 `strtol` and `strtod` are strictly better than `atoi`/`atof` because they report failure. The `endptr` parameter is set to point at the first character that didn't parse; if it still points at the start of the string, nothing was converted.
 
 ```c
+const char *input = "42abc";
 char *end;
-long value = strtol("42abc", &end, 10);
-if (end == "42abc") {
+
+long value = strtol(input, &end, 10);
+if (end == input) {
     // nothing parsed: not a number at all
 }
 printf("parsed %ld, stopped at \"%s\"\n", value, end);   // parsed 42, stopped at "abc"
 ```
+
+Compare `end` against the *variable* holding the string, never against a literal: `end == "42abc"` compares addresses, and identical literals are not guaranteed to share one.
 
 ##### Sorting and Searching
 `qsort` and `bsearch` work on any array, of any element type, because they take a **comparator function pointer** rather than assuming a type, the same pattern covered in [Function Pointers](#function-pointers).
@@ -1188,13 +1192,17 @@ if (regcomp(&pattern, "^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$", REG_EXTENDED) != 0)
 const char *input = "192.168.1.1";
 int result = regexec(&pattern, input, 0, NULL, 0);
 if (result == 0) {
-    printf("%s looks like an IPv4 address\n", input);
+    printf("%s has the shape of an IPv4 address\n", input);
 } else if (result == REG_NOMATCH) {
     printf("%s does not match\n", input);
 }
 
 regfree(&pattern);
 ```
+
+::: {.callout-warning title="Shape is not validity"}
+That pattern checks *structure*, not *meaning*: `[0-9]+` accepts any run of digits, so `999.999.999.999` matches happily despite being no address at all. Constraining each octet to 0-255 in pure regex is possible but grotesque (`(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)`), which is the general lesson: regex is good at recognizing shape and poor at enforcing range. Match the shape, then validate the captured numbers in C.
+:::
 
 `regcomp` must be paired with `regfree` (compiling allocates internal state), the same discipline as `malloc`/`free` under [Memory Management](#memory-management). `REG_EXTENDED` selects POSIX Extended Regular Expressions (the more familiar `+`/`?`/`|` syntax); omitting it falls back to POSIX Basic Regular Expressions, an older and more awkward dialect.
 
@@ -1541,9 +1549,11 @@ This prevents the compiler from optimizing away reads/writes to:
 ```c
 // Without volatile, the compiler might replace this loop with a generic 'while(true)'
 // or remove the read entirely if it thinks the value never changes.
-volatile int *status_reg = 0xFF00;
+volatile uint16_t *status_reg = (volatile uint16_t *)0xFF00;
 while (*status_reg == 0); // Wait for hardware flag
 ```
+
+The cast is required: assigning a bare integer to a pointer is a constraint violation, and modern compilers reject it outright. Note also the fixed-width `uint16_t` rather than `int`, since a hardware register has an exact width.
 
 ## Features and Libraries for DSP
 Digital Signal Processing requires specific features to handle continuous signals efficiently.
@@ -1568,8 +1578,10 @@ In 16-bit DSPs, we often use the **Q15** (or 1.15) format.
 - The 16 bits are treated as a signed integer range $[-32768, +32767]$.
 - Conceptually, we divide this integer by $2^{15}$ (32768).
 - **Range**: $-1.0$ to $\approx 0.999969$.
-- **0x7FFF** (32767) represents $\approx 1.0$.
-- **0x8000** (-32768) represents $-1.0$.
+- **0x8000** (-32768) represents exactly $-1.0$.
+- **0x7FFF** (32767) represents $32767/32768 \approx 0.999969$, just short of $+1.0$.
+
+The range is deliberately asymmetric: $-1.0$ is exactly representable but $+1.0$ is not. This is why multiplying two Q15 values is safe (the only product that could reach $+1.0$ is $-1.0 \times -1.0$, the single case that saturates) and why DSP hardware provides saturation to handle it.
 
 **Arithmetic:** When you multiply two Q15 numbers, the result is conceptually Q30 (since $2^{-15} \times 2^{-15} = 2^{-30}$). To store this back into a 16-bit Q15 variable, you must shift the result to the right by 15 bits.
 
@@ -1580,7 +1592,7 @@ $$
 DSP hardware often does this shift (and handles saturation so overflows don't wrap around to negative numbers) automatically in a single cycle.
 
 ### DSP Extensions and Intrinsics
-Standard C does not natively support specialized DSP hardware instructions like [MAC](./glossary.qmd#mac) (Multiply-and-Accumulate) with saturation. To bridge this, compilers provide **intrinsics** , function-like commands that map directly to assembly instructions.
+Standard C does not natively support specialized DSP hardware instructions like [MAC](./glossary.qmd#mac) (Multiply-and-Accumulate) with saturation. To bridge this, compilers provide **intrinsics**: function-like commands that map directly to assembly instructions.
 
 ```c
 // Example of a built-in intrinsic for dsPIC (XC16)
@@ -1604,21 +1616,27 @@ Using these pre-validated libraries is often more efficient than writing raw C i
 C gives you enormous power and freedom, but with that comes the responsibility to avoid subtle bugs. Here are the most common traps that snare even experienced programmers.
 
 ### 1. Integer Promotion and Implicit Conversions
-C's type promotion rules are surprising. In expressions mixing different integer types, *smaller types are promoted to larger types*.
+C's type promotion rules are surprising. Before arithmetic, any integer type narrower than `int` is promoted to `int` (the *integer promotions*). The arithmetic therefore happens at `int` width, not at the operands' declared width, and whether that saves you or burns you depends entirely on how wide `int` is on your target.
 
 ```c
 int16_t a = 30000;
 int16_t b = 30000;
 
-// Wrong! Overflow before assignment
-int32_t result = a + b;  // a + b happens in 16-bit: -5536
-                         // Then promoted to int32_t
-
-// Correct: Promote before arithmetic
-int32_t result = (int32_t)a + b;  // First term is int32_t, b is promoted
+int32_t result = a + b;
+// Desktop (32-bit int): a and b promote to int, sum is 60000, correct.
+// dsPIC   (16-bit int): a and b promote to int, which is only 16 bits,
+//                       so the sum overflows to -5536 before assignment.
 ```
 
-**Rule of thumb:** When doing arithmetic that might overflow, explicitly cast the first operand to the desired result type.
+The bug is not that the compiler used the declared 16-bit type; it is that `int` itself is 16 bits on the dsPIC, so promotion buys no extra headroom. Signed overflow is undefined behavior, so the `-5536` is what typically happens, not what is guaranteed.
+
+Casting one operand to a type at least as wide as the result forces the arithmetic to happen at that width:
+
+```c
+int32_t result = (int32_t)a + b;   // b converts to int32_t; addition is 32-bit everywhere
+```
+
+**Rule of thumb:** When arithmetic on narrow types might overflow, cast one operand to the desired result type. Do not assume promotion to `int` gives you room to spare; on a 16-bit target it does not.
 
 ### 2. Operator Precedence Surprises
 ```c
@@ -1698,9 +1716,9 @@ The classic C vulnerability:
 char buffer[10];
 strcpy(buffer, "This string is way too long");  // Buffer overflow!
 
-// Safe alternatives
+// No overflow, but silently truncates to "This stri"
 strncpy(buffer, source, sizeof(buffer) - 1);
-buffer[sizeof(buffer) - 1] = '\0';  // Ensure null termination
+buffer[sizeof(buffer) - 1] = '\0';  // strncpy may not terminate: do it yourself
 ```
 
 Or better yet, use `snprintf`:
@@ -1708,6 +1726,10 @@ Or better yet, use `snprintf`:
 ```c
 snprintf(buffer, sizeof(buffer), "Value: %d", x);
 ```
+
+::: {.callout-warning title="Truncation is a bug too"}
+`strncpy` stops the overflow but replaces it with a quieter failure: the string is cut short and nothing tells you. If the value mattered (a path, a device identifier, a command), you now carry corrupted data forward instead of crashing. `snprintf` at least reports it: its return value is the length the output *would* have needed, so `if (n >= sizeof(buffer))` detects truncation. Treat a bound as something to check, not merely something to impose.
+:::
 
 ### 6. Off-by-One Errors
 ```c
@@ -1722,7 +1744,13 @@ for(int i = 0; i < 10; i++) {
 }
 ```
 
-**Mnemonic:** Use `<` for counting up to a size, `>` for counting down to zero.
+**Rule:** A loop over `n` elements runs while the index is `< n`, never `<= n`. Counting down, start at `n - 1` and run while the index is `>= 0`:
+
+```c
+for (int i = n - 1; i >= 0; i--) { /* ... */ }
+```
+
+Beware the unsigned version of that descending loop: if `i` is `unsigned`, `i >= 0` is always true and the loop never ends.
 
 ### 7. Pointer Arithmetic Gone Wrong
 ```c
@@ -1874,7 +1902,7 @@ void __attribute__((interrupt, auto_psv)) _T1Interrupt(void)
 	- If you forget this, the ISR will immediately trigger again!
 	- Each interrupt source has a flag bit
 
-4. **No return type, no parameters**: ISRs are called by hardware, not by your code
+4. **Returns `void`, takes no parameters**: ISRs are invoked by hardware, not by your code, so there is no caller to pass arguments or receive a result
 
 ### Communicating Between ISR and Main
 ISRs and main code run asynchronously, the ISR can fire at any moment. To share data safely:

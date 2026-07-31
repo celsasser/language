@@ -253,13 +253,23 @@ Always quote it: `"$@"` is the only form that preserves arguments exactly, each 
 ### Arrays
 A shell variable holds text. An **array** holds an ordered list of values, which matters because the alternative, jamming a list into one string and splitting it later, is exactly the practice the [quoting](#quoting-and-expansion) section warns against. A path with a space in it survives an array intact and does not survive a space-separated string.
 
+Assignment looks the same in both shells. Reading the values back does not, so the expansions below are written twice:
+
 ```bash
 files=(report.txt "my notes.md" data.csv)     # zsh and bash both
 
-echo "$files[2]"        # my notes.md      (zsh: 1-based)
-echo "${#files}"        # 3                (zsh: element count)
+# zsh
+echo "$files[2]"        # my notes.md      (1-based, braces optional)
+echo "${#files}"        # 3                (element count)
 echo "$files[@]"        # all elements
+
+# bash
+echo "${files[1]}"      # my notes.md      (0-based, braces required)
+echo "${#files[@]}"     # 3                (element count)
+echo "${files[@]}"      # all elements
 ```
+
+The braced forms (`"${files[1]}"`, `"${files[@]}"`) also work in zsh, so when in doubt, write those.
 
 ::: {.callout-warning title="Arrays are where zsh and bash genuinely differ"}
 Most of this guide applies to both shells. Arrays are the exception, and the differences bite immediately.
@@ -283,12 +293,12 @@ files=()                          # empty
 files+=(newfile.txt)              # append
 files=("${files[@]}" prepended)   # prepend, the clumsy way
 
-for file in "$files[@]"; do       # quoted: each element stays one word
+for file in "${files[@]}"; do     # quoted: each element stays one word
     echo "processing: $file"
 done
 ```
 
-Quoting the expansion matters for the same reason it always does. `"$files[@]"` yields one word per element regardless of spaces; unquoted, each element is re-split on whitespace and `my notes.md` becomes two arguments.
+Quoting the expansion matters for the same reason it always does. `"${files[@]}"` yields one word per element regardless of spaces; unquoted, each element is re-split on whitespace and `my notes.md` becomes two arguments.
 
 A common source of arrays is a command's output, and here the shells diverge again:
 
@@ -914,7 +924,7 @@ So `*.txt` as a glob means "any filename ending in `.txt`," but `*.txt` as a reg
 ```bash
 ls *.qmd            # every .qmd file in this directory
 ls la-*.qmd         # every .qmd file starting with "la-"
-ls chapter?.md      # chapter1.md, chapter7.md — but not chapter12.md
+ls chapter?.md      # chapter1.md, chapter7.md, but not chapter12.md
 ls [abc]*.txt       # .txt files starting with a, b, or c
 ls **/*.png         # every .png at any depth (zsh)
 ```

@@ -44,10 +44,24 @@ When practitioners say "modern C++," they mean C++11 onward. The difference is n
 Zero-overhead abstraction
 :::
 
-<!-- The core design tenets: you don't pay for what you don't use; abstractions
-should cost no more than the hand-written equivalent; direct hardware access
-preserved from C; multi-paradigm (procedural, OO, generic, functional).
-Contrast with Rust's safety-first and Python's programmer-time-first stances. -->
+Every language optimizes for something, and the choice shows up in a thousand small decisions. Python optimizes for programmer time and accepts a 50x performance cost to get it. Rust optimizes for safety and accepts a borrow checker that will argue with you. C++ optimizes for **abstraction you do not pay for**, and accepts the complexity that goal demands.
+
+Stroustrup states it as two rules:
+
+> **What you don't use, you don't pay for.** And what you do use, you couldn't hand-code any better.
+
+The first rule explains the language's shape. Exceptions, RTTI, virtual dispatch, and the entire standard library are opt-in; a program that avoids them pays nothing for their existence, which is why C++ remains viable on a microcontroller with kilobytes of RAM. It is also why the language never acquired a garbage collector: mandatory runtime machinery would tax every program to benefit some.
+
+The second rule is the more demanding one, and it is what makes C++ interesting. A `std::sort` call compiles to code as fast as a hand-written quicksort, faster than C's `qsort` in fact, because the comparison is inlined rather than called through a function pointer. A `unique_ptr` compiles to exactly the pointer it wraps, with the `delete` you would have written yourself. A range-based `for` over a `vector` produces the same loop as the index arithmetic. The abstraction exists in the source and evaporates in the object file, which is a promise most languages cannot make and C++ mostly keeps.
+
+Three further commitments follow from those two:
+
+- **Direct hardware access is preserved.** C's pointer model, memory layout, and arithmetic all survive intact. You can still cast an integer to a pointer and write a hardware register. C++ adds layers above C without hiding it.
+- **Multi-paradigm, deliberately.** Procedural, object-oriented, generic, and functional styles are all first-class, and idiomatic modern C++ mixes them in a single function without apology. This was not indecision. Stroustrup's position is that no one paradigm fits every problem, and a systems language should not force the choice.
+- **Static type safety, where it is free.** C++ prefers errors at compile time when catching them costs nothing at run time, which is the logic behind `enum class`, `constexpr`, concepts, and the `static_cast` family.
+
+The cost of this design is the thing everyone complains about, and the complaint is fair. Refusing to break backward compatibility means every superseded approach is still in the language: `new` and `delete` sit alongside smart pointers, C arrays alongside `std::array`, macros alongside `constexpr`. Nothing was ever removed, so the language only grows, and a newcomer faces decades of accumulated strata with no signposts saying which layer is current. That is precisely the gap this chapter tries to fill.
+
 ## What C++ Adds to C
 <!-- Orienting section: the reader knows C. Enumerate at a high level what C++
 layers on, each expanded in its own section below. This is the "map." -->
@@ -62,10 +76,37 @@ layers on, each expanded in its own section below. This is the "map." -->
 - Stronger type safety (`nullptr`, `enum class`, `static_cast` family)
 
 ### Small but Pervasive Differences
-<!-- The little things that bite a C programmer immediately: bool as a real
-keyword, stricter implicit conversions, // comments (well before C99), struct
-names as types without typedef, function overloading changing name-mangling,
-`nullptr` vs NULL, uniform initialization braces. Quick table. -->
+::: {.subheading}
+The papercuts that greet a C programmer on day one
+:::
+
+The features above are the headline additions, each with its own section below. But a C programmer's first hour with C++ is rarely spent on templates. It is spent on a scatter of small changes that make otherwise-valid C either fail to compile or, worse, compile into something subtly different. They are worth knowing up front because none of them are hard, and every one of them will happen to you.
+
+| Concern             | C                                                     | C++                                                              |
+|---------------------|-------------------------------------------------------|------------------------------------------------------------------|
+| Booleans            | `_Bool` (C99), or `int` with `#define TRUE 1`          | `bool`, `true`, `false` are keywords                             |
+| Null pointer        | `NULL`, a macro for `0` or `((void*)0)`               | `nullptr`, with its own type `std::nullptr_t`                    |
+| `struct` names      | `struct Point p;` unless you `typedef`                | `Point p;` works directly                                        |
+| `void*` conversion  | Implicitly converts to any object pointer            | Requires an explicit cast                                        |
+| Casts               | `(int)x`                                              | `static_cast<int>(x)` and friends preferred                      |
+| Character literals  | `'a'` has type `int`                                  | `'a'` has type `char`                                            |
+| Empty parameter list| `void f()` means "unspecified arguments"              | `void f()` means "takes no arguments", identical to `f(void)`    |
+| Function names      | One symbol per name                                   | [Mangled](#name-mangling) with types; overloading is legal        |
+| `const` at file scope | External linkage                                    | Internal linkage, so it may live in a header                     |
+| Initialization      | `= value` or `= { ... }`                              | Braces work everywhere; see [uniform initialization](#uniform-initialization) |
+
+Three of these deserve a sentence more than the table gives them.
+
+**`void*` no longer converts silently.** This is the one that breaks the most existing C code, and it is why the canonical C idiom `int *p = malloc(n * sizeof *p);` is a compile error in C++. C++ demands `static_cast<int*>(malloc(...))`, which is a good moment to notice that you should have been writing [`new`](#new-delete) or, better, a [container](#containers) instead. The stricter rule exists because C++ leans far harder on the type system than C does; a language with overloading, templates, and constructors cannot afford a pointer type that quietly becomes any other pointer type.
+
+**`nullptr` is not just tidier than `NULL`.** Because `NULL` is typically the literal `0`, it is indistinguishable from an integer, and with overloading that ambiguity becomes a real bug. Given both `void log(int)` and `void log(char*)`, the call `log(NULL)` resolves to the *integer* overload. `nullptr` has a distinct type that converts to any pointer and to nothing else, so `log(nullptr)` picks the pointer overload as you intended.
+
+**`void f()` changed meaning.** In C, an empty parameter list declares a function whose arguments are unspecified, which is a holdover from pre-ANSI C and defeats argument checking entirely; `f(void)` is how you actually say "no parameters." C++ fixed this by making the empty list mean exactly what it looks like. You can still write `f(void)` for compatibility, but there is no reason to.
+
+::: {.callout-note title="`//` comments were C++'s first, though it hardly matters now"}
+Single-line `//` comments came from C++ (by way of BCPL) and were only adopted into C with C99. If you have worked on a codebase pinned to C89, that difference is memorable. On any current compiler it is a non-issue, and it is mentioned here only so the historical direction of borrowing is clear: the flow of features between C and C++ has never been one-way.
+:::
+
 ## Lambdas and Modern C++
 ::: {.subheading}
 Anonymous functions and the C++11-and-later additions
@@ -277,9 +318,71 @@ The same idea appears in Rust and Python, but each language makes different trad
 The through-line: C++ hands you fine-grained, explicit control and expects you to wield it correctly; Rust encodes the same distinctions in the type system and checks them; Python hides them entirely. If you know Rust's closures, the [Closures section](rust-ho.qmd#closures) of the Rust chapter is worth rereading with this table in hand.
 
 ### Structured Bindings
-<!-- C++17 `auto [a, b] = pair;`: destructuring for pairs, tuples, structs, and
-arrays. Compare to Rust/Python tuple unpacking and to the `std::tie` idiom it
-replaced. Full prose in a later pass. -->
+::: {.subheading}
+Unpacking an aggregate into named pieces
+:::
+
+A function that needs to return two things has always been awkward in C. You either return a `struct` and then reach into it by field name, or you return one value and write the other through an out-parameter pointer. C++ gained `std::pair` and `std::tuple` early, but using them was its own kind of ugly: the members are called `first` and `second`, names that tell you nothing about what they hold.
+
+```cpp
+std::map<std::string, int> scores{{"ada", 91}, {"grace", 97}};
+
+auto result = scores.insert({"alan", 88});
+if (result.second) {                              // .second? second what?
+    std::cout << result.first->first << " added\n";  // and now .first->first
+}
+```
+
+C++17's **structured bindings** let you name the pieces at the point of unpacking:
+
+```cpp
+auto [position, inserted] = scores.insert({"alan", 88});
+if (inserted) {
+    std::cout << position->first << " added\n";
+}
+```
+
+The syntax is `auto [name1, name2, ...] = expression;`. The number of names must match the number of elements exactly; too few or too many is a compile error rather than a silent truncation. It works on three kinds of thing: `std::pair` and `std::tuple`, plain structs whose members are all public, and fixed-size arrays.
+
+```cpp
+struct Point { double x, y; };
+Point origin_offset() { return {3.0, 4.0}; }
+
+auto [x, y] = origin_offset();          // struct with public members
+int  coords[2] = {10, 20};
+auto [row, column] = coords;             // fixed-size array
+
+for (const auto& [name, score] : scores) {   // the idiom you will use most
+    std::cout << name << ": " << score << '\n';
+}
+```
+
+That last loop is where structured bindings earn their keep. Iterating a `std::map` yields a `std::pair<const Key, Value>`, so the pre-C++17 version was a thicket of `it->first` and `it->second`. Naming them `[name, score]` makes the loop body read like the data it processes.
+
+The declaration is `auto`, so the same [reference and `const` qualifiers](#auto-and-type-deduction) apply. `auto [a, b]` copies, `auto& [a, b]` binds references to the original members and lets you modify them, and `const auto& [a, b]` observes without copying, which is the right default for anything larger than a machine word.
+
+```cpp
+for (auto& [name, score] : scores) {
+    score += 5;                          // modifies the map in place
+}
+```
+
+::: {.callout-warning title="The names are not variables in the ordinary sense"}
+A structured binding introduces *names for parts of one hidden object*, not independent variables. Two consequences follow. You cannot apply a storage specifier such as `static` to individual names, and you cannot capture a binding by name in a pre-C++20 [lambda](#lambdas) (C++20 relaxed this). If a lambda capture fails to compile on a binding, copy it into a normal local first.
+:::
+
+Before C++17, the closest approximation was `std::tie`, which builds a tuple of references so that assignment scatters values into existing variables. You still see it in older code, and it is still the tool when you want to assign into variables that already exist rather than declare new ones.
+
+```cpp
+std::map<std::string, int>::iterator position;
+bool inserted;
+std::tie(position, inserted) = scores.insert({"alan", 88});   // pre-C++17
+```
+
+The limitations are what motivated the language feature: `std::tie` requires the variables to be declared (and therefore default-constructible) beforehand, it cannot bind references into the original object, and it does not work on plain structs or arrays.
+
+If you have read the other chapters, this is well-trodden ground. Python has had `name, score = pair` since the beginning and applies it in `for` loops the same way. Rust's [pattern matching](rust-ho.qmd#pattern-matching) is the most general of the three: `let (a, b) = pair;` and `let Point { x, y } = p;` are the direct analogues, but the same patterns work in `match` arms, nest arbitrarily, and can bind by reference or by move. C++ made a deliberately narrower choice. A structured binding is a *declaration* form only; it destructures, but it never tests, so there is no C++ equivalent of matching a struct against a pattern and taking a branch when it fails to fit. That capability lives in `std::visit` over a `std::variant`, and it is considerably less pleasant.
+
 ### `constexpr` and `if constexpr`
 ::: {.subheading}
 Moving work from run time to compile time
@@ -1941,7 +2044,87 @@ auto it  = std::find(v.begin(), v.end(), 42);              // first element == 4
 int  sum = std::accumulate(v.begin(), v.end(), 0);         // fold with + starting from 0
 ```
 
-The full `<algorithm>` catalog and the C++20 `ranges` library (which lets you write `std::ranges::sort(v)` on the whole container, and chain lazy views like `v | std::views::filter(...) | std::views::transform(...)`) are a topic for a later pass. If you have read the Rust chapter, ranges are C++'s answer to [Rust's iterator adapters](rust-ho.qmd#iterators), and both play the role that list comprehensions play in Python: a declarative pipeline over a sequence, in place of a hand-written loop.
+A representative slice of the catalog, enough to recognize the naming conventions:
+
+| Algorithm                          | Does                                                    |
+|------------------------------------|---------------------------------------------------------|
+| `sort`, `stable_sort`              | Order a range; `stable_` preserves ties' relative order |
+| `find`, `find_if`                  | First matching element, by value or by predicate        |
+| `count`, `count_if`                | How many match                                          |
+| `all_of`, `any_of`, `none_of`      | Quantify a predicate over the range                     |
+| `copy`, `copy_if`                  | Write elements into an output iterator                  |
+| `transform`                        | Map a function over a range into an output              |
+| `remove`, `remove_if`              | Shuffle unwanted elements to the back (see the warning) |
+| `accumulate`, `reduce`             | Fold to a single value (`<numeric>`)                    |
+| `min_element`, `max_element`       | Iterator to the smallest or largest                     |
+| `lower_bound`, `binary_search`     | Binary search over an already-sorted range              |
+
+The `_if` suffix is the pattern to internalize: the base name takes a value, the `_if` variant takes a predicate, which since C++11 is almost always a [lambda](#lambdas).
+
+::: {.callout-warning title="`std::remove` does not remove anything"}
+Because an algorithm sees only iterators, it has no access to the container and therefore cannot change its size. `std::remove` moves the surviving elements forward and returns an iterator to the new logical end; the container is still just as long, with unspecified junk in the tail. Deleting for real takes two calls, an idiom known as *erase-remove*:
+
+```cpp
+v.erase(std::remove_if(v.begin(), v.end(), is_odd), v.end());
+```
+
+C++20 finally supplied the one-liner everyone wanted, as a free function: `std::erase_if(v, is_odd);`.
+:::
+
+#### Ranges
+::: {.subheading}
+The pipeline C++20 added on top
+:::
+
+Two complaints follow from everything above. Passing `v.begin(), v.end()` to sort an entire container is noise you write hundreds of times, and nothing stops you from accidentally passing iterators from two different containers, which compiles cleanly and corrupts memory. And composing operations requires materializing intermediates: filtering into a temporary vector, then transforming that into another.
+
+C++20's ranges library answers both. A **range** is simply anything with a `begin()` and an `end()`, so every algorithm gains an overload in `std::ranges` that takes the container itself. The pair is bundled into one argument, which is both shorter and impossible to mismatch.
+
+```cpp
+#include <algorithm>
+#include <ranges>
+
+std::ranges::sort(v);                       // no .begin(), .end()
+auto it = std::ranges::find(v, 42);
+```
+
+The more interesting half is **views**. A view is a lazy, non-owning adaptor over a range: it computes nothing when constructed, holds no elements of its own, and produces each value only as you iterate. Views compose with `operator|`, borrowed from the Unix [shell pipeline](shell.qmd), so a chain reads left to right in the order the data flows.
+
+```cpp
+#include <iostream>
+#include <ranges>
+#include <vector>
+
+int main() {
+    std::vector<int> values{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+    auto pipeline = values
+                  | std::views::filter([](int n) { return n % 2 == 0; })
+                  | std::views::transform([](int n) { return n * n; })
+                  | std::views::take(3);
+
+    for (int value : pipeline) {
+        std::cout << value << ' ';          // 4 16 36
+    }
+}
+```
+
+Nothing in that chain runs until the `for` loop asks for a value, and no intermediate vector is ever allocated. Each iteration pulls one number through the whole pipeline. Because `take(3)` stops after three results, the elements past `6` are never examined at all, which is the property that makes views composable without a performance penalty. The commonly used ones:
+
+| View                        | Yields                                              |
+|-----------------------------|-----------------------------------------------------|
+| `views::filter(pred)`       | Elements satisfying `pred`                          |
+| `views::transform(fn)`      | `fn` applied to each element                        |
+| `views::take(n)`            | The first `n` elements                              |
+| `views::drop(n)`            | Everything after the first `n`                      |
+| `views::reverse`            | The range back to front                             |
+| `views::iota(start)`        | An increasing sequence, optionally bounded          |
+| `views::split(delim)`       | Subranges between delimiters                        |
+| `views::join`               | A range of ranges, flattened                        |
+
+Two caveats keep this honest. A view refers to its underlying range without owning it, so a view that outlives the container it was built from dangles exactly as a raw pointer would; this is the same lifetime discipline that governs [references](#references) and [`std::string_view`](#containers). And getting results back into a container needed the awkward `std::ranges::to` workaround until C++23 made it a proper pipeline stage: `auto result = pipeline | std::ranges::to<std::vector>();`.
+
+If you have read the Rust chapters, all of this is familiar under different spelling. Views are [Rust's iterator adapters](rust-ho.qmd#iterators) with `|` in place of `.`, and the correspondence is close to exact: `views::filter` is `.filter()`, `views::transform` is `.map()`, `views::take` is `.take()`, and laziness-until-consumed is the defining property of both. Python's generator expressions and `itertools` occupy the same niche, and a list comprehension is the eager version of the same idea. Where the languages differ is guarantees rather than expressiveness. Rust's borrow checker will not compile an adapter chain that outlives its source; C++ will compile the dangling view without complaint and fail at run time. That contrast, the same capability with and without a compiler enforcing its safety precondition, is the through-line of [the Rust comparison](#key-differences-from-rust) at the end of this chapter.
 
 ## Memory Management
 ::: {.subheading}
@@ -1950,7 +2133,7 @@ Owning the heap without owning the bookkeeping
 
 C gives you `malloc` and `free` and trusts you to pair them. C++ inherits that machinery, adds a typed version of it, and then spends most of its modern effort convincing you never to touch either one directly. This section walks that arc: what `new` and `delete` actually do, why raw ownership is now considered a defect rather than a style choice, the smart pointers that replaced it, and finally the move semantics that make the whole scheme efficient enough to be the default.
 
-### `new` / `delete`
+### `new` / `delete` {#new-delete}
 ::: {.subheading}
 Typed allocation, and why you should stop using it
 :::
@@ -2006,7 +2189,7 @@ RAII applied to the heap
 
 A **smart pointer** is a class template that holds a raw pointer, behaves like one (`*` and `->` are overloaded), and deletes what it points at in its destructor. That is the whole idea: it is the [`File` wrapper from the RAII section](#raii), generalized over any heap-allocated type. Three of them live in `<memory>`, and they differ only in what ownership model they encode.
 
-#### `std::unique_ptr<T>`
+#### `std::unique_ptr<T>` {#unique-ptr}
 ::: {.subheading}
 Exclusive ownership, zero overhead
 :::
@@ -2040,7 +2223,7 @@ void observes(Widget* w);                   // borrows, may be null; no ownershi
 
 That first signature is unforgeable documentation: the caller *has* to write `std::move`, so the transfer is visible at the call site.
 
-#### `std::shared_ptr<T>`
+#### `std::shared_ptr<T>` {#shared-ptr}
 ::: {.subheading}
 Shared ownership by reference count
 :::
@@ -2315,16 +2498,266 @@ And the pairing is fixed: use `std::move` on rvalue references, `std::forward<T>
 Move semantics is why so much of modern C++ advice inverts what you learned in the 1990s. Return large objects by value, because elision and moves make it free. Store objects in containers rather than pointers to objects, because growth relocates by moving. Prefer `unique_ptr` to raw pointers, because a move-only type expresses transfer of ownership with no runtime cost at all. The copy-everywhere overhead that made C++ feel heavy was not inherent to the language; it was a missing distinction in the type system, and C++11 supplied it.
 
 ## Error Handling
+::: {.subheading}
+Two mechanisms, and an unresolved argument about which to use
+:::
+
+C has one answer to failure: return a value that means "it went wrong," and trust the caller to check. `fopen` returns null, `malloc` returns null, most POSIX calls return `-1` and set `errno`. The weakness is not the mechanism but the trust. Nothing forces the check, an ignored return is silent, and error codes have to travel back up through every intermediate function by hand, cluttering signatures that have nothing to do with the failure.
+
+C++ added exceptions to solve exactly that, and then spent thirty years arguing about whether the cure was worse than the disease. The result is that C++ today has two working error-handling styles: exceptions, which the standard library uses and which pair naturally with [RAII](#raii), and value-based returns, which most systems, embedded, and game codebases prefer. You need to read both.
+
 ### Exceptions
-<!-- try/catch/throw, stack unwinding + RAII interplay, exception safety
-guarantees. Why embedded/game/systems shops often disable them (-fno-exceptions)
-and the cost model. -->
+::: {.subheading}
+Throw at the point of failure, catch where you can do something about it
+:::
+
+An exception separates *detecting* a failure from *handling* it. Code that cannot fix a problem does not have to mention it: you `throw` where the problem is discovered, and the nearest enclosing `catch` that names a matching type takes over. Everything between the two is skipped.
+
+```cpp
+#include <iostream>
+#include <stdexcept>
+#include <string>
+
+double parse_ratio(const std::string& text, double denominator) {
+    if (denominator == 0.0) {
+        throw std::invalid_argument("denominator must be non-zero");
+    }
+    return std::stod(text) / denominator;      // stod itself throws on bad input
+}
+
+int main() {
+    try {
+        std::cout << parse_ratio("42.0", 0.0) << '\n';
+    } catch (const std::invalid_argument& error) {
+        std::cerr << "bad argument: " << error.what() << '\n';
+    } catch (const std::exception& error) {    // base class: catches the rest
+        std::cerr << "failed: " << error.what() << '\n';
+    }
+}
+```
+
+Three details matter in that snippet. Catch handlers are tried **in order** and the first type match wins, so specific types must precede their base classes; putting `std::exception` first would make every later handler unreachable. You catch **by `const` reference**, always, because catching by value slices a derived exception down to its base ([slicing](#slicing) again) and catching by non-const reference buys nothing. And `catch (...)` catches anything at all, but gives you no object to inspect, so it is for logging and rethrowing rather than handling.
+
+The standard hierarchy is rooted at `std::exception`, whose only real interface is `what()` returning a C string. Below it, `<stdexcept>` supplies `logic_error` (`invalid_argument`, `out_of_range`, `domain_error`) for bugs the caller could have prevented, and `runtime_error` (`overflow_error`, `range_error`) for conditions only detectable at run time. `std::bad_alloc` from a failed [`new`](#new-delete) and `std::system_error` from OS calls round out the ones you will actually meet.
+
+#### Stack Unwinding
+When a `throw` executes, the runtime walks back up the call stack looking for a matching handler, and as it leaves each frame it **destroys every fully constructed automatic object in that frame**. This process is *stack unwinding*, and it is the reason exceptions and RAII are not two features but one.
+
+```cpp
+void process(const std::string& path) {
+    std::ofstream log("audit.txt");            // RAII: closes on any exit
+    auto buffer = std::make_unique<char[]>(4096);   // RAII: frees on any exit
+
+    if (path.empty()) {
+        throw std::invalid_argument("empty path");  // both released here
+    }
+    // ... more work that may also throw
+}
+```
+
+Recall the [`goto` cleanup ladder](#the-problem-it-solves) that C requires. Exceptions make that pattern not merely tedious but unworkable: a `throw` three calls deep will skip your cleanup label entirely, because it does not return through your function at all. Only destructors get run during unwinding. This is why "use RAII for every resource" is stated as an absolute rule in C++ rather than a preference. In a codebase with exceptions, a raw `new` paired with a matching `delete` is not just risky style, it is a leak waiting for the first exception to pass through.
+
+::: {.callout-warning title="Never let a destructor throw"}
+If an exception escapes a destructor *while unwinding is already in progress*, the runtime has two exceptions and no way to choose, so it calls `std::terminate` and the program dies. Since C++11 destructors are implicitly `noexcept`, which makes this the default behavior rather than an edge case. A destructor that does anything failure-prone (closing a file, committing a transaction) must swallow and log its own errors, and offer a separate explicit `close()` or `commit()` for callers who want to handle failure properly.
+:::
+
+#### Exception Safety
+Because an exception can leave a function at nearly any point, "does this work" is no longer the only question; "what state does it leave behind" matters too. The standard vocabulary, due largely to Dave Abrahams, names four levels of guarantee:
+
+| Guarantee     | Promise                                                                        |
+|---------------|--------------------------------------------------------------------------------|
+| **No-throw**  | Never throws. Required of destructors, swaps, and move operations.              |
+| **Strong**    | Either succeeds, or leaves everything exactly as it was. Commit-or-rollback.    |
+| **Basic**     | Invariants hold and nothing leaks, but the state may have changed observably.   |
+| **None**      | All bets are off. Not acceptable in code you intend to keep.                    |
+
+Basic is the floor; anything less is a bug. Strong is what you want for operations a caller might retry, and the classic technique for achieving it is **copy-and-swap**: do all the failure-prone work on a copy, then commit with an operation that cannot fail.
+
+```cpp
+Widget& Widget::operator=(const Widget& other) {
+    Widget temporary(other);        // may throw; *this is untouched
+    swap(temporary);                // noexcept: the commit point
+    return *this;                   // temporary's destructor cleans up the old state
+}
+```
+
+The same reasoning explains a rule from the [move semantics](#noexcept-is-not-optional-here) section. `std::vector` can only use moves while reallocating if the move constructor is `noexcept`; if it might throw, a half-moved reallocation would have destroyed the originals with no way to restore them, so the vector copies instead to preserve the strong guarantee.
+
+#### The Cost, and Why Many Shops Disable Them
+Modern implementations use a *zero-cost* (table-driven) model. The compiler emits side tables mapping code addresses to cleanup actions, so a `try` block that never throws costs nothing at run time: no flag to set, no register to save, entering and leaving `try` is literally free. The bill arrives only on the throw, and it is steep, typically microseconds, since unwinding involves table lookups, dynamic type matching, and a heap allocation for the exception object itself. Exceptions are priced for the exceptional.
+
+So why do so many codebases turn them off with `-fno-exceptions`? Three reasons, none of them about the happy path:
+
+- **Binary size.** Those unwind tables are real bytes, often 10 to 20 percent of the image. On a microcontroller with 256 KB of FLASH that is decisive, which is why the [bare-metal section](#which-c-features-cost-you) treats disabling them as routine.
+- **Unbounded latency.** A throw's cost depends on stack depth and table contents, and is not analyzable ahead of time. Hard-real-time and safety-critical standards frequently forbid anything without a worst-case bound.
+- **Invisible control flow.** Any call may be a return point. That makes exhaustive reasoning about a function harder, and writing genuinely exception-safe code requires a discipline that is easy to state and hard to sustain across a large team. Google's style guide bans them for essentially this reason, compounded by the impossibility of retrofitting them into an existing exception-unaware codebase.
+
+The tradeoff is real in both directions. Disabling exceptions costs you the ability to report failure from a constructor, which is what pushes those codebases toward [two-phase initialization and factory functions](#which-c-features-cost-you). And most of the standard library assumes exceptions: `std::vector::at`, `std::stoi`, and `new` all throw, so with them disabled those become calls you must avoid rather than handle.
+
 ### Alternatives
-<!-- std::optional, std::expected (C++23), error codes. Compare to Rust's
-Result-as-the-only-way. -->
+::: {.subheading}
+Failure as a return value, done properly
+:::
+
+The value-based approach is C's, but with the type system doing the work that trust used to do. Three tools, in increasing order of expressiveness.
+
+**`std::optional<T>`** (C++17) holds either a `T` or nothing. It is the right return type when there is exactly one way to fail and the caller does not need to know why: a lookup that found no match, a parse of possibly-absent input.
+
+```cpp
+#include <optional>
+
+std::optional<int> find_port(const Config& config) {
+    if (!config.has("port")) {
+        return std::nullopt;
+    }
+    return config.get_int("port");
+}
+
+if (auto port = find_port(config)) {      // contextually converts to bool
+    connect(*port);                        // dereference to get the value
+} else {
+    connect(default_port);
+}
+```
+
+`value()` throws `std::bad_optional_access` if empty, `operator*` is undefined behavior if empty, and `value_or(fallback)` gives you a default in one call. This is C++'s answer to the null pointer, and it is a genuine improvement for the same reason [`enum class`](#enum-class) is: the possibility of absence is now in the type, so the compiler knows about it and the reader cannot miss it.
+
+**`std::expected<T, E>`** (C++23) is `optional` plus a reason. It holds either the value or an error of your choosing, which is what error codes always wanted to be.
+
+```cpp
+#include <expected>
+
+enum class ParseError { Empty, NotANumber, OutOfRange };
+
+std::expected<int, ParseError> parse_port(std::string_view text) {
+    if (text.empty()) {
+        return std::unexpected(ParseError::Empty);
+    }
+    // ...
+    return value;
+}
+
+auto result = parse_port(input);
+if (result) {
+    connect(*result);
+} else {
+    log_failure(result.error());
+}
+```
+
+**`std::error_code`** (C++11) is the older, heavier mechanism for wrapping OS-level errors without exceptions. Much of the standard library, `std::filesystem` most visibly, offers paired overloads: one that throws and one taking an `error_code&` out-parameter that does not. It is worth recognizing, but for new code `std::expected` is the better tool.
+
+::: {.callout-note title="Which should you use?"}
+The working consensus: **exceptions for the genuinely exceptional**, conditions that indicate a broken invariant or an environment failure the immediate caller cannot sensibly handle. **Value returns for the expected**, cases where failure is an ordinary outcome the caller will branch on, like parsing user input or looking something up. A failed parse of untrusted input is not exceptional; it is Tuesday. The mistake in both directions is treating one as the answer to everything.
+:::
+
+#### The Rust Comparison
+If you have read the Rust chapters, `std::expected<T, E>` will look strikingly like [`Result<T, E>`](rust-ho.qmd#errors-as-values), and it is: the C++23 proposal cites Rust's as prior art. `std::optional` is [`Option<T>`](rust-ho.qmd#option-t). The distance between the languages is not the vocabulary but the enforcement, and it comes down to three things.
+
+Rust has **exactly one** error mechanism. `panic!` exists but is for unrecoverable bugs, not error handling, so there is no dialect split and no library you cannot use because it made the other choice. C++ has two, permanently, and every codebase and dependency picks one.
+
+Rust's `Result` is `#[must_use]`, so **ignoring one is a compiler warning**. A discarded `std::expected` is silent, exactly like the unchecked C return code the type was meant to improve on. The type documents the failure either way; only Rust makes you acknowledge it.
+
+Rust has [`?`](rust-ho.qmd#errors-as-values), which propagates an error to the caller in one character and converts the error type on the way. That is the ergonomic gap that kept value-based error handling unpopular in C++ for decades: without it, propagating an `expected` through five call layers means five explicit `if (!result) return std::unexpected(result.error());` blocks, and exceptions start looking attractive again purely for the brevity. C++23 added monadic operations (`and_then`, `transform`, `or_else`) that chain without the boilerplate, which helps, but nothing as concise as `?` is in the language yet.
+
+The honest summary is that C++ has arrived at the right *types* without the *enforcement* or the *ergonomics* that make them pleasant, and cannot abandon exceptions without breaking the standard library and thirty years of code. Rust had the advantage of choosing once, at the start.
+
 ## Namespaces
-<!-- Organizing names; `using` declarations vs. directives; the C++ answer to
-C's file-static and prefix conventions. Anchor to c.qmd's translation-unit model. -->
+::: {.subheading}
+Scoping names without the prefix conventions
+:::
+
+Recall from the [C chapter](c.qmd#static) how C partitions names. There are exactly two scopes at file level: `static` makes an identifier private to its translation unit, and everything else is global to the entire program. With one global pool, every library must prefix its public names defensively, which is why you see `SDL_CreateWindow`, `png_read_info`, and `pthread_mutex_lock`. The prefix is a namespace implemented by hand, in the identifier itself.
+
+C++ makes it a language feature.
+
+```cpp
+namespace audio {
+    struct Buffer { /* ... */ };
+    void resample(Buffer& buffer, int rate);
+
+    namespace detail {                       // nested: implementation guts
+        int gcd(int a, int b);
+    }
+}
+
+audio::Buffer buffer;
+audio::resample(buffer, 48000);
+audio::detail::gcd(12, 18);
+```
+
+Namespaces are **open**: you may reopen the same namespace in as many files as you like, and the declarations accumulate. That is what lets a library spread `namespace audio` across fifty headers, and it is also why the standard library can be `std` everywhere. It also means you can add to `std`, which the standard forbids except for a few specified specializations; do not.
+
+Names are looked up from the innermost enclosing scope outward, so inside `namespace audio` you write `Buffer` and `detail::gcd` without qualification. A leading `::` forces the global scope, useful when a local name shadows one you need: `::malloc` when `audio::malloc` also exists.
+
+### `using`: Declarations and Directives
+Fully qualified names get verbose, and C++ offers two ways to shorten them. They differ enormously in how much damage they can do.
+
+A **`using` declaration** brings in one specific name:
+
+```cpp
+using std::string;
+using std::vector;
+
+vector<string> names;      // no std:: needed for these two
+```
+
+A **`using` directive** brings in everything:
+
+```cpp
+using namespace std;       // all of std, unqualified
+vector<string> names;
+```
+
+`using namespace std;` appears in every tutorial and is a mistake in almost all real code. The standard library exports thousands of names, many of them short and generic: `count`, `distance`, `data`, `size`, `begin`, `swap`, `left`, `end`. Pull all of them into your scope and you invite collisions with your own identifiers. Worse, the collisions do not always produce an error; sometimes overload resolution simply picks the standard library's function instead of yours, and the program compiles and misbehaves.
+
+The rules that follow from this are simple and worth applying without exception:
+
+- **Never** put a `using` directive at file scope in a header. Every file that includes it inherits the pollution, transitively, and cannot opt out.
+- In a `.cpp` file, a directive is tolerable but still unnecessary. Prefer declarations for the handful of names you use often.
+- Inside a function, a directive is genuinely harmless; the scope ends at the closing brace.
+- A **namespace alias** handles long nested names cleanly: `namespace fs = std::filesystem;`.
+
+```cpp
+namespace fs = std::filesystem;              // alias: the good pattern
+for (const auto& entry : fs::directory_iterator(path)) { /* ... */ }
+```
+
+### The Anonymous Namespace
+C's `static` at file scope, meaning "internal linkage, not visible to other translation units," is still valid C++, but the idiomatic replacement is a namespace with no name:
+
+```cpp
+namespace {
+    constexpr int retry_count_max = 3;       // internal linkage
+    void log_attempt(int attempt) { /* ... */ }
+}
+```
+
+Everything inside is private to that translation unit. This is preferred over `static` for two reasons: it works on *types* as well as functions and variables, where `static` does not, and it applies to an entire block at once rather than one declaration at a time. This is the C++ equivalent of a [private Rust module](rust-in.qmd#visibility) or a leading underscore in Python, except that the compiler enforces it and the linker never sees the symbol at all.
+
+### Inline Namespaces and Versioning
+An **inline namespace** is nested but transparent: its names are visible in the enclosing namespace as though they were declared there. The point is versioning without breaking callers.
+
+```cpp
+namespace audio {
+    inline namespace v2 {
+        void resample(Buffer&, int rate);
+    }
+    namespace v1 {
+        void resample(Buffer&, int rate);    // still reachable, explicitly
+    }
+}
+
+audio::resample(buffer, 48000);              // resolves to v2
+audio::v1::resample(buffer, 48000);          // opt into the old one
+```
+
+Because the version is part of the [mangled name](#name-mangling), the two versions can coexist in one binary without a linker conflict. Standard library implementations use this heavily; if you have ever read a libstdc++ linker error mentioning `std::__cxx11::basic_string`, you have met an inline namespace used to keep an old ABI alive alongside a new one.
+
+::: {.callout-note title="Namespaces are not modules"}
+A namespace scopes *names*. It does not affect compilation, dependencies, or build times, and it has nothing to do with which files get textually included. A header still `#include`s other headers regardless of how the names inside are organized. If you have read the Rust chapters, this is the key difference from [Rust's modules](rust-in.qmd#modules), which are simultaneously the naming system, the visibility system, and the compilation structure. C++'s answer to that second job arrived separately, and much later, as [modules](#modules).
+:::
+
 ## Compilation and the Build
 ::: {.subheading}
 What changes when the language gets bigger
@@ -2634,21 +3067,95 @@ Two differences are worth noting. Rust's `no_std` split is *cleaner* than C++'s:
 :::
 
 ## Key Differences from C
-<!-- Summary table for the C programmer: what to unlearn, what carries over.
-Pass-by-value still holds; but references, RAII, overloading, and templates
-change the idioms substantially. -->
+::: {.subheading}
+What carries over, and what you have to unlearn
+:::
+
+Most of C survives intact. The type system's foundations, the pointer model, the [translation-unit compilation model](#compilation-and-the-build), the preprocessor, the linker, the arithmetic and its promotion rules, `struct` layout, and the entire C standard library are all still there and still work the way you expect. Arguments are still passed by value. That is the good news, and it is why C code compiles as C++ far more often than not.
+
+What changes is not the machinery but the *idioms*. The habits that make you a good C programmer, managing lifetime by hand, returning error codes, passing pointers so callees can write through them, using macros for genericity, are each replaced by something the compiler participates in. The table is a map from habit to habit:
+
+| Concern             | C                                              | C++                                                          |
+|---------------------|------------------------------------------------|--------------------------------------------------------------|
+| Resource lifetime   | Manual `malloc`/`free`, `goto` cleanup ladder  | [RAII](#raii): destructors run automatically                 |
+| Heap ownership      | Raw pointers, ownership by convention          | [`unique_ptr`](#unique-ptr) / [`shared_ptr`](#shared-ptr) |
+| Out-parameters      | `T*` the callee writes through                 | [`T&`](#references): cannot be null, cannot be reseated      |
+| Failure reporting   | Return code, `errno`                           | [Exceptions](#exceptions) or [`optional`/`expected`](#alternatives) |
+| Generic code        | `void*` plus casts, or preprocessor macros     | [Templates](#templates), type-checked and monomorphized      |
+| Dynamic dispatch    | Hand-built struct of function pointers         | [`virtual` functions](#virtual-functions) and the vtable     |
+| Name collisions     | Prefixes: `png_read_info`                      | [Namespaces](#namespaces)                                    |
+| Data structures     | Hand-rolled per project                        | [STL containers](#containers) and [algorithms](#algorithms-and-ranges) |
+| Compile-time values | `#define`, the enum hack                       | [`constexpr`](#constexpr-and-if-constexpr): typed and scoped |
+| Encapsulation       | Convention, plus `static` in a `.c` file       | [`private`](#access-control), enforced by the compiler       |
+| Strings             | `char*` and `<string.h>`                       | `std::string`, `std::string_view`                            |
+| Symbols             | One per name                                   | [Mangled](#name-mangling); overloading is legal              |
+
+The single most consequential row is the first. In C, the lifetime of a resource is tracked in the programmer's head and documented in comments; in C++, it is tracked by the type system and enforced by the compiler inserting destructor calls you never write. Nearly every other difference follows from it. Smart pointers are RAII applied to the heap, containers are RAII applied to collections, and [move semantics](#move-semantics) exist to make RAII cheap enough to use everywhere. If you internalize one thing from this chapter, that is the one.
+
+::: {.callout-warning title="C is not a subset of C++"}
+The two languages have diverged, and "valid C" does not imply "valid C++." The [small differences](#small-but-pervasive-differences) section listed the common breakages, of which `void*` no longer converting implicitly is the one you will hit first, since it invalidates the canonical `malloc` idiom. There are also constructs valid in both that *mean different things*: `sizeof('a')` is `sizeof(int)` in C and `sizeof(char)` in C++. And C99 features such as variable-length arrays and designated initializers were never adopted wholesale by C++. Compile C as C, C++ as C++, and use [`extern "C"`](#name-mangling) at the boundary.
+:::
+
+A last piece of advice for someone arriving from C, since it is the most common way to get C++ wrong: do not write "C with classes." A C++ program that allocates with `new`, passes raw pointers, and hand-rolls its containers is strictly worse than the C program it would have been, because it pays C++'s compile times and complexity without collecting any of the safety. The idioms are the point. Use the containers, use the smart pointers, let destructors do the cleanup, and reach for a raw `new` only when you have a reason you could defend out loud.
+
 ## Key Differences from Rust
-<!-- For readers who did the Rust chapters: RAII vs. ownership+borrow-checker,
-exceptions vs. Result, templates vs. trait-bounded generics, "safe by
-convention" vs. "safe by compiler." What Rust took from C++ and improved. -->
+::: {.subheading}
+The same goals, thirty years apart
+:::
+
+Rust and C++ want the same things: abstraction that costs nothing at run time, control over memory layout and lifetime, and performance competitive with C. They largely agree on the answers, too. Rust's ownership model is a direct descendant of C++'s RAII, its generics monomorphize exactly as templates do, and `Box`/`Rc`/`Arc` are recognizably `unique_ptr`/`shared_ptr` with the atomicity split out. Graydon Hoare and the early Rust team knew C++ intimately, and the design reads as a considered response to it rather than a rejection.
+
+| Concern            | C++                                              | Rust                                                    |
+|--------------------|--------------------------------------------------|---------------------------------------------------------|
+| Ownership          | RAII by convention; compiler does not verify     | Ownership in the type system; borrow checker verifies    |
+| Use-after-move     | Legal: moved-from is [valid but unspecified](#the-moved-from-state) | Compile error: the value is gone         |
+| Dangling reference | Compiles; undefined behavior at run time         | Compile error via [lifetimes](rust-ho.qmd#lifetimes)     |
+| Mutability         | Mutable by default; `const` opts out             | Immutable by default; `mut` opts in                      |
+| Aliasing           | Unrestricted; the optimizer must be pessimistic  | One `&mut` **or** many `&`, never both                   |
+| Data races         | Your responsibility                              | Prevented at compile time by `Send`/`Sync`               |
+| Null               | `nullptr` on any pointer                         | No null; absence is [`Option<T>`](rust-ho.qmd#option-t)  |
+| Errors             | [Exceptions **and**](#error-handling) value returns | [`Result<T, E>`](rust-ho.qmd#errors-as-values) only, and `#[must_use]` |
+| Generics           | [Templates](#templates), structurally checked at instantiation | Trait bounds, checked at definition        |
+| Interfaces         | [Concepts](#concepts) (structural) / abstract classes | [Traits](rust-ho.qmd#traits) (nominal, opt-in)      |
+| Initialization     | Reading an uninitialized value is UB             | Cannot compile; every value is initialized               |
+| Build              | Headers, ODR, `#include`; CMake by convention    | Modules and `Cargo`, one system, in the box              |
+| Escape hatch       | The whole language                               | `unsafe`, and it is greppable                            |
+
+The pattern in that table is one difference wearing many hats. C++ *knows* the right discipline, states it clearly in the [Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/){target="_blank" rel="noopener noreferrer"}, and cannot enforce it. Rust encodes the same discipline in the type system and refuses to compile violations. `unique_ptr` and `Box` express identical intent; only one of them stops you from reading the pointer after the move.
+
+Rust's advantage is not that its authors were smarter, but that they were **later and unencumbered**. Every one of C++'s enforcement gaps traces to backward compatibility. C++ cannot make values immutable by default, cannot forbid null, cannot restrict aliasing, and cannot delete exceptions, because billions of lines depend on all four. Rust chose once, before it had users. C++ has spent fifteen years retrofitting the same guarantees as opt-in additions (`unique_ptr`, `nullptr`, `enum class`, `constexpr`, concepts, `expected`) that work well and that nothing compels you to adopt.
+
+Where C++ still wins is unglamorous and decisive: it is everywhere. Thirty-five years of libraries, mature toolchains for every architecture that has ever shipped, compilers certified for automotive and avionics, and an installed base measured in decades of engineering. Its template metaprogramming remains more powerful than Rust's generics, and its compile-time evaluation is more mature. Rust's ecosystem is younger, its compile times are not obviously better, and the borrow checker has a genuine learning curve that costs real productivity for the first month or two.
+
+The two are also converging in practice. C++ borrowed `expected` from `Result` and structural concepts from trait bounds; Rust borrowed monomorphization and zero-cost abstraction wholesale from C++. Neither is replacing the other soon. What is worth taking from the comparison is the framing: **C++ makes safety achievable, Rust makes it default.** Once you have seen the guarantee enforced mechanically, writing C++ feels different, and better, because you know exactly which invariants you are now personally responsible for.
+
 ## Where to Go Next
-<!-- .see-more div with authoritative references: Stroustrup's "A Tour of C++"
-and "The C++ Programming Language," cppreference.com, the C++ Core Guidelines. -->
+[cppreference.com](https://en.cppreference.com/){target="_blank" rel="noopener noreferrer"} is the reference to keep open. It is community-maintained rather than official, and it is far better than the standard itself for daily work: every entry states which standard introduced a feature, which is exactly what you need when a codebase is pinned to C++17.
+
+### Documentation and Guidelines
+- The [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/){target="_blank" rel="noopener noreferrer"}, by Stroustrup and Herb Sutter, is the closest thing to an official answer for "what is idiomatic." Searchable, rule-numbered, and each rule explains its reasoning.
+- [isocpp.org](https://isocpp.org/){target="_blank" rel="noopener noreferrer"} tracks the standardization process, including the FAQ and the status of upcoming standards.
+- [Compiler Explorer](https://godbolt.org/){target="_blank" rel="noopener noreferrer"} shows the assembly your code compiles to, side by side, across compilers and optimization levels. There is no faster way to confirm that an abstraction really was zero-cost, and it makes the [name mangling](#name-mangling) and [copy elision](#copy-elision-and-rvo) sections concrete in about ten seconds.
+
+### Tooling Worth Adopting Early
+- **Sanitizers.** `-fsanitize=address,undefined` catches use-after-free, buffer overruns, and undefined behavior at run time with roughly a 2x slowdown. Run your tests under them. This is the single highest-value habit available to a C++ programmer, and it recovers a meaningful fraction of what the [borrow checker](#key-differences-from-rust) would have given you.
+- **`clang-tidy`** static-analyzes against the Core Guidelines and will flag missing `override`, implicit conversions, and rule-of-five violations before they compile.
+- **`clang-format`** ends formatting arguments permanently. Commit the config file.
+- **`valgrind`** remains the best tool for leak hunting when sanitizers are not an option.
+
+### Books
+- [A Tour of C++](https://www.stroustrup.com/tour3.html){target="_blank" rel="noopener noreferrer"} (Stroustrup, 3rd ed.) is the right next book after this chapter: the whole modern language, briskly, for people who already program.
+- [Effective Modern C++](https://www.oreilly.com/library/view/effective-modern-c/9781491908419/){target="_blank" rel="noopener noreferrer"} (Meyers) is the book that makes C++11/14 click. Its 42 items on `auto`, move semantics, and smart pointers are still the clearest treatment of the material in [Lambdas](#lambdas-and-modern-c) and [Move Semantics](#move-semantics).
+- [C++ Concurrency in Action](https://www.manning.com/books/c-plus-plus-concurrency-in-action-second-edition){target="_blank" rel="noopener noreferrer"} (Williams) covers the threading model this chapter does not.
+
+### Practice
+The most useful exercise is not a tutorial project. Take a small C program you have already written, one with `malloc`, error codes, and a hand-rolled data structure, and port it: containers for the data structure, RAII for the resources, `expected` or exceptions for the errors. The diff teaches more about what C++ is *for* than any greenfield exercise, because you can see precisely what each idiom bought.
+
 ## Further Reading
-<!--
-- Stroustrup, B. (2022). A Tour of C++ (3rd ed.). Addison-Wesley.
-- Stroustrup, B. (2013). The C++ Programming Language (4th ed.).
-- Meyers, S. (2014). Effective Modern C++. O'Reilly.
-- cppreference.com — the working reference.
-- C++ Core Guidelines (Stroustrup & Sutter).
--->
+- Stroustrup, B. (2022). *A Tour of C++* (3rd ed.). Addison-Wesley. (The concise modern overview).
+- Stroustrup, B. (2013). *The C++ Programming Language* (4th ed.). Addison-Wesley. (The comprehensive reference).
+- Stroustrup, B. (1994). *The Design and Evolution of C++*. Addison-Wesley. (Why the language is the way it is, from the source).
+- Meyers, S. (2014). *Effective Modern C++*. O'Reilly. (42 specific ways to improve C++11 and C++14 use).
+- Williams, A. (2019). *C++ Concurrency in Action* (2nd ed.). Manning.
+- Stroustrup, B., & Sutter, H. *C++ Core Guidelines*. [isocpp.github.io/CppCoreGuidelines](https://isocpp.github.io/CppCoreGuidelines/){target="_blank" rel="noopener noreferrer"}.
+- *cppreference.com*. [en.cppreference.com](https://en.cppreference.com/){target="_blank" rel="noopener noreferrer"}. (The working reference).

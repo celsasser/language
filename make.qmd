@@ -63,7 +63,7 @@ A shell script is imperative: it runs top to bottom and does the same work every
 
 The difference shows up the moment a project grows. A build script has to be written in a correct order, and that order has to be maintained by hand as the project changes. A makefile has no order to maintain. Rules can appear in any sequence, because the dependencies, not the layout of the file, determine what runs when.
 
-That declarative structure is also what makes `make -j8` (`--jobs=8`: compile in parallel by running up to 8 concurrent jobs (threads) simultaneously) possible. Once Make knows the graph, it knows which targets are independent, and independent targets can compile simultaneously. You get parallelism for free from a description you wrote for a different reason. A shell script cannot offer this, because it has no idea which of its lines are related.
+That declarative structure is also what makes `make -j8` (`--jobs=8`: compile in parallel by running up to 8 concurrent jobs (processes) simultaneously) possible. Once Make knows the graph, it knows which targets are independent, and independent targets can compile simultaneously. You get parallelism for free from a description you wrote for a different reason. A shell script cannot offer this, because it has no idea which of its lines are related.
 
 The cost is that the graph has to be *true*. Make trusts what you declare. A dependency you failed to mention is a dependency Make will happily ignore, producing a build that is subtly stale and, under `-j`, unpredictably broken.
 

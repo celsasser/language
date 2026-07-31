@@ -1645,7 +1645,7 @@ char buffer[10];
 strcpy(buffer, "This string is way too long");  // Buffer overflow!
 
 // No overflow, but silently truncates to "This stri"
-strncpy(buffer, source, sizeof(buffer) - 1);
+strncpy(buffer, "This string is way too long", sizeof(buffer) - 1);
 buffer[sizeof(buffer) - 1] = '\0';  // strncpy may not terminate: do it yourself
 ```
 
@@ -1656,7 +1656,7 @@ snprintf(buffer, sizeof(buffer), "Value: %d", x);
 ```
 
 ::: {.callout-warning title="Truncation is a bug too"}
-`strncpy` stops the overflow but replaces it with a quieter failure: the string is cut short and nothing tells you. If the value mattered (a path, a device identifier, a command), you now carry corrupted data forward instead of crashing. `snprintf` at least reports it: its return value is the length the output *would* have needed, so `if (n >= sizeof(buffer))` detects truncation. Treat a bound as something to check, not merely something to impose.
+`strncpy` stops the overflow but replaces it with a quieter failure: the string is cut short and nothing tells you. If the value mattered (a path, a device identifier, a command), you now carry corrupted data forward instead of crashing. `snprintf` at least reports it: it returns the length the output *would* have needed, so storing that return in an `int n` and checking `if (n >= (int)sizeof(buffer))` detects truncation. Treat a bound as something to check, not merely something to impose.
 :::
 
 ### 6. Off-by-One Errors

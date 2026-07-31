@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-07-30">
+<meta name="dcterms.date" content="2026-07-31">
 
 <title>Makefile Language – Computer Language Notebook</title>
 <style>
@@ -477,7 +477,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 30, 2026</p>
+      <p class="date">July 31, 2026</p>
     </div>
   </div>
   
@@ -581,7 +581,7 @@ there. -->
 <h4 class="anchored" data-anchor-id="you-describe-relationships-not-order">You Describe Relationships, Not Order</h4>
 <p>A shell script is imperative: it runs top to bottom and does the same work every time. A makefile is <strong>declarative</strong>. You state which files depend on which other files, and Make derives the build order itself by walking the resulting graph.</p>
 <p>The difference shows up the moment a project grows. A build script has to be written in a correct order, and that order has to be maintained by hand as the project changes. A makefile has no order to maintain. Rules can appear in any sequence, because the dependencies, not the layout of the file, determine what runs when.</p>
-<p>That declarative structure is also what makes <code>make -j8</code> (<code>--jobs=8</code>: compile in parallel by running up to 8 concurrent jobs (threads) simultaneously) possible. Once Make knows the graph, it knows which targets are independent, and independent targets can compile simultaneously. You get parallelism for free from a description you wrote for a different reason. A shell script cannot offer this, because it has no idea which of its lines are related.</p>
+<p>That declarative structure is also what makes <code>make -j8</code> (<code>--jobs=8</code>: compile in parallel by running up to 8 concurrent jobs (processes) simultaneously) possible. Once Make knows the graph, it knows which targets are independent, and independent targets can compile simultaneously. You get parallelism for free from a description you wrote for a different reason. A shell script cannot offer this, because it has no idea which of its lines are related.</p>
 <p>The cost is that the graph has to be <em>true</em>. Make trusts what you declare. A dependency you failed to mention is a dependency Make will happily ignore, producing a build that is subtly stale and, under <code>-j</code>, unpredictably broken.</p>
 </section>
 <section id="timestamps-not-content" class="level4">

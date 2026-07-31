@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-07-30">
+<meta name="dcterms.date" content="2026-07-31">
 
 <title>The C Language – Computer Language Notebook</title>
 <style>
@@ -570,7 +570,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 30, 2026</p>
+      <p class="date">July 31, 2026</p>
     </div>
   </div>
   
@@ -2875,7 +2875,7 @@ Result_{Q15} = (A_{Q15} \times B_{Q15}) &gt;&gt; 15
 <span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>strcpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">);</span>  <span class="co">// Buffer overflow!</span></span>
 <span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a><span class="co">// No overflow, but silently truncates to "This stri"</span></span>
-<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>strncpy<span class="op">(</span>buffer<span class="op">,</span> source<span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>strncpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">);</span></span>
 <span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>buffer<span class="op">[</span><span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">;</span>  <span class="co">// strncpy may not terminate: do it yourself</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Or better yet, use <code>snprintf</code>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb77"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>snprintf<span class="op">(</span>buffer<span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">),</span> <span class="st">"Value: </span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> x<span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -2889,7 +2889,7 @@ Result_{Q15} = (A_{Q15} \times B_{Q15}) &gt;&gt; 15
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p><code>strncpy</code> stops the overflow but replaces it with a quieter failure: the string is cut short and nothing tells you. If the value mattered (a path, a device identifier, a command), you now carry corrupted data forward instead of crashing. <code>snprintf</code> at least reports it: its return value is the length the output <em>would</em> have needed, so <code>if (n &gt;= sizeof(buffer))</code> detects truncation. Treat a bound as something to check, not merely something to impose.</p>
+<p><code>strncpy</code> stops the overflow but replaces it with a quieter failure: the string is cut short and nothing tells you. If the value mattered (a path, a device identifier, a command), you now carry corrupted data forward instead of crashing. <code>snprintf</code> at least reports it: it returns the length the output <em>would</em> have needed, so storing that return in an <code>int n</code> and checking <code>if (n &gt;= (int)sizeof(buffer))</code> detects truncation. Treat a bound as something to check, not merely something to impose.</p>
 </div>
 </div>
 </section>

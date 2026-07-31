@@ -250,6 +250,371 @@ done
 Always quote it: `"$@"` is the only form that preserves arguments exactly, each as a separate word even when it contains spaces. Bare `$@` and `$*` word-split, and unquoted `$*` collapses everything into one string. This is the same quoting hazard from the [Quoting](#quoting-and-expansion) section, now applied to a script's own inputs.
 :::
 
+### Arrays
+A shell variable holds text. An **array** holds an ordered list of values, which matters because the alternative, jamming a list into one string and splitting it later, is exactly the practice the [quoting](#quoting-and-expansion) section warns against. A path with a space in it survives an array intact and does not survive a space-separated string.
+
+Assignment looks the same in both shells. Reading the values back does not, so the expansions below are written twice:
+
+```bash
+files=(report.txt "my notes.md" data.csv)     # zsh and bash both
+
+# zsh
+echo "$files[2]"        # my notes.md      (1-based, braces optional)
+echo "${#files}"        # 3                (element count)
+echo "$files[@]"        # all elements
+
+# bash
+echo "${files[1]}"      # my notes.md      (0-based, braces required)
+echo "${#files[@]}"     # 3                (element count)
+echo "${files[@]}"      # all elements
+```
+
+The braced forms (`"${files[1]}"`, `"${files[@]}"`) also work in zsh, so when in doubt, write those.
+
+::: {.callout-warning title="Arrays are where zsh and bash genuinely differ"}
+Most of this guide applies to both shells. Arrays are the exception, and the differences bite immediately.
+
+|                         | zsh                          | bash                       |
+|-------------------------|------------------------------|----------------------------|
+| First index             | **1**                        | **0**                      |
+| All elements            | `"$arr[@]"` or `"${arr[@]}"` | `"${arr[@]}"`              |
+| Element count           | `${#arr}`                    | `${#arr[@]}`               |
+| Braces around subscript | optional                     | **required**               |
+| Associative arrays      | `typeset -A`                 | `declare -A`, bash 4+ only |
+
+The 1-based indexing is the one that catches people, and it is deliberate: zsh follows the tradition of `awk` and the positional parameters (`$1` is the first argument, not `$0`). Note also that `${#arr}` means different things in the two shells: element count in zsh, but in bash it is the *string length of the first element*, which is a silent wrong answer rather than an error.
+
+For portable scripts, write bash syntax with braces everywhere and 0-based indices. For your own `.zshrc`, use zsh's.
+:::
+
+#### Building and Iterating
+```bash
+files=()                          # empty
+files+=(newfile.txt)              # append
+files=("${files[@]}" prepended)   # prepend, the clumsy way
+
+for file in "${files[@]}"; do     # quoted: each element stays one word
+    echo "processing: $file"
+done
+```
+
+Quoting the expansion matters for the same reason it always does. `"${files[@]}"` yields one word per element regardless of spaces; unquoted, each element is re-split on whitespace and `my notes.md` becomes two arguments.
+
+A common source of arrays is a command's output, and here the shells diverge again:
+
+```bash
+lines=("${(@f)$(ls)}")            # zsh: split on newlines only
+mapfile -t lines < <(ls)          # bash 4+: read lines into an array
+```
+
+The zsh `(@f)` is a **parameter expansion flag**, splitting on newlines rather than all whitespace, which is what you want for filenames. Splitting command output on spaces is the classic way to break on a file named `my notes.md`.
+
+#### Associative Arrays
+An associative array maps string keys to values, a dictionary rather than a list. It must be declared before use:
+
+```bash
+typeset -A config                 # zsh   (declare -A in bash 4+)
+config[host]="localhost"
+config[port]="8080"
+
+echo "$config[host]"              # localhost
+echo "${(k)config}"               # keys:   host port
+echo "${(v)config}"               # values: localhost 8080
+```
+
+`(k)` and `(v)` are two more zsh expansion flags, yielding keys and values respectively. In bash the equivalents are `"${!config[@]}"` for keys and `"${config[@]}"` for values.
+
+#### Testing Whether a Key Exists
+::: {.subheading}
+the `$+` You Found
+:::
+
+Now to the thing that sent you looking. Your search turned up `$+aliases[run-help]`, and the `+` is the piece worth understanding, because it answers a question ordinary expansion cannot.
+
+`${+name}` is zsh's **set test**. It expands to `1` if the parameter is set and `0` if it is not, and it never expands the value itself:
+
+```bash
+name="curtis"
+echo ${+name}          # 1
+echo ${+nonexistent}   # 0
+```
+
+The reason this exists as its own operator is that **unset and empty are different states**, and plain expansion cannot tell them apart:
+
+```bash
+empty=""
+echo "[${empty}]"      # []     <- looks identical to unset
+echo "[${nope}]"       # []     <- but this one was never set
+echo ${+empty}         # 1      <- set, holding an empty string
+echo ${+nope}          # 0      <- genuinely not set
+```
+
+For an ordinary variable that distinction is often academic. For an associative array it is the whole question: *is there an entry under this key?* An empty result could mean "no such key" or "a key whose value is empty," and `$+` separates them.
+
+Which brings us to what you were actually testing. zsh exposes several of its internal tables as associative arrays you can read like any other:
+
+| Array         | Contains                                          |
+|---------------|---------------------------------------------------|
+| `$aliases`    | all defined aliases, keyed by name                |
+| `$functions`  | all defined shell functions, keyed by name        |
+| `$parameters` | all parameters, keyed by name                     |
+| `$commands`   | external commands found on `$PATH`, keyed by name |
+| `$options`    | shell options and their on/off state              |
+| `$builtins`   | built-in commands                                 |
+
+So the recipe you found reads directly:
+
+```bash
+if (( ${+aliases[run-help]} )); then
+    echo "run-help is aliased to: $aliases[run-help]"
+fi
+```
+
+`${+aliases[run-help]}` is `1` if an alias named `run-help` exists, `0` otherwise. The `(( ... ))` is arithmetic evaluation, which treats nonzero as true, so the whole thing reads as "if the alias exists." And because `$aliases` is an ordinary associative array, you can read the definition out of it, list every alias with `${(k)aliases}`, or even assign to it to *create* an alias.
+
+::: {.callout-note title="The portable alternative"}
+`$+` and the `$aliases` table are zsh-specific. In bash, `${var+set}` is the POSIX cousin, expanding to the word `set` when the parameter exists and to nothing when it does not:
+
+```bash
+[[ -n "${config[host]+x}" ]] && echo "key exists"   # bash 4+, works in zsh too
+```
+
+For aliases specifically, the portable test is to ask the shell rather than inspect a table:
+
+```bash
+alias run-help >/dev/null 2>&1 && echo "defined"
+```
+
+That works everywhere. The zsh table is nicer when you are already in zsh and want the value, not just its existence.
+:::
+
+#### Why `$PATH` Is Both
+One array in particular you have already been using without noticing. zsh ties `$PATH` (the colon-separated string) to `$path` (an array), keeping them synchronized:
+
+```bash
+echo "$PATH"           # /usr/local/bin:/usr/bin:/bin
+echo "$path[1]"        # /usr/local/bin   (the same data, indexable)
+echo "${#path}"        # 3                (how many entries, without counting colons)
+
+path+=(/opt/homebrew/bin)      # append via the array; $PATH updates to match
+```
+
+Changing either one updates the other, which is what "tied" means.
+
+This is much pleasanter than the `export PATH="$PATH:/opt/bin"` string surgery from earlier, and it is why zsh users often manipulate `$path` instead. The pairing is called a **tied parameter**, created with `typeset -T`, and you can make your own. `$PATH` stays a colon-separated string because that is what the environment must contain for child processes to read it; `$path` is the same data in a form the shell can index.
+
+## Parameter Expansion
+::: {.subheading}
+`${...}` is a tiny string-editing language built into the shell.
+:::
+
+You already use the plain form, `$VAR` or `${VAR}`, to read a value. The braces, though, are not just there to disambiguate where a name ends (`${VAR}_suffix`). Inside them lives a small sublanguage for *transforming* the value on the way out: trimming a prefix or suffix, substituting a default, slicing a substring, changing case. It is the shell's answer to the string operations you would reach for `str.removeprefix` or `substr` to do elsewhere, and it runs entirely in the shell with no external process. That last point matters: `${1#--profile=}` does its work without forking `sed` or `cut`, which is why parameter expansion is the idiomatic tool for the small, hot string edits that CLI parsing is full of.
+
+The whole family shares one shape: `${` *parameter operator word* `}`. The *parameter* is the variable (`1`, `PROFILE`, `PATH`); the *operator* is a punctuation glyph that names the transformation; the *word* is the argument to it. What follows are the operators you will actually meet in the wild.
+
+### Trimming Prefixes and Suffixes
+::: {.subheading}
+`#` bites off the front, `%` bites off the back.
+:::
+
+These four are the workhorses. Each takes a **glob pattern** (the same wildcards as [globbing](#globbing), not a regex) and removes the matched piece from one end of the value:
+
+| Expansion     | Removes                                    | Mnemonic                           |
+|---------------|--------------------------------------------|------------------------------------|
+| `${var#pat}`  | shortest match of `pat` from the **front** | `#` is left of `$` on the keyboard |
+| `${var##pat}` | longest match of `pat` from the **front**  | doubled = greedy                   |
+| `${var%pat}`  | shortest match of `pat` from the **back**  | `%` is right of `$`                |
+| `${var%%pat}` | longest match of `pat` from the **back**   | doubled = greedy                   |
+
+The single/double distinction is about greed, and it only bites when the pattern contains a `*`:
+
+```bash
+path=/usr/local/bin/python3
+
+echo "${path##*/}"   # python3      longest front match of */  → strips every dir
+echo "${path#*/}"    # usr/local/bin/python3   shortest → strips just the leading /
+echo "${path%/*}"    # /usr/local/bin          shortest back match of /* → the dirname
+echo "${path%.*}"    # (unchanged; no dot)     strips a file extension when present
+```
+
+`${path##*/}` and `${path%/*}` are the shell's built-in `basename` and `dirname`, running without a subprocess. That is the single most common use you will see.
+
+Back to your parser, `${1#--profile=}` reads exactly this way: take `$1`, strip the shortest front match of the literal `--profile=`, and hand back what remains. When `$1` is `--profile=release`, the pattern `--profile=` matches the head and expansion yields `release`. There is no `*` in the pattern, so single vs. double `#` makes no difference here; `#` is just the conventional choice for "strip a known literal prefix."
+
+### Defaults and Presence
+::: {.subheading}
+Substitute a fallback, or assign one, when a variable is empty or unset.
+:::
+
+The `:-`, `:=`, `:+`, and `:?` operators branch on whether a variable has a value. They are the shell's ternary, and they retire whole `if [ -z "$x" ]` blocks:
+
+```bash
+echo "${EDITOR:-vim}"        # use $EDITOR, or "vim" if it is empty/unset
+: "${CONFIG:=/etc/app.conf}" # as above, but ALSO assign the default back into $CONFIG
+echo "${DEBUG:+--verbose}"   # if DEBUG is set, expand to "--verbose"; else to nothing
+echo "${1:?missing argument}"  # if $1 is empty/unset, print the message and abort
+```
+
+The colon is the difference between "unset or empty" (with `:`) and merely "unset" (without). `${x-default}` fires only when `x` is entirely unset; `${x:-default}` also fires when `x` is set but empty. You almost always want the colon form.
+
+`${1:?message}` is a particularly clean guard for a script's own arguments: one line that either yields the argument or exits with your error, replacing a three-line `if` at the top of the script.
+
+### Slicing, Length, and Substitution
+::: {.subheading}
+The rest of the toolkit: substrings, length, search-and-replace, case.
+:::
+
+The remaining operators round out the string library. These are bash/zsh features (not in strict POSIX `sh`), so reserve them for scripts with a `bash` shebang:
+
+```bash
+name="deploy-prod-2024"
+
+echo "${#name}"          # 16          length, like strlen
+echo "${name:0:6}"       # deploy      substring: offset 0, length 6
+echo "${name:7}"         # prod-2024   substring from offset 7 to the end
+echo "${name/prod/stage}"   # deploy-stage-2024   replace FIRST match
+echo "${name//-/_}"      # deploy_prod_2024        replace ALL matches (doubled /)
+echo "${name^^}"         # DEPLOY-PROD-2024        upper-case (bash 4+; zsh: ${name:u})
+echo "${name,,}"         # deploy-prod-2024        lower-case (bash 4+; zsh: ${name:l})
+```
+
+Substitution (`${var/from/to}`) is the in-shell `sed s///` for the common case, and like the trimming operators it takes a glob pattern for `from`, not a regex.
+
+### Argument Parsing
+::: {.subheading}
+The Real-World Loop: where parameter expansion, `case`, and `shift` come together.
+:::
+
+Nearly every hand-written CLI parser is the same shape: a `while` loop over the positional arguments, a `case` that dispatches on the current one, and `shift` to advance. Here is the pattern in full, the kind of loop you will find at the top of countless real scripts:
+
+```bash
+PROFILE=debug
+AUTO_RUN=false
+SD_ROOT=
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --profile=*)
+            PROFILE="${1#--profile=}"   # strip the flag, keep the value
+            shift
+            ;;
+        -r|--run)
+            AUTO_RUN=true
+            shift
+            if [ "$#" -gt 0 ]; then     # consume the NEXT arg as this flag's value
+                SD_ROOT="$1"
+                shift
+            fi
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
+```
+
+The three moving parts: `while [ "$#" -gt 0 ]` runs until the arguments are exhausted; `case "$1"` inspects the front argument; `shift` drops `$1` and slides `$2` down into its place, decrementing `$#`. Each branch is responsible for consuming exactly the arguments it owns, one `shift` per argument eaten. Miss a `shift` and the loop spins forever on the same argument; add one too many and you skip an argument unparsed.
+
+Notice the two different ways a flag takes a value. `--profile=release` carries its value *attached*, and `${1#--profile=}` peels it off in place. `-r release` carries its value in the *next* argument, so the branch does a second `shift` to consume it. This split is exactly what the next callout is about.
+
+::: {.callout-warning title="This loop has a real bug"}
+The `-r|--run` branch unconditionally swallows the following argument as `SD_ROOT`. But `-r` is a boolean flag, "should we auto-run?", and its value here is `true`, set on the line above. Consuming the next argument as well means `myscript --run --profile=release` silently eats `--profile=release` into `SD_ROOT` and never parses the profile. Either `-r` is a boolean (take no argument) or it expects a path (document it, and reject a following flag), but it cannot quietly be both. When a flag conditionally consumes the next token, that next token is invisible to the rest of the parser, and mixing that with a boolean reading of the same flag is how parsers grow silent, order-dependent surprises.
+:::
+
+::: {.callout-note title="How should an option take its argument? Prefer `--option=value`."}
+There are three conventions in circulation, and they are not equally safe:
+
+| Style                | Example             | Cost                                                           |
+|----------------------|---------------------|----------------------------------------------------------------|
+| **Attached, `=`**    | `--profile=release` | One token, unambiguous. `${1#--profile=}` extracts it locally. |
+| **Separate token**   | `--profile release` | Two tokens; the parser must look ahead and `shift` twice.      |
+| **Glued short form** | `-prelease`         | Terse, but ambiguous with bundling (`-p -r`), and unreadable.  |
+
+The **attached `--option=value`** form is the most bullet-proof, and your instinct is right. Its value travels *with* the flag as a single argument, so there is no "is the next token my value or the next flag?" lookahead, no risk of consuming a flag by accident (the bug above), and no ambiguity if the value itself starts with a dash (`--pattern=-foo` is unmistakable, whereas `--pattern -foo` looks like two flags). The parser branch stays entirely local: match `--option=*`, then `${1#--option=}`. The separate-token form is what most GNU tools also accept, and it is fine when you handle the lookahead deliberately, but the `=` form removes the entire class of "who owns the next argument" mistakes. Reserve the glued short form for genuine single-letter boolean flags, where bundling (`-rf`) is a feature, not a hazard.
+
+For anything beyond a handful of flags, reach for a real parser instead of hand-rolling: bash's built-in `getopts` (POSIX short options), the GNU `getopt` program (long options too), or, honestly, a different language once the flag matrix gets wide.
+:::
+
+### Optional Values Need Two Patterns
+::: {.subheading}
+When a flag's `=value` is optional, bare `--flag` and `--flag=value` are different tokens.
+:::
+
+Once you commit to the `=` convention, a subtlety surfaces the moment a flag's value becomes *optional*. Suppose `--run` should enable auto-run on its own, but also accept an optional `--run=<path>` to override a default. The trap: the glob `--run=*` requires the literal `=` to be present, so a bare `--run` **does not match it**. You need two branches, one per spelling:
+
+```bash
+--run)                           # bare: enable, keep the default path
+    AUTO_RUN=true
+    shift
+    ;;
+--run=*)                         # with a value: enable, and maybe override
+    AUTO_RUN=true
+    value="${1#--run=}"          # everything after '='; may be the empty string
+    if [ -n "$value" ]; then     # only override when a real path was given
+        SD_ROOT="$value"
+    fi
+    shift
+    ;;
+```
+
+This also settles a tempting shortcut: "can't I just assign `${1#--run=}` to a variable and test whether it's empty?" You can, but only to answer *one* of three separate questions, and it is easy to conflate them:
+
+| What you want to know                       | How you actually test it                                                                      |
+|---------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Was `--run` passed at all?                  | The `case` pattern. Entering **either** branch means yes; do not inspect a variable for this. |
+| Did they use `--run=value` or bare `--run`? | **Which** branch fired. Matching `--run=*` means a value was supplied (possibly empty).       |
+| Was the supplied value non-empty?           | `[ -n "$value" ]` (or `[ -z "$value" ]`), always quoted.                                      |
+
+Emptiness alone cannot distinguish the first two rows, because `SD_ROOT` ends up empty both when the user passes nothing (`--run`) and when they pass an empty value (`--run=`). That ambiguity is exactly why a separate boolean like `AUTO_RUN` earns its place: it records "did they ask to run?" unambiguously, set the instant either branch fires, independent of whether a path came with it. Reserve the emptiness test for the narrow, honest question it answers well, "is there a usable value here?", and let the `case` structure answer the rest.
+
+### The Built-in Parser `getopts`
+::: {.subheading}
+The POSIX shell's own option parser, for when the hand-rolled loop gets tedious
+:::
+
+The hand-rolled `while`/`case`/`shift` loop is honest and portable, but it grows repetitive: every flag needs its own branch, its own `shift` bookkeeping, and its own error handling. `getopts` is a POSIX built-in that absorbs that boilerplate for **short options** (`-v`, `-o file`, and bundled forms like `-vo`). It is not a separate program; it is a shell keyword you call once per iteration of a `while` loop, and it walks the arguments for you.
+
+The mental model: you hand `getopts` an *option string* describing which flags exist, and it hands you back, one call at a time, the next flag it found:
+
+```bash
+verbose=false
+output=
+
+while getopts "vo:h" opt; do
+    case "$opt" in
+        v) verbose=true ;;
+        o) output="$OPTARG" ;;      # $OPTARG holds the value for a flag with ':'
+        h) usage; exit 0 ;;
+        ?) usage; exit 1 ;;         # getopts sets opt to '?' on an unknown flag
+    esac
+done
+
+shift "$((OPTIND - 1))"            # drop the parsed options; leave the positionals
+echo "remaining arguments: $@"
+```
+
+Three pieces do the work:
+
+- **The option string `"vo:h"`.** Each letter is a valid flag. A **colon after a letter** means that flag *takes an argument*: `o:` is `-o value`. So `v` and `h` are boolean, `o` expects a value. A **leading colon** (`":vo:h"`) switches `getopts` into *silent error mode*, where you handle bad input yourself instead of letting it print to stderr.
+- **`$OPTARG`.** When a flag takes an argument, `getopts` puts that argument here. In the loop above, `-o report.txt` leaves `opt=o` and `OPTARG=report.txt`.
+- **`$OPTIND`.** The index of the *next* argument `getopts` will look at. After the loop, `OPTIND - 1` is the count of tokens consumed by options, so `shift "$((OPTIND - 1))"` slides the leftover positional arguments (the filenames, the paths) down to `$1`, `$2`, ready for a `for arg in "$@"` afterward. This is the step people forget, and without it your positionals still have the flags in front of them.
+
+What you get for free is exactly the tedium the manual loop makes you write by hand: **bundling** (`-vo file` is understood as `-v -o file`), the `=` and separate-token forms of an argument (`-ofile` and `-o file` both work), and a clean stop at the first non-option argument or at the `--` sentinel.
+
+::: {.callout-warning title="`getopts` does short options only"}
+This is the catch, and it is why the hand-rolled loop never fully goes away. POSIX `getopts` understands `-v`, not `--verbose`; there is no long-option support, and `--profile=release` will not parse. If you need long options you have three choices: accept short-only, hand-roll the `case` loop from the previous section (which handles `--profile=*` naturally), or step outside the shell to the separate GNU `getopt` **program** (note: no `s`), which does support long options but has its own quoting sharp edges. For anything with a serious flag matrix, that last signal, "I am now fighting the parser", is usually the moment to reach for Python's `argparse` or Rust's `clap` instead.
+:::
+
+::: {.callout-note title="`getopts` (built-in) vs. `getopt` (program)"}
+The near-identical names hide a real difference. **`getopts`** (with the `s`) is the shell built-in shown above: POSIX, portable, short options only, no subprocess. **`getopt`** (no `s`) is an external program, GNU's version parses long options and can re-order arguments, but its classic form mishandles values with spaces and its "enhanced" mode needs careful `eval set -- "$@"` wrapping. When someone says "use getopts," they almost always mean the safe built-in. Reach for the external `getopt` only when you specifically need long options *and* cannot move to a real language.
+:::
+
 ## Running Commands and Capturing Output
 ::: {.subheading}
 Every command hands back two separate things, and confusing them is the root of most "why didn't that work?" moments.
@@ -559,7 +924,7 @@ So `*.txt` as a glob means "any filename ending in `.txt`," but `*.txt` as a reg
 ```bash
 ls *.qmd            # every .qmd file in this directory
 ls la-*.qmd         # every .qmd file starting with "la-"
-ls chapter?.md      # chapter1.md, chapter7.md — but not chapter12.md
+ls chapter?.md      # chapter1.md, chapter7.md, but not chapter12.md
 ls [abc]*.txt       # .txt files starting with a, b, or c
 ls **/*.png         # every .png at any depth (zsh)
 ```
@@ -706,7 +1071,131 @@ zsh and bash also provide `[[ ]]`, a shell *keyword* rather than a program. Beca
 [[ "$n" -gt 0 && "$n" -lt 100 ]]   # combine numeric tests
 ```
 
-Prefer `[[ ]]` for new code in bash/zsh: it does what you mean with fewer footguns. Reach for the older `[ ]` only when you need POSIX portability (e.g. scripts that must run under `sh`/`dash`).
+[Prefer `[[ ]]` for new code in bash/zsh: it does what you mean with fewer footguns. Reach for the older `[ ]` only when you need POSIX portability (e.g. scripts that must run under `sh`/`dash`)]{.hl-default}.
+
+### Arithmetic: `(( ))`
+::: {.subheading}
+Where numbers behave like numbers
+:::
+
+There is a third bracket, and it exists because the two above are fundamentally *text* tools. `[ ]` and `[[ ]]` compare strings, and their numeric operators (`-gt`, `-lt`) are a lettered workaround bolted on for the cases where you need arithmetic.] `(( ))` inverts that: inside it, everything is a number and C's operators mean what they mean in C.
+
+```bash
+n=5
+
+if (( n > 0 )); then           # reads exactly like C
+    echo "positive"
+fi
+
+(( count = 10 * 3 ))           # assignment, no $ and no spaces problem
+(( count += 5 ))               # compound assignment
+(( i++ ))                      # increment
+```
+
+Three things are immediately different from the bracket forms, and each is a reason Google kept suggesting it:
+
+1. **The operators are C's.** `>`, `<`, `>=`, `==`, `!=`, `&&`, `||`, `%`, `*`, `+` all work directly. No `-gt`, no `-a`, no remembering which family a given test belongs to.
+2. **No `$` is needed on variable names.** Inside `(( ))` a bare word is read as a parameter, so `(( n > 0 ))` works. `$n` also works and is harmless.
+3. **No quoting hazard.** Word splitting does not happen inside `(( ))`, so the "always quote your variables" rule that dominates `[ ]` simply does not apply.
+
+#### Why Prefer It Over `[ ]` for Numbers
+The strongest argument is not convenience, it is a correctness bug that `[[ ]]` will hand you silently:
+
+```bash
+[[ 10 > 9 ]]  && echo true || echo false     # false  <- !!
+(( 10 > 9 ))  && echo true || echo false     # true
+```
+
+Inside `[[ ]]`, `>` is a **string** comparison, so it compares `"10"` and `"9"` lexicographically, and `"1"` sorts before `"9"`. The test is not an error and produces no warning; it just quietly gives you the wrong answer. Every number that crosses a digit-count boundary is affected, which means the bug tends to appear only once your counter passes 9 or your version number reaches 10.
+
+Inside `[[ ]]` you must write `[[ 10 -gt 9 ]]` to get numeric comparison. Inside `(( ))`, `>` is arithmetic and there is nothing to get wrong. Hence the rule:
+
+| Testing                    | Use     |
+|----------------------------|---------|
+| Numbers                    | `(( ))` |
+| Strings, files, patterns   | `[[ ]]` |
+| POSIX portability required | `[ ]`   |
+
+#### The Exit Status Inversion
+`(( ))` is a command like any other, so it produces an exit status, and here it does something that looks backwards until you see why:
+
+```bash
+(( 1 )); echo $?        # 0   (success)
+(( 0 )); echo $?        # 1   (failure)
+```
+
+The rule is that `(( expr ))` succeeds when the expression evaluates to **nonzero**. This is C's notion of truth (nonzero is true) being translated into the shell's notion of success (zero is success), so the two conventions get bridged at exactly this boundary. It is why `(( ${+aliases[run-help]} ))` from the [arrays section](#arrays) reads naturally: `$+` yields `1` for "exists," `(( ))` treats `1` as true, and the `if` sees success.
+
+A useful consequence is that a bare variable is a truth test:
+
+```bash
+if (( count )); then           # true when count is nonzero
+    echo "we have $count items"
+fi
+```
+
+::: {.callout-warning title="`(( i++ ))` can kill a script under `set -e`"}
+This one is genuinely nasty and worth knowing before it bites. Post-increment evaluates to the variable's *old* value, so when `i` is `0`, `(( i++ ))` evaluates to `0`, which is a **failed** exit status. Under [`set -e`](#fail-loudly), which exits on any failure, the script dies on a line that looks incapable of failing:
+
+```bash
+set -e
+i=0
+(( i++ ))         # evaluates to 0 -> exit status 1 -> script exits here
+echo "never reached"
+```
+
+Three fixes, in rough order of preference:
+
+```bash
+(( ++i ))         # pre-increment: evaluates to the NEW value, 1, so it succeeds
+(( i++ )) || true # explicitly discard the status
+i=$(( i + 1 ))    # use the expansion form, which has no exit status at all
+```
+
+The same hazard applies to any arithmetic that legitimately evaluates to zero, such as `(( total = a - b ))` when the two are equal.
+:::
+
+#### `$(( ))`: the Expansion Form
+You have already seen its sibling, back in the `while` loop: `$(( ))` with a leading `$` is **arithmetic expansion**, which computes a value and substitutes it into the command line rather than producing an exit status.
+
+```bash
+n=$(( 3 + 4 * 2 ))         # 11   (normal precedence)
+echo "$(( n / 2 ))"        # 5    (integer division)
+echo "$(( n % 3 ))"        # 2    (modulo)
+```
+
+The distinction is worth stating plainly, since the two forms look nearly identical:
+
+| Form          | Purpose                                 | Yields                       |
+|---------------|-----------------------------------------|------------------------------|
+| `(( expr ))`  | evaluate for a condition or side effect | an exit status               |
+| `$(( expr ))` | evaluate for a value                    | the computed number, as text |
+
+So `(( i++ ))` is a statement, while `i=$(( i + 1 ))` is an assignment. Use the first in conditions, the second when you need the number itself.
+
+#### The C-Style `for` Loop
+This is the construct you remembered seeing, and now it should read plainly. The `for (( ))` form uses arithmetic evaluation for all three clauses, giving the shell a genuine counting loop:
+
+```bash
+for (( i = 0; i < 5; i++ )); do
+    echo "$i"
+done
+```
+
+Note it is `for ((` with the double parens, not `for (`. This is the exception to the "the shell's `for` is a for-each" rule from the [`for` section](#for): when you genuinely need to count, this is the readable way. Reach for it sparingly, though, since iterating over a glob or a list is more idiomatic shell, and a loop counting to a fixed number is often a sign that a list would serve better.
+
+::: {.callout-note title="Limits: integers only (mostly)"}
+Shell arithmetic is **integer** arithmetic. `$(( 7 / 2 ))` is `3`, not `3.5`, and the fractional part is discarded rather than rounded.
+
+zsh is the partial exception: it supports floating point in `(( ))`, so `(( 3.5 > 2 ))` works there. **bash does not**, and the same line is a syntax error. Since this is one of the wider zsh/bash gaps, portable scripts needing real numbers hand the job to a tool that has them:
+
+```bash
+echo "scale=2; 7 / 2" | bc      # 3.50   (bc: an arbitrary-precision calculator)
+awk 'BEGIN { print 7 / 2 }'     # 3.5    (awk does floating point natively)
+```
+
+Since you have already met [`awk`](#columns-and-computation), it is usually the more convenient of the two, and it is already in your toolkit.
+:::
 
 ### `if` / `elif` / `else`
 With conditions understood, the branching itself is unremarkable:
@@ -731,7 +1220,7 @@ The `then` can share a line with `if` if you separate them with a semicolon (`if
 n=5
 while [ "$n" -gt 0 ]; do
     echo "$n"
-    n=$((n - 1))        # $(( )) is arithmetic expansion
+    n=$((n - 1))        # $(( )) is arithmetic expansion; see (( )) below
 done
 
 # Wait for a service to come up
@@ -765,7 +1254,7 @@ for branch in $(git branch --format='%(refname:short)'); do
 done
 
 # C-style counter, when you genuinely need numbers (bash/zsh)
-for ((i = 0; i < 5; i++)); do
+for ((i = 0; i < 5; i++)); do        # see Arithmetic: (( ))
     echo "$i"
 done
 ```
@@ -1109,6 +1598,10 @@ Almost every shell task decomposes the same way: **produce** a stream (`ls`, `fi
 
 ## Gnarly Breakdowns
 ### `find` in a Loop
+::: {.subheading}
+The bulletproof way to iterate over files found by `find`, including files whose names contain spaces, tabs, newlines, or anything else.
+:::
+
 ```shell
 find '<path>' -name "<filter>" -print0 | while IFS= read -r -d '' f
 do
@@ -1116,10 +1609,6 @@ do
     echo "$f"
 done
 ```
-
-::: {.subheading}
-The bulletproof way to iterate over files found by `find`, including files whose names contain spaces, tabs, newlines, or anything else.
-:::
 
 This one earns its place in "Gnarly Breakdowns" because every piece of it exists to defend against a single enemy: **filenames can contain almost any character**. On a Unix filesystem the only two bytes forbidden in a filename are `/` (the path separator) and the null byte `\0`. *Everything else is fair game*: spaces, tabs, newlines, quotes, glob characters. A robust loop over filenames has to treat the filename as opaque bytes, and that constraint is what shapes every flag below.
 

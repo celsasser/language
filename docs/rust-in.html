@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-06-18">
+<meta name="dcterms.date" content="2026-08-02">
 
 <title>Rust: Introduction – Computer Language Notebook</title>
 <style>
@@ -197,7 +197,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./cpp-cgl.html" class="sidebar-item-text sidebar-link">
+  <a href="./cpp-GL.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Guidelines</span></a>
   </div>
 </li>
@@ -451,7 +451,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">June 18, 2026</p>
+      <p class="date">August 2, 2026</p>
     </div>
   </div>
   
@@ -505,7 +505,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="is-rust-as-efficient-and-fast-as-c" class="level5">
 <h5 class="anchored" data-anchor-id="is-rust-as-efficient-and-fast-as-c">2. Is Rust as efficient and fast as C?</h5>
-<p>Yes, with one honest qualification.</p>
+<p>Yes, with one qualification.</p>
 <p>On the machine-code level, Rust and C compile to essentially identical output. Both use LLVM (Clang also uses LLVM), both have no runtime or garbage collector, and Rust’s abstractions — iterators, generics, closures — are zero-cost: they disappear at compile time. Benchmarks between idiomatic Rust and idiomatic C are routinely within a percent or two of each other, and Rust sometimes wins because the compiler can apply optimizations that would be illegal in C due to aliasing rules (<code>restrict</code> in C is opt-in; Rust’s ownership model gives the compiler that guarantee automatically).</p>
 <p>The qualification: Rust has bounds-checked array indexing in debug builds. In optimized builds, those checks are often eliminated when the compiler can prove an access is in range, and idiomatic safe Rust often uses iterators or slice methods that compile down without per-access bounds checks. In tight inner loops over arrays this can still matter in some cases, and C has no such checks by default. If you truly need manual unchecked indexing, Rust gives you the escape hatch via <a href="https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword" target="_blank"><code>unsafe</code></a>, but you have to ask for it deliberately. In practice, for most systems code, the difference does not appear outside of microbenchmarks.</p>
 </section>

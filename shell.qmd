@@ -571,14 +571,14 @@ This also settles a tempting shortcut: "can't I just assign `${1#--run=}` to a v
 | Did they use `--run=value` or bare `--run`? | **Which** branch fired. Matching `--run=*` means a value was supplied (possibly empty).       |
 | Was the supplied value non-empty?           | `[ -n "$value" ]` (or `[ -z "$value" ]`), always quoted.                                      |
 
-Emptiness alone cannot distinguish the first two rows, because `SD_ROOT` ends up empty both when the user passes nothing (`--run`) and when they pass an empty value (`--run=`). That ambiguity is exactly why a separate boolean like `AUTO_RUN` earns its place: it records "did they ask to run?" unambiguously, set the instant either branch fires, independent of whether a path came with it. Reserve the emptiness test for the narrow, honest question it answers well, "is there a usable value here?", and let the `case` structure answer the rest.
+Emptiness alone cannot distinguish the first two rows, because `SD_ROOT` ends up empty both when the user passes nothing (`--run`) and when they pass an empty value (`--run=`). That ambiguity is exactly why a separate boolean like `AUTO_RUN` earns its place: it records "did they ask to run?" unambiguously, set the instant either branch fires, independent of whether a path came with it. Reserve the emptiness test for the narrow question it answers well, "is there a usable value here?", and let the `case` structure answer the rest.
 
 ### The Built-in Parser `getopts`
 ::: {.subheading}
 The POSIX shell's own option parser, for when the hand-rolled loop gets tedious
 :::
 
-The hand-rolled `while`/`case`/`shift` loop is honest and portable, but it grows repetitive: every flag needs its own branch, its own `shift` bookkeeping, and its own error handling. `getopts` is a POSIX built-in that absorbs that boilerplate for **short options** (`-v`, `-o file`, and bundled forms like `-vo`). It is not a separate program; it is a shell keyword you call once per iteration of a `while` loop, and it walks the arguments for you.
+The hand-rolled `while`/`case`/`shift` loop is portable, but it grows repetitive: every flag needs its own branch, its own `shift` bookkeeping, and its own error handling. `getopts` is a POSIX built-in that absorbs that boilerplate for **short options** (`-v`, `-o file`, and bundled forms like `-vo`). It is not a separate program; it is a shell keyword you call once per iteration of a `while` loop, and it walks the arguments for you.
 
 The mental model: you hand `getopts` an *option string* describing which flags exist, and it hands you back, one call at a time, the next flag it found:
 

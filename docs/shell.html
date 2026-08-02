@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-07-31">
+<meta name="dcterms.date" content="2026-08-02">
 
 <title>The Shell – Computer Language Notebook</title>
 <style>
@@ -197,7 +197,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./cpp-cgl.html" class="sidebar-item-text sidebar-link">
+  <a href="./cpp-GL.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Guidelines</span></a>
   </div>
 </li>
@@ -526,7 +526,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 31, 2026</p>
+      <p class="date">August 2, 2026</p>
     </div>
   </div>
   
@@ -1339,14 +1339,14 @@ child: sh_var=[] env_var=[dong]</code></pre>
 </tr>
 </tbody>
 </table>
-<p>Emptiness alone cannot distinguish the first two rows, because <code>SD_ROOT</code> ends up empty both when the user passes nothing (<code>--run</code>) and when they pass an empty value (<code>--run=</code>). That ambiguity is exactly why a separate boolean like <code>AUTO_RUN</code> earns its place: it records “did they ask to run?” unambiguously, set the instant either branch fires, independent of whether a path came with it. Reserve the emptiness test for the narrow, honest question it answers well, “is there a usable value here?”, and let the <code>case</code> structure answer the rest.</p>
+<p>Emptiness alone cannot distinguish the first two rows, because <code>SD_ROOT</code> ends up empty both when the user passes nothing (<code>--run</code>) and when they pass an empty value (<code>--run=</code>). That ambiguity is exactly why a separate boolean like <code>AUTO_RUN</code> earns its place: it records “did they ask to run?” unambiguously, set the instant either branch fires, independent of whether a path came with it. Reserve the emptiness test for the narrow question it answers well, “is there a usable value here?”, and let the <code>case</code> structure answer the rest.</p>
 </section>
 <section id="the-built-in-parser-getopts" class="level3">
 <h3 class="anchored" data-anchor-id="the-built-in-parser-getopts">The Built-in Parser <code>getopts</code></h3>
 <div class="subheading">
 <p>The POSIX shell’s own option parser, for when the hand-rolled loop gets tedious</p>
 </div>
-<p>The hand-rolled <code>while</code>/<code>case</code>/<code>shift</code> loop is honest and portable, but it grows repetitive: every flag needs its own branch, its own <code>shift</code> bookkeeping, and its own error handling. <code>getopts</code> is a POSIX built-in that absorbs that boilerplate for <strong>short options</strong> (<code>-v</code>, <code>-o file</code>, and bundled forms like <code>-vo</code>). It is not a separate program; it is a shell keyword you call once per iteration of a <code>while</code> loop, and it walks the arguments for you.</p>
+<p>The hand-rolled <code>while</code>/<code>case</code>/<code>shift</code> loop is portable, but it grows repetitive: every flag needs its own branch, its own <code>shift</code> bookkeeping, and its own error handling. <code>getopts</code> is a POSIX built-in that absorbs that boilerplate for <strong>short options</strong> (<code>-v</code>, <code>-o file</code>, and bundled forms like <code>-vo</code>). It is not a separate program; it is a shell keyword you call once per iteration of a <code>while</code> loop, and it walks the arguments for you.</p>
 <p>The mental model: you hand <code>getopts</code> an <em>option string</em> describing which flags exist, and it hands you back, one call at a time, the next flag it found:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="va">verbose</span><span class="op">=</span>false</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="va">output</span><span class="op">=</span></span>

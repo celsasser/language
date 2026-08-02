@@ -41,7 +41,7 @@ Rust separates the two concerns cleanly. For code reuse, you use *traits with de
 The payoff is that Rust's type system is simpler to reason about. There is no implicit behavior coming from somewhere up the hierarchy, and the borrow checker doesn't have to contend with inherited mutable state. If you miss inheritance, you usually find that a trait with default methods plus composition covers the real need without the baggage.
 
 ##### 2. Is Rust as efficient and fast as C?
-Yes, with one honest qualification.
+Yes, with one qualification.
 
 On the machine-code level, Rust and C compile to essentially identical output. Both use LLVM (Clang also uses LLVM), both have no runtime or garbage collector, and Rust's abstractions — iterators, generics, closures — are zero-cost: they disappear at compile time. Benchmarks between idiomatic Rust and idiomatic C are routinely within a percent or two of each other, and Rust sometimes wins because the compiler can apply optimizations that would be illegal in C due to aliasing rules (`restrict` in C is opt-in; Rust's ownership model gives the compiler that guarantee automatically).
 

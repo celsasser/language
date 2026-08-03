@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-08-02">
+<meta name="dcterms.date" content="2026-08-03">
 
 <title>The CMake Language – Computer Language Notebook</title>
 <style>
@@ -390,7 +390,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#cmake-is-not-a-build-tool" id="toc-cmake-is-not-a-build-tool" class="nav-link" data-scroll-target="#cmake-is-not-a-build-tool">CMake Is Not a Build Tool</a></li>
   <li><a href="#the-two-phase-model" id="toc-the-two-phase-model" class="nav-link" data-scroll-target="#the-two-phase-model">The Two-Phase Model</a></li>
-  <li><a href="#a-short-history" id="toc-a-short-history" class="nav-link" data-scroll-target="#a-short-history">A Short History</a></li>
+  <li><a href="#a-short-history" id="toc-a-short-history" class="nav-link" data-scroll-target="#a-short-history">A Short History</a>
+  <ul class="collapse">
+  <li><a href="#the-predecessors" id="toc-the-predecessors" class="nav-link" data-scroll-target="#the-predecessors">The Predecessors</a></li>
+  <li><a href="#the-contract-that-funded-it" id="toc-the-contract-that-funded-it" class="nav-link" data-scroll-target="#the-contract-that-funded-it">The Contract That Funded It</a></li>
+  <li><a href="#why-not-tcl" id="toc-why-not-tcl" class="nav-link" data-scroll-target="#why-not-tcl">Why Not Tcl</a></li>
+  <li><a href="#adoption-and-the-modern-split" id="toc-adoption-and-the-modern-split" class="nav-link" data-scroll-target="#adoption-and-the-modern-split">Adoption, and the Modern Split</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#cmake-in-2-minutes" id="toc-cmake-in-2-minutes" class="nav-link" data-scroll-target="#cmake-in-2-minutes">CMake in 2 Minutes</a>
+  <ul>
+  <li><a href="#the-two-commands" id="toc-the-two-commands" class="nav-link" data-scroll-target="#the-two-commands">The Two Commands</a></li>
+  <li><a href="#a-whole-project" id="toc-a-whole-project" class="nav-link" data-scroll-target="#a-whole-project">A Whole Project</a></li>
+  <li><a href="#the-five-commands-that-matter" id="toc-the-five-commands-that-matter" class="nav-link" data-scroll-target="#the-five-commands-that-matter">The Five Commands That Matter</a></li>
+  <li><a href="#adding-a-file" id="toc-adding-a-file" class="nav-link" data-scroll-target="#adding-a-file">Adding a File</a></li>
+  <li><a href="#private-or-public" id="toc-private-or-public" class="nav-link" data-scroll-target="#private-or-public"><code>PRIVATE</code> or <code>PUBLIC</code>?</a></li>
+  <li><a href="#four-things-that-will-bite-you" id="toc-four-things-that-will-bite-you" class="nav-link" data-scroll-target="#four-things-that-will-bite-you">Four Things That Will Bite You</a></li>
+  <li><a href="#reading-a-project-you-did-not-write" id="toc-reading-a-project-you-did-not-write" class="nav-link" data-scroll-target="#reading-a-project-you-did-not-write">Reading a Project You Did Not Write</a></li>
   </ul></li>
   <li><a href="#the-language" id="toc-the-language" class="nav-link" data-scroll-target="#the-language">The Language</a>
   <ul>
@@ -454,7 +470,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 2, 2026</p>
+      <p class="date">August 3, 2026</p>
     </div>
   </div>
   
@@ -531,10 +547,10 @@ recognize in old projects and replace.
 <p>If you have read <a href="./make.html#two-phase-evaluation">Two-Phase Evaluation</a> in the Make chapter, the shape will be familiar, and the parallel is worth drawing because it explains what CMake can and cannot know.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 15%">
-<col style="width: 13%">
-<col style="width: 31%">
-<col style="width: 38%">
+<col style="width: 6%">
+<col style="width: 10%">
+<col style="width: 65%">
+<col style="width: 18%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -570,17 +586,260 @@ recognize in old projects and replace.
 </section>
 <section id="a-short-history" class="level3">
 <h3 class="anchored" data-anchor-id="a-short-history">A Short History</h3>
-<p>Based on <a href="https://en.wikipedia.org/wiki/CMake">Wikipedia::CMake</a>.</p>
-<p>Initial development of CMake began in 1999 at Kitware and was first released the following year. It was funded by the United States National Library of Medicine as part of the Visible Human Project. The motivation behind the making of CMake was discussed above, but not what inspired its design. A couple of contemporary tools from the time were studied:</p>
-<ol type="1">
-<li><code>pcmaker</code>, developed by Ken Martin and others to support building the Visualization Toolkit (VTK), converted Unix Make files into NMake (Microsoft’s proprietary version of the classic Unix make utility) files for building on Windows.</li>
-<li><code>gmake</code> supported Unix and Windows compilers, but its design led to issues that were hard to resolve. Both tools were working examples of a build tool that supported both Unix and Windows, but they suffered from a serious flaw: they required Windows developers to use the command line even though many prefer to use an integrated development environment (IDE) such as Visual Studio.</li>
-</ol>
+<p>CMake was not designed in the abstract. It came out of a specific frustration, held by a specific person, about a specific kind of project, and nearly every one of its design decisions is traceable to that origin.</p>
+<p>The person is <strong>Bill Hoffman</strong>. He spent the decade from 1990 to 1999 at GE’s Corporate Research Center writing large C++ systems, which meant a decade of autotools and hand-written makefiles. That is the relevant qualification: he arrived at Kitware in 1999 having already formed strong opinions about what a build system should not do, and those opinions became CMake’s design rules.</p>
+<p>Kitware itself had been founded the year before by five people leaving GE, and it existed to support the <strong>Visualization Toolkit</strong> (VTK), a large C++ library for 3D graphics. VTK had a problem CMake would later be built to solve: it was C++ source shipped to research labs running every Unix variant of the era, plus Windows, and every one of those labs had to compile it themselves.</p>
+<section id="the-predecessors" class="level4">
+<h4 class="anchored" data-anchor-id="the-predecessors">The Predecessors</h4>
+<p>Two homegrown tools preceded CMake, and both are instructive failures.</p>
+<p><strong><code>pcmaker</code></strong> was written by <strong>Ken Martin</strong>, another Kitware founder, to get VTK building on Windows. It was a C program that read Unix makefiles and translated them into <strong>NMake</strong> files, NMake being Microsoft’s makefile tool. Your instinct to go looking for it was right and the trail is not quite cold: <code>pcmaker</code> lives on in VTK’s repository history at Kitware, where <code>pcmaker/pcmaker.dsp</code> carries commits by Ken Martin dating to November 1998. The <code>.dsp</code> extension dates it precisely, since that is a Visual Studio 6 project file, meaning the tool that generated Windows builds needed a hand-maintained Windows project of its own to build itself. It was never a released product, which is why there is nothing to find outside VTK’s history: it was internal scaffolding for one library’s Windows port.</p>
+<p><strong><code>gmake</code></strong>, in this context, is not GNU Make but Kitware’s own tool of the same name, which supported Unix and Windows compilers together. It worked, and its design had problems its authors found hard to fix.</p>
+<p>Both tools proved the concept and shared one flaw that turned out to be fatal:</p>
+<div class="callout callout-style-default callout-important callout-titled" title="The flaw that produced CMake">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>The flaw that produced CMake
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Both <code>pcmaker</code> and <code>gmake</code> required Windows developers to build from the <strong>command line</strong>. That was a reasonable expectation on Unix and an unreasonable one on Windows, where the overwhelming majority of C++ developers worked inside Visual Studio and expected a project file they could open. A cross-platform build tool that ignores how half its users actually work is not cross-platform. This is the origin of CMake’s generator model: not an architectural flourish, but a concession that the native build tool on each platform is the one that must run.</p>
+</div>
+</div>
+</section>
+<section id="the-contract-that-funded-it" class="level4">
+<h4 class="anchored" data-anchor-id="the-contract-that-funded-it">The Contract That Funded It</h4>
+<p>In 1999 the <strong>National Library of Medicine</strong> put Kitware on a team of three companies and three universities to build an open-source C++ toolkit for segmenting and registering medical images: the <strong>Insight Toolkit</strong> (ITK), part of the Visible Human Project. Kitware won the slot on VTK’s reputation.</p>
+<p>The contract was unusually permissive about implementation and specific about one thing: the toolkit had to be portable to Unix, Windows, and Mac. Hoffman blended ideas from <code>pcmaker</code> with the parts of autotools he thought worth keeping, and CMake was first implemented in 2000.</p>
+<p>Four rules came out of that period, and they still explain the tool:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 48%">
+<col style="width: 51%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Rule</th>
+<th style="text-align: left;">Consequence you meet today</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Support native build tools, including the Visual Studio IDE</td>
+<td style="text-align: left;">The generator model: CMake writes build files, it does not build</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">One input file for every platform</td>
+<td style="text-align: left;"><code>CMakeLists.txt</code> describes structure, never commands</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Depend on nothing but a C++ compiler</td>
+<td style="text-align: left;">The hand-written language, and no runtime to install</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Be able to generate code, for language wrapping</td>
+<td style="text-align: left;"><code>configure_file()</code>, and CMake’s use as a scripting tool</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="why-not-tcl" class="level4">
+<h4 class="anchored" data-anchor-id="why-not-tcl">Why Not Tcl</h4>
+<p>The third rule is the one that produced CMake’s most criticized feature, and it deserves stating in full because the tradeoff was made deliberately and with open eyes.</p>
 <div class="definition" data-label="Tcl">
 <p><a href="https://en.wikipedia.org/wiki/Tcl_(programming_language)" target="_blank">Tcl</a> (Tool Command Language) is a high-level, general-purpose, interpreted, <a href="https://en.wikipedia.org/wiki/Dynamic_programming_language" target="_blank">dynamic programming</a> language. It was designed with the goal of being very simple and powerful. Tcl casts everything into the mold of a command, even programming constructs like variable assignment and procedure definition. Tcl supports multiple programming paradigms, including <a href="https://en.wikipedia.org/wiki/Tcl_(programming_language)#Object-oriented" target="_base">object-oriented</a>, imperative, functional, and procedural styles.</p>
 </div>
-<p>CMake developers chose to develop a scripting language for CMake instead of using Tcl, a popular language for building at the time. Use of Tcl would have then added a dependency to the host machine which is counter to the goal of no dependencies other than a compiler. Also, Tcl was not well supported on Windows and some Unix systems at the time of initial development.</p>
-<p>Version 3.0 was released in June 2014. It has been described as the beginning of “Modern CMake”. Experts now advise to avoid variables in favor of targets and properties. The commands <code>add_compile_options</code>, <code>include_directories</code>, <code>link_directories</code>, <code>link_libraries</code> that were at the core of CMake 2 should now be replaced by target-specific commands.</p>
+<p>Tcl was the obvious choice. It was <em>the</em> embeddable scripting language of the late 1990s, Kitware knew it well (VTK was scriptable in Tcl), and adopting it would have spared everyone the language you are about to learn. They declined, for a reason that sounds mundane and is not: <span class="hl-default">a build system is the most basic dependency a package has, and it cannot itself be hard to install</span>.</p>
+<p>If CMake required Tcl, then building any CMake project would first require building Tcl, which in 1999 was genuinely painful on Windows and on several commercial Unixes. That is a circular dependency at exactly the worst point in the chain. So CMake depends on a C++ compiler and nothing else, which is a safe assumption when the thing it is building is C++.</p>
+<p>Hoffman has been candid that the cost was real. Writing in <em>The Architecture of Open Source Applications</em>, he notes that the decision “did limit CMake to creating its own simple language, a choice that still causes some people to dislike CMake,” and adds the counterfactual that matters: had CMake been Tcl-based, “it is unlikely it would have gained the popularity it enjoys today.”</p>
+<p>That is the trade in one sentence. The language is worse than Tcl. The tool spread because it asked nothing of you but a compiler, and Tcl-based competitors did not spread at all. Every complaint about CMake’s syntax is a bill for a decision that is the reason you have heard of CMake.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="The constraint has not expired">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The constraint has not expired
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>It is tempting to read this as a 1999 problem solved by 2026. It is not. Air-gapped machines, hardened build environments, and supercomputer login nodes all still make “just install this other runtime first” an expensive request. A build system that bootstraps from a compiler alone remains genuinely valuable in exactly the environments where builds matter most.</p>
+</div>
+</div>
+</section>
+<section id="adoption-and-the-modern-split" class="level4">
+<h4 class="anchored" data-anchor-id="adoption-and-the-modern-split">Adoption, and the Modern Split</h4>
+<p>ITK shipped, VTK moved onto CMake, and ParaView followed. That brought in the national laboratories (Los Alamos, Sandia, Livermore) as collaborators and funders, which is how a build system for one medical imaging toolkit became infrastructure.</p>
+<p>The turning point outside Kitware’s own orbit was <strong>KDE</strong> in 2006. Alexander Neundorf championed a switch away from the <code>scons</code> build then in use; Kitware prototyped a KDE build in a few weeks, and it built more of KDE than <code>scons</code> managed. A desktop environment of that size adopting CMake is what moved it from “the toolkit build system” to a default. LLVM followed in 2016, Visual Studio added native CMake support in 2017, and Qt adopted it in 2019.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 86%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Year</th>
+<th style="text-align: left;">Event</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1998</td>
+<td style="text-align: left;">Kitware founded; Ken Martin writes <code>pcmaker</code> to build VTK on Windows</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1999</td>
+<td style="text-align: left;">Bill Hoffman joins from GE Research; NLM funds ITK, requiring Unix, Windows, and Mac</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2000</td>
+<td style="text-align: left;">CMake first implemented</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2003</td>
+<td style="text-align: left;"><em>Mastering CMake</em> published, by Ken Martin and Bill Hoffman</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2006</td>
+<td style="text-align: left;">KDE migrates from <code>scons</code>; the first large adopter outside Kitware’s projects</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2014</td>
+<td style="text-align: left;"><strong>CMake 3.0</strong>: the target-based commands arrive, and “Modern CMake” begins</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2016 onward</td>
+<td style="text-align: left;">LLVM (2016), Visual Studio integration (2017), Qt (2019)</td>
+</tr>
+</tbody>
+</table>
+<p>That 2014 row is the one with practical consequences for reading other people’s projects. CMake 3.0 introduced the target-based model this chapter teaches, and it split the ecosystem’s advice in two. Everything written before it, which is a great deal of what search engines still return first, teaches the directory-scoped commands: <code>include_directories()</code>, <code>add_definitions()</code>, <code>link_libraries()</code>. Those still work, they are still everywhere, and they are the style <a href="#targets-are-the-unit-of-thought">this chapter tells you not to use</a>. When a tutorial’s CMake looks nothing like what you read here, check its date first.</p>
+</section>
+</section>
+</section>
+<section id="cmake-in-2-minutes" class="level2">
+<h2 class="anchored" data-anchor-id="cmake-in-2-minutes">CMake in 2 Minutes</h2>
+<div class="subheading">
+<p>Everything you need to be productive, before the details arrive</p>
+</div>
+<p>The rest of this chapter is thorough. This section is not: it is the smallest set of things that lets you read a <code>CMakeLists.txt</code>, change it correctly, and build it. If you are already working in a CMake project and want the ground under your feet before the theory, start here and treat everything after it as reference.</p>
+<section id="the-two-commands" class="level3">
+<h3 class="anchored" data-anchor-id="the-two-commands">The Two Commands</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build          <span class="co"># configure: read CMakeLists.txt, generate build/</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build          <span class="co"># build: actually compile</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Run the first once. Run the second whenever you change code. If you change <code>CMakeLists.txt</code>, the second one re-runs the first for you.</p>
+<p>When something is inexplicably wrong, delete and start over. This is cheap, safe, and the standard first move:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> <span class="at">-rf</span> build <span class="kw">&amp;&amp;</span> <span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="a-whole-project" class="level3">
+<h3 class="anchored" data-anchor-id="a-whole-project">A Whole Project</h3>
+<p>This is a complete, working CMake project. Not a fragment, not a simplification:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">cmake_minimum_required</span>(<span class="ot">VERSION</span> <span class="dt">3.16</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">project</span>(demo <span class="ot">LANGUAGES</span> <span class="ot">C</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c util.c)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Three lines. A version floor, a project name, and a target built from two sources. Everything else in this chapter is refinement of that shape.</p>
+</section>
+<section id="the-five-commands-that-matter" class="level3">
+<h3 class="anchored" data-anchor-id="the-five-commands-that-matter">The Five Commands That Matter</h3>
+<p>Ninety percent of real <code>CMakeLists.txt</code> content is these:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 45%">
+<col style="width: 22%">
+<col style="width: 32%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">What it does</th>
+<th style="text-align: left;">Make equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>add_executable(app a.c b.c)</code></td>
+<td style="text-align: left;">Declare a program</td>
+<td style="text-align: left;">A rule producing a binary</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>add_library(util a.c b.c)</code></td>
+<td style="text-align: left;">Declare a library</td>
+<td style="text-align: left;">A rule producing <code>.a</code> by default</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>target_link_libraries(app PRIVATE util)</code></td>
+<td style="text-align: left;"><code>app</code> depends on <code>util</code></td>
+<td style="text-align: left;"><code>-lutil</code>, plus the dependency edge</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>target_include_directories(util PUBLIC inc)</code></td>
+<td style="text-align: left;">Header search path</td>
+<td style="text-align: left;"><code>-Iinc</code> in <code>CFLAGS</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>target_compile_definitions(app PRIVATE FAST=1)</code></td>
+<td style="text-align: left;">Preprocessor define</td>
+<td style="text-align: left;"><code>-DFAST=1</code> in <code>CFLAGS</code></td>
+</tr>
+</tbody>
+</table>
+<p>Notice the shape they share. Every one names a <strong>target</strong> first and applies something to it. That is the entire model: you are not writing build commands, you are attaching properties to named things.</p>
+<p>That “by default” is doing real work. <code>add_library()</code> takes an optional type keyword, and leaving it out is a deliberate choice rather than a shorthand:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> <span class="ot">STATIC</span> a.c b.c)   <span class="co"># always static:  libutil.a</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> <span class="ot">SHARED</span> a.c b.c)   <span class="co"># always shared:  libutil.so, .dylib, or .dll</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> a.c b.c)          <span class="co"># let the person building decide</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>With no keyword, the <code>BUILD_SHARED_LIBS</code> variable decides, and it defaults to off. So the same three-line file produces <code>libutil.a</code> normally and <code>libutil.dylib</code> when configured with <code>-DBUILD_SHARED_LIBS=ON</code>, with nothing edited in between. The extension follows the platform too: <code>.so</code> on Linux, <code>.dylib</code> on macOS, <code>.dll</code> on Windows. You never name any of them, which is the “describe structure, not commands” principle from the <a href="#cmake-is-not-a-build-tool">overview</a> showing up in a small way.</p>
+<p>The convention is worth knowing when reading other people’s projects. Omitting the keyword leaves the linkage decision to whoever builds your library, which is the polite default for something others consume; naming <code>STATIC</code> or <code>SHARED</code> explicitly takes that decision away from them, which is right when your project genuinely requires one.</p>
+</section>
+<section id="adding-a-file" class="level3">
+<h3 class="anchored" data-anchor-id="adding-a-file">Adding a File</h3>
+<p>The single most common edit. Find the target and add the filename:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c util.c parser.c)    <span class="co"># parser.c is new</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>That is genuinely it. There is no dependency to declare, no header to list, no rule to write. CMake finds the headers <code>parser.c</code> includes and rebuilds it when they change, which is the <a href="./make.html#auto-generated-dependencies">hand-rolled <code>-MMD</code> machinery</a> from the Make chapter, done for you.</p>
+<p>If your project instead has a <code>set(SOURCES ...)</code> list feeding <code>add_executable(app ${SOURCES})</code>, add it there. Same idea, one more level of indirection.</p>
+</section>
+<section id="private-or-public" class="level3">
+<h3 class="anchored" data-anchor-id="private-or-public"><code>PRIVATE</code> or <code>PUBLIC</code>?</h3>
+<p>The one decision in routine list management that is not mechanical. The question to ask is always the same:</p>
+<p><span class="hl-default"><strong>Does anything that links this target also need this setting?</strong></span></p>
+<ul>
+<li><strong>No</strong> → <code>PRIVATE</code>. It is an implementation detail.</li>
+<li><strong>Yes</strong> → <code>PUBLIC</code>. It travels to consumers.</li>
+</ul>
+<p>Concretely: if <code>util.h</code> is a header your library’s <em>users</em> include, then the directory containing it is <code>PUBLIC</code>. If a define only affects how <code>util.c</code> compiles internally, it is <code>PRIVATE</code>. When you are linking a library into an executable, <code>PRIVATE</code> is nearly always right, because nothing links an executable.</p>
+<p>Get this wrong in the <code>PUBLIC</code>-should-have-been direction and the symptom is distinctive: your library builds fine, and the program using it fails with “no such file” on your header.</p>
+</section>
+<section id="four-things-that-will-bite-you" class="level3">
+<h3 class="anchored" data-anchor-id="four-things-that-will-bite-you">Four Things That Will Bite You</h3>
+<p><strong>Set a build type.</strong> Without it you get no optimization flags at all:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-DCMAKE_BUILD_TYPE</span><span class="op">=</span>Release</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Do not edit anything in <code>build/</code>.</strong> It is generated output. The next configure overwrites it.</p>
+<p><strong><code>if(hello)</code> is false.</strong> Only <code>ON</code>, <code>YES</code>, <code>TRUE</code>, <code>Y</code>, and non-zero numbers are true. A non-empty string is not truthy the way it is in Python or C.</p>
+<p><strong>Quoting a list destroys it.</strong> <code>set(SOURCES a.c b.c)</code> is three files; <code>set(SOURCES "a.c b.c")</code> is one filename with a space in it.</p>
+</section>
+<section id="reading-a-project-you-did-not-write" class="level3">
+<h3 class="anchored" data-anchor-id="reading-a-project-you-did-not-write">Reading a Project You Did Not Write</h3>
+<p>Two commands answer most questions:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build <span class="at">--verbose</span>        <span class="co"># show the real compiler invocations</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-DCMAKE_EXPORT_COMPILE_COMMANDS</span><span class="op">=</span>ON</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># then read build/compile_commands.json for the exact flags per file</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The second is the one to reach for when a file is being compiled with flags you cannot account for. It is also what <code>clangd</code> and most editor tooling read, so turning it on is worth doing permanently.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Vendor SDKs will not look like this">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Vendor SDKs will not look like this
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If you are working in an embedded project built on a vendor SDK (the Raspberry Pi Pico SDK, ESP-IDF, STM32Cube), its <code>CMakeLists.txt</code> will contain commands found in no CMake documentation: <code>pico_sdk_init()</code>, <code>pico_add_extra_outputs()</code>, and the like. These are functions the SDK defines, layered on top of the model above. The five commands in this section still do what this section says; the SDK’s own commands wrap large amounts of target configuration you would otherwise write by hand. When SDK code looks unfamiliar, it is the SDK, not a gap in the fundamentals.</p>
+</div>
+</div>
 </section>
 </section>
 <section id="the-language" class="level2">
@@ -589,21 +848,21 @@ recognize in old projects and replace.
 <p>Everything is a string, and it explains almost every surprise</p>
 </div>
 <p>CMake’s syntax is uniform to the point of monotony: the entire language is <strong>commands with arguments</strong>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">command_name</span>(argument1 argument2 argument3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">command_name</span>(argument1 argument2 argument3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>There are no operators, no expressions, no infix arithmetic. <code>set()</code>, <code>if()</code>, <code>add_executable()</code>, and <code>target_link_libraries()</code> are all the same kind of thing. Command names are case-insensitive by convention written lowercase; variable names are case-<em>sensitive</em> and conventionally uppercase.</p>
 <p>Comments start with <code>#</code>. Arguments are separated by whitespace, and there are no commas, which is the first thing to unlearn from every other language.</p>
 <section id="variables-and-the-string-typed-truth" class="level3">
 <h3 class="anchored" data-anchor-id="variables-and-the-string-typed-truth">Variables and the String-Typed Truth</h3>
 <p><code>set()</code> defines a variable, <code>${NAME}</code> expands it:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(PROJECT_AUTHOR <span class="st">"Curtis"</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"author is </span><span class="dv">${PROJECT_AUTHOR}</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(PROJECT_AUTHOR <span class="st">"Curtis"</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"author is </span><span class="dv">${PROJECT_AUTHOR}</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Now the fact that governs everything else: <span class="hl-default">CMake has exactly one data type, the string. A list is a string with semicolons in it</span>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(SOURCES a.c b.c c.c)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"</span><span class="dv">${SOURCES}</span><span class="st">"</span>)     <span class="co"># prints: a.c;b.c;c.c</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(SOURCES a.c b.c c.c)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"</span><span class="dv">${SOURCES}</span><span class="st">"</span>)     <span class="co"># prints: a.c;b.c;c.c</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Those semicolons are not display formatting. They are literally the value. <code>set()</code> with multiple arguments joins them with semicolons, and every command that “takes a list” is really receiving one string and splitting it again.</p>
 <p>This is why quoting changes meaning so drastically:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(SOURCES a.c b.c c.c)         <span class="co"># a list of three</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(QUOTED <span class="st">"a.c b.c c.c"</span>)        <span class="co"># ONE string containing spaces</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(SOURCES a.c b.c c.c)         <span class="co"># a list of three</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(QUOTED <span class="st">"a.c b.c c.c"</span>)        <span class="co"># ONE string containing spaces</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>list(LENGTH SOURCES n)</code> gives 3; the same on <code>QUOTED</code> gives 1. Passing <code>QUOTED</code> to <code>add_executable()</code> asks for a single file with spaces in its name, which does not exist, and the error will be about a missing source file rather than about quoting.</p>
 <div class="callout callout-style-default callout-warning callout-titled" title="Unset variables expand to nothing, silently">
 <div class="callout-header d-flex align-content-center">
@@ -629,13 +888,17 @@ recognize in old projects and replace.
 <h3 class="anchored" data-anchor-id="if-and-its-peculiar-rules"><code>if()</code> and Its Peculiar Rules</h3>
 <p><code>if()</code> is where CMake’s string-typedness produces genuine surprises, and it is worth two minutes now to save an afternoon later.</p>
 <p><strong>Bare words are auto-dereferenced.</strong> In an <code>if()</code>, an unquoted argument that names a variable is replaced by that variable’s <em>value</em>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(FOO BAR)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(BAR <span class="st">"surprise"</span>)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(FOO <span class="ot">STREQUAL</span> <span class="st">"BAR"</span>)     <span class="co"># TRUE: FOO's value is the string "BAR"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(FOO BAR)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(BAR <span class="st">"surprise"</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(FOO <span class="ot">STREQUAL</span> <span class="st">"BAR"</span>)     <span class="co"># TRUE: FOO's value is the string "BAR"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Read that twice. <code>FOO</code> was compared as its value, not its name. This behavior is unique to <code>if()</code> and exists for backward compatibility with CMake 1.x, and it is why you will see defensive quoting like <code>if("${FOO}" STREQUAL "BAR")</code> in careful code.</p>
 <p><strong>Truthiness is a fixed list, not a general notion.</strong> Only these are true:</p>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 41%">
+<col style="width: 58%">
+</colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">True</th>
@@ -664,38 +927,38 @@ recognize in old projects and replace.
 <p>That last row catches people from every other language: <code>if(hello)</code> is <strong>false</strong>, because <code>hello</code> is not in the true list. A non-empty string is not truthy in CMake.</p>
 <p>The <code>-NOTFOUND</code> suffix rule is deliberate design rather than an oddity. <code>find_library()</code> sets its output variable to <code>SOMELIB-NOTFOUND</code> on failure, so <code>if(SOMELIB)</code> reads naturally and the failed value carries a diagnostic name into any error message that prints it.</p>
 <p><strong>Comparison operators are words.</strong> There is no <code>==</code>, <code>&lt;</code>, or <code>&amp;&amp;</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(A <span class="ot">STREQUAL</span> B)              <span class="co"># string equality</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">N</span> <span class="ot">GREATER</span> 5)               <span class="co"># numeric</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(VER <span class="ot">VERSION_LESS</span> <span class="dt">3.20</span>)     <span class="co"># version-aware: 3.9 &lt; 3.20</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">NOT</span> A <span class="ot">AND</span> B <span class="ot">OR</span> C)          <span class="co"># boolean operators are words too</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">DEFINED</span> SOMEVAR)           <span class="co"># is it set at all</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">TARGET</span> <span class="bn">util</span>)               <span class="co"># does this target exist</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">EXISTS</span> <span class="dv">${path}</span>)            <span class="co"># filesystem check</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(A <span class="ot">STREQUAL</span> B)              <span class="co"># string equality</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">N</span> <span class="ot">GREATER</span> 5)               <span class="co"># numeric</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(VER <span class="ot">VERSION_LESS</span> <span class="dt">3.20</span>)     <span class="co"># version-aware: 3.9 &lt; 3.20</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">NOT</span> A <span class="ot">AND</span> B <span class="ot">OR</span> C)          <span class="co"># boolean operators are words too</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">DEFINED</span> SOMEVAR)           <span class="co"># is it set at all</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">TARGET</span> <span class="bn">util</span>)               <span class="co"># does this target exist</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">EXISTS</span> <span class="dv">${path}</span>)            <span class="co"># filesystem check</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>VERSION_LESS</code> earns its own mention: it compares dotted versions component-wise, so <code>3.9 VERSION_LESS 3.20</code> is true where <code>STRLESS</code> would say the opposite.</p>
 </section>
 <section id="control-flow-and-functions" class="level3">
 <h3 class="anchored" data-anchor-id="control-flow-and-functions">Control Flow and Functions</h3>
 <p>Loops and conditionals close with a matching keyword, and older CMake required repeating the condition inside it (<code>endif(SOMETHING)</code>), which you will see in old projects. Do not imitate it; the bare form is correct and has been for years.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="cf">foreach</span>(src <span class="ot">IN</span> <span class="ot">LISTS</span> SOURCES)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"source: </span><span class="dv">${src}</span><span class="st">"</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">endforeach</span>()</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="cf">foreach</span>(i <span class="ot">RANGE</span> <span class="dt">1 5</span>)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"i = </span><span class="dv">${i}</span><span class="st">"</span>)</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="cf">endforeach</span>()</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span>(CONDITION)</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ...</span></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="cf">endwhile</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="cf">foreach</span>(src <span class="ot">IN</span> <span class="ot">LISTS</span> SOURCES)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"source: </span><span class="dv">${src}</span><span class="st">"</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="cf">endforeach</span>()</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="cf">foreach</span>(i <span class="ot">RANGE</span> <span class="dt">1 5</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"i = </span><span class="dv">${i}</span><span class="st">"</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="cf">endforeach</span>()</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span>(CONDITION)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ...</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="cf">endwhile</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The <code>IN LISTS</code> form is the one to use. Plain <code>foreach(src ${SOURCES})</code> works by accident of expansion and breaks on empty elements.</p>
 <p>Functions and macros both exist, and the difference matters:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span>(add_demo name)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">add_executable</span>(<span class="dv">${name}</span> <span class="dv">${name}</span><span class="bn">.c</span>)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">target_link_libraries</span>(<span class="dv">${name}</span> <span class="bn">PRIVATE</span> util)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span>()</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">add_demo</span>(demo1)</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">add_demo</span>(demo2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span>(add_demo name)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">add_executable</span>(<span class="dv">${name}</span> <span class="dv">${name}</span><span class="bn">.c</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">target_link_libraries</span>(<span class="dv">${name}</span> <span class="bn">PRIVATE</span> util)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span>()</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="fu">add_demo</span>(demo1)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="fu">add_demo</span>(demo2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Arguments arrive as <code>${ARGV0}</code>, <code>${ARGV1}</code>, and so on, with <code>${ARGN}</code> holding everything past the named parameters. A <strong>function</strong> has its own variable scope, so <code>set()</code> inside it is local unless you say <code>PARENT_SCOPE</code>. A <strong>macro</strong> is textual substitution with no scope of its own, which means it can clobber the caller’s variables. Prefer <code>function()</code> unless you specifically need to modify the caller’s scope.</p>
 </section>
 </section>
@@ -709,10 +972,10 @@ recognize in old projects and replace.
 <section id="declaring-targets" class="level3">
 <h3 class="anchored" data-anchor-id="declaring-targets">Declaring Targets</h3>
 <p>Three commands create targets:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c)                  <span class="co"># a program</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> <span class="ot">STATIC</span> util.c)             <span class="co"># a static library (.a)</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">shared</span> <span class="ot">SHARED</span> shared.c)         <span class="co"># a shared library (.so / .dylib / .dll)</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">headers</span> <span class="ot">INTERFACE</span>)              <span class="co"># header-only: no sources to compile</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c)                  <span class="co"># a program</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> <span class="ot">STATIC</span> util.c)             <span class="co"># a static library (.a)</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">shared</span> <span class="ot">SHARED</span> shared.c)         <span class="co"># a shared library (.so / .dylib / .dll)</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">headers</span> <span class="ot">INTERFACE</span>)              <span class="co"># header-only: no sources to compile</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Omitting <code>STATIC</code>/<code>SHARED</code> lets the <code>BUILD_SHARED_LIBS</code> variable decide, which is the polite default for a library others may consume.</p>
 <p>Note that CMake needs no equivalent of a pattern rule, and no <code>-MMD</code> dependency generation. It knows the sources because you listed them, and header dependencies are discovered automatically by the generated build files. The <a href="./make.html#auto-generated-dependencies">hand-rolled dependency machinery</a> that a serious makefile requires simply is not a topic here.</p>
 </section>
@@ -720,6 +983,12 @@ recognize in old projects and replace.
 <h3 class="anchored" data-anchor-id="properties-and-the-propagation-keywords">Properties and the Propagation Keywords</h3>
 <p>Settings attach to targets with the <code>target_*</code> family. Each takes one of three keywords that decide who inherits the setting:</p>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 26%">
+<col style="width: 25%">
+<col style="width: 33%">
+</colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Keyword</th>
@@ -784,15 +1053,15 @@ recognize in old projects and replace.
 <section id="propagation-demonstrated" class="level3">
 <h3 class="anchored" data-anchor-id="propagation-demonstrated">Propagation, Demonstrated</h3>
 <p>Here is the mechanism doing its work, because it is easier to believe from output than from description. A library declares one <code>PUBLIC</code> and one <code>PRIVATE</code> setting:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># lib/CMakeLists.txt</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> util.c)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_include_directories</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span> <span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span>)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_definitions</span>(<span class="bn">util</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PUBLIC</span>  UTIL_PUBLIC=1</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PRIVATE</span> UTIL_PRIVATE=1)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># src/CMakeLists.txt</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> util)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># lib/CMakeLists.txt</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> util.c)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_include_directories</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span> <span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span>)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_definitions</span>(<span class="bn">util</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PUBLIC</span>  UTIL_PUBLIC=1</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PRIVATE</span> UTIL_PRIVATE=1)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># src/CMakeLists.txt</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> util)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Configuring with <code>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</code> and reading the resulting <code>compile_commands.json</code> shows exactly what each file was compiled with:</p>
 <pre><code>util.c     ['-DUTIL_PRIVATE=1', '-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']
 main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
@@ -815,7 +1084,7 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 <section id="linking-is-dependency-declaration" class="level3">
 <h3 class="anchored" data-anchor-id="linking-is-dependency-declaration">Linking Is Dependency Declaration</h3>
 <p><code>target_link_libraries()</code> is badly named. It does not only pass <code>-l</code> flags; it declares a <strong>dependency edge</strong>, and everything propagates along it:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> util)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> util)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This one line says: build <code>util</code> before <code>app</code>, link it in, and apply all of <code>util</code>’s <code>PUBLIC</code> and <code>INTERFACE</code> properties to <code>app</code>. Include paths, definitions, compile options, and language standards all travel this edge. It is closer to <code>import</code> than to a linker flag.</p>
 <p>The keyword here answers a different question than it does elsewhere: does anything linking <em><code>app</code></em> also need <code>util</code>? For an executable, nothing links it, so <code>PRIVATE</code> is nearly always right. For a library whose headers expose types from another library, <code>PUBLIC</code> is required, or your consumers will fail to compile.</p>
 </section>
@@ -835,28 +1104,28 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 └── src/
     ├── CMakeLists.txt
     └── main.c</code></pre>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># CMakeLists.txt  (top level)</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">cmake_minimum_required</span>(<span class="ot">VERSION</span> <span class="dt">3.16</span>)</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="kw">project</span>(demo <span class="ot">VERSION</span> <span class="dt">1.0</span> <span class="ot">LANGUAGES</span> <span class="ot">C</span>)</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_C_STANDARD</span> 11)</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_C_STANDARD_REQUIRED</span> <span class="ot">ON</span>)</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_EXPORT_COMPILE_COMMANDS</span> <span class="ot">ON</span>)</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(lib)</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(src)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># lib/CMakeLists.txt</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> util.c)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_include_directories</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span> <span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span>)</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_options</span>(<span class="bn">util</span> <span class="ot">PRIVATE</span> -Wall -Wextra)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># src/CMakeLists.txt</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c)</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> util)</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_options</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> -Wall -Wextra)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># CMakeLists.txt  (top level)</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="kw">cmake_minimum_required</span>(<span class="ot">VERSION</span> <span class="dt">3.16</span>)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="kw">project</span>(demo <span class="ot">VERSION</span> <span class="dt">1.0</span> <span class="ot">LANGUAGES</span> <span class="ot">C</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_C_STANDARD</span> 11)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_C_STANDARD_REQUIRED</span> <span class="ot">ON</span>)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_EXPORT_COMPILE_COMMANDS</span> <span class="ot">ON</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(lib)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(src)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># lib/CMakeLists.txt</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> util.c)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_include_directories</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span> <span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span>)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_options</span>(<span class="bn">util</span> <span class="ot">PRIVATE</span> -Wall -Wextra)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># src/CMakeLists.txt</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> util)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_options</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> -Wall -Wextra)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Building it:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build          <span class="co"># configure</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build          <span class="co"># build</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="ex">./build/src/app</span>              <span class="co"># run</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build          <span class="co"># configure</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build          <span class="co"># build</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="ex">./build/src/app</span>              <span class="co"># run</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Three commands worth knowing about the first line. <code>-S</code> names the source directory, <code>-B</code> the build directory, and the fact that they are separate is not incidental: <strong>out-of-source builds are the norm in CMake</strong>, unlike Make where in-tree builds are the default. Everything generated lands in <code>build/</code>, nothing pollutes your source tree, and <code>rm -rf build</code> is a complete and safe clean.</p>
 <p><code>cmake_minimum_required()</code> must be the first command in the top-level file. It does more than check a version; it sets <strong>policy</strong> defaults, CMake’s mechanism for changing behavior without breaking old projects. Declaring 3.16 means you get 3.16-era semantics even on CMake 4.x.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="`project()` is not decoration">
@@ -875,13 +1144,13 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 <section id="adding-options" class="level3">
 <h3 class="anchored" data-anchor-id="adding-options">Adding Options</h3>
 <p>Real projects need switches. <code>option()</code> declares a cached boolean the user can flip from the command line:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span>(DEMO_BUILD_TESTS <span class="st">"Build the test suite"</span> <span class="ot">ON</span>)</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span>(DEMO_USE_DOUBLE  <span class="st">"Use double precision"</span> <span class="ot">OFF</span>)</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(DEMO_USE_DOUBLE)</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">target_compile_definitions</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span> DEMO_DOUBLE=1)</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="cf">endif</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-DDEMO_BUILD_TESTS</span><span class="op">=</span>OFF <span class="at">-DDEMO_USE_DOUBLE</span><span class="op">=</span>ON</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span>(DEMO_BUILD_TESTS <span class="st">"Build the test suite"</span> <span class="ot">ON</span>)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span>(DEMO_USE_DOUBLE  <span class="st">"Use double precision"</span> <span class="ot">OFF</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(DEMO_USE_DOUBLE)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">target_compile_definitions</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span> DEMO_DOUBLE=1)</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="cf">endif</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-DDEMO_BUILD_TESTS</span><span class="op">=</span>OFF <span class="at">-DDEMO_USE_DOUBLE</span><span class="op">=</span>ON</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Prefixing option names with the project name is a convention worth following, because options are global and a project used as a subdirectory of another can otherwise collide with its parent.</p>
 </section>
 <section id="the-cache" class="level3">
@@ -889,7 +1158,7 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 <p><code>option()</code> writes into the <strong>cache</strong>, and understanding it prevents a category of baffling behavior.</p>
 <p><code>build/CMakeCache.txt</code> is a plain text file holding every option, detected compiler path, and found library location from the configure step. It persists between runs, which is why the second <code>cmake -S . -B build</code> is fast and why it remembers settings you passed only once.</p>
 <p>It is also why changing a setting sometimes appears not to work. A cached variable is not overwritten by <code>set()</code> in your <code>CMakeLists.txt</code> unless you pass <code>FORCE</code>, by design: your file should not silently override what the user asked for. When a configure result seems stuck, the reliable fix is to delete <code>build/</code> and start over. This is cheap, safe, and the standard advice.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> <span class="at">-rf</span> build <span class="kw">&amp;&amp;</span> <span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build      <span class="co"># the CMake equivalent of `make clean`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> <span class="at">-rf</span> build <span class="kw">&amp;&amp;</span> <span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build      <span class="co"># the CMake equivalent of `make clean`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="using-other-peoples-code" class="level2">
@@ -901,23 +1170,23 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 <section id="find_package" class="level3">
 <h3 class="anchored" data-anchor-id="find_package"><code>find_package()</code></h3>
 <p>The standard mechanism asks the system for a dependency:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">find_package</span>(<span class="im">Threads</span> <span class="ot">REQUIRED</span>)</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> <span class="bn">Threads::Threads</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">find_package</span>(<span class="im">Threads</span> <span class="ot">REQUIRED</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> <span class="bn">Threads::Threads</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>REQUIRED</code> makes a failure fatal at configure time, with a clear message, rather than a mysterious linker error much later. Without it, you check <code>if(Threads_FOUND)</code> and adapt.</p>
 <p>The <code>Threads::Threads</code> spelling is an <strong>imported target</strong>, and the double colon is a useful signal: it means “this is a target, not a filename,” and CMake will error immediately if no such target exists rather than passing an unrecognized string to the linker. Modern packages provide imported targets that carry their own include paths and flags, so linking one is all you need.</p>
 </section>
 <section id="fetchcontent" class="level3">
 <h3 class="anchored" data-anchor-id="fetchcontent"><code>FetchContent</code></h3>
 <p>When a dependency is not installed, <code>FetchContent</code> downloads and builds it as part of your project:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">include</span>(<span class="im">FetchContent</span>)</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">FetchContent_Declare</span>(fmt</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    <span class="ot">GIT_REPOSITORY</span> https://github.com/fmtlib/fmt.git</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    <span class="ot">GIT_TAG</span>        <span class="dt">10.2.1</span>)              <span class="co"># pin a tag, never a branch</span></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="fu">FetchContent_MakeAvailable</span>(fmt)</span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> <span class="bn">fmt::fmt</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">include</span>(<span class="im">FetchContent</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">FetchContent_Declare</span>(fmt</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    <span class="ot">GIT_REPOSITORY</span> https://github.com/fmtlib/fmt.git</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    <span class="ot">GIT_TAG</span>        <span class="dt">10.2.1</span>)              <span class="co"># pin a tag, never a branch</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="fu">FetchContent_MakeAvailable</span>(fmt)</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> <span class="bn">fmt::fmt</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This is the closest CMake comes to <a href="./rust-cc.html">Cargo</a> or <code>pip</code>, and the comparison is instructive about how much less it does. There is no lockfile, no transitive version resolution, and no central registry. Two dependencies wanting different versions of a third is a problem you solve by hand. Pinning <code>GIT_TAG</code> to an exact tag or commit is not optional advice; a branch name makes your build non-reproducible.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Why C++ dependency management is like this">
 <div class="callout-header d-flex align-content-center">
@@ -941,9 +1210,9 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 </div>
 <p>Generator expressions are the feature most likely to make CMake look unreadable, and they exist for a precise reason: <span class="hl-default">some values are not known at configure time because they depend on which build configuration is being generated</span>.</p>
 <p>A single configure can produce build files for Debug and Release simultaneously (Visual Studio and Xcode do this by default). A <code>if(CMAKE_BUILD_TYPE STREQUAL "Debug")</code> cannot work there, because configure runs once for all configurations. <code>$&lt;...&gt;</code> defers the decision:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_options</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;$&lt;</span><span class="kw">CONFIG</span><span class="ot">:Debug&gt;:-O0 -g&gt;</span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;$&lt;</span><span class="kw">CONFIG</span><span class="ot">:Release&gt;:-O2 -DNDEBUG&gt;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_options</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;$&lt;</span><span class="kw">CONFIG</span><span class="ot">:Debug&gt;:-O0 -g&gt;</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;$&lt;</span><span class="kw">CONFIG</span><span class="ot">:Release&gt;:-O2 -DNDEBUG&gt;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The form is <code>$&lt;condition:value&gt;</code>: emit <code>value</code> only if <code>condition</code> holds. The commonest ones:</p>
 <table class="caption-top table">
 <thead>
@@ -980,9 +1249,9 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 </tbody>
 </table>
 <p>The last two solve a specific problem worth naming: a library’s include directory differs depending on whether a consumer builds it as a subdirectory or links it after installation. The idiom is:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_include_directories</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;</span><span class="kw">BUILD_INTERFACE</span><span class="ot">:</span><span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span><span class="ot">/include&gt;</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;</span><span class="kw">INSTALL_INTERFACE</span><span class="ot">:include&gt;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_include_directories</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;</span><span class="kw">BUILD_INTERFACE</span><span class="ot">:</span><span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span><span class="ot">/include&gt;</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;</span><span class="kw">INSTALL_INTERFACE</span><span class="ot">:include&gt;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Do not reach for generator expressions early. Most projects need only the <code>CONFIG:</code> form for per-configuration flags, and reading a <code>$&lt;...&gt;</code> correctly is easier than deciding you need one.</p>
 </section>
 <section id="build-types-and-toolchains" class="level2">
@@ -992,9 +1261,9 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 <p>CMake ships four standard configurations, selected with <code>CMAKE_BUILD_TYPE</code> on single-configuration generators (Makefiles, Ninja):</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 13%">
-<col style="width: 65%">
 <col style="width: 20%">
+<col style="width: 31%">
+<col style="width: 47%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1026,26 +1295,26 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 </tr>
 </tbody>
 </table>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-DCMAKE_BUILD_TYPE</span><span class="op">=</span>Release</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-DCMAKE_BUILD_TYPE</span><span class="op">=</span>Release</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The trap: <span class="hl-default">if you do not set it, it is empty, and you get <strong>no optimization flags at all</strong></span>. Not <code>-O0</code>, but nothing, which is usually <code>-O0</code> by compiler default. A great many “CMake builds are slow” complaints are an unset build type. Since separate build directories are cheap, keeping <code>build-debug/</code> and <code>build-release/</code> side by side is the common practice, and it neatly avoids the <a href="./make.html#target-specific-and-pattern-specific-variables">stale-object problem</a> that variant builds cause in Make.</p>
 </section>
 <section id="cross-compilation" class="level3">
 <h3 class="anchored" data-anchor-id="cross-compilation">Cross-Compilation</h3>
 <p>For the embedded work in the <a href="./c.html">C</a> and <a href="./assembly.html">Assembly</a> chapters, cross-compiling is the main event, and CMake handles it with a <strong>toolchain file</strong>: a small script that describes the target system, read before anything else.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># arm-none-eabi.cmake</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_SYSTEM_NAME</span>      Generic)        <span class="co"># "Generic" means bare metal, no OS</span></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_SYSTEM_PROCESSOR</span> arm)</span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_C_COMPILER</span>   arm-none-eabi-gcc)</span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_CXX_COMPILER</span> arm-none-eabi-g++)</span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="co"># the compiler cannot link a host test program, so relax the check</span></span>
-<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_TRY_COMPILE_TARGET_TYPE</span> STATIC_LIBRARY)</span>
-<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_FIND_ROOT_PATH_MODE_PROGRAM</span> NEVER)   <span class="co"># find host programs on the host</span></span>
-<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_FIND_ROOT_PATH_MODE_LIBRARY</span> ONLY)    <span class="co"># find libraries only in the sysroot</span></span>
-<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_FIND_ROOT_PATH_MODE_INCLUDE</span> ONLY)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-DCMAKE_TOOLCHAIN_FILE</span><span class="op">=</span>arm-none-eabi.cmake</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># arm-none-eabi.cmake</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_SYSTEM_NAME</span>      Generic)        <span class="co"># "Generic" means bare metal, no OS</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_SYSTEM_PROCESSOR</span> arm)</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_C_COMPILER</span>   arm-none-eabi-gcc)</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_CXX_COMPILER</span> arm-none-eabi-g++)</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="co"># the compiler cannot link a host test program, so relax the check</span></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_TRY_COMPILE_TARGET_TYPE</span> STATIC_LIBRARY)</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_FIND_ROOT_PATH_MODE_PROGRAM</span> NEVER)   <span class="co"># find host programs on the host</span></span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_FIND_ROOT_PATH_MODE_LIBRARY</span> ONLY)    <span class="co"># find libraries only in the sysroot</span></span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_FIND_ROOT_PATH_MODE_INCLUDE</span> ONLY)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-DCMAKE_TOOLCHAIN_FILE</span><span class="op">=</span>arm-none-eabi.cmake</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Setting <code>CMAKE_SYSTEM_NAME</code> is what puts CMake into cross-compiling mode and sets <code>CMAKE_CROSSCOMPILING</code>. The <code>TRY_COMPILE_TARGET_TYPE</code> line addresses a specific early failure: CMake normally validates a compiler by building and linking a small program, which cannot link on a bare-metal target with no startup code or linker script, so you tell it to stop at the static library stage.</p>
 <p>The same toolchain file is discussed from the C++ side in <a href="./cpp.html#cross-compilation-and-bare-metal">Cross-Compilation and Bare Metal</a>.</p>
 </section>
@@ -1054,24 +1323,24 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 <h2 class="anchored" data-anchor-id="debugging-cmake">Debugging CMake</h2>
 <p>The toolkit, roughly in the order you will need it.</p>
 <p><strong>Print a variable.</strong> The <code>message()</code> command with <code>STATUS</code> is the <code>$(info)</code> of CMake:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"SOURCES = </span><span class="dv">${SOURCES}</span><span class="st">"</span>)</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">WARNING</span> <span class="st">"this is suspicious"</span>)</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">FATAL_ERROR</span> <span class="st">"stop here"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"SOURCES = </span><span class="dv">${SOURCES}</span><span class="st">"</span>)</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">WARNING</span> <span class="st">"this is suspicious"</span>)</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">FATAL_ERROR</span> <span class="st">"stop here"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>See the actual compiler command.</strong> The default build output shows progress, not invocations:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build <span class="at">--verbose</span>        <span class="co"># or: make -C build VERBOSE=1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build <span class="at">--verbose</span>        <span class="co"># or: make -C build VERBOSE=1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Generate a compile database.</strong> <code>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</code> writes <code>build/compile_commands.json</code> with the exact command for every source file. This is the fastest way to answer “what flags is this file <em>really</em> getting,” and it is what <code>clangd</code> and most editor tooling consume. Turning it on unconditionally in your top-level file is a kindness to everyone using the project.</p>
 <p><strong>Trace execution.</strong> <code>--trace-expand</code> prints every command as it runs with variables expanded. It is extremely verbose and occasionally the only thing that works:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">--trace-expand</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">|</span> <span class="fu">less</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">--trace-expand</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">|</span> <span class="fu">less</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Inspect the cache.</strong> <code>cmake -LAH build</code> lists every cached variable with its help text. <code>ccmake build</code> is a curses interface for the same thing.</p>
 <p><strong>Print target properties.</strong> When propagation is not doing what you expect:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">get_target_property</span>(dirs app <span class="ot">INCLUDE_DIRECTORIES</span>)</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"app include dirs: </span><span class="dv">${dirs}</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">get_target_property</span>(dirs app <span class="ot">INCLUDE_DIRECTORIES</span>)</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"app include dirs: </span><span class="dv">${dirs}</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="common-pitfalls" class="level2">
 <h2 class="anchored" data-anchor-id="common-pitfalls">Common Pitfalls</h2>
 <p>Each of these is a symptom you will actually see, with its cause.</p>
 <p><strong><code>file(GLOB)</code> for sources.</strong> It works, and it is the wrong tool:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">file</span>(<span class="ot">GLOB</span> SOURCES <span class="st">"src/*.c"</span>)     <span class="co"># do not do this</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="kw">file</span>(<span class="ot">GLOB</span> SOURCES <span class="st">"src/*.c"</span>)     <span class="co"># do not do this</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The glob runs at <em>configure</em> time. Add a new source file and the build system does not know it exists, so nothing rebuilds and nothing tells you why. CMake’s own documentation advises against it. List sources explicitly; the maintenance cost is one line per file and the failure mode it prevents is genuinely confusing.</p>
 <p><strong>A stale cache.</strong> Changing a compiler or a cached option and seeing no effect almost always means the cache is holding the old value. <code>rm -rf build</code>.</p>
 <p><strong>Forgetting <code>CMAKE_BUILD_TYPE</code>.</strong> No optimization, and a “CMake is slow” conclusion.</p>
@@ -1084,7 +1353,7 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 <section id="make-or-ninja" class="level2">
 <h2 class="anchored" data-anchor-id="make-or-ninja">Make or Ninja</h2>
 <p>CMake’s default generator on Unix is Unix Makefiles, but <strong>Ninja</strong> is the better choice for anything sizable:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-G</span> Ninja</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-G</span> Ninja</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Ninja was built for precisely this role: a build language nobody writes by hand, designed to be emitted by a generator and executed fast. It parallelizes by default without <code>-j</code>, and its no-op builds are dramatically quicker than Make’s on large projects, which matters because the no-op build is the one you run most. Your <code>CMakeLists.txt</code> does not change; only the generated output does.</p>
 <p>The tradeoff is that Ninja must be installed, whereas <code>make</code> is everywhere. For a project others will build, Makefiles as the default with Ninja as an option is the diplomatic choice.</p>
 </section>
@@ -1092,9 +1361,9 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 <h2 class="anchored" data-anchor-id="key-differences-from-make">Key Differences from Make</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 18%">
-<col style="width: 37%">
-<col style="width: 43%">
+<col style="width: 19%">
+<col style="width: 40%">
+<col style="width: 40%">
 </colgroup>
 <thead>
 <tr class="header">

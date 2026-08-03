@@ -1283,13 +1283,77 @@ The `: x_(0), y_(0)` part is the **member initializer list**, and it is worth dw
 ::: {.callout-note title="Modern change: initialization got safer and less surprising"}
 Two C++11 additions smoothed over classic constructor traps.
 
-- **In-class member initializers** let you give a member a default right where it is declared (`int x_ = 0;`), so every constructor need not repeat it.
+- **Default member initializers** let you give a member a value right where it is declared (`int x_ = 0;`), so every constructor need not repeat it. They get their own treatment in [Default Member Initializers](#default-member-initializers) below.
 - **uniform (brace) initialization**, covered under [Uniform Initialization](#uniform-initialization), lets you write `Point p{3, 4};`; it sidesteps the "most vexing parse" (where `Point p();` is read as a *function declaration*, not an object) and forbids narrowing conversions that the old `()` syntax silently allowed.
 
 For new code, brace-init is the default choice.
 :::
 
 A constructor taking a single argument doubles as an *implicit conversion*, which is occasionally handy and frequently a trap. Marking it `explicit` (as on the `File` constructor in the RAII section) disables that implicit conversion, so `File f = "path";` will not silently compile. Reach for `explicit` by default on single-argument constructors.
+
+#### Default Member Initializers {#default-member-initializers}
+::: {.subheading}
+Giving a member its value where it is declared (C++11)
+:::
+
+In C++98 a non-static data member could not be initialized in the class body. Its value had to come from a constructor's initializer list, and if a class had several constructors, every one of them had to repeat the same defaults. That duplication was pure maintenance liability: add a member and you must remember to touch each constructor, and a member forgotten in one of them is left uninitialized in exactly one code path.
+
+C++11 removed the restriction. A member may be given a value at its declaration, and any constructor that does not say otherwise uses it:
+
+```cpp
+class Widget {
+    int         count = 10;             // default member initializer
+    std::string name{"default"};        // braces work here too
+    bool        ready = false;
+
+public:
+    Widget() = default;                 // count=10, name="default", ready=false
+    Widget(int n) : count(n) {}         // count=n; the other two keep their defaults
+};
+```
+
+Both constructors are now honest about what they actually do. The second one says "this constructor is about `count`" and stays silent on the members it does not care about, rather than restating them for the compiler's benefit.
+
+**The initializer list wins.** When a member has both a default member initializer and an entry in a constructor's initializer list, the constructor's value is used and the in-class one is ignored. In the example above, `Widget w{5}` gives `count` the value 5, not 10. Read the default as "the value when nobody says otherwise."
+
+##### Where This Really Pays: Structs
+
+The pattern's natural home is the plain data struct, where it has become the standard way to express configuration and options:
+
+```cpp
+struct Config {
+    int         retry_count_max = 3;
+    bool        verbose         = false;
+    std::string log_path{"/var/log/app.log"};
+};
+
+Config a;                                  // every default
+Config b{5};                               // retry_count_max=5, rest defaulted
+Config c{5, true, "/tmp/debug.log"};       // all specified
+```
+
+No constructor is written and none is needed. `Config` remains an **aggregate**, so brace initialization still fills members positionally, and any member you leave out keeps its declared default. Compare this to the C approach, where a `struct` with defaults means either an `init_config()` function everyone must remember to call or a `#define`-laden initializer macro.
+
+This also closes one of C++'s oldest hazards. A local `struct Config c;` with no default member initializers leaves every scalar member holding garbage, and reading one is undefined behavior. Give the members defaults at their declarations and that failure mode is gone for good, with no runtime cost: the values are compiled in exactly as an initializer list's would be.
+
+::: {.callout-note title="C++14 finished the job"}
+In C++11, adding a default member initializer disqualified a type from being an aggregate, so `Config c{5, true}` would not compile: you got defaults or brace initialization, not both. C++14 lifted that restriction and the two have worked together ever since. The rule matters only if you are pinned to C++11, but it explains why older references describe the feature as a tradeoff rather than a free win.
+:::
+
+C++20's **designated initializers** pair naturally with this pattern, letting you name the members you are setting and leave the rest at their defaults:
+
+```cpp
+Config c{.verbose = true};                      // the other two keep their defaults
+Config d{.retry_count_max = 5, .verbose = true};
+```
+
+This is C99's feature arriving in C++ two decades later, with one restriction C does not impose: the standard requires the designators to appear in **declaration order**, so `{.verbose = true, .retry_count_max = 5}` is ill-formed where the C equivalent is fine. Enforcement varies in practice, and Clang in particular accepts the out-of-order form without complaint, so this is a portability trap rather than a reliable compile error. Keep them in declaration order and it never arises.
+
+::: {.callout-warning title="Members initialize in declaration order, always"}
+This predates default member initializers and catches people regardless, but it is worth stating here because in-class initializers make member order easier to overlook. Members are initialized in the order they are **declared in the class**, never the order they appear in a constructor's initializer list. Writing `Widget() : second_(1), first_(second_) {}` reads as though `second_` is ready first; if `first_` is declared first, it is initialized first, from an uninitialized `second_`. Compilers warn about this under `-Wreorder`, which is included in `-Wall`. Keep the initializer list in declaration order so the code reads the way it runs.
+:::
+
+If you have read the Rust chapters, the comparison is unflattering in an instructive way. Rust has no equivalent, because it does not need one: a struct literal must name every field, so there is nothing to default and nothing to forget. Where a C++ programmer reaches for default member initializers, a Rust programmer implements [`Default`](rust-ho.qmd#traits) and writes `Config { verbose: true, ..Default::default() }`. C++ builds the defaults into the type; Rust makes them a trait you opt into. The C++ version is terser at the point of use, and the Rust version cannot leave a field uninitialized by accident, which is the same tradeoff the two languages make almost everywhere.
 
 #### Destructors
 The destructor is `~ClassName()`, takes no parameters, and there is exactly one. It runs automatically when the object's lifetime ends: at the closing brace for a stack object, or at `delete` for a heap object. As the [RAII section](#raii) laid out, this automatic, guaranteed invocation is the hook the entire resource-management story hangs on. If your class owns a resource, the destructor is where you give it back:

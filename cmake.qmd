@@ -1,0 +1,612 @@
+---
+title: "The CMake Language"
+subtitle: "A build system generator, and the language you have to speak to it"
+---
+
+<!--
+Audience: the same systems reader as make.qmd, arriving directly from it. Assume
+Make is understood; anchor everything to it. Assume NO prior CMake.
+
+The thesis: CMake is not a build tool, it is a generator, and its unit of
+thought is the target-as-object-with-properties rather than the rule. Most
+CMake pain is either (a) reading it as a build tool, or (b) forgetting the
+language is string-typed.
+
+make.qmd's "Make and CMake" section answers "what generated these makefiles?"
+and stays there. This chapter answers "how do I read and write CMake?" Cross-
+link, do not duplicate: that section owns add_subdirectory tree collection and
+the recursive-make contrast.
+
+Dialect: CMake 3.16+ as the floor, noting 3.20+ where it matters. Target-based
+"modern CMake" throughout; directory-scoped commands shown only as things to
+recognize in old projects and replace.
+-->
+
+## Overview
+**CMake** occupies an odd position. It is the de facto build system for C and C++, it is what nearly every vendor SDK ships, and it is widely disliked by the people who use it every day. All three of those are true at once, and the reason is worth understanding before you write a line of it.
+
+[CMake solves a real problem that [Make](make.qmd) does not. A makefile describes how to build a project *on the machine that wrote it*.]{.hl-default} Move it to a different compiler, a different operating system, or a different build tool and it needs editing. [CMake describes a project's structure abstractly and then generates the actual build files for whatever toolchain is present]{.hl-default}: Makefiles on Unix, Ninja anywhere, Visual Studio solutions on Windows, Xcode projects on macOS. One description, many builds.
+
+The dislike is mostly about the language. CMake's syntax accumulated over twenty-five years, everything in it is a string, and the ecosystem is layered with a decade of superseded advice that still turns up first in search results. This chapter tries to teach the current style directly, so you can skip the archaeology.
+
+::: {.callout-note title="Read the Make chapter first, if you have not"}
+This chapter assumes you understand dependency graphs, targets, and incremental rebuilds as [Make](make.qmd) presents them, and it anchors nearly every concept to its Make counterpart. The complementary section [Make and CMake](make.qmd#make-and-cmake) approaches the same boundary from the other side, explaining what generates the makefiles you find in a `build/` directory. There is deliberate overlap of roughly one idea, the generator model, and no more.
+:::
+
+### CMake Is Not a Build Tool
+This is the correction that has to come first, because almost every early confusion traces to it.
+
+[CMake does not compile anything. It is a **generator**: it reads your project description and writes build files for some other tool to execute]{.hl-default}. Running `cmake` produces makefiles; running `make` (or `ninja`) builds your code. Two programs, two phases, two distinct moments at which things can go wrong.
+
+```bash
+cmake -S . -B build      # CONFIGURE: read CMakeLists.txt, write build files into build/
+cmake --build build      # BUILD: invoke the generated makefiles (or ninja, or msbuild)
+```
+
+The second command is a portable wrapper. On a Makefiles generator it runs `make -C build`; you can run that yourself and it is identical. The wrapper exists so a script works unchanged when someone configures with a different generator.
+
+```{mermaid}
+flowchart LR
+    A["CMakeLists.txt<br/><i>you write this</i>"] -->|"cmake -S . -B build<br/><b>configure</b>"| B["build/<br/>Makefiles or build.ninja<br/><i>generated, never edited</i>"]
+    B -->|"cmake --build build<br/><b>build</b>"| C["app, libutil.a<br/><i>artifacts</i>"]
+    A -.->|"edited?"| B
+```
+
+The dotted line matters: the generated build files list your `CMakeLists.txt` as a dependency, so editing one causes the *next* build to re-run the configure step automatically. You do not normally invoke `cmake` twice by hand.
+
+### The Two-Phase Model
+If you have read [Two-Phase Evaluation](make.qmd#two-phase-evaluation) in the Make chapter, the shape will be familiar, and the parallel is worth drawing because it explains what CMake can and cannot know.
+
+| Phase | When | What happens | What it can see |
+|:------|:-----|:-------------|:----------------|
+| **Configure** | `cmake -S . -B build` | `CMakeLists.txt` is executed top to bottom as a script. Compilers are probed, `find_package` searches the system, variables are set, targets are declared. | The machine, the filesystem, the toolchain |
+| **Generate** | end of the same command | The accumulated target graph is written out as build files. | Everything configure produced |
+| **Build** | `cmake --build build` | The generated build tool runs compilers and linkers. | Nothing from CMake's variables |
+
+The crucial consequence is the same one Make has: [CMake variables do not exist at build time]{.hl-default}. By the time your compiler runs, every `${VAR}` has already been resolved to text and baked into the generated files. A variable you set cannot depend on something a compile step produced, for exactly the reason a Make `$(shell)` cannot.
+
+CMake's escape hatch for genuinely build-time values is the **generator expression**, written `$<...>`, which is left unresolved through configure and evaluated when the build files are written per-configuration. They look cryptic and are covered in [Generator Expressions](#generator-expressions).
+
+### A Short History
+Based on [Wikipedia::CMake](https://en.wikipedia.org/wiki/CMake).
+
+Initial development of CMake began in 1999 at Kitware and was first released the following year. It was funded by the United States National Library of Medicine as part of the Visible Human Project. The motivation behind the making of CMake was discussed above, but not what inspired its design. A couple of contemporary tools from the time were studied:
+
+1.  `pcmaker`, developed by Ken Martin and others to support building the Visualization Toolkit (VTK), converted Unix Make files into NMake (Microsoft's proprietary version of the classic Unix make utility) files for building on Windows.
+2. `gmake` supported Unix and Windows compilers, but its design led to issues that were hard to resolve. Both tools were working examples of a build tool that supported both Unix and Windows, but they suffered from a serious flaw: they required Windows developers to use the command line even though many prefer to use an integrated development environment (IDE) such as Visual Studio.
+
+::: {.definition data-label="Tcl"}
+[Tcl](https://en.wikipedia.org/wiki/Tcl_(programming_language)){target=_blank} (Tool Command Language) is a high-level, general-purpose, interpreted, [dynamic programming](https://en.wikipedia.org/wiki/Dynamic_programming_language){target=_blank} language. It was designed with the goal of being very simple and powerful. Tcl casts everything into the mold of a command, even programming constructs like variable assignment and procedure definition. Tcl supports multiple programming paradigms, including [object-oriented](https://en.wikipedia.org/wiki/Tcl_(programming_language)#Object-oriented){target=_base}, imperative, functional, and procedural styles.
+:::
+
+CMake developers chose to develop a scripting language for CMake instead of using Tcl, a popular language for building at the time. Use of Tcl would have then added a dependency to the host machine which is counter to the goal of no dependencies other than a compiler. Also, Tcl was not well supported on Windows and some Unix systems at the time of initial development.
+
+Version 3.0 was released in June 2014. It has been described as the beginning of "Modern CMake". Experts now advise to avoid variables in favor of targets and properties. The commands `add_compile_options`, `include_directories`, `link_directories`, `link_libraries` that were at the core of CMake 2 should now be replaced by target-specific commands.
+
+## The Language
+::: {.subheading}
+Everything is a string, and it explains almost every surprise
+:::
+
+CMake's syntax is uniform to the point of monotony: the entire language is **commands with arguments**.
+
+```cmake
+command_name(argument1 argument2 argument3)
+```
+
+There are no operators, no expressions, no infix arithmetic. `set()`, `if()`, `add_executable()`, and `target_link_libraries()` are all the same kind of thing. Command names are case-insensitive by convention written lowercase; variable names are case-*sensitive* and conventionally uppercase.
+
+Comments start with `#`. Arguments are separated by whitespace, and there are no commas, which is the first thing to unlearn from every other language.
+
+### Variables and the String-Typed Truth
+`set()` defines a variable, `${NAME}` expands it:
+
+```cmake
+set(PROJECT_AUTHOR "Curtis")
+message(STATUS "author is ${PROJECT_AUTHOR}")
+```
+
+Now the fact that governs everything else: [CMake has exactly one data type, the string. A list is a string with semicolons in it]{.hl-default}.
+
+```cmake
+set(SOURCES a.c b.c c.c)
+message(STATUS "${SOURCES}")     # prints: a.c;b.c;c.c
+```
+
+Those semicolons are not display formatting. They are literally the value. `set()` with multiple arguments joins them with semicolons, and every command that "takes a list" is really receiving one string and splitting it again.
+
+This is why quoting changes meaning so drastically:
+
+```cmake
+set(SOURCES a.c b.c c.c)         # a list of three
+set(QUOTED "a.c b.c c.c")        # ONE string containing spaces
+```
+
+`list(LENGTH SOURCES n)` gives 3; the same on `QUOTED` gives 1. Passing `QUOTED` to `add_executable()` asks for a single file with spaces in its name, which does not exist, and the error will be about a missing source file rather than about quoting.
+
+::: {.callout-warning title="Unset variables expand to nothing, silently"}
+`${TYPO}` where `TYPO` was never defined expands to the empty string with no warning. A misspelled variable does not fail; it quietly vanishes, and the resulting build is subtly wrong. This is the same hazard as Make's undefined-variable expansion, and it has the same remedy: configure with `--warn-uninitialized` when hunting one down, and be disciplined about names.
+:::
+
+#### Variable Scope
+Variables are scoped to the **directory** and inherited downward. A `set()` in the top-level `CMakeLists.txt` is visible in every `add_subdirectory()` beneath it; a `set()` in a subdirectory is *not* visible to its parent or its siblings. Functions introduce their own scope; macros do not.
+
+`set(VAR value PARENT_SCOPE)` writes into the enclosing scope, and it is the usual way a subdirectory or function returns a value. Note that it sets the variable in the parent *only*, leaving the local one untouched, which reads as a bug the first time you meet it.
+
+This directory-based scoping is the strongest reason to prefer target properties over variables. A variable's reach depends on where it was written; a target property travels with the target.
+
+### `if()` and Its Peculiar Rules
+`if()` is where CMake's string-typedness produces genuine surprises, and it is worth two minutes now to save an afternoon later.
+
+**Bare words are auto-dereferenced.** In an `if()`, an unquoted argument that names a variable is replaced by that variable's *value*:
+
+```cmake
+set(FOO BAR)
+set(BAR "surprise")
+
+if(FOO STREQUAL "BAR")     # TRUE: FOO's value is the string "BAR"
+```
+
+Read that twice. `FOO` was compared as its value, not its name. This behavior is unique to `if()` and exists for backward compatibility with CMake 1.x, and it is why you will see defensive quoting like `if("${FOO}" STREQUAL "BAR")` in careful code.
+
+**Truthiness is a fixed list, not a general notion.** Only these are true:
+
+| True | False |
+|:-----|:------|
+| `ON`, `YES`, `TRUE`, `Y` | `OFF`, `NO`, `FALSE`, `N` |
+| Any non-zero number (`1`, `42`, `-1`) | `0`, the empty string |
+| | `NOTFOUND`, anything ending in `-NOTFOUND`, `IGNORE` |
+| | **Any other string**, including `hello` |
+
+That last row catches people from every other language: `if(hello)` is **false**, because `hello` is not in the true list. A non-empty string is not truthy in CMake.
+
+The `-NOTFOUND` suffix rule is deliberate design rather than an oddity. `find_library()` sets its output variable to `SOMELIB-NOTFOUND` on failure, so `if(SOMELIB)` reads naturally and the failed value carries a diagnostic name into any error message that prints it.
+
+**Comparison operators are words.** There is no `==`, `<`, or `&&`:
+
+```cmake
+if(A STREQUAL B)              # string equality
+if(N GREATER 5)               # numeric
+if(VER VERSION_LESS 3.20)     # version-aware: 3.9 < 3.20
+if(NOT A AND B OR C)          # boolean operators are words too
+if(DEFINED SOMEVAR)           # is it set at all
+if(TARGET util)               # does this target exist
+if(EXISTS ${path})            # filesystem check
+```
+
+`VERSION_LESS` earns its own mention: it compares dotted versions component-wise, so `3.9 VERSION_LESS 3.20` is true where `STRLESS` would say the opposite.
+
+### Control Flow and Functions
+Loops and conditionals close with a matching keyword, and older CMake required repeating the condition inside it (`endif(SOMETHING)`), which you will see in old projects. Do not imitate it; the bare form is correct and has been for years.
+
+```cmake
+foreach(src IN LISTS SOURCES)
+    message(STATUS "source: ${src}")
+endforeach()
+
+foreach(i RANGE 1 5)
+    message(STATUS "i = ${i}")
+endforeach()
+
+while(CONDITION)
+    # ...
+endwhile()
+```
+
+The `IN LISTS` form is the one to use. Plain `foreach(src ${SOURCES})` works by accident of expansion and breaks on empty elements.
+
+Functions and macros both exist, and the difference matters:
+
+```cmake
+function(add_demo name)
+    add_executable(${name} ${name}.c)
+    target_link_libraries(${name} PRIVATE util)
+endfunction()
+
+add_demo(demo1)
+add_demo(demo2)
+```
+
+Arguments arrive as `${ARGV0}`, `${ARGV1}`, and so on, with `${ARGN}` holding everything past the named parameters. A **function** has its own variable scope, so `set()` inside it is local unless you say `PARENT_SCOPE`. A **macro** is textual substitution with no scope of its own, which means it can clobber the caller's variables. Prefer `function()` unless you specifically need to modify the caller's scope.
+
+## Targets Are the Unit of Thought
+::: {.subheading}
+The single idea that separates modern CMake from the bad old style
+:::
+
+Everything above is syntax. This section is the actual model, and internalizing it is most of what it takes to write CMake that does not hurt.
+
+In Make, a target is a filename in a dependency graph, and build settings are global strings (`CFLAGS`, `LDFLAGS`) that every rule shares. In CMake, [a target is an **object with properties**, and those properties propagate along the dependency graph]{.hl-default}. That difference is the whole reason large projects migrated.
+
+### Declaring Targets
+Three commands create targets:
+
+```cmake
+add_executable(app main.c)                  # a program
+add_library(util STATIC util.c)             # a static library (.a)
+add_library(shared SHARED shared.c)         # a shared library (.so / .dylib / .dll)
+add_library(headers INTERFACE)              # header-only: no sources to compile
+```
+
+Omitting `STATIC`/`SHARED` lets the `BUILD_SHARED_LIBS` variable decide, which is the polite default for a library others may consume.
+
+Note that CMake needs no equivalent of a pattern rule, and no `-MMD` dependency generation. It knows the sources because you listed them, and header dependencies are discovered automatically by the generated build files. The [hand-rolled dependency machinery](make.qmd#auto-generated-dependencies) that a serious makefile requires simply is not a topic here.
+
+### Properties and the Propagation Keywords
+Settings attach to targets with the `target_*` family. Each takes one of three keywords that decide who inherits the setting:
+
+| Keyword | Applies to the target | Applies to consumers | Use for |
+|:--------|:---------------------:|:--------------------:|:--------|
+| `PRIVATE` | yes | no | Implementation details |
+| `PUBLIC` | yes | yes | Anything the header exposes |
+| `INTERFACE` | no | yes | Header-only libraries |
+
+The commands themselves map cleanly onto their Make counterparts:
+
+| Make | CMake |
+|:-----|:------|
+| `-I` paths in `CFLAGS` | `target_include_directories()` |
+| `-D` defines in `CFLAGS` | `target_compile_definitions()` |
+| Other `CFLAGS` | `target_compile_options()` |
+| `-l` and `LDFLAGS` | `target_link_libraries()` |
+| `-std=c11` | `target_compile_features()` |
+
+### Propagation, Demonstrated
+Here is the mechanism doing its work, because it is easier to believe from output than from description. A library declares one `PUBLIC` and one `PRIVATE` setting:
+
+```cmake
+# lib/CMakeLists.txt
+add_library(util util.c)
+target_include_directories(util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(util
+    PUBLIC  UTIL_PUBLIC=1
+    PRIVATE UTIL_PRIVATE=1)
+```
+
+```cmake
+# src/CMakeLists.txt
+add_executable(app main.c)
+target_link_libraries(app PRIVATE util)
+```
+
+Configuring with `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` and reading the resulting `compile_commands.json` shows exactly what each file was compiled with:
+
+```
+util.c     ['-DUTIL_PRIVATE=1', '-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']
+main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']
+```
+
+Three things to notice. `main.c` picked up `-I/tmp/demo/lib` even though `src/CMakeLists.txt` never mentions that path; the dependency carried its own include requirement along the link edge. It picked up `UTIL_PUBLIC` for the same reason. And it did *not* pick up `UTIL_PRIVATE`, because that was declared an implementation detail.
+
+In Make, the equivalent is a global `CFLAGS` containing every include path in the project, edited by hand, applied to every file whether it needs them or not, with no way to express "this path is my business, not yours." That is the improvement, stated concretely.
+
+::: {.callout-important title="The single most valuable rule in CMake"}
+**Use `target_*` commands, never the directory-scoped ones.** The older `include_directories()`, `add_definitions()`, and `link_libraries()` apply to everything in the current directory and below, silently, regardless of whether it makes sense. They are the CMake equivalent of a global variable, they are what most pre-2015 tutorials teach, and they are the root of a large fraction of unmaintainable CMake. If you are reading a project full of them, you are reading the old style.
+:::
+
+### Linking Is Dependency Declaration
+`target_link_libraries()` is badly named. It does not only pass `-l` flags; it declares a **dependency edge**, and everything propagates along it:
+
+```cmake
+target_link_libraries(app PRIVATE util)
+```
+
+This one line says: build `util` before `app`, link it in, and apply all of `util`'s `PUBLIC` and `INTERFACE` properties to `app`. Include paths, definitions, compile options, and language standards all travel this edge. It is closer to `import` than to a linker flag.
+
+The keyword here answers a different question than it does elsewhere: does anything linking *`app`* also need `util`? For an executable, nothing links it, so `PRIVATE` is nearly always right. For a library whose headers expose types from another library, `PUBLIC` is required, or your consumers will fail to compile.
+
+## A Complete Project
+::: {.subheading}
+The chapter's running example, entire
+:::
+
+Everything so far, assembled into a project that builds a library and a program that uses it.
+
+```
+demo/
+├── CMakeLists.txt
+├── lib/
+│   ├── CMakeLists.txt
+│   ├── util.c
+│   └── util.h
+└── src/
+    ├── CMakeLists.txt
+    └── main.c
+```
+
+```cmake
+# CMakeLists.txt  (top level)
+cmake_minimum_required(VERSION 3.16)
+project(demo VERSION 1.0 LANGUAGES C)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+add_subdirectory(lib)
+add_subdirectory(src)
+```
+
+```cmake
+# lib/CMakeLists.txt
+add_library(util util.c)
+target_include_directories(util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_options(util PRIVATE -Wall -Wextra)
+```
+
+```cmake
+# src/CMakeLists.txt
+add_executable(app main.c)
+target_link_libraries(app PRIVATE util)
+target_compile_options(app PRIVATE -Wall -Wextra)
+```
+
+Building it:
+
+```bash
+cmake -S . -B build          # configure
+cmake --build build          # build
+./build/src/app              # run
+```
+
+Three commands worth knowing about the first line. `-S` names the source directory, `-B` the build directory, and the fact that they are separate is not incidental: **out-of-source builds are the norm in CMake**, unlike Make where in-tree builds are the default. Everything generated lands in `build/`, nothing pollutes your source tree, and `rm -rf build` is a complete and safe clean.
+
+`cmake_minimum_required()` must be the first command in the top-level file. It does more than check a version; it sets **policy** defaults, CMake's mechanism for changing behavior without breaking old projects. Declaring 3.16 means you get 3.16-era semantics even on CMake 4.x.
+
+::: {.callout-note title="`project()` is not decoration"}
+`project()` triggers compiler detection, which is why it must appear before any target. It also defines a family of variables (`demo_VERSION`, `PROJECT_SOURCE_DIR`, `CMAKE_PROJECT_NAME`) that the rest of the file and any tooling can read. Omitting it produces confusing failures about the compiler being unset.
+:::
+
+### Adding Options
+Real projects need switches. `option()` declares a cached boolean the user can flip from the command line:
+
+```cmake
+option(DEMO_BUILD_TESTS "Build the test suite" ON)
+option(DEMO_USE_DOUBLE  "Use double precision" OFF)
+
+if(DEMO_USE_DOUBLE)
+    target_compile_definitions(util PUBLIC DEMO_DOUBLE=1)
+endif()
+```
+
+```bash
+cmake -S . -B build -DDEMO_BUILD_TESTS=OFF -DDEMO_USE_DOUBLE=ON
+```
+
+Prefixing option names with the project name is a convention worth following, because options are global and a project used as a subdirectory of another can otherwise collide with its parent.
+
+### The Cache
+`option()` writes into the **cache**, and understanding it prevents a category of baffling behavior.
+
+`build/CMakeCache.txt` is a plain text file holding every option, detected compiler path, and found library location from the configure step. It persists between runs, which is why the second `cmake -S . -B build` is fast and why it remembers settings you passed only once.
+
+It is also why changing a setting sometimes appears not to work. A cached variable is not overwritten by `set()` in your `CMakeLists.txt` unless you pass `FORCE`, by design: your file should not silently override what the user asked for. When a configure result seems stuck, the reliable fix is to delete `build/` and start over. This is cheap, safe, and the standard advice.
+
+```bash
+rm -rf build && cmake -S . -B build      # the CMake equivalent of `make clean`
+```
+
+## Using Other People's Code
+::: {.subheading}
+The problem CMake exists to solve
+:::
+
+Nothing above justifies CMake over a competent makefile. This section does. Finding and consuming dependencies portably is where hand-written Make becomes genuinely painful and CMake earns its place.
+
+### `find_package()`
+The standard mechanism asks the system for a dependency:
+
+```cmake
+find_package(Threads REQUIRED)
+target_link_libraries(app PRIVATE Threads::Threads)
+```
+
+`REQUIRED` makes a failure fatal at configure time, with a clear message, rather than a mysterious linker error much later. Without it, you check `if(Threads_FOUND)` and adapt.
+
+The `Threads::Threads` spelling is an **imported target**, and the double colon is a useful signal: it means "this is a target, not a filename," and CMake will error immediately if no such target exists rather than passing an unrecognized string to the linker. Modern packages provide imported targets that carry their own include paths and flags, so linking one is all you need.
+
+### `FetchContent`
+When a dependency is not installed, `FetchContent` downloads and builds it as part of your project:
+
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG        10.2.1)              # pin a tag, never a branch
+
+FetchContent_MakeAvailable(fmt)
+
+target_link_libraries(app PRIVATE fmt::fmt)
+```
+
+This is the closest CMake comes to [Cargo](rust-cc.qmd) or `pip`, and the comparison is instructive about how much less it does. There is no lockfile, no transitive version resolution, and no central registry. Two dependencies wanting different versions of a third is a problem you solve by hand. Pinning `GIT_TAG` to an exact tag or commit is not optional advice; a branch name makes your build non-reproducible.
+
+::: {.callout-note title="Why C++ dependency management is like this"}
+C and C++ never had a package manager in the language's first four decades, so the ecosystem grew around system packages and vendored source trees. CMake inherited that world rather than creating it. `vcpkg` and `Conan` are the serious attempts at the missing layer, both integrate with CMake, and neither has become universal. If Rust's Cargo felt like an unreasonable luxury, this is the contrast that explains why.
+:::
+
+## Generator Expressions
+::: {.subheading}
+The `$<...>` syntax, and when you actually need it
+
+:::
+
+Generator expressions are the feature most likely to make CMake look unreadable, and they exist for a precise reason: [some values are not known at configure time because they depend on which build configuration is being generated]{.hl-default}.
+
+A single configure can produce build files for Debug and Release simultaneously (Visual Studio and Xcode do this by default). A `if(CMAKE_BUILD_TYPE STREQUAL "Debug")` cannot work there, because configure runs once for all configurations. `$<...>` defers the decision:
+
+```cmake
+target_compile_options(app PRIVATE
+    $<$<CONFIG:Debug>:-O0 -g>
+    $<$<CONFIG:Release>:-O2 -DNDEBUG>)
+```
+
+The form is `$<condition:value>`: emit `value` only if `condition` holds. The commonest ones:
+
+| Expression | Meaning |
+|:-----------|:--------|
+| `$<CONFIG:Debug>` | 1 in the Debug configuration |
+| `$<CXX_COMPILER_ID:GNU>` | 1 when compiling with GCC |
+| `$<PLATFORM_ID:Windows>` | 1 on Windows |
+| `$<TARGET_FILE:app>` | Full path to a target's output file |
+| `$<BUILD_INTERFACE:...>` | Applies when built in-tree |
+| `$<INSTALL_INTERFACE:...>` | Applies when consumed after install |
+
+The last two solve a specific problem worth naming: a library's include directory differs depending on whether a consumer builds it as a subdirectory or links it after installation. The idiom is:
+
+```cmake
+target_include_directories(util PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+```
+
+Do not reach for generator expressions early. Most projects need only the `CONFIG:` form for per-configuration flags, and reading a `$<...>` correctly is easier than deciding you need one.
+
+## Build Types and Toolchains
+### Build Types
+CMake ships four standard configurations, selected with `CMAKE_BUILD_TYPE` on single-configuration generators (Makefiles, Ninja):
+
+| Type | Flags (GCC/Clang defaults) | Purpose |
+|:-----|:---------------------------|:--------|
+| `Debug` | `-g` | Debugging: no optimization, full symbols |
+| `Release` | `-O3 -DNDEBUG` | Shipping |
+| `RelWithDebInfo` | `-O2 -g -DNDEBUG` | Profiling, and debugging optimized code |
+| `MinSizeRel` | `-Os -DNDEBUG` | Size-constrained targets |
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+```
+
+The trap: [if you do not set it, it is empty, and you get **no optimization flags at all**]{.hl-default}. Not `-O0`, but nothing, which is usually `-O0` by compiler default. A great many "CMake builds are slow" complaints are an unset build type. Since separate build directories are cheap, keeping `build-debug/` and `build-release/` side by side is the common practice, and it neatly avoids the [stale-object problem](make.qmd#target-specific-and-pattern-specific-variables) that variant builds cause in Make.
+
+### Cross-Compilation
+For the embedded work in the [C](c.qmd) and [Assembly](assembly.qmd) chapters, cross-compiling is the main event, and CMake handles it with a **toolchain file**: a small script that describes the target system, read before anything else.
+
+```cmake
+# arm-none-eabi.cmake
+set(CMAKE_SYSTEM_NAME      Generic)        # "Generic" means bare metal, no OS
+set(CMAKE_SYSTEM_PROCESSOR arm)
+
+set(CMAKE_C_COMPILER   arm-none-eabi-gcc)
+set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
+
+# the compiler cannot link a host test program, so relax the check
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)   # find host programs on the host
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)    # find libraries only in the sysroot
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+```
+
+```bash
+cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi.cmake
+```
+
+Setting `CMAKE_SYSTEM_NAME` is what puts CMake into cross-compiling mode and sets `CMAKE_CROSSCOMPILING`. The `TRY_COMPILE_TARGET_TYPE` line addresses a specific early failure: CMake normally validates a compiler by building and linking a small program, which cannot link on a bare-metal target with no startup code or linker script, so you tell it to stop at the static library stage.
+
+The same toolchain file is discussed from the C++ side in [Cross-Compilation and Bare Metal](cpp.qmd#cross-compilation-and-bare-metal).
+
+## Debugging CMake
+The toolkit, roughly in the order you will need it.
+
+**Print a variable.** The `message()` command with `STATUS` is the `$(info)` of CMake:
+
+```cmake
+message(STATUS "SOURCES = ${SOURCES}")
+message(WARNING "this is suspicious")
+message(FATAL_ERROR "stop here")
+```
+
+**See the actual compiler command.** The default build output shows progress, not invocations:
+
+```bash
+cmake --build build --verbose        # or: make -C build VERBOSE=1
+```
+
+**Generate a compile database.** `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` writes `build/compile_commands.json` with the exact command for every source file. This is the fastest way to answer "what flags is this file *really* getting," and it is what `clangd` and most editor tooling consume. Turning it on unconditionally in your top-level file is a kindness to everyone using the project.
+
+**Trace execution.** `--trace-expand` prints every command as it runs with variables expanded. It is extremely verbose and occasionally the only thing that works:
+
+```bash
+cmake -S . -B build --trace-expand 2>&1 | less
+```
+
+**Inspect the cache.** `cmake -LAH build` lists every cached variable with its help text. `ccmake build` is a curses interface for the same thing.
+
+**Print target properties.** When propagation is not doing what you expect:
+
+```cmake
+get_target_property(dirs app INCLUDE_DIRECTORIES)
+message(STATUS "app include dirs: ${dirs}")
+```
+
+## Common Pitfalls
+Each of these is a symptom you will actually see, with its cause.
+
+**`file(GLOB)` for sources.** It works, and it is the wrong tool:
+
+```cmake
+file(GLOB SOURCES "src/*.c")     # do not do this
+```
+
+The glob runs at *configure* time. Add a new source file and the build system does not know it exists, so nothing rebuilds and nothing tells you why. CMake's own documentation advises against it. List sources explicitly; the maintenance cost is one line per file and the failure mode it prevents is genuinely confusing.
+
+**A stale cache.** Changing a compiler or a cached option and seeing no effect almost always means the cache is holding the old value. `rm -rf build`.
+
+**Forgetting `CMAKE_BUILD_TYPE`.** No optimization, and a "CMake is slow" conclusion.
+
+**Using directory-scoped commands.** `include_directories()` instead of `target_include_directories()`. Works at first, becomes unmaintainable, and is the single clearest marker of pre-modern CMake.
+
+**Quoting a list.** `"${SOURCES}"` collapses three files into one nonexistent filename with spaces.
+
+**Expecting `if(string)` to be true.** It is false unless the string is in the truthy list.
+
+**Editing files in `build/`.** They are output. The next configure overwrites them.
+
+**Missing `PUBLIC` on a library's include directory.** The library builds, consumers fail with "no such file" on its header, and the error points at the consumer rather than the cause.
+
+## Make or Ninja
+CMake's default generator on Unix is Unix Makefiles, but **Ninja** is the better choice for anything sizable:
+
+```bash
+cmake -S . -B build -G Ninja
+```
+
+Ninja was built for precisely this role: a build language nobody writes by hand, designed to be emitted by a generator and executed fast. It parallelizes by default without `-j`, and its no-op builds are dramatically quicker than Make's on large projects, which matters because the no-op build is the one you run most. Your `CMakeLists.txt` does not change; only the generated output does.
+
+The tradeoff is that Ninja must be installed, whereas `make` is everywhere. For a project others will build, Makefiles as the default with Ninja as an option is the diplomatic choice.
+
+## Key Differences from Make
+
+| | Make | CMake |
+|:--|:-----|:------|
+| What it is | A build tool | A generator that emits build files |
+| Unit of thought | A rule producing a file | A target with properties |
+| Build settings | Global strings (`CFLAGS`) | Per-target, propagating along dependencies |
+| Header dependencies | Hand-rolled with `-MMD` | Automatic |
+| Out-of-source builds | Possible, awkward | The default |
+| Portability | One platform per makefile | One description, many toolchains |
+| Finding libraries | Hand-written, or `pkg-config` | `find_package()`, imported targets |
+| Data types | Strings | Strings |
+| Language quality | Terse, three languages in one file | Verbose, uniform, string-typed |
+| Best at | Small projects, task running, anything non-C | Portable C and C++ projects with dependencies |
+
+The last row is the practical summary. For a handful of files, a task runner, or a language with its own build tool, a makefile is smaller and clearer. For a C or C++ project that must build on more than one machine and consume libraries it did not write, CMake does work you would otherwise do by hand and get wrong.
+
+Neither is a good *language*. Make is three languages sharing a file with an evaluation order you have to reason about; CMake is one uniform language with a single data type and twenty-five years of accumulated compatibility. You use them because the problems they solve are real, and because the alternatives have not displaced them.
+
+## Where to Go Next
+
+### Documentation
+- [CMake Documentation](https://cmake.org/cmake/help/latest/){target="_blank" rel="noopener noreferrer"}, complete and precise, though poor for learning
+- [cmake-buildsystem(7)](https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html){target="_blank" rel="noopener noreferrer"}, the authoritative statement of the target model
+- [cmake-generator-expressions(7)](https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html){target="_blank" rel="noopener noreferrer"}, the full `$<...>` catalog
+
+### Guides
+- [Modern CMake](https://cliutils.gitlab.io/modern-cmake/){target="_blank" rel="noopener noreferrer"}, the best free introduction to target-based CMake
+- [Effective Modern CMake](https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1){target="_blank" rel="noopener noreferrer"}, a concise list of practices
+- [Professional CMake](https://crascit.com/professional-cmake/){target="_blank" rel="noopener noreferrer"} by Craig Scott, the reference book, actively maintained
+
+### Practice
+The most useful exercise is to take a working makefile you already understand and reproduce it in CMake, then diff the compiler commands with `compile_commands.json` on both sides until they match. It forces you to discover which of your `CFLAGS` were genuinely per-target and which were global by accident.

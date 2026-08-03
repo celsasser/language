@@ -385,74 +385,363 @@ test: app
 Either is fine. The failure mode to avoid is a `.PHONY` list at the top that someone forgets to update when adding a target, which is exactly the case where the bug lies dormant until a filename collides. Phony targets carry most of the weight in [Make as a Task Runner](#make-as-a-task-runner), where essentially every target is one.
 
 ## The Dependency Graph
+::: {.subheading}
+What Make actually computes
+:::
+
+A makefile looks like a list of rules. It is better understood as a **graph**: each target is a node, each prerequisite is an edge, and running Make means walking that graph to decide which nodes are stale. Every capability in this chapter, parallelism, incremental rebuilds, the freedom to write rules in any order, falls out of that one structure.
+
 ### How Make Decides What to Rebuild
-<!-- The central mechanism, stated precisely: a target is out of date if it
-does not exist, or if any prerequisite has a NEWER modification time. Recurse
-depth-first through the graph, rebuild bottom-up.
 
-Worth a Mermaid diagram of a small graph (main.c/util.c -> .o -> binary) with
-one source marked dirty and the affected nodes highlighted.
+The rule is short enough to state exactly. [A target is out of date if it does not exist, or if any of its prerequisites has a more recent modification time than the target]{.hl-default}. When a target is out of date, Make runs its recipe.
 
-Then the consequence: Make compares mtimes, it does not hash content. A
-touched-but-unchanged file triggers a rebuild; a changed file with an old
-timestamp does not. -->
+The subtlety is that this test is applied *recursively, bottom-up*. Before Make can compare `app` against `main.o`, it must know whether `main.o` is itself current, which means checking `main.o` against `main.c` and `util.h` first. So Make walks depth-first to the leaves of the graph, then evaluates staleness on the way back up. A rebuild deep in the tree updates a timestamp, which propagates staleness upward to everything that depends on it.
+
+Take the makefile from [A Complete Small Makefile](#a-complete-small-makefile). Its graph looks like this, with an edit to `util.h` marked:
+
+```{mermaid}
+flowchart TD
+    MC["main.c"] --> MO["main.o"]
+    UH["util.h<br/>(just edited)"] --> MO
+    UH --> UO["util.o"]
+    UC["util.c"] --> UO
+    MO --> APP["app"]
+    UO --> APP
+
+    classDef dirty fill:#f8d7da,stroke:#c33,stroke-width:2px
+    classDef stale fill:#fff3cd,stroke:#e0a800,stroke-width:2px
+    class UH dirty
+    class MO,UO,APP stale
+```
+
+Touching `util.h` makes both object files stale, because both list it as a prerequisite. Rebuilding them updates their timestamps, which in turn makes `app` stale. Three recipes run. Had you edited `util.c` instead, `main.o` would have been left alone and only two would have run.
+
+Now notice what this depends on. `main.o` is rebuilt only because someone wrote `util.h` in its prerequisite list. Make cannot read `main.c`, does not know what `#include` means, and has no way to discover that relationship on its own. [The graph is not derived from your source code; it is asserted by you, and Make trusts the assertion completely]{.hl-default}. Omit `util.h` from that line and the rebuild silently does not happen, leaving an object file compiled against a header that no longer exists in that form. This is the single most common source of stale builds, and it is common enough that the fix, generating those prerequisites automatically from the compiler itself, gets its own section in [Auto-Generated Dependencies](#auto-generated-dependencies).
+
+::: {.callout-note title="Newer, not different"}
+The comparison is strictly *newer than*, not *not equal to*. A prerequisite older than its target is considered fine no matter how much its contents changed. This sounds like pedantry until you restore a file from a backup or check out an old branch, at which point it is the whole problem. See [When Timestamps Lie](#when-timestamps-lie).
+:::
+
 ### Graph Traversal and Ordering
-<!-- Make derives order from the graph, not from file position. Rules can
-appear in any order. This is the declarative payoff and the thing that
-distinguishes Make from a build script. Sets up why parallelism works. -->
+
+Make derives execution order from the graph alone. The order rules appear in the file is irrelevant, with exactly one exception: the first target in the file is the [default goal](#the-default-goal). Beyond that, you can shuffle the rules in a makefile arbitrarily and the build will run identically.
+
+This is worth dwelling on, because it is the concrete payoff of the declarative design described in [You Describe Relationships, Not Order](#you-describe-relationships-not-order). In a build script, the order of the lines *is* the build order, and keeping it correct as the project grows is manual work. In a makefile there is no order to maintain. Adding a source file means adding a node and its edges; where you type it does not matter.
+
+Two consequences follow directly.
+
+**A target is built at most once per run.** If both `main.o` and `util.o` depend on a generated `config.h`, Make does not generate it twice. The graph is walked, not the file, and a node already visited and brought up to date is not revisited. This is why a diamond-shaped dependency is unremarkable in Make and a genuine hazard in a shell script.
+
+**Independent subtrees can run concurrently.** Nothing connects `main.o` to `util.o`, so nothing requires one to precede the other. `make -j` exploits exactly this, and it needs no additional annotation from you because the information was already in the graph. The catch is that parallelism turns an incomplete graph from a latent bug into an intermittent one: a missing edge that happened to work serially, because the file order accidentally matched the true order, will fail unpredictably under `-j`. [Parallelism](#parallelism) treats this properly.
+
+::: {.callout-warning title="Cycles"}
+Because the structure is a graph rather than a tree, it is possible to write a cycle: `a` depends on `b`, which depends on `a`. GNU Make detects this, prints `Circular a <- b dependency dropped`, and continues by ignoring one of the edges. It is a warning rather than an error, which means a cyclic makefile builds *something*, just not reliably the right thing. Treat that message as a bug to fix, not noise to tolerate.
+:::
+
 ### Order-Only Prerequisites
-<!-- The | separator: prerequisites that must exist but whose timestamps are
-ignored. The canonical use is a build directory, since a directory's mtime
-changes every time a file lands in it, which would otherwise rebuild
-everything. Show the `$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)` idiom. -->
+
+Sometimes a target requires that something *exist* without caring when it was last modified. The canonical case is an output directory.
+
+Consider building objects into `build/`. The directory must be there before the compiler writes into it, so the instinct is to make it a prerequisite:
+
+```makefile
+# BROKEN: rebuilds everything, constantly
+build/%.o: %.c build
+	$(CC) -c $< -o $@
+
+build:
+	mkdir -p build
+```
+
+This builds correctly and then rebuilds far more than it should. The reason is that [a directory's modification time changes every time a file is created inside it]{.hl-default}, so `build` is a prerequisite whose timestamp moves on its own, without anyone editing a source file.
+
+Whether that bites on the very next run is a matter of timing. If every object lands within the same timestamp tick as the directory update, the comparison is *equal* rather than *newer* and nothing rebuilds, which is why this makefile can look fine in a quick test. The failure surfaces as soon as anything is added to `build/` afterward: a newly added source file, a generated artifact, a later build step writing its output there. Any of these advances the directory's mtime past every object already in it, and the next run recompiles all of them despite nothing having changed. In a real project that is a rebuild-everything, at unpredictable intervals, for no visible reason.
+
+The `|` separator solves it. Prerequisites listed after the pipe are **order-only**: Make guarantees they are brought up to date *before* the target's recipe runs, but their timestamps are excluded from the staleness comparison.
+
+```makefile
+build/%.o: %.c | build
+	$(CC) -c $< -o $@
+
+build:
+	mkdir -p build
+```
+
+Now `build` is created if missing and otherwise ignored. The ordering guarantee is kept; the false staleness is gone.
+
+```makefile
+target: normal-prereqs | order-only-prereqs
+```
+
+Directories are the overwhelmingly common use, to the point that the `| $(BUILD_DIR)` idiom is worth recognizing on sight. The general principle is broader: reach for order-only whenever a prerequisite is a precondition rather than an input. A tool that must be built before it can be run on your sources, or a code generator whose mere presence matters but whose timestamp does not, both fit.
+
+::: {.callout-tip title="`mkdir -p` and the missing recipe"}
+An alternative you will see is skipping the rule entirely and creating the directory inside the recipe: `@mkdir -p $(@D)`. Here `$(@D)` is the directory part of the target (see [Automatic Variables](#automatic-variables)), and `-p` makes it succeed when the directory already exists. This is less elegant, since it runs on every compile rather than once, but it is robust and needs no order-only prerequisite at all. Both idioms are in wide use.
+:::
+
 ### When Timestamps Lie
-<!-- The failure family that follows from mtime-based staleness:
-  - clock skew on network filesystems and in VMs/containers
-  - `touch` as both a tool and a hazard
-  - checkouts that reset mtimes (git sets them to checkout time)
-  - sub-second resolution and fast successive builds
-  - generated files whose timestamps do not reflect content change
-Contrast briefly with content-hash systems (Ninja, Bazel, Cargo) and note the
-tradeoff: hashing costs a read of every file but is correct. -->
+
+Make's use of modification times is the cheap approximation described in [Timestamps, Not Content](#timestamps-not-content), and the ways it fails are worth cataloguing, because each has a recognizable symptom and a known fix.
+
+**Clock skew.** A file whose mtime is in the future is newer than every target that depends on it, permanently, so its dependents rebuild on every invocation. Make usually notices and warns:
+
+```
+make: Warning: File 'util.c' has modification time 47 s in the future
+```
+
+The cause is almost always a mismatched clock across a boundary: a network filesystem where the server and client disagree, a VM or container whose clock drifted from the host, or a dual-boot machine where one OS keeps local time and the other UTC. The fix is to correct the clock, not the files, though `find . -newer . -exec touch {} +` will paper over an already-damaged tree.
+
+**Version control does not preserve mtimes.** Git records content, not timestamps, and sets a file's mtime to the moment it was written into your working tree. So `git checkout` of an *older* branch produces files with *newer* timestamps, and a fresh clone stamps the entire tree with the current time. The usual consequence is a full rebuild after switching branches, which is merely slow. The dangerous inverse happens when a build artifact survives a checkout that rewound its sources: the artifact is newer than the sources it no longer matches, and Make sees nothing to do. When a build is inexplicably wrong right after a branch switch, this is the first thing to suspect, and `make clean` is the answer.
+
+**`touch` cuts both ways.** It is the intended tool for forcing a rebuild without editing anything (`touch config.h; make`) and for the opposite, marking a target as current without running its recipe (`make -t`, `--touch`). Both are legitimate. Both also make the timestamps stop reflecting reality, and a `make -t` run performed to silence a rebuild loop will hide genuine staleness afterward.
+
+**Sub-second resolution.** Modern filesystems record nanoseconds and GNU Make compares them, so a generated file and its output landing in the same second are ordered correctly. Older combinations are not so lucky: filesystems with one-second granularity (or Make 3.81, still shipping as `/usr/bin/make` on macOS) can see a prerequisite and its target as having *identical* timestamps, and identical is not newer, so the rebuild is skipped. Very fast generate-then-compile steps are where this shows up, and it is maddening precisely because it is timing-dependent and vanishes under a debugger or a slower machine.
+
+**Regenerated files that did not change.** A code generator rerun on unchanged input typically rewrites its output byte-for-byte, updating the mtime. Everything downstream rebuilds despite nothing having actually changed. The standard remedy is to write to a temporary file and move it into place only if it differs:
+
+```makefile
+generated.h: schema.json
+	./generate $< > $@.tmp
+	@if cmp -s $@.tmp $@; then rm $@.tmp; else mv $@.tmp $@; fi
+```
+
+This restores content-sensitivity by hand, for the one file where it matters most.
+
+Taken together, this is the bill for the design decision in [Timestamps, Not Content](#timestamps-not-content). The newer generation of build systems pays a different price: Ninja, Bazel, and Cargo hash file contents, so none of the failures above can occur, at the cost of reading every input on every build and maintaining a state database to compare against. Make trades correctness in the corner cases for needing nothing but `stat` and no state at all. For a chapter's worth of source files that is a fine trade; for a monorepo it stopped being one some time ago.
+
 ## Variables
+::: {.subheading}
+The macro language, and the one distinction that matters most
+:::
+
+Variables are the second of the [three languages](#the-three-languages-in-one-file): pure text substitution, closer to the C preprocessor than to a programming language. There are no types. A variable holds a string, and a list is only a string with spaces in it. Keeping that in mind explains most of what follows, including several behaviors that look like bugs.
+
+Conventionally they are written in uppercase, referenced as `$(NAME)` or `${NAME}`, and a single-character name can drop the parentheses entirely, which is why `$@` works and why `$(CC)` cannot be written `$CC`. That last spelling means "expand the variable `C`, then append a literal `C`", and since `C` is almost certainly undefined, you get the bare string `C`. Empty expansion of an undefined variable, with no error, is Make's default and the root of a great many silent failures.
+
 ### The Two Flavors
 ::: {.subheading}
 The highest-value thing to understand in Make
 :::
 
-<!-- = is recursively expanded: the right-hand side is stored as text and
-re-expanded at every use. := is simply expanded: evaluated once at definition.
+Make has two assignment operators that look interchangeable and are not.
 
-Show the two behaving differently with a $(shell) call or a self-reference.
-The classic: FOO = $(BAR) picks up a BAR defined LATER in the file, which is
-either exactly what you want or a deep confusion. Also note that `A = $(A) x`
-is an infinite loop Make will diagnose, while `A := $(A) x` is fine.
+`=` creates a **recursively expanded** variable. The right-hand side is stored *as text, unevaluated*, and re-expanded every single time the variable is used.
 
-Recommendation to state plainly: prefer := unless you specifically need
-deferred expansion. Note ::= as the POSIX-blessed spelling of :=. -->
+`:=` creates a **simply expanded** variable. The right-hand side is evaluated *once*, at the moment of definition, and the result is stored.
+
+```makefile
+A := hello
+B  = $(A) world      # stored as the literal text "$(A) world"
+C := $(A) world      # stored as "hello world"
+
+A := goodbye         # redefine A
+
+$(info B is $(B))    # B is goodbye world   <- re-expanded, sees the new A
+$(info C is $(C))    # C is hello world     <- frozen at definition time
+```
+
+`B` changed because it was never really "hello world"; it was a recipe for computing a string, re-run on each reference. `C` was computed once and is now inert.
+
+This is Make's deferred-evaluation mechanism, and it is genuinely useful. It lets a variable refer to another that is defined *later* in the file, which is how makefiles offer overridable configuration blocks:
+
+```makefile
+CFLAGS = $(OPTIMIZATION) $(WARNINGS)     # OPTIMIZATION not defined yet
+
+OPTIMIZATION := -O2
+WARNINGS     := -Wall -Wextra
+```
+
+With `:=` on the first line, `CFLAGS` would expand to a single space, permanently, because both operands were empty when it was evaluated. With `=` it resolves correctly whenever it is eventually used.
+
+The cost is that a recursively expanded variable is re-evaluated on every reference, which matters when the right-hand side does real work:
+
+```makefile
+VERSION = $(shell git describe --tags)    # runs git EVERY time $(VERSION) appears
+VERSION := $(shell git describe --tags)   # runs git exactly once
+```
+
+In a makefile referencing `$(VERSION)` in a dozen recipes, the first spelling forks a dozen `git` processes. This is a common and easily missed cause of sluggish builds.
+
+The two flavors also differ on self-reference. Appending to a recursively expanded variable is a genuine infinite loop, and Make refuses it outright:
+
+```makefile
+A = $(A) more        # *** Recursive variable 'A' references itself (eventually). Stop.
+A := $(A) more       # fine: expands the old value once, then reassigns
+```
+
+::: {.callout-tip title="Prefer `:=`"}
+Use `:=` unless you specifically need deferred expansion. It evaluates once, cannot loop, does not re-run `$(shell)` calls, and behaves the way a reader coming from any other language expects. Reach for `=` deliberately, when you want a variable whose value depends on something defined later or on a target-specific value resolved per-target. POSIX blesses `::=` as a synonym for `:=`; GNU Make accepts both, and `:=` is what you will see in practice.
+:::
+
+::: {.callout-note title="`!=` and shell assignment"}
+GNU Make 4.0 added `VAR != command` as shorthand for `VAR := $(shell command)`. It is concise and increasingly common, but it is a GNU extension and absent from the Make 3.81 that macOS ships, so a makefile that must run there should use `$(shell ...)` explicitly.
+:::
 
 ### `?=` and `+=` {#conditional-and-append-assignment}
-<!-- ?= assigns only if not already set, which is how you write overridable
-defaults (CC ?= gcc). += appends, and its expansion flavor is inherited from
-how the variable was first defined, which is a subtle gotcha worth showing. -->
-### Where Values Come From
-<!-- Precedence, highest to lowest: command line (make CC=clang) > environment
-with -e > makefile > environment > built-in defaults. `override` to win against
-the command line. `export` to push a variable into recipe environments, and
-why recipes do NOT see makefile variables unless exported or expanded.
-A table is the right form here. -->
-### Target-Specific and Pattern-Specific Variables
-<!-- `debug: CFLAGS += -g -O0` and how the value applies to the target and
-everything below it in the graph. This is how debug/release variants are
-usually done without duplicating rules. Pattern-specific (%.o: CFLAGS += ...)
-as the generalization. -->
-### Automatic Variables
-<!-- $@ target, $< first prerequisite, $^ all prerequisites (deduped),
-$+ all with duplicates, $? those newer than the target, $* the pattern stem,
-$| order-only prerequisites. Plus the $(@D)/$(@F) directory/file variants.
 
-Quick-reference table, then a worked pattern rule using several at once.
-Emphasize that these only have meaning inside a recipe. -->
+Two further operators cover the common cases.
+
+**`?=` assigns only if the variable is not already set.** This is how you write a default that a user can override:
+
+```makefile
+CC      ?= gcc
+PREFIX  ?= /usr/local
+```
+
+Run `make` and `CC` is `gcc`. Run `make CC=clang`, or export `CC` in the environment, and your assignment is skipped entirely. Note that "already set" includes being set to the empty string, and that the built-in default for `CC` is already `cc`, so `CC ?= gcc` in a makefile using the built-in rules never takes effect. Where that matters, assign unconditionally or use `override`.
+
+**`+=` appends, with a space separator.** Its subtlety is that the flavor is inherited from how the variable was first defined, and the two behave differently:
+
+```makefile
+SIMPLE := -Wall
+SIMPLE += $(EXTRA)      # $(EXTRA) expanded NOW, while it is still empty
+
+RECUR   = -Wall
+RECUR  += $(EXTRA)      # $(EXTRA) left as text, expanded later
+
+EXTRA := -Wextra
+
+$(info SIMPLE = $(SIMPLE))   # SIMPLE = -Wall
+$(info RECUR  = $(RECUR))    # RECUR  = -Wall -Wextra
+```
+
+Same operator, same order, different results, decided entirely by an assignment several lines earlier. When appending something that may not be defined yet, either define the base with `=` or move the append below the definition it depends on.
+
+Appending to an *undefined* variable is well defined: it behaves like `=`, creating a recursively expanded variable.
+
+### Where Values Come From
+
+The same variable can be set in five places, and Make resolves the conflict by a fixed precedence. Highest wins:
+
+| Rank | Source                        | Example                        | Notes                                              |
+|:-----|:------------------------------|:-------------------------------|:---------------------------------------------------|
+| 1    | `override` in the makefile    | `override CFLAGS += -Wall`     | Beats even the command line                        |
+| 2    | Command line                  | `make CC=clang`                | The user's intent; beats the file                  |
+| 3    | Makefile assignment           | `CC := gcc`                    | The ordinary case                                  |
+| 4    | Environment                   | `CC=clang make`                | Loses to the makefile, unless `-e` is passed       |
+| 5    | Built-in defaults             | `CC` is `cc`, `CFLAGS` is empty | Make's own table, visible via `make -p`            |
+
+The pairing of rows 2 and 4 is the useful part. A makefile assignment beats the environment, which means a stray `CFLAGS` exported in someone's shell profile cannot silently change your build. A command-line assignment beats the makefile, which means a user can still override deliberately when they mean to. That default is almost always what you want; `make -e` inverts it and is best avoided.
+
+`override` exists for the case where the makefile must win regardless, most often to append a flag the build genuinely requires:
+
+```makefile
+override CFLAGS += -fno-strict-aliasing    # survives `make CFLAGS=-O2`
+```
+
+Without `override`, `make CFLAGS=-O2` would discard that flag entirely, since the command line wins and the assignment is skipped.
+
+#### Recipes and the Environment
+
+A point that catches people: recipes do **not** automatically see makefile variables as shell variables. Consider:
+
+```makefile
+GREETING := hello
+
+show:
+	echo $(GREETING)      # Make expands this to: echo hello
+	echo $$GREETING       # the shell sees $GREETING, which is unset -> empty
+```
+
+The first line works because Make substitutes the text *before* the shell ever runs, exactly as described in [The Three Languages in One File](#the-three-languages-in-one-file). The second asks the shell for an environment variable that was never exported. `export` bridges the gap:
+
+```makefile
+export GREETING := hello
+
+show:
+	echo $$GREETING       # now the shell has it too
+```
+
+A bare `export` with no arguments exports everything, which is occasionally convenient and mostly a way to leak makefile internals into every subprocess. Export deliberately, and prefer plain `$(VAR)` expansion unless a recipe genuinely needs the value in its environment, as when it invokes a script that reads it.
+
+### Target-Specific and Pattern-Specific Variables
+
+A variable can be given a different value for one target and everything beneath it in the graph. The syntax hangs an assignment off a target:
+
+```makefile
+target: VARIABLE = value
+```
+
+This is how build variants are done without duplicating rules. The classic is a debug build:
+
+```makefile
+CFLAGS := -Wall -O2
+
+app: main.o util.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+debug: CFLAGS += -g -O0 -DDEBUG
+debug: app
+```
+
+Running `make app` compiles with `-Wall -O2`. Running `make debug` compiles the *same rules* with `-Wall -O2 -g -O0 -DDEBUG`. One set of rules, two configurations.
+
+The critical detail is the scope: the value applies to the named target **and to every prerequisite reached through it**. That is what makes the example work at all, since the flags need to reach `main.o` and `util.o`, which are built by rules that never mention `debug`. This inheritance is a genuine exception to Make's otherwise flat, global variable model, and it is the only scoping mechanism the language has.
+
+::: {.callout-warning title="Variant builds and stale objects"}
+`make debug` after `make` reuses whatever `.o` files already exist, because the object files are up to date by timestamp and Make has no idea the *flags* changed. You get a mix of optimized and unoptimized objects and a confusing debugging session. The simple fix is `make clean` between variants; the better one is to put each variant's objects in its own directory (`build/debug/`, `build/release/`) so they cannot collide. Content-hashing build systems track flag changes as inputs and rebuild correctly; Make does not.
+:::
+
+Pattern-specific variables generalize the same idea to a pattern rather than a named target, which is useful for treating one class of file differently:
+
+```makefile
+%.o: CFLAGS += -fPIC          # every object file gets -fPIC
+generated/%.o: CFLAGS += -w   # but generated sources compile without warnings
+```
+
+### Automatic Variables
+
+Inside a recipe, Make defines a set of variables describing the rule currently being executed. They are what make pattern rules possible: a single rule cannot name its target and prerequisites literally, so it refers to them positionally.
+
+| Variable | Expands to                                              |
+|:---------|:--------------------------------------------------------|
+| `$@`     | The target                                              |
+| `$<`     | The first prerequisite                                  |
+| `$^`     | All prerequisites, duplicates removed                   |
+| `$+`     | All prerequisites, duplicates kept, in order            |
+| `$?`     | Only the prerequisites newer than the target            |
+| `$*`     | The stem: the part matched by `%` in a pattern rule     |
+| `$|`     | The order-only prerequisites                            |
+
+Each also has directory and file variants, formed by adding `D` or `F`: `$(@D)` is the target's directory, `$(@F)` its filename. `$(<D)` and `$(<F)` do the same for the first prerequisite. These are why the `@mkdir -p $(@D)` idiom from [Order-Only Prerequisites](#order-only-prerequisites) works.
+
+Here they are at work in a realistic pattern rule:
+
+```makefile
+build/%.o: src/%.c include/config.h | build
+	@echo "compiling $* ..."
+	$(CC) $(CFLAGS) -c $< -o $@
+```
+
+Building `build/parser.o` from this rule gives:
+
+| Variable | Value                             |
+|:---------|:----------------------------------|
+| `$@`     | `build/parser.o`                  |
+| `$<`     | `src/parser.c`                    |
+| `$^`     | `src/parser.c include/config.h`   |
+| `$*`     | `parser`                          |
+| `$|`     | `build`                           |
+| `$(@D)`  | `build`                           |
+
+Note why `$<` rather than `$^` is passed to the compiler. `$^` would include `include/config.h`, and handing a header to `gcc -c` as a second input is an error. The pattern is nearly universal: `$<` for compilation, where exactly one input is the source, and `$^` for linking, where all the inputs genuinely are inputs:
+
+```makefile
+app: $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $^      # every object goes on the link line
+```
+
+`$?` is the specialist of the group, expanding to only those prerequisites newer than the target. Its natural use is a target that can be updated incrementally rather than rebuilt, such as an archive:
+
+```makefile
+libutil.a: $(OBJS)
+	ar rcs $@ $?            # replace only the members that changed
+```
+
+::: {.callout-important title="Automatic variables exist only inside recipes"}
+They describe the rule being executed, so they have no meaning anywhere else. Using `$@` in a plain variable assignment at the top of a file yields an empty string, silently. The exception is the right-hand side of a [target-specific variable](#target-specific-and-pattern-specific-variables), which is evaluated in the context of its target and can therefore see them.
+:::
+
 ## Two-Phase Evaluation
 ::: {.subheading}
 Why makefiles do not read top to bottom
@@ -667,6 +956,8 @@ What generates the makefiles you were never meant to read
 :::
 
 If you have worked in a modern C++ project, you have probably met a tree with a `CMakeLists.txt` in nearly every directory and wondered what collects them. That question has a clean answer, but it starts with a correction.
+
+This section answers it from Make's side: what generates the makefiles you find in a `build/` directory, and how CMake's structure differs from [recursive make](#recursive-make). For CMake as a language in its own right, its target model, its syntax, and how to write it, see [The CMake Language](cmake.qmd).
 
 ::: {.callout-important title="`CMakeLists.txt` is not a makefile"}
 CMake is a **separate language** with its own syntax and semantics. It shares nothing with Make beyond a problem domain. If you read `CMakeLists.txt` expecting makefile constructs, nothing will parse: there are no tab-indented recipes, no `$(VAR)` expansions with Make's meaning, and no `target: prerequisites` rules.

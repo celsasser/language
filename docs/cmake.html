@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2026-08-02">
+
+<title>The CMake Language – Computer Language Notebook</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./rust-in.html" rel="next">
+<link href="./make.html" rel="prev">
+<link href="././favicon.png" rel="icon" type="image/png">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f876f781226a33a7a2f77a56c5ae090f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": true,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Computer Language Notebook</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Languages</a></li><li class="breadcrumb-item"><a href="./make.html">Build Systems</a></li><li class="breadcrumb-item"><a href="./cmake.html">The CMake Language</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="./index.html" class="sidebar-logo-link">
+      <img src="././images/logo.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="././images/logo.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Languages</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./assembly.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./c.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The C Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">The C++ Language</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cpp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cpp-GL.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Guidelines</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Build Systems</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth2 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./make.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Makefile Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cmake.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">The CMake Language</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">The Rust Language</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-in.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-ho.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Hands On</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-cc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cargo and Crates</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-out.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Places You’ll Go</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./python.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Python Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./css.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CSS Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./matlab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The MATLAB Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shell.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Shell Scripting</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text">The Ecosystem</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./ecosystem.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./git.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Git Version Control</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">Briefs</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./b-pyperf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Python Performance Analysis</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false">
+ <span class="menu-text">Reference</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/assembly-pc.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PC Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-general.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Web Guide</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-selectors.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Selector Guide</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="false">
+ <span class="menu-text">Appendix</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossary</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a>
+  <ul>
+  <li><a href="#cmake-is-not-a-build-tool" id="toc-cmake-is-not-a-build-tool" class="nav-link" data-scroll-target="#cmake-is-not-a-build-tool">CMake Is Not a Build Tool</a></li>
+  <li><a href="#the-two-phase-model" id="toc-the-two-phase-model" class="nav-link" data-scroll-target="#the-two-phase-model">The Two-Phase Model</a></li>
+  <li><a href="#a-short-history" id="toc-a-short-history" class="nav-link" data-scroll-target="#a-short-history">A Short History</a></li>
+  </ul></li>
+  <li><a href="#the-language" id="toc-the-language" class="nav-link" data-scroll-target="#the-language">The Language</a>
+  <ul>
+  <li><a href="#variables-and-the-string-typed-truth" id="toc-variables-and-the-string-typed-truth" class="nav-link" data-scroll-target="#variables-and-the-string-typed-truth">Variables and the String-Typed Truth</a>
+  <ul class="collapse">
+  <li><a href="#variable-scope" id="toc-variable-scope" class="nav-link" data-scroll-target="#variable-scope">Variable Scope</a></li>
+  </ul></li>
+  <li><a href="#if-and-its-peculiar-rules" id="toc-if-and-its-peculiar-rules" class="nav-link" data-scroll-target="#if-and-its-peculiar-rules"><code>if()</code> and Its Peculiar Rules</a></li>
+  <li><a href="#control-flow-and-functions" id="toc-control-flow-and-functions" class="nav-link" data-scroll-target="#control-flow-and-functions">Control Flow and Functions</a></li>
+  </ul></li>
+  <li><a href="#targets-are-the-unit-of-thought" id="toc-targets-are-the-unit-of-thought" class="nav-link" data-scroll-target="#targets-are-the-unit-of-thought">Targets Are the Unit of Thought</a>
+  <ul>
+  <li><a href="#declaring-targets" id="toc-declaring-targets" class="nav-link" data-scroll-target="#declaring-targets">Declaring Targets</a></li>
+  <li><a href="#properties-and-the-propagation-keywords" id="toc-properties-and-the-propagation-keywords" class="nav-link" data-scroll-target="#properties-and-the-propagation-keywords">Properties and the Propagation Keywords</a></li>
+  <li><a href="#propagation-demonstrated" id="toc-propagation-demonstrated" class="nav-link" data-scroll-target="#propagation-demonstrated">Propagation, Demonstrated</a></li>
+  <li><a href="#linking-is-dependency-declaration" id="toc-linking-is-dependency-declaration" class="nav-link" data-scroll-target="#linking-is-dependency-declaration">Linking Is Dependency Declaration</a></li>
+  </ul></li>
+  <li><a href="#a-complete-project" id="toc-a-complete-project" class="nav-link" data-scroll-target="#a-complete-project">A Complete Project</a>
+  <ul>
+  <li><a href="#adding-options" id="toc-adding-options" class="nav-link" data-scroll-target="#adding-options">Adding Options</a></li>
+  <li><a href="#the-cache" id="toc-the-cache" class="nav-link" data-scroll-target="#the-cache">The Cache</a></li>
+  </ul></li>
+  <li><a href="#using-other-peoples-code" id="toc-using-other-peoples-code" class="nav-link" data-scroll-target="#using-other-peoples-code">Using Other People’s Code</a>
+  <ul>
+  <li><a href="#find_package" id="toc-find_package" class="nav-link" data-scroll-target="#find_package"><code>find_package()</code></a></li>
+  <li><a href="#fetchcontent" id="toc-fetchcontent" class="nav-link" data-scroll-target="#fetchcontent"><code>FetchContent</code></a></li>
+  </ul></li>
+  <li><a href="#generator-expressions" id="toc-generator-expressions" class="nav-link" data-scroll-target="#generator-expressions">Generator Expressions</a></li>
+  <li><a href="#build-types-and-toolchains" id="toc-build-types-and-toolchains" class="nav-link" data-scroll-target="#build-types-and-toolchains">Build Types and Toolchains</a>
+  <ul>
+  <li><a href="#build-types" id="toc-build-types" class="nav-link" data-scroll-target="#build-types">Build Types</a></li>
+  <li><a href="#cross-compilation" id="toc-cross-compilation" class="nav-link" data-scroll-target="#cross-compilation">Cross-Compilation</a></li>
+  </ul></li>
+  <li><a href="#debugging-cmake" id="toc-debugging-cmake" class="nav-link" data-scroll-target="#debugging-cmake">Debugging CMake</a></li>
+  <li><a href="#common-pitfalls" id="toc-common-pitfalls" class="nav-link" data-scroll-target="#common-pitfalls">Common Pitfalls</a></li>
+  <li><a href="#make-or-ninja" id="toc-make-or-ninja" class="nav-link" data-scroll-target="#make-or-ninja">Make or Ninja</a></li>
+  <li><a href="#key-differences-from-make" id="toc-key-differences-from-make" class="nav-link" data-scroll-target="#key-differences-from-make">Key Differences from Make</a></li>
+  <li><a href="#where-to-go-next" id="toc-where-to-go-next" class="nav-link" data-scroll-target="#where-to-go-next">Where to Go Next</a>
+  <ul>
+  <li><a href="#documentation" id="toc-documentation" class="nav-link" data-scroll-target="#documentation">Documentation</a></li>
+  <li><a href="#guides" id="toc-guides" class="nav-link" data-scroll-target="#guides">Guides</a></li>
+  <li><a href="#practice" id="toc-practice" class="nav-link" data-scroll-target="#practice">Practice</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Languages</a></li><li class="breadcrumb-item"><a href="./make.html">Build Systems</a></li><li class="breadcrumb-item"><a href="./cmake.html">The CMake Language</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">The CMake Language</h1>
+<p class="subtitle lead">A build system generator, and the language you have to speak to it</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">August 2, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Audience: the same systems reader as make.qmd, arriving directly from it. Assume
+Make is understood; anchor everything to it. Assume NO prior CMake.
+
+The thesis: CMake is not a build tool, it is a generator, and its unit of
+thought is the target-as-object-with-properties rather than the rule. Most
+CMake pain is either (a) reading it as a build tool, or (b) forgetting the
+language is string-typed.
+
+make.qmd's "Make and CMake" section answers "what generated these makefiles?"
+and stays there. This chapter answers "how do I read and write CMake?" Cross-
+link, do not duplicate: that section owns add_subdirectory tree collection and
+the recursive-make contrast.
+
+Dialect: CMake 3.16+ as the floor, noting 3.20+ where it matters. Target-based
+"modern CMake" throughout; directory-scoped commands shown only as things to
+recognize in old projects and replace.
+-->
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p><strong>CMake</strong> occupies an odd position. It is the de facto build system for C and C++, it is what nearly every vendor SDK ships, and it is widely disliked by the people who use it every day. All three of those are true at once, and the reason is worth understanding before you write a line of it.</p>
+<p><span class="hl-default">CMake solves a real problem that <a href="./make.html">Make</a> does not. A makefile describes how to build a project <em>on the machine that wrote it</em>.</span> Move it to a different compiler, a different operating system, or a different build tool and it needs editing. <span class="hl-default">CMake describes a project’s structure abstractly and then generates the actual build files for whatever toolchain is present</span>: Makefiles on Unix, Ninja anywhere, Visual Studio solutions on Windows, Xcode projects on macOS. One description, many builds.</p>
+<p>The dislike is mostly about the language. CMake’s syntax accumulated over twenty-five years, everything in it is a string, and the ecosystem is layered with a decade of superseded advice that still turns up first in search results. This chapter tries to teach the current style directly, so you can skip the archaeology.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Read the Make chapter first, if you have not">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Read the Make chapter first, if you have not
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This chapter assumes you understand dependency graphs, targets, and incremental rebuilds as <a href="./make.html">Make</a> presents them, and it anchors nearly every concept to its Make counterpart. The complementary section <a href="./make.html#make-and-cmake">Make and CMake</a> approaches the same boundary from the other side, explaining what generates the makefiles you find in a <code>build/</code> directory. There is deliberate overlap of roughly one idea, the generator model, and no more.</p>
+</div>
+</div>
+<section id="cmake-is-not-a-build-tool" class="level3">
+<h3 class="anchored" data-anchor-id="cmake-is-not-a-build-tool">CMake Is Not a Build Tool</h3>
+<p>This is the correction that has to come first, because almost every early confusion traces to it.</p>
+<p><span class="hl-default">CMake does not compile anything. It is a <strong>generator</strong>: it reads your project description and writes build files for some other tool to execute</span>. Running <code>cmake</code> produces makefiles; running <code>make</code> (or <code>ninja</code>) builds your code. Two programs, two phases, two distinct moments at which things can go wrong.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build      <span class="co"># CONFIGURE: read CMakeLists.txt, write build files into build/</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build      <span class="co"># BUILD: invoke the generated makefiles (or ninja, or msbuild)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The second command is a portable wrapper. On a Makefiles generator it runs <code>make -C build</code>; you can run that yourself and it is identical. The wrapper exists so a script works unchanged when someone configures with a different generator.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    A["CMakeLists.txt&lt;br/&gt;&lt;i&gt;you write this&lt;/i&gt;"] --&gt;|"cmake -S . -B build&lt;br/&gt;&lt;b&gt;configure&lt;/b&gt;"| B["build/&lt;br/&gt;Makefiles or build.ninja&lt;br/&gt;&lt;i&gt;generated, never edited&lt;/i&gt;"]
+    B --&gt;|"cmake --build build&lt;br/&gt;&lt;b&gt;build&lt;/b&gt;"| C["app, libutil.a&lt;br/&gt;&lt;i&gt;artifacts&lt;/i&gt;"]
+    A -.-&gt;|"edited?"| B
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>The dotted line matters: the generated build files list your <code>CMakeLists.txt</code> as a dependency, so editing one causes the <em>next</em> build to re-run the configure step automatically. You do not normally invoke <code>cmake</code> twice by hand.</p>
+</section>
+<section id="the-two-phase-model" class="level3">
+<h3 class="anchored" data-anchor-id="the-two-phase-model">The Two-Phase Model</h3>
+<p>If you have read <a href="./make.html#two-phase-evaluation">Two-Phase Evaluation</a> in the Make chapter, the shape will be familiar, and the parallel is worth drawing because it explains what CMake can and cannot know.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 13%">
+<col style="width: 31%">
+<col style="width: 38%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Phase</th>
+<th style="text-align: left;">When</th>
+<th style="text-align: left;">What happens</th>
+<th style="text-align: left;">What it can see</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Configure</strong></td>
+<td style="text-align: left;"><code>cmake -S . -B build</code></td>
+<td style="text-align: left;"><code>CMakeLists.txt</code> is executed top to bottom as a script. Compilers are probed, <code>find_package</code> searches the system, variables are set, targets are declared.</td>
+<td style="text-align: left;">The machine, the filesystem, the toolchain</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Generate</strong></td>
+<td style="text-align: left;">end of the same command</td>
+<td style="text-align: left;">The accumulated target graph is written out as build files.</td>
+<td style="text-align: left;">Everything configure produced</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Build</strong></td>
+<td style="text-align: left;"><code>cmake --build build</code></td>
+<td style="text-align: left;">The generated build tool runs compilers and linkers.</td>
+<td style="text-align: left;">Nothing from CMake’s variables</td>
+</tr>
+</tbody>
+</table>
+<p>The crucial consequence is the same one Make has: <span class="hl-default">CMake variables do not exist at build time</span>. By the time your compiler runs, every <code>${VAR}</code> has already been resolved to text and baked into the generated files. A variable you set cannot depend on something a compile step produced, for exactly the reason a Make <code>$(shell)</code> cannot.</p>
+<p>CMake’s escape hatch for genuinely build-time values is the <strong>generator expression</strong>, written <code>$&lt;...&gt;</code>, which is left unresolved through configure and evaluated when the build files are written per-configuration. They look cryptic and are covered in <a href="#generator-expressions">Generator Expressions</a>.</p>
+</section>
+<section id="a-short-history" class="level3">
+<h3 class="anchored" data-anchor-id="a-short-history">A Short History</h3>
+<p>Based on <a href="https://en.wikipedia.org/wiki/CMake">Wikipedia::CMake</a>.</p>
+<p>Initial development of CMake began in 1999 at Kitware and was first released the following year. It was funded by the United States National Library of Medicine as part of the Visible Human Project. The motivation behind the making of CMake was discussed above, but not what inspired its design. A couple of contemporary tools from the time were studied:</p>
+<ol type="1">
+<li><code>pcmaker</code>, developed by Ken Martin and others to support building the Visualization Toolkit (VTK), converted Unix Make files into NMake (Microsoft’s proprietary version of the classic Unix make utility) files for building on Windows.</li>
+<li><code>gmake</code> supported Unix and Windows compilers, but its design led to issues that were hard to resolve. Both tools were working examples of a build tool that supported both Unix and Windows, but they suffered from a serious flaw: they required Windows developers to use the command line even though many prefer to use an integrated development environment (IDE) such as Visual Studio.</li>
+</ol>
+<div class="definition" data-label="Tcl">
+<p><a href="https://en.wikipedia.org/wiki/Tcl_(programming_language)" target="_blank">Tcl</a> (Tool Command Language) is a high-level, general-purpose, interpreted, <a href="https://en.wikipedia.org/wiki/Dynamic_programming_language" target="_blank">dynamic programming</a> language. It was designed with the goal of being very simple and powerful. Tcl casts everything into the mold of a command, even programming constructs like variable assignment and procedure definition. Tcl supports multiple programming paradigms, including <a href="https://en.wikipedia.org/wiki/Tcl_(programming_language)#Object-oriented" target="_base">object-oriented</a>, imperative, functional, and procedural styles.</p>
+</div>
+<p>CMake developers chose to develop a scripting language for CMake instead of using Tcl, a popular language for building at the time. Use of Tcl would have then added a dependency to the host machine which is counter to the goal of no dependencies other than a compiler. Also, Tcl was not well supported on Windows and some Unix systems at the time of initial development.</p>
+<p>Version 3.0 was released in June 2014. It has been described as the beginning of “Modern CMake”. Experts now advise to avoid variables in favor of targets and properties. The commands <code>add_compile_options</code>, <code>include_directories</code>, <code>link_directories</code>, <code>link_libraries</code> that were at the core of CMake 2 should now be replaced by target-specific commands.</p>
+</section>
+</section>
+<section id="the-language" class="level2">
+<h2 class="anchored" data-anchor-id="the-language">The Language</h2>
+<div class="subheading">
+<p>Everything is a string, and it explains almost every surprise</p>
+</div>
+<p>CMake’s syntax is uniform to the point of monotony: the entire language is <strong>commands with arguments</strong>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">command_name</span>(argument1 argument2 argument3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>There are no operators, no expressions, no infix arithmetic. <code>set()</code>, <code>if()</code>, <code>add_executable()</code>, and <code>target_link_libraries()</code> are all the same kind of thing. Command names are case-insensitive by convention written lowercase; variable names are case-<em>sensitive</em> and conventionally uppercase.</p>
+<p>Comments start with <code>#</code>. Arguments are separated by whitespace, and there are no commas, which is the first thing to unlearn from every other language.</p>
+<section id="variables-and-the-string-typed-truth" class="level3">
+<h3 class="anchored" data-anchor-id="variables-and-the-string-typed-truth">Variables and the String-Typed Truth</h3>
+<p><code>set()</code> defines a variable, <code>${NAME}</code> expands it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(PROJECT_AUTHOR <span class="st">"Curtis"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"author is </span><span class="dv">${PROJECT_AUTHOR}</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Now the fact that governs everything else: <span class="hl-default">CMake has exactly one data type, the string. A list is a string with semicolons in it</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(SOURCES a.c b.c c.c)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"</span><span class="dv">${SOURCES}</span><span class="st">"</span>)     <span class="co"># prints: a.c;b.c;c.c</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Those semicolons are not display formatting. They are literally the value. <code>set()</code> with multiple arguments joins them with semicolons, and every command that “takes a list” is really receiving one string and splitting it again.</p>
+<p>This is why quoting changes meaning so drastically:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(SOURCES a.c b.c c.c)         <span class="co"># a list of three</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(QUOTED <span class="st">"a.c b.c c.c"</span>)        <span class="co"># ONE string containing spaces</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>list(LENGTH SOURCES n)</code> gives 3; the same on <code>QUOTED</code> gives 1. Passing <code>QUOTED</code> to <code>add_executable()</code> asks for a single file with spaces in its name, which does not exist, and the error will be about a missing source file rather than about quoting.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="Unset variables expand to nothing, silently">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Unset variables expand to nothing, silently
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>${TYPO}</code> where <code>TYPO</code> was never defined expands to the empty string with no warning. A misspelled variable does not fail; it quietly vanishes, and the resulting build is subtly wrong. This is the same hazard as Make’s undefined-variable expansion, and it has the same remedy: configure with <code>--warn-uninitialized</code> when hunting one down, and be disciplined about names.</p>
+</div>
+</div>
+<section id="variable-scope" class="level4">
+<h4 class="anchored" data-anchor-id="variable-scope">Variable Scope</h4>
+<p>Variables are scoped to the <strong>directory</strong> and inherited downward. A <code>set()</code> in the top-level <code>CMakeLists.txt</code> is visible in every <code>add_subdirectory()</code> beneath it; a <code>set()</code> in a subdirectory is <em>not</em> visible to its parent or its siblings. Functions introduce their own scope; macros do not.</p>
+<p><code>set(VAR value PARENT_SCOPE)</code> writes into the enclosing scope, and it is the usual way a subdirectory or function returns a value. Note that it sets the variable in the parent <em>only</em>, leaving the local one untouched, which reads as a bug the first time you meet it.</p>
+<p>This directory-based scoping is the strongest reason to prefer target properties over variables. A variable’s reach depends on where it was written; a target property travels with the target.</p>
+</section>
+</section>
+<section id="if-and-its-peculiar-rules" class="level3">
+<h3 class="anchored" data-anchor-id="if-and-its-peculiar-rules"><code>if()</code> and Its Peculiar Rules</h3>
+<p><code>if()</code> is where CMake’s string-typedness produces genuine surprises, and it is worth two minutes now to save an afternoon later.</p>
+<p><strong>Bare words are auto-dereferenced.</strong> In an <code>if()</code>, an unquoted argument that names a variable is replaced by that variable’s <em>value</em>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(FOO BAR)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(BAR <span class="st">"surprise"</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(FOO <span class="ot">STREQUAL</span> <span class="st">"BAR"</span>)     <span class="co"># TRUE: FOO's value is the string "BAR"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Read that twice. <code>FOO</code> was compared as its value, not its name. This behavior is unique to <code>if()</code> and exists for backward compatibility with CMake 1.x, and it is why you will see defensive quoting like <code>if("${FOO}" STREQUAL "BAR")</code> in careful code.</p>
+<p><strong>Truthiness is a fixed list, not a general notion.</strong> Only these are true:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">True</th>
+<th style="text-align: left;">False</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>ON</code>, <code>YES</code>, <code>TRUE</code>, <code>Y</code></td>
+<td style="text-align: left;"><code>OFF</code>, <code>NO</code>, <code>FALSE</code>, <code>N</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Any non-zero number (<code>1</code>, <code>42</code>, <code>-1</code>)</td>
+<td style="text-align: left;"><code>0</code>, the empty string</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>NOTFOUND</code>, anything ending in <code>-NOTFOUND</code>, <code>IGNORE</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><strong>Any other string</strong>, including <code>hello</code></td>
+</tr>
+</tbody>
+</table>
+<p>That last row catches people from every other language: <code>if(hello)</code> is <strong>false</strong>, because <code>hello</code> is not in the true list. A non-empty string is not truthy in CMake.</p>
+<p>The <code>-NOTFOUND</code> suffix rule is deliberate design rather than an oddity. <code>find_library()</code> sets its output variable to <code>SOMELIB-NOTFOUND</code> on failure, so <code>if(SOMELIB)</code> reads naturally and the failed value carries a diagnostic name into any error message that prints it.</p>
+<p><strong>Comparison operators are words.</strong> There is no <code>==</code>, <code>&lt;</code>, or <code>&amp;&amp;</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(A <span class="ot">STREQUAL</span> B)              <span class="co"># string equality</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">N</span> <span class="ot">GREATER</span> 5)               <span class="co"># numeric</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(VER <span class="ot">VERSION_LESS</span> <span class="dt">3.20</span>)     <span class="co"># version-aware: 3.9 &lt; 3.20</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">NOT</span> A <span class="ot">AND</span> B <span class="ot">OR</span> C)          <span class="co"># boolean operators are words too</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">DEFINED</span> SOMEVAR)           <span class="co"># is it set at all</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">TARGET</span> <span class="bn">util</span>)               <span class="co"># does this target exist</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">EXISTS</span> <span class="dv">${path}</span>)            <span class="co"># filesystem check</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>VERSION_LESS</code> earns its own mention: it compares dotted versions component-wise, so <code>3.9 VERSION_LESS 3.20</code> is true where <code>STRLESS</code> would say the opposite.</p>
+</section>
+<section id="control-flow-and-functions" class="level3">
+<h3 class="anchored" data-anchor-id="control-flow-and-functions">Control Flow and Functions</h3>
+<p>Loops and conditionals close with a matching keyword, and older CMake required repeating the condition inside it (<code>endif(SOMETHING)</code>), which you will see in old projects. Do not imitate it; the bare form is correct and has been for years.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="cf">foreach</span>(src <span class="ot">IN</span> <span class="ot">LISTS</span> SOURCES)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"source: </span><span class="dv">${src}</span><span class="st">"</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">endforeach</span>()</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="cf">foreach</span>(i <span class="ot">RANGE</span> <span class="dt">1 5</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"i = </span><span class="dv">${i}</span><span class="st">"</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="cf">endforeach</span>()</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span>(CONDITION)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ...</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="cf">endwhile</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>IN LISTS</code> form is the one to use. Plain <code>foreach(src ${SOURCES})</code> works by accident of expansion and breaks on empty elements.</p>
+<p>Functions and macros both exist, and the difference matters:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span>(add_demo name)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">add_executable</span>(<span class="dv">${name}</span> <span class="dv">${name}</span><span class="bn">.c</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">target_link_libraries</span>(<span class="dv">${name}</span> <span class="bn">PRIVATE</span> util)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span>()</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">add_demo</span>(demo1)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">add_demo</span>(demo2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Arguments arrive as <code>${ARGV0}</code>, <code>${ARGV1}</code>, and so on, with <code>${ARGN}</code> holding everything past the named parameters. A <strong>function</strong> has its own variable scope, so <code>set()</code> inside it is local unless you say <code>PARENT_SCOPE</code>. A <strong>macro</strong> is textual substitution with no scope of its own, which means it can clobber the caller’s variables. Prefer <code>function()</code> unless you specifically need to modify the caller’s scope.</p>
+</section>
+</section>
+<section id="targets-are-the-unit-of-thought" class="level2">
+<h2 class="anchored" data-anchor-id="targets-are-the-unit-of-thought">Targets Are the Unit of Thought</h2>
+<div class="subheading">
+<p>The single idea that separates modern CMake from the bad old style</p>
+</div>
+<p>Everything above is syntax. This section is the actual model, and internalizing it is most of what it takes to write CMake that does not hurt.</p>
+<p>In Make, a target is a filename in a dependency graph, and build settings are global strings (<code>CFLAGS</code>, <code>LDFLAGS</code>) that every rule shares. In CMake, <span class="hl-default">a target is an <strong>object with properties</strong>, and those properties propagate along the dependency graph</span>. That difference is the whole reason large projects migrated.</p>
+<section id="declaring-targets" class="level3">
+<h3 class="anchored" data-anchor-id="declaring-targets">Declaring Targets</h3>
+<p>Three commands create targets:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c)                  <span class="co"># a program</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> <span class="ot">STATIC</span> util.c)             <span class="co"># a static library (.a)</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">shared</span> <span class="ot">SHARED</span> shared.c)         <span class="co"># a shared library (.so / .dylib / .dll)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">headers</span> <span class="ot">INTERFACE</span>)              <span class="co"># header-only: no sources to compile</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Omitting <code>STATIC</code>/<code>SHARED</code> lets the <code>BUILD_SHARED_LIBS</code> variable decide, which is the polite default for a library others may consume.</p>
+<p>Note that CMake needs no equivalent of a pattern rule, and no <code>-MMD</code> dependency generation. It knows the sources because you listed them, and header dependencies are discovered automatically by the generated build files. The <a href="./make.html#auto-generated-dependencies">hand-rolled dependency machinery</a> that a serious makefile requires simply is not a topic here.</p>
+</section>
+<section id="properties-and-the-propagation-keywords" class="level3">
+<h3 class="anchored" data-anchor-id="properties-and-the-propagation-keywords">Properties and the Propagation Keywords</h3>
+<p>Settings attach to targets with the <code>target_*</code> family. Each takes one of three keywords that decide who inherits the setting:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Keyword</th>
+<th style="text-align: center;">Applies to the target</th>
+<th style="text-align: center;">Applies to consumers</th>
+<th style="text-align: left;">Use for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>PRIVATE</code></td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">no</td>
+<td style="text-align: left;">Implementation details</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>PUBLIC</code></td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: left;">Anything the header exposes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>INTERFACE</code></td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: left;">Header-only libraries</td>
+</tr>
+</tbody>
+</table>
+<p>The commands themselves map cleanly onto their Make counterparts:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Make</th>
+<th style="text-align: left;">CMake</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>-I</code> paths in <code>CFLAGS</code></td>
+<td style="text-align: left;"><code>target_include_directories()</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>-D</code> defines in <code>CFLAGS</code></td>
+<td style="text-align: left;"><code>target_compile_definitions()</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Other <code>CFLAGS</code></td>
+<td style="text-align: left;"><code>target_compile_options()</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>-l</code> and <code>LDFLAGS</code></td>
+<td style="text-align: left;"><code>target_link_libraries()</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>-std=c11</code></td>
+<td style="text-align: left;"><code>target_compile_features()</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="propagation-demonstrated" class="level3">
+<h3 class="anchored" data-anchor-id="propagation-demonstrated">Propagation, Demonstrated</h3>
+<p>Here is the mechanism doing its work, because it is easier to believe from output than from description. A library declares one <code>PUBLIC</code> and one <code>PRIVATE</code> setting:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># lib/CMakeLists.txt</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> util.c)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_include_directories</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span> <span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_definitions</span>(<span class="bn">util</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PUBLIC</span>  UTIL_PUBLIC=1</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PRIVATE</span> UTIL_PRIVATE=1)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># src/CMakeLists.txt</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> util)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Configuring with <code>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</code> and reading the resulting <code>compile_commands.json</code> shows exactly what each file was compiled with:</p>
+<pre><code>util.c     ['-DUTIL_PRIVATE=1', '-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']
+main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
+<p>Three things to notice. <code>main.c</code> picked up <code>-I/tmp/demo/lib</code> even though <code>src/CMakeLists.txt</code> never mentions that path; the dependency carried its own include requirement along the link edge. It picked up <code>UTIL_PUBLIC</code> for the same reason. And it did <em>not</em> pick up <code>UTIL_PRIVATE</code>, because that was declared an implementation detail.</p>
+<p>In Make, the equivalent is a global <code>CFLAGS</code> containing every include path in the project, edited by hand, applied to every file whether it needs them or not, with no way to express “this path is my business, not yours.” That is the improvement, stated concretely.</p>
+<div class="callout callout-style-default callout-important callout-titled" title="The single most valuable rule in CMake">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>The single most valuable rule in CMake
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Use <code>target_*</code> commands, never the directory-scoped ones.</strong> The older <code>include_directories()</code>, <code>add_definitions()</code>, and <code>link_libraries()</code> apply to everything in the current directory and below, silently, regardless of whether it makes sense. They are the CMake equivalent of a global variable, they are what most pre-2015 tutorials teach, and they are the root of a large fraction of unmaintainable CMake. If you are reading a project full of them, you are reading the old style.</p>
+</div>
+</div>
+</section>
+<section id="linking-is-dependency-declaration" class="level3">
+<h3 class="anchored" data-anchor-id="linking-is-dependency-declaration">Linking Is Dependency Declaration</h3>
+<p><code>target_link_libraries()</code> is badly named. It does not only pass <code>-l</code> flags; it declares a <strong>dependency edge</strong>, and everything propagates along it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> util)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This one line says: build <code>util</code> before <code>app</code>, link it in, and apply all of <code>util</code>’s <code>PUBLIC</code> and <code>INTERFACE</code> properties to <code>app</code>. Include paths, definitions, compile options, and language standards all travel this edge. It is closer to <code>import</code> than to a linker flag.</p>
+<p>The keyword here answers a different question than it does elsewhere: does anything linking <em><code>app</code></em> also need <code>util</code>? For an executable, nothing links it, so <code>PRIVATE</code> is nearly always right. For a library whose headers expose types from another library, <code>PUBLIC</code> is required, or your consumers will fail to compile.</p>
+</section>
+</section>
+<section id="a-complete-project" class="level2">
+<h2 class="anchored" data-anchor-id="a-complete-project">A Complete Project</h2>
+<div class="subheading">
+<p>The chapter’s running example, entire</p>
+</div>
+<p>Everything so far, assembled into a project that builds a library and a program that uses it.</p>
+<pre><code>demo/
+├── CMakeLists.txt
+├── lib/
+│   ├── CMakeLists.txt
+│   ├── util.c
+│   └── util.h
+└── src/
+    ├── CMakeLists.txt
+    └── main.c</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># CMakeLists.txt  (top level)</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">cmake_minimum_required</span>(<span class="ot">VERSION</span> <span class="dt">3.16</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="kw">project</span>(demo <span class="ot">VERSION</span> <span class="dt">1.0</span> <span class="ot">LANGUAGES</span> <span class="ot">C</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_C_STANDARD</span> 11)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_C_STANDARD_REQUIRED</span> <span class="ot">ON</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_EXPORT_COMPILE_COMMANDS</span> <span class="ot">ON</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(lib)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(src)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># lib/CMakeLists.txt</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> util.c)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_include_directories</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span> <span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span>)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_options</span>(<span class="bn">util</span> <span class="ot">PRIVATE</span> -Wall -Wextra)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># src/CMakeLists.txt</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> util)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_options</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> -Wall -Wextra)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Building it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build          <span class="co"># configure</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build          <span class="co"># build</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="ex">./build/src/app</span>              <span class="co"># run</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Three commands worth knowing about the first line. <code>-S</code> names the source directory, <code>-B</code> the build directory, and the fact that they are separate is not incidental: <strong>out-of-source builds are the norm in CMake</strong>, unlike Make where in-tree builds are the default. Everything generated lands in <code>build/</code>, nothing pollutes your source tree, and <code>rm -rf build</code> is a complete and safe clean.</p>
+<p><code>cmake_minimum_required()</code> must be the first command in the top-level file. It does more than check a version; it sets <strong>policy</strong> defaults, CMake’s mechanism for changing behavior without breaking old projects. Declaring 3.16 means you get 3.16-era semantics even on CMake 4.x.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="`project()` is not decoration">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span><code>project()</code> is not decoration
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>project()</code> triggers compiler detection, which is why it must appear before any target. It also defines a family of variables (<code>demo_VERSION</code>, <code>PROJECT_SOURCE_DIR</code>, <code>CMAKE_PROJECT_NAME</code>) that the rest of the file and any tooling can read. Omitting it produces confusing failures about the compiler being unset.</p>
+</div>
+</div>
+<section id="adding-options" class="level3">
+<h3 class="anchored" data-anchor-id="adding-options">Adding Options</h3>
+<p>Real projects need switches. <code>option()</code> declares a cached boolean the user can flip from the command line:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span>(DEMO_BUILD_TESTS <span class="st">"Build the test suite"</span> <span class="ot">ON</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="kw">option</span>(DEMO_USE_DOUBLE  <span class="st">"Use double precision"</span> <span class="ot">OFF</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(DEMO_USE_DOUBLE)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">target_compile_definitions</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span> DEMO_DOUBLE=1)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="cf">endif</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-DDEMO_BUILD_TESTS</span><span class="op">=</span>OFF <span class="at">-DDEMO_USE_DOUBLE</span><span class="op">=</span>ON</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Prefixing option names with the project name is a convention worth following, because options are global and a project used as a subdirectory of another can otherwise collide with its parent.</p>
+</section>
+<section id="the-cache" class="level3">
+<h3 class="anchored" data-anchor-id="the-cache">The Cache</h3>
+<p><code>option()</code> writes into the <strong>cache</strong>, and understanding it prevents a category of baffling behavior.</p>
+<p><code>build/CMakeCache.txt</code> is a plain text file holding every option, detected compiler path, and found library location from the configure step. It persists between runs, which is why the second <code>cmake -S . -B build</code> is fast and why it remembers settings you passed only once.</p>
+<p>It is also why changing a setting sometimes appears not to work. A cached variable is not overwritten by <code>set()</code> in your <code>CMakeLists.txt</code> unless you pass <code>FORCE</code>, by design: your file should not silently override what the user asked for. When a configure result seems stuck, the reliable fix is to delete <code>build/</code> and start over. This is cheap, safe, and the standard advice.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> <span class="at">-rf</span> build <span class="kw">&amp;&amp;</span> <span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build      <span class="co"># the CMake equivalent of `make clean`</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="using-other-peoples-code" class="level2">
+<h2 class="anchored" data-anchor-id="using-other-peoples-code">Using Other People’s Code</h2>
+<div class="subheading">
+<p>The problem CMake exists to solve</p>
+</div>
+<p>Nothing above justifies CMake over a competent makefile. This section does. Finding and consuming dependencies portably is where hand-written Make becomes genuinely painful and CMake earns its place.</p>
+<section id="find_package" class="level3">
+<h3 class="anchored" data-anchor-id="find_package"><code>find_package()</code></h3>
+<p>The standard mechanism asks the system for a dependency:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">find_package</span>(<span class="im">Threads</span> <span class="ot">REQUIRED</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> <span class="bn">Threads::Threads</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>REQUIRED</code> makes a failure fatal at configure time, with a clear message, rather than a mysterious linker error much later. Without it, you check <code>if(Threads_FOUND)</code> and adapt.</p>
+<p>The <code>Threads::Threads</code> spelling is an <strong>imported target</strong>, and the double colon is a useful signal: it means “this is a target, not a filename,” and CMake will error immediately if no such target exists rather than passing an unrecognized string to the linker. Modern packages provide imported targets that carry their own include paths and flags, so linking one is all you need.</p>
+</section>
+<section id="fetchcontent" class="level3">
+<h3 class="anchored" data-anchor-id="fetchcontent"><code>FetchContent</code></h3>
+<p>When a dependency is not installed, <code>FetchContent</code> downloads and builds it as part of your project:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">include</span>(<span class="im">FetchContent</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">FetchContent_Declare</span>(fmt</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    <span class="ot">GIT_REPOSITORY</span> https://github.com/fmtlib/fmt.git</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    <span class="ot">GIT_TAG</span>        <span class="dt">10.2.1</span>)              <span class="co"># pin a tag, never a branch</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="fu">FetchContent_MakeAvailable</span>(fmt)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> <span class="bn">fmt::fmt</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is the closest CMake comes to <a href="./rust-cc.html">Cargo</a> or <code>pip</code>, and the comparison is instructive about how much less it does. There is no lockfile, no transitive version resolution, and no central registry. Two dependencies wanting different versions of a third is a problem you solve by hand. Pinning <code>GIT_TAG</code> to an exact tag or commit is not optional advice; a branch name makes your build non-reproducible.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Why C++ dependency management is like this">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Why C++ dependency management is like this
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>C and C++ never had a package manager in the language’s first four decades, so the ecosystem grew around system packages and vendored source trees. CMake inherited that world rather than creating it. <code>vcpkg</code> and <code>Conan</code> are the serious attempts at the missing layer, both integrate with CMake, and neither has become universal. If Rust’s Cargo felt like an unreasonable luxury, this is the contrast that explains why.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="generator-expressions" class="level2">
+<h2 class="anchored" data-anchor-id="generator-expressions">Generator Expressions</h2>
+<div class="subheading">
+<p>The <code>$&lt;...&gt;</code> syntax, and when you actually need it</p>
+</div>
+<p>Generator expressions are the feature most likely to make CMake look unreadable, and they exist for a precise reason: <span class="hl-default">some values are not known at configure time because they depend on which build configuration is being generated</span>.</p>
+<p>A single configure can produce build files for Debug and Release simultaneously (Visual Studio and Xcode do this by default). A <code>if(CMAKE_BUILD_TYPE STREQUAL "Debug")</code> cannot work there, because configure runs once for all configurations. <code>$&lt;...&gt;</code> defers the decision:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_options</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;$&lt;</span><span class="kw">CONFIG</span><span class="ot">:Debug&gt;:-O0 -g&gt;</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;$&lt;</span><span class="kw">CONFIG</span><span class="ot">:Release&gt;:-O2 -DNDEBUG&gt;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The form is <code>$&lt;condition:value&gt;</code>: emit <code>value</code> only if <code>condition</code> holds. The commonest ones:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Expression</th>
+<th style="text-align: left;">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>$&lt;CONFIG:Debug&gt;</code></td>
+<td style="text-align: left;">1 in the Debug configuration</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>$&lt;CXX_COMPILER_ID:GNU&gt;</code></td>
+<td style="text-align: left;">1 when compiling with GCC</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>$&lt;PLATFORM_ID:Windows&gt;</code></td>
+<td style="text-align: left;">1 on Windows</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>$&lt;TARGET_FILE:app&gt;</code></td>
+<td style="text-align: left;">Full path to a target’s output file</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>$&lt;BUILD_INTERFACE:...&gt;</code></td>
+<td style="text-align: left;">Applies when built in-tree</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>$&lt;INSTALL_INTERFACE:...&gt;</code></td>
+<td style="text-align: left;">Applies when consumed after install</td>
+</tr>
+</tbody>
+</table>
+<p>The last two solve a specific problem worth naming: a library’s include directory differs depending on whether a consumer builds it as a subdirectory or links it after installation. The idiom is:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_include_directories</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;</span><span class="kw">BUILD_INTERFACE</span><span class="ot">:</span><span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span><span class="ot">/include&gt;</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;</span><span class="kw">INSTALL_INTERFACE</span><span class="ot">:include&gt;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Do not reach for generator expressions early. Most projects need only the <code>CONFIG:</code> form for per-configuration flags, and reading a <code>$&lt;...&gt;</code> correctly is easier than deciding you need one.</p>
+</section>
+<section id="build-types-and-toolchains" class="level2">
+<h2 class="anchored" data-anchor-id="build-types-and-toolchains">Build Types and Toolchains</h2>
+<section id="build-types" class="level3">
+<h3 class="anchored" data-anchor-id="build-types">Build Types</h3>
+<p>CMake ships four standard configurations, selected with <code>CMAKE_BUILD_TYPE</code> on single-configuration generators (Makefiles, Ninja):</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 65%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Flags (GCC/Clang defaults)</th>
+<th style="text-align: left;">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>Debug</code></td>
+<td style="text-align: left;"><code>-g</code></td>
+<td style="text-align: left;">Debugging: no optimization, full symbols</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>Release</code></td>
+<td style="text-align: left;"><code>-O3 -DNDEBUG</code></td>
+<td style="text-align: left;">Shipping</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>RelWithDebInfo</code></td>
+<td style="text-align: left;"><code>-O2 -g -DNDEBUG</code></td>
+<td style="text-align: left;">Profiling, and debugging optimized code</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>MinSizeRel</code></td>
+<td style="text-align: left;"><code>-Os -DNDEBUG</code></td>
+<td style="text-align: left;">Size-constrained targets</td>
+</tr>
+</tbody>
+</table>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-DCMAKE_BUILD_TYPE</span><span class="op">=</span>Release</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The trap: <span class="hl-default">if you do not set it, it is empty, and you get <strong>no optimization flags at all</strong></span>. Not <code>-O0</code>, but nothing, which is usually <code>-O0</code> by compiler default. A great many “CMake builds are slow” complaints are an unset build type. Since separate build directories are cheap, keeping <code>build-debug/</code> and <code>build-release/</code> side by side is the common practice, and it neatly avoids the <a href="./make.html#target-specific-and-pattern-specific-variables">stale-object problem</a> that variant builds cause in Make.</p>
+</section>
+<section id="cross-compilation" class="level3">
+<h3 class="anchored" data-anchor-id="cross-compilation">Cross-Compilation</h3>
+<p>For the embedded work in the <a href="./c.html">C</a> and <a href="./assembly.html">Assembly</a> chapters, cross-compiling is the main event, and CMake handles it with a <strong>toolchain file</strong>: a small script that describes the target system, read before anything else.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># arm-none-eabi.cmake</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_SYSTEM_NAME</span>      Generic)        <span class="co"># "Generic" means bare metal, no OS</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_SYSTEM_PROCESSOR</span> arm)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_C_COMPILER</span>   arm-none-eabi-gcc)</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_CXX_COMPILER</span> arm-none-eabi-g++)</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="co"># the compiler cannot link a host test program, so relax the check</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_TRY_COMPILE_TARGET_TYPE</span> STATIC_LIBRARY)</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_FIND_ROOT_PATH_MODE_PROGRAM</span> NEVER)   <span class="co"># find host programs on the host</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_FIND_ROOT_PATH_MODE_LIBRARY</span> ONLY)    <span class="co"># find libraries only in the sysroot</span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_FIND_ROOT_PATH_MODE_INCLUDE</span> ONLY)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-DCMAKE_TOOLCHAIN_FILE</span><span class="op">=</span>arm-none-eabi.cmake</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Setting <code>CMAKE_SYSTEM_NAME</code> is what puts CMake into cross-compiling mode and sets <code>CMAKE_CROSSCOMPILING</code>. The <code>TRY_COMPILE_TARGET_TYPE</code> line addresses a specific early failure: CMake normally validates a compiler by building and linking a small program, which cannot link on a bare-metal target with no startup code or linker script, so you tell it to stop at the static library stage.</p>
+<p>The same toolchain file is discussed from the C++ side in <a href="./cpp.html#cross-compilation-and-bare-metal">Cross-Compilation and Bare Metal</a>.</p>
+</section>
+</section>
+<section id="debugging-cmake" class="level2">
+<h2 class="anchored" data-anchor-id="debugging-cmake">Debugging CMake</h2>
+<p>The toolkit, roughly in the order you will need it.</p>
+<p><strong>Print a variable.</strong> The <code>message()</code> command with <code>STATUS</code> is the <code>$(info)</code> of CMake:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"SOURCES = </span><span class="dv">${SOURCES}</span><span class="st">"</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">WARNING</span> <span class="st">"this is suspicious"</span>)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">FATAL_ERROR</span> <span class="st">"stop here"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>See the actual compiler command.</strong> The default build output shows progress, not invocations:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build <span class="at">--verbose</span>        <span class="co"># or: make -C build VERBOSE=1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Generate a compile database.</strong> <code>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</code> writes <code>build/compile_commands.json</code> with the exact command for every source file. This is the fastest way to answer “what flags is this file <em>really</em> getting,” and it is what <code>clangd</code> and most editor tooling consume. Turning it on unconditionally in your top-level file is a kindness to everyone using the project.</p>
+<p><strong>Trace execution.</strong> <code>--trace-expand</code> prints every command as it runs with variables expanded. It is extremely verbose and occasionally the only thing that works:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">--trace-expand</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">|</span> <span class="fu">less</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Inspect the cache.</strong> <code>cmake -LAH build</code> lists every cached variable with its help text. <code>ccmake build</code> is a curses interface for the same thing.</p>
+<p><strong>Print target properties.</strong> When propagation is not doing what you expect:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">get_target_property</span>(dirs app <span class="ot">INCLUDE_DIRECTORIES</span>)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"app include dirs: </span><span class="dv">${dirs}</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="common-pitfalls" class="level2">
+<h2 class="anchored" data-anchor-id="common-pitfalls">Common Pitfalls</h2>
+<p>Each of these is a symptom you will actually see, with its cause.</p>
+<p><strong><code>file(GLOB)</code> for sources.</strong> It works, and it is the wrong tool:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">file</span>(<span class="ot">GLOB</span> SOURCES <span class="st">"src/*.c"</span>)     <span class="co"># do not do this</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The glob runs at <em>configure</em> time. Add a new source file and the build system does not know it exists, so nothing rebuilds and nothing tells you why. CMake’s own documentation advises against it. List sources explicitly; the maintenance cost is one line per file and the failure mode it prevents is genuinely confusing.</p>
+<p><strong>A stale cache.</strong> Changing a compiler or a cached option and seeing no effect almost always means the cache is holding the old value. <code>rm -rf build</code>.</p>
+<p><strong>Forgetting <code>CMAKE_BUILD_TYPE</code>.</strong> No optimization, and a “CMake is slow” conclusion.</p>
+<p><strong>Using directory-scoped commands.</strong> <code>include_directories()</code> instead of <code>target_include_directories()</code>. Works at first, becomes unmaintainable, and is the single clearest marker of pre-modern CMake.</p>
+<p><strong>Quoting a list.</strong> <code>"${SOURCES}"</code> collapses three files into one nonexistent filename with spaces.</p>
+<p><strong>Expecting <code>if(string)</code> to be true.</strong> It is false unless the string is in the truthy list.</p>
+<p><strong>Editing files in <code>build/</code>.</strong> They are output. The next configure overwrites them.</p>
+<p><strong>Missing <code>PUBLIC</code> on a library’s include directory.</strong> The library builds, consumers fail with “no such file” on its header, and the error points at the consumer rather than the cause.</p>
+</section>
+<section id="make-or-ninja" class="level2">
+<h2 class="anchored" data-anchor-id="make-or-ninja">Make or Ninja</h2>
+<p>CMake’s default generator on Unix is Unix Makefiles, but <strong>Ninja</strong> is the better choice for anything sizable:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-G</span> Ninja</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Ninja was built for precisely this role: a build language nobody writes by hand, designed to be emitted by a generator and executed fast. It parallelizes by default without <code>-j</code>, and its no-op builds are dramatically quicker than Make’s on large projects, which matters because the no-op build is the one you run most. Your <code>CMakeLists.txt</code> does not change; only the generated output does.</p>
+<p>The tradeoff is that Ninja must be installed, whereas <code>make</code> is everywhere. For a project others will build, Makefiles as the default with Ninja as an option is the diplomatic choice.</p>
+</section>
+<section id="key-differences-from-make" class="level2">
+<h2 class="anchored" data-anchor-id="key-differences-from-make">Key Differences from Make</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 37%">
+<col style="width: 43%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Make</th>
+<th style="text-align: left;">CMake</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">What it is</td>
+<td style="text-align: left;">A build tool</td>
+<td style="text-align: left;">A generator that emits build files</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Unit of thought</td>
+<td style="text-align: left;">A rule producing a file</td>
+<td style="text-align: left;">A target with properties</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Build settings</td>
+<td style="text-align: left;">Global strings (<code>CFLAGS</code>)</td>
+<td style="text-align: left;">Per-target, propagating along dependencies</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Header dependencies</td>
+<td style="text-align: left;">Hand-rolled with <code>-MMD</code></td>
+<td style="text-align: left;">Automatic</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Out-of-source builds</td>
+<td style="text-align: left;">Possible, awkward</td>
+<td style="text-align: left;">The default</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Portability</td>
+<td style="text-align: left;">One platform per makefile</td>
+<td style="text-align: left;">One description, many toolchains</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Finding libraries</td>
+<td style="text-align: left;">Hand-written, or <code>pkg-config</code></td>
+<td style="text-align: left;"><code>find_package()</code>, imported targets</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Data types</td>
+<td style="text-align: left;">Strings</td>
+<td style="text-align: left;">Strings</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Language quality</td>
+<td style="text-align: left;">Terse, three languages in one file</td>
+<td style="text-align: left;">Verbose, uniform, string-typed</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Best at</td>
+<td style="text-align: left;">Small projects, task running, anything non-C</td>
+<td style="text-align: left;">Portable C and C++ projects with dependencies</td>
+</tr>
+</tbody>
+</table>
+<p>The last row is the practical summary. For a handful of files, a task runner, or a language with its own build tool, a makefile is smaller and clearer. For a C or C++ project that must build on more than one machine and consume libraries it did not write, CMake does work you would otherwise do by hand and get wrong.</p>
+<p>Neither is a good <em>language</em>. Make is three languages sharing a file with an evaluation order you have to reason about; CMake is one uniform language with a single data type and twenty-five years of accumulated compatibility. You use them because the problems they solve are real, and because the alternatives have not displaced them.</p>
+</section>
+<section id="where-to-go-next" class="level2">
+<h2 class="anchored" data-anchor-id="where-to-go-next">Where to Go Next</h2>
+<section id="documentation" class="level3">
+<h3 class="anchored" data-anchor-id="documentation">Documentation</h3>
+<ul>
+<li><a href="https://cmake.org/cmake/help/latest/" target="_blank" rel="noopener noreferrer">CMake Documentation</a>, complete and precise, though poor for learning</li>
+<li><a href="https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html" target="_blank" rel="noopener noreferrer">cmake-buildsystem(7)</a>, the authoritative statement of the target model</li>
+<li><a href="https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html" target="_blank" rel="noopener noreferrer">cmake-generator-expressions(7)</a>, the full <code>$&lt;...&gt;</code> catalog</li>
+</ul>
+</section>
+<section id="guides" class="level3">
+<h3 class="anchored" data-anchor-id="guides">Guides</h3>
+<ul>
+<li><a href="https://cliutils.gitlab.io/modern-cmake/" target="_blank" rel="noopener noreferrer">Modern CMake</a>, the best free introduction to target-based CMake</li>
+<li><a href="https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1" target="_blank" rel="noopener noreferrer">Effective Modern CMake</a>, a concise list of practices</li>
+<li><a href="https://crascit.com/professional-cmake/" target="_blank" rel="noopener noreferrer">Professional CMake</a> by Craig Scott, the reference book, actively maintained</li>
+</ul>
+</section>
+<section id="practice" class="level3">
+<h3 class="anchored" data-anchor-id="practice">Practice</h3>
+<p>The most useful exercise is to take a working makefile you already understand and reproduce it in CMake, then diff the compiler commands with <code>compile_commands.json</code> on both sides until they match. It forces you to discover which of your <code>CFLAGS</code> were genuinely per-target and which were global by accident.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation column-body">
+  <div class="nav-page nav-page-previous">
+      <a href="./make.html" class="pagination-link" aria-label="The Makefile Language">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">The Makefile Language</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./rust-in.html" class="pagination-link" aria-label="Introduction">
+        <span class="nav-page-text">Introduction</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

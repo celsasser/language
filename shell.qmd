@@ -1061,6 +1061,10 @@ wc -c <<< "hello"                     # 6, the trailing newline counts
 
 `<<< "$text"` replaces the older `echo "$text" | grep foo`, saving a process and a subshell. It is the same idea as a heredoc scaled down to one line: an anonymous stream built from text you already have, wired to stdin.
 
+::: {.callout-warning title="`<<<` is not POSIX"}
+The heredoc (`<<`) is POSIX and works in every shell. The herestring (`<<<`) is a ksh extension adopted by bash and zsh, and it is **absent from POSIX**. A minimal `/bin/sh` such as `dash` or BusyBox `ash` rejects it outright with `Syntax error: redirection unexpected`. In a script declaring `#!/bin/sh`, use `printf '%s\n' "$text" | cmd` instead. See [shebangs and portability](#shebangs).
+:::
+
 ### `grep` Reads stdin Too
 Worth stating early because it changes how you use it: `grep` searches files when given filenames, but with *no* filename it reads stdin. That is what makes it a pipeline citizen.
 
@@ -1802,6 +1806,62 @@ echo "${args[@]}"          # quote array expansions too: "${arr[@]}"
 
 If you do one thing differently after this notebook, make it this.
 
+#### The shebang, and the promise it makes {#shebangs}
+::: {.subheading}
+The first line chooses your language.
+:::
+
+A script is just a text file; something has to decide which interpreter runs it. That decision is made by the first two bytes. If a file begins with `#!`, the kernel reads the rest of that line as the path to an interpreter and executes it, handing your script's path as an argument. `./build.sh` with `#!/bin/sh` on top becomes `/bin/sh ./build.sh`. The name is a contraction of **hash** (`#`) and **bang** (`!`).
+
+Two properties fall out of this that explain most shebang confusion:
+
+- **The kernel needs an absolute path.** It does not search `$PATH`. `#!bash` will not work; the line must name a real file such as `/bin/bash`.
+- **It only applies when the script is executed directly.** `./script.sh` honors the shebang. `bash script.sh` ignores it completely, because you already named the interpreter. This is why a script with a wrong shebang can appear to work: everyone has been invoking it via `bash script.sh`.
+
+The shebang is a **promise about which dialect the file is written in**. The two you will actually write:
+
+| Shebang                | Means                                    | Use when                                              |
+|------------------------|------------------------------------------|-------------------------------------------------------|
+| `#!/usr/bin/env bash`  | "this file is bash; give me bash"        | scripts for machines you control (the common case)     |
+| `#!/bin/sh`            | "this file is portable POSIX shell"      | installers, CI, containers, anything widely deployed   |
+
+`#!/usr/bin/env bash` is preferred over `#!/bin/bash` because it searches `$PATH` rather than hard-coding a location. On macOS, `/bin/bash` is bash 3.2 from 2007 (Apple froze it over a GPLv3 licensing objection), while a Homebrew bash 5 lives in `/opt/homebrew/bin`. `env` finds the modern one; the hard-coded path is stuck with the antique.
+
+::: {.callout-warning title="`#!/bin/sh` is a promise, and nothing enforces it"}
+`#!/bin/sh` declares POSIX, but *which shell you actually get depends on the system*, and none of them will hold you to the promise:
+
+- **Debian and Ubuntu**: `/bin/sh` is `dash`, a minimal POSIX shell. Bashisms fail here.
+- **Alpine and most containers**: BusyBox `ash`. Also minimal.
+- **macOS**: `/bin/sh` is **bash 3.2 running in POSIX mode**, and POSIX mode does *not* disable bash syntax. `[[ ]]`, arrays, and `<<<` all still work.
+
+The macOS case is the trap. Write `#!/bin/sh`, use `[[ ]]`, and it runs perfectly on your laptop, then dies the moment it reaches a Debian CI runner or an Alpine image. Declaring `sh` gets you no local warning whatsoever. **If you write `#!/bin/sh`, you must check the script with a tool** (below); if you would rather not, declare `bash` honestly and use it freely.
+:::
+
+Which to choose is a question about *reach*, not virtue. Personal scripts, repo tooling, and build helpers on known machines should say `bash` and use arrays, `[[ ]]`, and `<<<` without guilt; POSIX costs real ergonomics and buys nothing if bash is always present. Reach for `#!/bin/sh` when the script must run somewhere you do not control: install scripts, container entrypoints, CI bootstrapping. The one genuinely bad option is claiming `sh` and writing bash anyway.
+
+#### Checking POSIX compliance
+Since no shell enforces the `#!/bin/sh` promise, two external tools do. They catch different things, so they complement rather than replace each other.
+
+**Run it under a strict shell.** `dash` implements little beyond POSIX, so it rejects bashisms that bash-as-`sh` would wave through. This is a *technique*, not a feature: dash has no `--posix` or check flag, it simply fails on what it does not support.
+
+```shell
+dash ./script.sh        # bashisms surface as errors
+```
+
+Its limitation is that it is a runtime check. An unsupported *command* only fails if execution reaches it, so a `[[ ]]` inside an untaken branch goes unnoticed. Unsupported *syntax* like `arr=(a b c)` fails at parse time and is caught regardless.
+
+**Lint it statically.** `shellcheck -s sh` reads the whole file without running it, so branch coverage is irrelevant, and it names each bashism with a rationale.
+
+```shell
+shellcheck -s sh ./script.sh    # -s sh forces POSIX rules regardless of shebang
+```
+
+Use ShellCheck as the primary check and dash as a confirming smoke test. Together they answer the question a container was the only obvious way to answer.
+
+::: {.callout-note title="What POSIX actually costs you"}
+The features you give up under `#!/bin/sh` are the ones you reach for most: arrays, `[[ ]]` (use `[ ]`), `<<<` (use `printf ... |`), `${var,,}` case conversion, `$'...'` escapes, and C-style `for ((i=0;...))`. Heredocs, `$(...)`, parameter expansion, and functions are all POSIX and stay available. `local` is technically not POSIX but is implemented by every shell in practice, dash included, so it is a safe exception.
+:::
+
 #### Fail loudly
 ::: {.subheading}
 `set -euo pipefail`
@@ -1822,6 +1882,8 @@ set -euo pipefail
 
 ::: {.callout-note title="`set -e` is a blunt instrument"}
 It is a real improvement, but it has well-known blind spots: it ignores failures inside most conditionals and command substitutions, and a command whose non-zero exit you *expect* (like `grep` finding no match) will halt the script unless you handle it, e.g. `grep x file || true`. Treat `set -e` as a strong default, not a guarantee, and still check the exit codes that matter.
+
+Note also that `-e` and `-u` are POSIX but **`pipefail` is not**. In a `#!/bin/sh` script write `set -eu` and check pipeline stages yourself.
 :::
 
 #### Know the anti-patterns by name
@@ -1840,6 +1902,46 @@ shellcheck myscript.sh
 ```
 
 It is the fastest way to convert vague unease into concrete, named knowledge. After a few weeks of heeding it, the rules stop being a checklist and become reflex.
+
+#### Verifying what you download {#verifying-downloads}
+::: {.subheading}
+What a checksum actually proves, and what it does not.
+:::
+
+Shell scripts install things, and installing means fetching a binary and running it. The ritual advice is "check the SHA-256." Worth understanding what that defends against, because the usual explanation (catching corruption in transit) is the least of it: HTTPS already integrity-checks the wire, and a flipped bit fails the TLS record MAC long before any checksum sees it.
+
+The real threat is that **the file was already wrong before you downloaded it**. TLS protects the *channel*, not the *contents*. It guarantees you received exactly the bytes the server sent; it says nothing about whether those bytes are the ones the author built. What can go wrong upstream:
+
+- **Compromised distribution infrastructure.** Someone reaches the release host, a CDN, or a package mirror and swaps the artifact. TLS delivers the tampered file with a perfectly valid padlock. This is not hypothetical: the Linux Mint ISO replacement (2016), the PHP git server compromise (2021), and the `xz`/`liblzma` backdoor (2024) were all of this shape.
+- **A stolen maintainer account.** A leaked release token uploads a malicious build to the legitimate release page. Nothing about the transport looks wrong, because nothing about it *is* wrong.
+- **Mirrors and redistribution.** Fetching from anywhere but the origin adds a party to trust. A checksum from the origin is what lets you use an untrusted mirror safely.
+
+This leads to the distinction that makes the whole practice make sense. A checksum does two different jobs, and only one of them is about security:
+
+| Job              | Defends against                            | Requires                                    |
+|------------------|--------------------------------------------|---------------------------------------------|
+| **Integrity**    | truncated or corrupt download, bad mirror  | a hash from anywhere                        |
+| **Authenticity** | tampered artifact, compromised host        | a hash or signature from an *independent* path |
+
+::: {.callout-warning title="A checksum from the same page proves less than it looks"}
+If you fetch the tarball and its advertised SHA-256 from the same server over the same connection, an attacker who can change one can change the other. Verifying that hash confirms your download completed intact. It does **not** establish that the artifact is genuine. The check is only as independent as the channel the hash arrived on.
+:::
+
+**Signatures are categorically stronger** for exactly this reason. A GPG signature or Sigstore attestation is verified against a key you obtained previously and separately, so the trust anchor is not the download server. Compromising the host no longer suffices; the attacker needs the private key as well. That is a genuinely independent path, which a same-page checksum is not.
+
+```shell
+# Integrity: did the bytes arrive whole? (hash from the release page)
+shasum -a 256 tool.tar.xz          # macOS; sha256sum on Linux
+
+# Authenticity: was this signed by the key I already trust?
+gpg --verify tool.tar.xz.asc tool.tar.xz
+```
+
+In practice the strongest check available is usually **agreement across independent sources**: if a distro package, the upstream release, and a checksum you obtained by another route all match, an attacker would have had to compromise several unrelated systems at once. That is a far higher bar than any single hash.
+
+::: {.callout-note title="What a package manager is actually buying you"}
+The security value of `apt`, `brew`, or `nix` is not convenience, it is that they maintain that independent trust path on your behalf. Homebrew keeps artifact hashes in a git-versioned formula repository separate from upstream's release host, so a silent upstream swap shows up as a mismatch. Installing by hand with `curl | tar` is a perfectly reasonable choice, but it is precisely that second path you are giving up, and doing the verification yourself is how you get it back.
+:::
 
 ::: {.callout-tip title="The safe-shell starting block"}
 Every script: `#!/usr/bin/env bash` then `set -euo pipefail`. Every variable: `"$quoted"`. Every script before you trust it: `shellcheck`. That trio neutralizes the large majority of shell bugs, which frees you to be relaxed about the 90% of shell that is genuinely safe, and sharp only where it counts.

@@ -524,9 +524,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#writing-safe-shell" id="toc-writing-safe-shell" class="nav-link" data-scroll-target="#writing-safe-shell">Writing Safe Shell</a>
   <ul>
   <li><a href="#quote-every-expansion" id="toc-quote-every-expansion" class="nav-link" data-scroll-target="#quote-every-expansion">Quote every expansion</a></li>
+  <li><a href="#shebangs" id="toc-shebangs" class="nav-link" data-scroll-target="#shebangs">The shebang, and the promise it makes</a></li>
+  <li><a href="#checking-posix-compliance" id="toc-checking-posix-compliance" class="nav-link" data-scroll-target="#checking-posix-compliance">Checking POSIX compliance</a></li>
   <li><a href="#fail-loudly" id="toc-fail-loudly" class="nav-link" data-scroll-target="#fail-loudly">Fail loudly</a></li>
   <li><a href="#know-the-anti-patterns-by-name" id="toc-know-the-anti-patterns-by-name" class="nav-link" data-scroll-target="#know-the-anti-patterns-by-name">Know the anti-patterns by name</a></li>
   <li><a href="#let-a-linter-retrain-your-instinct" id="toc-let-a-linter-retrain-your-instinct" class="nav-link" data-scroll-target="#let-a-linter-retrain-your-instinct">Let a linter retrain your instinct</a></li>
+  <li><a href="#verifying-downloads" id="toc-verifying-downloads" class="nav-link" data-scroll-target="#verifying-downloads">Verifying what you download</a></li>
   </ul></li>
   <li><a href="#where-to-go-next" id="toc-where-to-go-next" class="nav-link" data-scroll-target="#where-to-go-next">Where to Go Next</a></li>
   </ul>
@@ -2004,6 +2007,19 @@ child: sh_var=[] env_var=[dong]</code></pre>
 <span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a><span class="bu">read</span> <span class="at">-r</span> <span class="va">first</span> <span class="va">second</span> <span class="op">&lt;&lt;&lt;</span> <span class="st">"one two"</span>    <span class="co"># split a string into variables</span></span>
 <span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a><span class="fu">wc</span> <span class="at">-c</span> <span class="op">&lt;&lt;&lt;</span> <span class="st">"hello"</span>                     <span class="co"># 6, the trailing newline counts</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>&lt;&lt;&lt; "$text"</code> replaces the older <code>echo "$text" | grep foo</code>, saving a process and a subshell. It is the same idea as a heredoc scaled down to one line: an anonymous stream built from text you already have, wired to stdin.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="`<<<` is not POSIX">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>&lt;&lt;&lt;</code> is not POSIX
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The heredoc (<code>&lt;&lt;</code>) is POSIX and works in every shell. The herestring (<code>&lt;&lt;&lt;</code>) is a ksh extension adopted by bash and zsh, and it is <strong>absent from POSIX</strong>. A minimal <code>/bin/sh</code> such as <code>dash</code> or BusyBox <code>ash</code> rejects it outright with <code>Syntax error: redirection unexpected</code>. In a script declaring <code>#!/bin/sh</code>, use <code>printf '%s\n' "$text" | cmd</code> instead. See <a href="#shebangs">shebangs and portability</a>.</p>
+</div>
+</div>
 </section>
 </section>
 <section id="grep-reads-stdin-too" class="level3">
@@ -2894,6 +2910,89 @@ cp "$src" "$dst"            # quote both sides, always
 echo "${args[@]}"          # quote array expansions too: "${arr[@]}"</code></pre>
 <p>If you do one thing differently after this notebook, make it this.</p>
 </section>
+<section id="shebangs" class="level4">
+<h4 class="anchored" data-anchor-id="shebangs">The shebang, and the promise it makes</h4>
+<div class="subheading">
+<p>The first line chooses your language.</p>
+</div>
+<p>A script is just a text file; something has to decide which interpreter runs it. That decision is made by the first two bytes. If a file begins with <code>#!</code>, the kernel reads the rest of that line as the path to an interpreter and executes it, handing your script’s path as an argument. <code>./build.sh</code> with <code>#!/bin/sh</code> on top becomes <code>/bin/sh ./build.sh</code>. The name is a contraction of <strong>hash</strong> (<code>#</code>) and <strong>bang</strong> (<code>!</code>).</p>
+<p>Two properties fall out of this that explain most shebang confusion:</p>
+<ul>
+<li><strong>The kernel needs an absolute path.</strong> It does not search <code>$PATH</code>. <code>#!bash</code> will not work; the line must name a real file such as <code>/bin/bash</code>.</li>
+<li><strong>It only applies when the script is executed directly.</strong> <code>./script.sh</code> honors the shebang. <code>bash script.sh</code> ignores it completely, because you already named the interpreter. This is why a script with a wrong shebang can appear to work: everyone has been invoking it via <code>bash script.sh</code>.</li>
+</ul>
+<p>The shebang is a <strong>promise about which dialect the file is written in</strong>. The two you will actually write:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 34%">
+<col style="width: 45%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Shebang</th>
+<th>Means</th>
+<th>Use when</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>#!/usr/bin/env bash</code></td>
+<td>“this file is bash; give me bash”</td>
+<td>scripts for machines you control (the common case)</td>
+</tr>
+<tr class="even">
+<td><code>#!/bin/sh</code></td>
+<td>“this file is portable POSIX shell”</td>
+<td>installers, CI, containers, anything widely deployed</td>
+</tr>
+</tbody>
+</table>
+<p><code>#!/usr/bin/env bash</code> is preferred over <code>#!/bin/bash</code> because it searches <code>$PATH</code> rather than hard-coding a location. On macOS, <code>/bin/bash</code> is bash 3.2 from 2007 (Apple froze it over a GPLv3 licensing objection), while a Homebrew bash 5 lives in <code>/opt/homebrew/bin</code>. <code>env</code> finds the modern one; the hard-coded path is stuck with the antique.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="`#!/bin/sh` is a promise, and nothing enforces it">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>#!/bin/sh</code> is a promise, and nothing enforces it
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>#!/bin/sh</code> declares POSIX, but <em>which shell you actually get depends on the system</em>, and none of them will hold you to the promise:</p>
+<ul>
+<li><strong>Debian and Ubuntu</strong>: <code>/bin/sh</code> is <code>dash</code>, a minimal POSIX shell. Bashisms fail here.</li>
+<li><strong>Alpine and most containers</strong>: BusyBox <code>ash</code>. Also minimal.</li>
+<li><strong>macOS</strong>: <code>/bin/sh</code> is <strong>bash 3.2 running in POSIX mode</strong>, and POSIX mode does <em>not</em> disable bash syntax. <code>[[ ]]</code>, arrays, and <code>&lt;&lt;&lt;</code> all still work.</li>
+</ul>
+<p>The macOS case is the trap. Write <code>#!/bin/sh</code>, use <code>[[ ]]</code>, and it runs perfectly on your laptop, then dies the moment it reaches a Debian CI runner or an Alpine image. Declaring <code>sh</code> gets you no local warning whatsoever. <strong>If you write <code>#!/bin/sh</code>, you must check the script with a tool</strong> (below); if you would rather not, declare <code>bash</code> honestly and use it freely.</p>
+</div>
+</div>
+<p>Which to choose is a question about <em>reach</em>, not virtue. Personal scripts, repo tooling, and build helpers on known machines should say <code>bash</code> and use arrays, <code>[[ ]]</code>, and <code>&lt;&lt;&lt;</code> without guilt; POSIX costs real ergonomics and buys nothing if bash is always present. Reach for <code>#!/bin/sh</code> when the script must run somewhere you do not control: install scripts, container entrypoints, CI bootstrapping. The one genuinely bad option is claiming <code>sh</code> and writing bash anyway.</p>
+</section>
+<section id="checking-posix-compliance" class="level4">
+<h4 class="anchored" data-anchor-id="checking-posix-compliance">Checking POSIX compliance</h4>
+<p>Since no shell enforces the <code>#!/bin/sh</code> promise, two external tools do. They catch different things, so they complement rather than replace each other.</p>
+<p><strong>Run it under a strict shell.</strong> <code>dash</code> implements little beyond POSIX, so it rejects bashisms that bash-as-<code>sh</code> would wave through. This is a <em>technique</em>, not a feature: dash has no <code>--posix</code> or check flag, it simply fails on what it does not support.</p>
+<pre class="shell"><code>dash ./script.sh        # bashisms surface as errors</code></pre>
+<p>Its limitation is that it is a runtime check. An unsupported <em>command</em> only fails if execution reaches it, so a <code>[[ ]]</code> inside an untaken branch goes unnoticed. Unsupported <em>syntax</em> like <code>arr=(a b c)</code> fails at parse time and is caught regardless.</p>
+<p><strong>Lint it statically.</strong> <code>shellcheck -s sh</code> reads the whole file without running it, so branch coverage is irrelevant, and it names each bashism with a rationale.</p>
+<pre class="shell"><code>shellcheck -s sh ./script.sh    # -s sh forces POSIX rules regardless of shebang</code></pre>
+<p>Use ShellCheck as the primary check and dash as a confirming smoke test. Together they answer the question a container was the only obvious way to answer.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="What POSIX actually costs you">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>What POSIX actually costs you
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The features you give up under <code>#!/bin/sh</code> are the ones you reach for most: arrays, <code>[[ ]]</code> (use <code>[ ]</code>), <code>&lt;&lt;&lt;</code> (use <code>printf ... |</code>), <code>${var,,}</code> case conversion, <code>$'...'</code> escapes, and C-style <code>for ((i=0;...))</code>. Heredocs, <code>$(...)</code>, parameter expansion, and functions are all POSIX and stay available. <code>local</code> is technically not POSIX but is implemented by every shell in practice, dash included, so it is a safe exception.</p>
+</div>
+</div>
+</section>
 <section id="fail-loudly" class="level4">
 <h4 class="anchored" data-anchor-id="fail-loudly">Fail loudly</h4>
 <div class="subheading">
@@ -2944,6 +3043,7 @@ set -euo pipefail</code></pre>
 </div>
 <div class="callout-body-container callout-body">
 <p>It is a real improvement, but it has well-known blind spots: it ignores failures inside most conditionals and command substitutions, and a command whose non-zero exit you <em>expect</em> (like <code>grep</code> finding no match) will halt the script unless you handle it, e.g.&nbsp;<code>grep x file || true</code>. Treat <code>set -e</code> as a strong default, not a guarantee, and still check the exit codes that matter.</p>
+<p>Note also that <code>-e</code> and <code>-u</code> are POSIX but <strong><code>pipefail</code> is not</strong>. In a <code>#!/bin/sh</code> script write <code>set -eu</code> and check pipeline stages yourself.</p>
 </div>
 </div>
 </section>
@@ -2962,6 +3062,79 @@ set -euo pipefail</code></pre>
 <p><a href="https://www.shellcheck.net/" target="_blank" rel="noopener noreferrer"><code>shellcheck</code></a> is the static analyzer the shell never shipped with. It catches the quoting, splitting, and <code>set -e</code> mistakes above automatically, and it explains <em>why</em> each one is a bug with a linked rationale. Run it on every script:</p>
 <pre class="shell"><code>shellcheck myscript.sh</code></pre>
 <p>It is the fastest way to convert vague unease into concrete, named knowledge. After a few weeks of heeding it, the rules stop being a checklist and become reflex.</p>
+</section>
+<section id="verifying-downloads" class="level4">
+<h4 class="anchored" data-anchor-id="verifying-downloads">Verifying what you download</h4>
+<div class="subheading">
+<p>What a checksum actually proves, and what it does not.</p>
+</div>
+<p>Shell scripts install things, and installing means fetching a binary and running it. The ritual advice is “check the SHA-256.” Worth understanding what that defends against, because the usual explanation (catching corruption in transit) is the least of it: HTTPS already integrity-checks the wire, and a flipped bit fails the TLS record MAC long before any checksum sees it.</p>
+<p>The real threat is that <strong>the file was already wrong before you downloaded it</strong>. TLS protects the <em>channel</em>, not the <em>contents</em>. It guarantees you received exactly the bytes the server sent; it says nothing about whether those bytes are the ones the author built. What can go wrong upstream:</p>
+<ul>
+<li><strong>Compromised distribution infrastructure.</strong> Someone reaches the release host, a CDN, or a package mirror and swaps the artifact. TLS delivers the tampered file with a perfectly valid padlock. This is not hypothetical: the Linux Mint ISO replacement (2016), the PHP git server compromise (2021), and the <code>xz</code>/<code>liblzma</code> backdoor (2024) were all of this shape.</li>
+<li><strong>A stolen maintainer account.</strong> A leaked release token uploads a malicious build to the legitimate release page. Nothing about the transport looks wrong, because nothing about it <em>is</em> wrong.</li>
+<li><strong>Mirrors and redistribution.</strong> Fetching from anywhere but the origin adds a party to trust. A checksum from the origin is what lets you use an untrusted mirror safely.</li>
+</ul>
+<p>This leads to the distinction that makes the whole practice make sense. A checksum does two different jobs, and only one of them is about security:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 41%">
+<col style="width: 42%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Job</th>
+<th>Defends against</th>
+<th>Requires</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Integrity</strong></td>
+<td>truncated or corrupt download, bad mirror</td>
+<td>a hash from anywhere</td>
+</tr>
+<tr class="even">
+<td><strong>Authenticity</strong></td>
+<td>tampered artifact, compromised host</td>
+<td>a hash or signature from an <em>independent</em> path</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-warning callout-titled" title="A checksum from the same page proves less than it looks">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>A checksum from the same page proves less than it looks
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If you fetch the tarball and its advertised SHA-256 from the same server over the same connection, an attacker who can change one can change the other. Verifying that hash confirms your download completed intact. It does <strong>not</strong> establish that the artifact is genuine. The check is only as independent as the channel the hash arrived on.</p>
+</div>
+</div>
+<p><strong>Signatures are categorically stronger</strong> for exactly this reason. A GPG signature or Sigstore attestation is verified against a key you obtained previously and separately, so the trust anchor is not the download server. Compromising the host no longer suffices; the attacker needs the private key as well. That is a genuinely independent path, which a same-page checksum is not.</p>
+<pre class="shell"><code># Integrity: did the bytes arrive whole? (hash from the release page)
+shasum -a 256 tool.tar.xz          # macOS; sha256sum on Linux
+
+# Authenticity: was this signed by the key I already trust?
+gpg --verify tool.tar.xz.asc tool.tar.xz</code></pre>
+<p>In practice the strongest check available is usually <strong>agreement across independent sources</strong>: if a distro package, the upstream release, and a checksum you obtained by another route all match, an attacker would have had to compromise several unrelated systems at once. That is a far higher bar than any single hash.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="What a package manager is actually buying you">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>What a package manager is actually buying you
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The security value of <code>apt</code>, <code>brew</code>, or <code>nix</code> is not convenience, it is that they maintain that independent trust path on your behalf. Homebrew keeps artifact hashes in a git-versioned formula repository separate from upstream’s release host, so a silent upstream swap shows up as a mismatch. Installing by hand with <code>curl | tar</code> is a perfectly reasonable choice, but it is precisely that second path you are giving up, and doing the verification yourself is how you get it back.</p>
+</div>
+</div>
 <div class="callout callout-style-default callout-tip callout-titled" title="The safe-shell starting block">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">

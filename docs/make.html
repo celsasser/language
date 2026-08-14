@@ -109,6 +109,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<meta name="mermaid-theme" content="neutral">
 <script src="site_libs/quarto-diagram/mermaid.min.js"></script>
 <script src="site_libs/quarto-diagram/mermaid-init.js"></script>
 <link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
@@ -437,7 +438,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#what-runs-when" id="toc-what-runs-when" class="nav-link" data-scroll-target="#what-runs-when">What Runs When</a></li>
   <li><a href="#immediate-and-deferred" id="toc-immediate-and-deferred" class="nav-link" data-scroll-target="#immediate-and-deferred">Immediate and Deferred</a></li>
-  <li><a href="#eval-writing-makefile-text-at-parse-time" id="toc-eval-writing-makefile-text-at-parse-time" class="nav-link" data-scroll-target="#eval-writing-makefile-text-at-parse-time"><code>$(eval)</code>: Writing Makefile Text at Parse Time</a></li>
+  <li><a href="#eval" id="toc-eval" class="nav-link" data-scroll-target="#eval"><code>$(eval)</code></a></li>
   </ul></li>
   <li><a href="#pattern-rules-and-implicit-rules" id="toc-pattern-rules-and-implicit-rules" class="nav-link" data-scroll-target="#pattern-rules-and-implicit-rules">Pattern Rules and Implicit Rules</a>
   <ul>
@@ -479,7 +480,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#delete_on_error" id="toc-delete_on_error" class="nav-link" data-scroll-target="#delete_on_error"><code>.DELETE_ON_ERROR</code></a></li>
   <li><a href="#oneshell" id="toc-oneshell" class="nav-link" data-scroll-target="#oneshell"><code>.ONESHELL</code></a></li>
-  <li><a href="#intermediate-files-.secondary-and-.intermediate" id="toc-intermediate-files-.secondary-and-.intermediate" class="nav-link" data-scroll-target="#intermediate-files-.secondary-and-.intermediate">Intermediate Files: <code>.SECONDARY</code> and <code>.INTERMEDIATE</code></a></li>
+  <li><a href="#intermediate-files" id="toc-intermediate-files" class="nav-link" data-scroll-target="#intermediate-files">Intermediate Files</a></li>
   <li><a href="#suppressing-output-and-parallelism" id="toc-suppressing-output-and-parallelism" class="nav-link" data-scroll-target="#suppressing-output-and-parallelism">Suppressing Output and Parallelism</a></li>
   </ul></li>
   <li><a href="#debugging-makefiles" id="toc-debugging-makefiles" class="nav-link" data-scroll-target="#debugging-makefiles">Debugging Makefiles</a></li>
@@ -554,8 +555,8 @@ Examples span three flavors: hosted C/C++ builds, cross-compiled embedded
 <p>Make was written by <strong>Stuart Feldman</strong> at Bell Labs in 1976, reportedly after a colleague lost a morning of debugging to a program that was not being rebuilt from the source he was editing. The tool that came out of that afternoon is still recognizable in the one you run today, which is either a testament to the design or an indictment of the industry, depending on your mood.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 10%">
-<col style="width: 89%">
+<col style="width: 7%">
+<col style="width: 92%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1152,10 +1153,10 @@ there. -->
 <p>The same variable can be set in five places, and Make resolves the conflict by a fixed precedence. Highest wins:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 4%">
-<col style="width: 25%">
-<col style="width: 26%">
-<col style="width: 42%">
+<col style="width: 5%">
+<col style="width: 24%">
+<col style="width: 29%">
+<col style="width: 40%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1356,7 +1357,7 @@ there. -->
 <div class="subheading">
 <p>Why makefiles do not read top to bottom</p>
 </div>
-<p>Make does not execute a makefile the way a shell executes a script. It runs the file <strong>twice, in two distinct passes over different parts of it</strong>. Nearly every remaining Make mystery, <code>$(shell date)</code> reporting the wrong time, <code>$(wildcard)</code> not seeing generated files, <code>$$</code> in shell loops, is a consequence of this split.</p>
+<p>Make does not execute a makefile the way a shell executes a script. It runs the file <em>twice</em>, in two distinct passes over different parts of it. Nearly every remaining Make mystery, <code>$(shell date)</code> reporting the wrong time, <code>$(wildcard)</code> not seeing generated files, <code>$$</code> in shell loops, is a consequence of this split.</p>
 <p>The two phases:</p>
 <p><strong>Phase 1, read.</strong> Make reads every makefile (and everything they <code>include</code>), expands the macro language, evaluates conditionals and <code>$(shell)</code> calls, and assembles the dependency graph. Nothing is compiled. Nothing on disk changes. At the end of this phase Make has a complete, fully-expanded picture of what depends on what, and a set of recipes still stored as <em>unexpanded text</em>.</p>
 <p><strong>Phase 2, run.</strong> Make walks the graph from the requested goal, decides which targets are stale, and for each one it must rebuild, expands that recipe’s text and hands the result to the shell.</p>
@@ -1385,7 +1386,20 @@ there. -->
 </div>
 </div>
 </div>
-<p>The dividing line is the tab. <span class="hl-default">Everything at the left margin is phase 1; everything tab-indented is phase 2</span>. That is the same boundary as the <a href="#the-three-languages-in-one-file">three languages</a>, viewed on a timeline instead of a page: the rule and macro languages are read first and completely, and only then does the shell language start running.</p>
+<p>The dividing line is the tab. <span class="hl-default">Everything at the left margin is <em>phase 1</em>; everything tab-indented is <em>phase 2</em></span>. That is the same boundary as the <a href="#the-three-languages-in-one-file">three languages</a>, viewed on a timeline instead of a page: the rule and macro languages are read first and completely, and only then does the shell language start running.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="A diagnostic question">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>A diagnostic question
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>When something in a makefile behaves impossibly, ask “which phase is this in?” A value that is empty when you expected content is usually <em>phase 1</em> looking for something <em>phase 2</em> has not created yet. A <code>$</code> that vanished is <em>phase 1</em> consuming something <em>phase 2</em> needed. Almost nothing else produces those two symptoms.</p>
+</div>
+</div>
 <section id="what-runs-when" class="level3">
 <h3 class="anchored" data-anchor-id="what-runs-when">What Runs When</h3>
 <p>The consequences are specific enough to enumerate.</p>
@@ -1422,8 +1436,8 @@ there. -->
 <p>The GNU Make manual describes the same split in terms of <em>when a given expansion happens</em>, and the vocabulary is worth having because the manual uses it everywhere.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 63%">
-<col style="width: 36%">
+<col style="width: 53%">
+<col style="width: 46%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1456,9 +1470,12 @@ there. -->
 </table>
 <p>The row that surprises people is the third: prerequisite lists are expanded during the read phase, along with the targets. This is why a variable used in a prerequisite list must have its final value by the time Make reaches that line, and why a <code>$(wildcard)</code> there is frozen at parse time.</p>
 </section>
-<section id="eval-writing-makefile-text-at-parse-time" class="level3">
-<h3 class="anchored" data-anchor-id="eval-writing-makefile-text-at-parse-time"><code>$(eval)</code>: Writing Makefile Text at Parse Time</h3>
-<p>Because phase 1 is a text-processing pass, Make provides a way to feed generated text back into it. <code>$(eval ...)</code> takes a string and parses it as makefile source, right there during the read phase:</p>
+<section id="eval" class="level3">
+<h3 class="anchored" data-anchor-id="eval"><code>$(eval)</code></h3>
+<div class="subheading">
+<p>Writing Makefile text at parse time</p>
+</div>
+<p>Because <em>phase 1</em> is a text-processing pass, Make provides a way to feed generated text back into it. <code>$(eval ...)</code> takes a string and parses it as makefile source, right there during the read phase:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="dt">PROGRAMS</span> <span class="ch">:=</span><span class="st"> server client monitor</span></span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="kw">define</span> <span class="dt">program_rule</span></span>
@@ -1467,7 +1484,7 @@ there. -->
 <span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a><span class="kw">endef</span></span>
 <span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a><span class="ch">$(</span><span class="kw">foreach</span><span class="st"> p</span><span class="kw">,</span><span class="ch">$(</span><span class="dt">PROGRAMS</span><span class="ch">)</span><span class="kw">,</span><span class="ch">$(</span><span class="kw">eval</span><span class="st"> </span><span class="ch">$(</span><span class="kw">call</span><span class="st"> program_rule</span><span class="kw">,</span><span class="ch">$(</span><span class="dt">p</span><span class="ch">))))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This generates three complete rules from one template. Note the doubled <code>$$</code> in the template body: the first expansion (of <code>$(call ...)</code>) must leave <code>$(CC)</code>, <code>$@</code>, and <code>$^</code> intact so that <code>$(eval)</code> sees them as makefile text, and phase 2 expands them later. Getting the number of <code>$</code> right is the entire difficulty of <code>eval</code>, and it is why heavily generated makefiles become unreadable.</p>
+<p>This generates three complete rules from one template. Note the doubled <code>$$</code> in the template body: the first expansion (of <code>$(call ...)</code>) must leave <code>$(CC)</code>, <code>$@</code>, and <code>$^</code> intact so that <code>$(eval)</code> sees them as makefile text, and <em>phase 2</em> expands them later. Getting the number of <code>$</code> right is the entire difficulty of <code>eval</code>, and it is why heavily generated makefiles become unreadable.</p>
 <div class="callout callout-style-default callout-warning callout-titled" title="`eval` is a last resort">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -1479,19 +1496,6 @@ there. -->
 </div>
 <div class="callout-body-container callout-body">
 <p>It is the one construct that lets a makefile write itself, which makes it powerful and makes debugging miserable: the file you are reading is not the file Make built its graph from. Before reaching for it, check whether a <a href="#static-pattern-rules">static pattern rule</a> or a plain pattern rule does the job. When you do use it, <code>make -p</code> will show you the rules that were actually generated.</p>
-</div>
-</div>
-<div class="callout callout-style-default callout-tip callout-titled" title="A diagnostic question">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Tip</span>A diagnostic question
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>When something in a makefile behaves impossibly, ask <strong>which phase is this in?</strong> A value that is empty when you expected content is usually phase 1 looking for something phase 2 has not created yet. A <code>$</code> that vanished is phase 1 consuming something phase 2 needed. Almost nothing else produces those two symptoms.</p>
 </div>
 </div>
 </section>
@@ -1699,8 +1703,8 @@ there. -->
 <h3 class="anchored" data-anchor-id="text-manipulation">Text Manipulation</h3>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 32%">
-<col style="width: 67%">
+<col style="width: 31%">
+<col style="width: 68%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1779,9 +1783,9 @@ there. -->
 <p>These treat each word as a path and decompose it.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 27%">
-<col style="width: 47%">
+<col style="width: 23%">
+<col style="width: 39%">
+<col style="width: 37%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1919,10 +1923,10 @@ there. -->
 <p>These are Make’s entire diagnostic vocabulary, and they are the tools you debug the macro language with.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 19%">
-<col style="width: 33%">
+<col style="width: 23%">
 <col style="width: 20%">
+<col style="width: 33%">
+<col style="width: 22%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2112,8 +2116,8 @@ ordering in newer versions, and the jobserver's role across recursive make. -->
 <p>The empty prerequisite list is not a mistake; the presence of the line is the whole declaration.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 74%">
+<col style="width: 26%">
+<col style="width: 73%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2216,8 +2220,11 @@ ordering in newer versions, and the jobserver's role across recursive make. -->
 <p>The tradeoffs are real, though. It is a GNU extension, absent from BSD make and from POSIX. Error handling changes: only the shell’s final exit status is checked, so an early failure no longer stops the recipe unless you add <code>set -e</code> (<code>.SHELLFLAGS := -ec</code> is the usual way). And the <code>@</code> and <code>-</code> prefixes now apply to the whole recipe rather than a line, since there is only one command.</p>
 <p>Use it when a makefile has recipes with multi-step shell logic, and know you have traded portability for it. For a makefile whose recipes are single compiler invocations, it buys nothing.</p>
 </section>
-<section id="intermediate-files-.secondary-and-.intermediate" class="level3">
-<h3 class="anchored" data-anchor-id="intermediate-files-.secondary-and-.intermediate">Intermediate Files: <code>.SECONDARY</code> and <code>.INTERMEDIATE</code></h3>
+<section id="intermediate-files" class="level3">
+<h3 class="anchored" data-anchor-id="intermediate-files">Intermediate Files</h3>
+<div class="subheading">
+<p><code>.SECONDARY</code> and <code>.INTERMEDIATE</code></p>
+</div>
 <p><a href="#chained-inference">Chained inference</a> invents files nobody asked for, and by default Make deletes them once the build completes. That is usually tidy and occasionally infuriating, because a deleted intermediate must be regenerated next time, so a build you expected to be a no-op does work.</p>
 <p>The concrete case: a rule chain from <code>.proto</code> to <code>.c</code> to <code>.o</code> deletes the generated <code>.c</code> files after every build. You cannot read them to debug the generator, and every subsequent build regenerates and recompiles them.</p>
 <p><code>.SECONDARY</code> marks a file as intermediate but exempt from deletion. With no prerequisites, it applies to everything:</p>

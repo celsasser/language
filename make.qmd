@@ -35,7 +35,7 @@ It also has a reputation for being cryptic, and the reputation is earned. Make i
 Make was written by **Stuart Feldman** at Bell Labs in 1976, reportedly after a colleague lost a morning of debugging to a program that was not being rebuilt from the source he was editing. The tool that came out of that afternoon is still recognizable in the one you run today, which is either a testament to the design or an indictment of the industry, depending on your mood.
 
 | Era          | What happened                                                                                                                                                        |
-|:------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|:-------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 1976         | Feldman writes Make at Bell Labs for Unix v7. The core model (targets, prerequisites, recipes, timestamp comparison) arrives essentially complete.                   |
 | 1980s        | Make ships with every Unix, and every vendor extends it incompatibly. Writing a portable makefile becomes genuinely hard.                                            |
 | 1988         | POSIX standardizes a common core, deliberately small: suffix rules, basic macros, no conditionals, no functions.                                                     |
@@ -50,7 +50,6 @@ On Linux, `make` is almost always GNU Make. On macOS, `/usr/bin/make` is GNU Mak
 <!-- The tab story belongs in "Tabs, and Why" below, not here. Feldman's own
 quote about having "a dozen users" and not wanting to break them is the payoff
 there. -->
-
 ### The Make Philosophy
 ::: {.subheading}
 Three decisions that explain everything else
@@ -392,7 +391,6 @@ What Make actually computes
 A makefile looks like a list of rules. It is better understood as a **graph**: each target is a node, each prerequisite is an edge, and running Make means walking that graph to decide which nodes are stale. Every capability in this chapter, parallelism, incremental rebuilds, the freedom to write rules in any order, falls out of that one structure.
 
 ### How Make Decides What to Rebuild
-
 The rule is short enough to state exactly. [A target is out of date if it does not exist, or if any of its prerequisites has a more recent modification time than the target]{.hl-default}. When a target is out of date, Make runs its recipe.
 
 The subtlety is that this test is applied *recursively, bottom-up*. Before Make can compare `app` against `main.o`, it must know whether `main.o` is itself current, which means checking `main.o` against `main.c` and `util.h` first. So Make walks depth-first to the leaves of the graph, then evaluates staleness on the way back up. A rebuild deep in the tree updates a timestamp, which propagates staleness upward to everything that depends on it.
@@ -423,7 +421,6 @@ The comparison is strictly *newer than*, not *not equal to*. A prerequisite olde
 :::
 
 ### Graph Traversal and Ordering
-
 Make derives execution order from the graph alone. The order rules appear in the file is irrelevant, with exactly one exception: the first target in the file is the [default goal](#the-default-goal). Beyond that, you can shuffle the rules in a makefile arbitrarily and the build will run identically.
 
 This is worth dwelling on, because it is the concrete payoff of the declarative design described in [You Describe Relationships, Not Order](#you-describe-relationships-not-order). In a build script, the order of the lines *is* the build order, and keeping it correct as the project grows is manual work. In a makefile there is no order to maintain. Adding a source file means adding a node and its edges; where you type it does not matter.
@@ -439,7 +436,6 @@ Because the structure is a graph rather than a tree, it is possible to write a c
 :::
 
 ### Order-Only Prerequisites
-
 Sometimes a target requires that something *exist* without caring when it was last modified. The canonical case is an output directory.
 
 Consider building objects into `build/`. The directory must be there before the compiler writes into it, so the instinct is to make it a prerequisite:
@@ -480,7 +476,6 @@ An alternative you will see is skipping the rule entirely and creating the direc
 :::
 
 ### When Timestamps Lie
-
 Make's use of modification times is the cheap approximation described in [Timestamps, Not Content](#timestamps-not-content), and the ways it fails are worth cataloguing, because each has a recognizable symptom and a known fix.
 
 **Clock skew.** A file whose mtime is in the future is newer than every target that depends on it, permanently, so its dependents rebuild on every invocation. Make usually notices and warns:
@@ -578,7 +573,6 @@ GNU Make 4.0 added `VAR != command` as shorthand for `VAR := $(shell command)`. 
 :::
 
 ### `?=` and `+=` {#conditional-and-append-assignment}
-
 Two further operators cover the common cases.
 
 **`?=` assigns only if the variable is not already set.** This is how you write a default that a user can override:
@@ -610,16 +604,15 @@ Same operator, same order, different results, decided entirely by an assignment 
 Appending to an *undefined* variable is well defined: it behaves like `=`, creating a recursively expanded variable.
 
 ### Where Values Come From
-
 The same variable can be set in five places, and Make resolves the conflict by a fixed precedence. Highest wins:
 
-| Rank | Source                        | Example                        | Notes                                              |
-|:-----|:------------------------------|:-------------------------------|:---------------------------------------------------|
-| 1    | `override` in the makefile    | `override CFLAGS += -Wall`     | Beats even the command line                        |
-| 2    | Command line                  | `make CC=clang`                | The user's intent; beats the file                  |
-| 3    | Makefile assignment           | `CC := gcc`                    | The ordinary case                                  |
-| 4    | Environment                   | `CC=clang make`                | Loses to the makefile, unless `-e` is passed       |
-| 5    | Built-in defaults             | `CC` is `cc`, `CFLAGS` is empty | Make's own table, visible via `make -p`            |
+| Rank | Source                     | Example                         | Notes                                        |
+|:-----|:---------------------------|:--------------------------------|:---------------------------------------------|
+| 1    | `override` in the makefile | `override CFLAGS += -Wall`      | Beats even the command line                  |
+| 2    | Command line               | `make CC=clang`                 | The user's intent; beats the file            |
+| 3    | Makefile assignment        | `CC := gcc`                     | The ordinary case                            |
+| 4    | Environment                | `CC=clang make`                 | Loses to the makefile, unless `-e` is passed |
+| 5    | Built-in defaults          | `CC` is `cc`, `CFLAGS` is empty | Make's own table, visible via `make -p`      |
 
 The pairing of rows 2 and 4 is the useful part. A makefile assignment beats the environment, which means a stray `CFLAGS` exported in someone's shell profile cannot silently change your build. A command-line assignment beats the makefile, which means a user can still override deliberately when they mean to. That default is almost always what you want; `make -e` inverts it and is best avoided.
 
@@ -632,7 +625,6 @@ override CFLAGS += -fno-strict-aliasing    # survives `make CFLAGS=-O2`
 Without `override`, `make CFLAGS=-O2` would discard that flag entirely, since the command line wins and the assignment is skipped.
 
 #### Recipes and the Environment
-
 A point that catches people: recipes do **not** automatically see makefile variables as shell variables. Consider:
 
 ```makefile
@@ -655,7 +647,6 @@ show:
 A bare `export` with no arguments exports everything, which is occasionally convenient and mostly a way to leak makefile internals into every subprocess. Export deliberately, and prefer plain `$(VAR)` expansion unless a recipe genuinely needs the value in its environment, as when it invokes a script that reads it.
 
 ### Target-Specific and Pattern-Specific Variables
-
 A variable can be given a different value for one target and everything beneath it in the graph. The syntax hangs an assignment off a target:
 
 ```makefile
@@ -690,18 +681,17 @@ generated/%.o: CFLAGS += -w   # but generated sources compile without warnings
 ```
 
 ### Automatic Variables
-
 Inside a recipe, Make defines a set of variables describing the rule currently being executed. They are what make pattern rules possible: a single rule cannot name its target and prerequisites literally, so it refers to them positionally.
 
-| Variable | Expands to                                              |
-|:---------|:--------------------------------------------------------|
-| `$@`     | The target                                              |
-| `$<`     | The first prerequisite                                  |
-| `$^`     | All prerequisites, duplicates removed                   |
-| `$+`     | All prerequisites, duplicates kept, in order            |
-| `$?`     | Only the prerequisites newer than the target            |
-| `$*`     | The stem: the part matched by `%` in a pattern rule     |
-| `$|`     | The order-only prerequisites                            |
+| Variable | Expands to                                          |
+|:---------|:----------------------------------------------------|
+| `$@`     | The target                                          |
+| `$<`     | The first prerequisite                              |
+| `$^`     | All prerequisites, duplicates removed               |
+| `$+`     | All prerequisites, duplicates kept, in order        |
+| `$?`     | Only the prerequisites newer than the target        |
+| `$*`     | The stem: the part matched by `%` in a pattern rule |
+| `$|`     | The order-only prerequisites                        |
 
 Each also has directory and file variants, formed by adding `D` or `F`: `$(@D)` is the target's directory, `$(@F)` its filename. `$(<D)` and `$(<F)` do the same for the first prerequisite. These are why the `@mkdir -p $(@D)` idiom from [Order-Only Prerequisites](#order-only-prerequisites) works.
 
@@ -715,14 +705,14 @@ build/%.o: src/%.c include/config.h | build
 
 Building `build/parser.o` from this rule gives:
 
-| Variable | Value                             |
-|:---------|:----------------------------------|
-| `$@`     | `build/parser.o`                  |
-| `$<`     | `src/parser.c`                    |
-| `$^`     | `src/parser.c include/config.h`   |
-| `$*`     | `parser`                          |
-| `$|`     | `build`                           |
-| `$(@D)`  | `build`                           |
+| Variable | Value                                      |
+|:---------|:-------------------------------------------|
+| `$@`     | `build/parser.o`                           |
+| `$<`     | `src/parser.c`                             |
+| `$^`     | `src/parser.c include/config.h`            |
+| `$*`     | `parser`                                   |
+| `$|`     | `build`                                    |
+| `$(@D)`  | `build`                                    |
 
 Note why `$<` rather than `$^` is passed to the compiler. `$^` would include `include/config.h`, and handing a header to `gcc -c` as a second input is an error. The pattern is nearly universal: `$<` for compilation, where exactly one input is the source, and `$^` for linking, where all the inputs genuinely are inputs:
 
@@ -747,7 +737,7 @@ They describe the rule being executed, so they have no meaning anywhere else. Us
 Why makefiles do not read top to bottom
 :::
 
-Make does not execute a makefile the way a shell executes a script. It runs the file **twice, in two distinct passes over different parts of it**. Nearly every remaining Make mystery, `$(shell date)` reporting the wrong time, `$(wildcard)` not seeing generated files, `$$` in shell loops, is a consequence of this split.
+Make does not execute a makefile the way a shell executes a script. It runs the file *twice*, in two distinct passes over different parts of it. Nearly every remaining Make mystery, `$(shell date)` reporting the wrong time, `$(wildcard)` not seeing generated files, `$$` in shell loops, is a consequence of this split.
 
 The two phases:
 
@@ -772,10 +762,13 @@ flowchart LR
     P1 --> P2
 ```
 
-The dividing line is the tab. [Everything at the left margin is phase 1; everything tab-indented is phase 2]{.hl-default}. That is the same boundary as the [three languages](#the-three-languages-in-one-file), viewed on a timeline instead of a page: the rule and macro languages are read first and completely, and only then does the shell language start running.
+The dividing line is the tab. [Everything at the left margin is *phase 1*; everything tab-indented is *phase 2*]{.hl-default}. That is the same boundary as the [three languages](#the-three-languages-in-one-file), viewed on a timeline instead of a page: the rule and macro languages are read first and completely, and only then does the shell language start running.
+
+::: {.callout-tip title="A diagnostic question"}
+When something in a makefile behaves impossibly, ask "which phase is this in?" A value that is empty when you expected content is usually *phase 1* looking for something *phase 2* has not created yet. A `$` that vanished is *phase 1* consuming something *phase 2* needed. Almost nothing else produces those two symptoms.
+:::
 
 ### What Runs When
-
 The consequences are specific enough to enumerate.
 
 **`$(shell)` in a variable runs at parse time.** A timestamp captured this way records when Make read the file, not when the recipe ran:
@@ -829,22 +822,24 @@ list:
 Written as `$f`, Make would expand it first, find no variable named `f`, substitute the empty string, and the shell would receive `echo "found "`. Silently, with no error, on every iteration. The rule is mechanical: [inside a recipe, `$(...)` is Make's, `$$` is the shell's]{.hl-default}.
 
 ### Immediate and Deferred
-
 The GNU Make manual describes the same split in terms of *when a given expansion happens*, and the vocabulary is worth having because the manual uses it everywhere.
 
-| Construct                          | Expanded            |
-|:-----------------------------------|:--------------------|
-| `VAR := value`                     | Immediately (phase 1) |
-| `VAR = value`                      | Deferred, on each reference |
-| Target and prerequisite lists      | Immediately (phase 1) |
-| Recipe lines                       | Deferred (phase 2)  |
+| Construct                                     | Expanded                                |
+|:----------------------------------------------|:----------------------------------------|
+| `VAR := value`                                | Immediately (phase 1)                   |
+| `VAR = value`                                 | Deferred, on each reference             |
+| Target and prerequisite lists                 | Immediately (phase 1)                   |
+| Recipe lines                                  | Deferred (phase 2)                      |
 | Right-hand side of a target-specific variable | Deferred, when the target is considered |
 
 The row that surprises people is the third: prerequisite lists are expanded during the read phase, along with the targets. This is why a variable used in a prerequisite list must have its final value by the time Make reaches that line, and why a `$(wildcard)` there is frozen at parse time.
 
-### `$(eval)`: Writing Makefile Text at Parse Time
+### `$(eval)`
+::: {.subheading}
+Writing Makefile text at parse time
+:::
 
-Because phase 1 is a text-processing pass, Make provides a way to feed generated text back into it. `$(eval ...)` takes a string and parses it as makefile source, right there during the read phase:
+Because *phase 1* is a text-processing pass, Make provides a way to feed generated text back into it. `$(eval ...)` takes a string and parses it as makefile source, right there during the read phase:
 
 ```makefile
 PROGRAMS := server client monitor
@@ -857,14 +852,10 @@ endef
 $(foreach p,$(PROGRAMS),$(eval $(call program_rule,$(p))))
 ```
 
-This generates three complete rules from one template. Note the doubled `$$` in the template body: the first expansion (of `$(call ...)`) must leave `$(CC)`, `$@`, and `$^` intact so that `$(eval)` sees them as makefile text, and phase 2 expands them later. Getting the number of `$` right is the entire difficulty of `eval`, and it is why heavily generated makefiles become unreadable.
+This generates three complete rules from one template. Note the doubled `$$` in the template body: the first expansion (of `$(call ...)`) must leave `$(CC)`, `$@`, and `$^` intact so that `$(eval)` sees them as makefile text, and *phase 2* expands them later. Getting the number of `$` right is the entire difficulty of `eval`, and it is why heavily generated makefiles become unreadable.
 
 ::: {.callout-warning title="`eval` is a last resort"}
 It is the one construct that lets a makefile write itself, which makes it powerful and makes debugging miserable: the file you are reading is not the file Make built its graph from. Before reaching for it, check whether a [static pattern rule](#static-pattern-rules) or a plain pattern rule does the job. When you do use it, `make -p` will show you the rules that were actually generated.
-:::
-
-::: {.callout-tip title="A diagnostic question"}
-When something in a makefile behaves impossibly, ask **which phase is this in?** A value that is empty when you expected content is usually phase 1 looking for something phase 2 has not created yet. A `$` that vanished is phase 1 consuming something phase 2 needed. Almost nothing else produces those two symptoms.
 :::
 
 ## Pattern Rules and Implicit Rules
@@ -1109,20 +1100,19 @@ $(function arg1,arg2,arg3)
 The separator between the name and the first argument is whitespace; every separator after that is a comma. Leading whitespace in an argument is stripped, trailing whitespace is not, and a literal comma inside an argument has to be smuggled in through a variable holding one. These are the sharp edges, and they account for most function-related confusion.
 
 ### Text Manipulation
-
-| Function                     | Result                                                        |
-|:-----------------------------|:--------------------------------------------------------------|
-| `$(subst from,to,text)`      | Replace every occurrence of `from`; plain text, no wildcards  |
-| `$(patsubst pat,repl,text)`  | Replace each *word* matching `pat`, where `%` is the wildcard |
-| `$(strip text)`              | Collapse internal whitespace, remove leading and trailing     |
-| `$(findstring find,in)`      | `find` if present, empty otherwise                            |
-| `$(filter pat...,text)`      | Words matching any pattern                                    |
-| `$(filter-out pat...,text)`  | Words matching none of the patterns                           |
-| `$(sort list)`               | Sorted, **duplicates removed**                                |
-| `$(word n,text)`             | The nth word, 1-indexed                                       |
-| `$(wordlist s,e,text)`       | Words `s` through `e` inclusive                               |
-| `$(words text)`              | How many words                                                |
-| `$(firstword text)`          | The first word; `$(lastword text)` for the last               |
+| Function                    | Result                                                        |
+|:----------------------------|:--------------------------------------------------------------|
+| `$(subst from,to,text)`     | Replace every occurrence of `from`; plain text, no wildcards  |
+| `$(patsubst pat,repl,text)` | Replace each *word* matching `pat`, where `%` is the wildcard |
+| `$(strip text)`             | Collapse internal whitespace, remove leading and trailing     |
+| `$(findstring find,in)`     | `find` if present, empty otherwise                            |
+| `$(filter pat...,text)`     | Words matching any pattern                                    |
+| `$(filter-out pat...,text)` | Words matching none of the patterns                           |
+| `$(sort list)`              | Sorted, **duplicates removed**                                |
+| `$(word n,text)`            | The nth word, 1-indexed                                       |
+| `$(wordlist s,e,text)`      | Words `s` through `e` inclusive                               |
+| `$(words text)`             | How many words                                                |
+| `$(firstword text)`         | The first word; `$(lastword text)` for the last               |
 
 Worked, with the result in a comment:
 
@@ -1159,17 +1149,17 @@ endif
 ### Filenames
 These treat each word as a path and decompose it.
 
-| Function              | On `src/net/socket.c`   | Notes                                     |
-|:----------------------|:------------------------|:------------------------------------------|
-| `$(dir ...)`          | `src/net/`              | Keeps the trailing slash                  |
-| `$(notdir ...)`       | `socket.c`              | The filename alone                        |
-| `$(basename ...)`     | `src/net/socket`        | Strips the suffix, keeps the path         |
-| `$(suffix ...)`       | `.c`                    | Includes the dot                          |
-| `$(addprefix p,...)`  | `$(addprefix build/,$(notdir ...))` | Prepends to every word        |
-| `$(addsuffix s,...)`  | `$(addsuffix .o,names)` | Appends to every word                     |
-| `$(join a,b)`         | pairwise concatenation  | Rarely what you want                      |
-| `$(realpath ...)`     | absolute, symlinks resolved | Empty if the file does not exist      |
-| `$(abspath ...)`      | absolute, symlinks kept | Works on nonexistent paths                |
+| Function             | On `src/net/socket.c`               | Notes                             |
+|:---------------------|:------------------------------------|:----------------------------------|
+| `$(dir ...)`         | `src/net/`                          | Keeps the trailing slash          |
+| `$(notdir ...)`      | `socket.c`                          | The filename alone                |
+| `$(basename ...)`    | `src/net/socket`                    | Strips the suffix, keeps the path |
+| `$(suffix ...)`      | `.c`                                | Includes the dot                  |
+| `$(addprefix p,...)` | `$(addprefix build/,$(notdir ...))` | Prepends to every word            |
+| `$(addsuffix s,...)` | `$(addsuffix .o,names)`             | Appends to every word             |
+| `$(join a,b)`        | pairwise concatenation              | Rarely what you want              |
+| `$(realpath ...)`    | absolute, symlinks resolved         | Empty if the file does not exist  |
+| `$(abspath ...)`     | absolute, symlinks kept             | Works on nonexistent paths        |
 
 All of them map over the whole list, so `$(notdir src/a.c src/b.c)` yields `a.c b.c`.
 
@@ -1293,11 +1283,11 @@ Without that check, a failed command yields an empty string that is indistinguis
 ### `error`, `warning`, `info`
 These are Make's entire diagnostic vocabulary, and they are the tools you debug the macro language with.
 
-| Function            | Output goes to | Prefixed with `file:line` | Stops the build |
-|:--------------------|:---------------|:--------------------------|:----------------|
-| `$(info text)`      | stdout         | No                        | No              |
-| `$(warning text)`   | stderr         | Yes                       | No              |
-| `$(error text)`     | stderr         | Yes                       | Yes, immediately |
+| Function          | Output goes to | Prefixed with `file:line` | Stops the build  |
+|:------------------|:---------------|:--------------------------|:-----------------|
+| `$(info text)`    | stdout         | No                        | No               |
+| `$(warning text)` | stderr         | Yes                       | No               |
+| `$(error text)`   | stderr         | Yes                       | Yes, immediately |
 
 `$(info)` is printf debugging for phase 1. Because everything in Make is text and expansion order is the usual culprit, dumping a variable at a specific point in the file answers most questions faster than any other technique:
 
@@ -1448,20 +1438,20 @@ A few take none and simply switch a global behavior on:
 
 The empty prerequisite list is not a mistake; the presence of the line is the whole declaration.
 
-| Target                    | Effect                                                                     |
-|:--------------------------|:----------------------------------------------------------------------------|
-| `.PHONY`                  | Its prerequisites are actions, not files; never compared against disk      |
-| `.DELETE_ON_ERROR`        | Delete a target whose recipe failed. **Use this**                          |
-| `.DEFAULT_GOAL`           | A variable, not a rule: sets what plain `make` builds                      |
-| `.ONESHELL`               | Run each recipe in a single shell instead of one shell per line            |
-| `.SILENT`                 | Suppress echoing, for the named targets or globally if empty               |
-| `.SUFFIXES`               | The suffix-rule list; empty it to disable them                             |
-| `.PRECIOUS`               | Do not delete these targets on interrupt or failure                        |
-| `.INTERMEDIATE`           | Treat these as intermediate: delete them when the build completes          |
-| `.SECONDARY`              | Intermediate, but do not delete. Empty means "all"                         |
-| `.NOTPARALLEL`            | Run this makefile serially regardless of `-j`                              |
-| `.EXPORT_ALL_VARIABLES`   | Export every makefile variable into recipe environments                    |
-| `.LOW_RESOLUTION_TIME`    | Compare these targets' timestamps at one-second granularity                |
+| Target                  | Effect                                                                |
+|:------------------------|:----------------------------------------------------------------------|
+| `.PHONY`                | Its prerequisites are actions, not files; never compared against disk |
+| `.DELETE_ON_ERROR`      | Delete a target whose recipe failed. **Use this**                     |
+| `.DEFAULT_GOAL`         | A variable, not a rule: sets what plain `make` builds                 |
+| `.ONESHELL`             | Run each recipe in a single shell instead of one shell per line       |
+| `.SILENT`               | Suppress echoing, for the named targets or globally if empty          |
+| `.SUFFIXES`             | The suffix-rule list; empty it to disable them                        |
+| `.PRECIOUS`             | Do not delete these targets on interrupt or failure                   |
+| `.INTERMEDIATE`         | Treat these as intermediate: delete them when the build completes     |
+| `.SECONDARY`            | Intermediate, but do not delete. Empty means "all"                    |
+| `.NOTPARALLEL`          | Run this makefile serially regardless of `-j`                         |
+| `.EXPORT_ALL_VARIABLES` | Export every makefile variable into recipe environments               |
+| `.LOW_RESOLUTION_TIME`  | Compare these targets' timestamps at one-second granularity           |
 
 ### `.DELETE_ON_ERROR`
 ::: {.subheading}
@@ -1518,7 +1508,11 @@ The tradeoffs are real, though. It is a GNU extension, absent from BSD make and 
 
 Use it when a makefile has recipes with multi-step shell logic, and know you have traded portability for it. For a makefile whose recipes are single compiler invocations, it buys nothing.
 
-### Intermediate Files: `.SECONDARY` and `.INTERMEDIATE`
+### Intermediate Files
+::: {.subheading}
+`.SECONDARY` and `.INTERMEDIATE`
+:::
+
 [Chained inference](#chained-inference) invents files nobody asked for, and by default Make deletes them once the build completes. That is usually tidy and occasionally infuriating, because a deleted intermediate must be regenerated next time, so a build you expected to be a no-op does work.
 
 The concrete case: a rule chain from `.proto` to `.c` to `.o` deletes the generated `.c` files after every build. You cannot read them to debug the generator, and every subsequent build regenerates and recompiles them.

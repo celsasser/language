@@ -747,79 +747,592 @@ They describe the rule being executed, so they have no meaning anywhere else. Us
 Why makefiles do not read top to bottom
 :::
 
-<!-- The model that explains the remaining mysteries.
+Make does not execute a makefile the way a shell executes a script. It runs the file **twice, in two distinct passes over different parts of it**. Nearly every remaining Make mystery, `$(shell date)` reporting the wrong time, `$(wildcard)` not seeing generated files, `$$` in shell loops, is a consequence of this split.
 
-PHASE 1 (read): Make reads all makefiles, expands variables on the left of
-assignments and in rule lines, evaluates conditionals and $(shell) calls, and
-builds the dependency graph. Nothing is built yet.
+The two phases:
 
-PHASE 2 (run): Make walks the graph and expands + executes recipes as needed.
+**Phase 1, read.** Make reads every makefile (and everything they `include`), expands the macro language, evaluates conditionals and `$(shell)` calls, and assembles the dependency graph. Nothing is compiled. Nothing on disk changes. At the end of this phase Make has a complete, fully-expanded picture of what depends on what, and a set of recipes still stored as *unexpanded text*.
 
-Consequences to spell out:
-  - $(shell date) in a simple-expanded variable runs ONCE, at parse time,
-    before any compilation. A timestamp captured this way is the parse time.
-  - Recipe lines are expanded in phase 2, so $$ is needed to pass a literal $
-    to the shell; shell variables and loops need $$i, not $i.
-  - Conditionals are decided in phase 1 and cannot depend on anything a recipe
-    produced.
-  - $(eval) is the escape hatch for generating rules during phase 1.
+**Phase 2, run.** Make walks the graph from the requested goal, decides which targets are stale, and for each one it must rebuild, expands that recipe's text and hands the result to the shell.
 
-This section deserves a diagram: a timeline with the two phases and which
-constructs fire in each. -->
+```{mermaid}
+flowchart LR
+    subgraph P1["Phase 1: read"]
+        direction TB
+        A1["parse makefiles<br/>and includes"] --> A2["expand variables,<br/>run $(shell)"]
+        A2 --> A3["evaluate<br/>conditionals"]
+        A3 --> A4["build the<br/>dependency graph"]
+    end
+    subgraph P2["Phase 2: run"]
+        direction TB
+        B1["walk the graph<br/>from the goal"] --> B2["compare<br/>timestamps"]
+        B2 --> B3["expand the recipe<br/>of a stale target"]
+        B3 --> B4["hand it to<br/>/bin/sh"]
+    end
+    P1 --> P2
+```
+
+The dividing line is the tab. [Everything at the left margin is phase 1; everything tab-indented is phase 2]{.hl-default}. That is the same boundary as the [three languages](#the-three-languages-in-one-file), viewed on a timeline instead of a page: the rule and macro languages are read first and completely, and only then does the shell language start running.
+
+### What Runs When
+
+The consequences are specific enough to enumerate.
+
+**`$(shell)` in a variable runs at parse time.** A timestamp captured this way records when Make read the file, not when the recipe ran:
+
+```makefile
+BUILD_TIME := $(shell date +%T)
+
+app: main.o
+	@echo "starting link at $$(date +%T)"
+	@echo "BUILD_TIME says $(BUILD_TIME)"
+	$(CC) -o $@ $^
+```
+
+On a build where compilation takes a minute, those two lines print times a minute apart. `$(BUILD_TIME)` was frozen before the first object file was compiled. That is usually what you want for stamping a version into a binary, and it is emphatically not a way to time a build step.
+
+**`$(wildcard)` cannot see files a recipe will create.** This is the same fact with a sharper edge:
+
+```makefile
+# BROKEN: OBJS is empty on a clean tree
+OBJS := $(wildcard build/*.o)
+
+app: $(OBJS)
+	$(CC) -o $@ $^
+```
+
+On the first run, `build/` is empty or missing, `$(wildcard)` returns nothing, and `app` links against no objects. Run `make` a second time and it works, because now the files exist at parse time. A makefile that only builds correctly on the second invocation is nearly always this bug. The fix is to derive the object list from the *sources*, which do exist when the file is read:
+
+```makefile
+SRCS := $(wildcard src/*.c)
+OBJS := $(patsubst src/%.c,build/%.o,$(SRCS))
+```
+
+**Conditionals are decided in phase 1.** An `ifeq` cannot test anything a recipe produced, because no recipe has run yet:
+
+```makefile
+# BROKEN: the test happens before the compiler ever runs
+ifeq ($(wildcard build/app),)
+    $(info app does not exist yet)
+endif
+```
+
+Conditionals are for configuration (platform, toolchain, build variant), all of which is knowable at parse time. Anything that must be decided from the state of the build belongs in the recipe, where it is written as a shell `if`.
+
+**Recipes are expanded in phase 2, which is why `$$` exists.** Make expands a recipe's `$(...)` and `$` references immediately before handing the text to the shell. A `$` intended for the shell must be escaped as `$$` so it survives that pass:
+
+```makefile
+list:
+	for f in *.c; do echo "found $$f"; done
+```
+
+Written as `$f`, Make would expand it first, find no variable named `f`, substitute the empty string, and the shell would receive `echo "found "`. Silently, with no error, on every iteration. The rule is mechanical: [inside a recipe, `$(...)` is Make's, `$$` is the shell's]{.hl-default}.
+
+### Immediate and Deferred
+
+The GNU Make manual describes the same split in terms of *when a given expansion happens*, and the vocabulary is worth having because the manual uses it everywhere.
+
+| Construct                          | Expanded            |
+|:-----------------------------------|:--------------------|
+| `VAR := value`                     | Immediately (phase 1) |
+| `VAR = value`                      | Deferred, on each reference |
+| Target and prerequisite lists      | Immediately (phase 1) |
+| Recipe lines                       | Deferred (phase 2)  |
+| Right-hand side of a target-specific variable | Deferred, when the target is considered |
+
+The row that surprises people is the third: prerequisite lists are expanded during the read phase, along with the targets. This is why a variable used in a prerequisite list must have its final value by the time Make reaches that line, and why a `$(wildcard)` there is frozen at parse time.
+
+### `$(eval)`: Writing Makefile Text at Parse Time
+
+Because phase 1 is a text-processing pass, Make provides a way to feed generated text back into it. `$(eval ...)` takes a string and parses it as makefile source, right there during the read phase:
+
+```makefile
+PROGRAMS := server client monitor
+
+define program_rule
+$(1): $(1).o common.o
+	$$(CC) $$(LDFLAGS) -o $$@ $$^
+endef
+
+$(foreach p,$(PROGRAMS),$(eval $(call program_rule,$(p))))
+```
+
+This generates three complete rules from one template. Note the doubled `$$` in the template body: the first expansion (of `$(call ...)`) must leave `$(CC)`, `$@`, and `$^` intact so that `$(eval)` sees them as makefile text, and phase 2 expands them later. Getting the number of `$` right is the entire difficulty of `eval`, and it is why heavily generated makefiles become unreadable.
+
+::: {.callout-warning title="`eval` is a last resort"}
+It is the one construct that lets a makefile write itself, which makes it powerful and makes debugging miserable: the file you are reading is not the file Make built its graph from. Before reaching for it, check whether a [static pattern rule](#static-pattern-rules) or a plain pattern rule does the job. When you do use it, `make -p` will show you the rules that were actually generated.
+:::
+
+::: {.callout-tip title="A diagnostic question"}
+When something in a makefile behaves impossibly, ask **which phase is this in?** A value that is empty when you expected content is usually phase 1 looking for something phase 2 has not created yet. A `$` that vanished is phase 1 consuming something phase 2 needed. Almost nothing else produces those two symptoms.
+:::
+
 ## Pattern Rules and Implicit Rules
+::: {.subheading}
+One rule for a whole class of files
+:::
+
+The makefile in [A Complete Small Makefile](#a-complete-small-makefile) has two nearly identical rules, differing only in a filename. At two files that is mild redundancy. At two hundred it is unmaintainable, and every added source file is an opportunity to forget a line.
+
+An **implicit rule** solves this by describing a *class* of transformation rather than a single instance: "any `.o` file can be built from the `.c` file of the same name, like this." Make then applies it wherever it needs a target that no explicit rule covers. This is the machinery that turns a hundred-file build back into a makefile you can read in one screen.
+
+There are two spellings, one obsolete and one current, plus a controlled variant worth preferring over both.
+
 ### Suffix Rules
-<!-- The POSIX-era form (.c.o:) shown briefly for reading old makefiles, then
-set aside as superseded. Note .SUFFIXES and why you might clear it. -->
+The original form, standardized by POSIX and still lurking in old makefiles, keys off filename *suffixes*. The target is the concatenation of the source suffix and the target suffix:
+
+```makefile
+.SUFFIXES: .c .o
+
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+```
+
+`.c.o:` reads backwards from what you would guess: it means "to make a `.o` from a `.c`", source first. Only suffixes listed in `.SUFFIXES` participate, which is why the declaration is there.
+
+The form is genuinely limited. It can only match on suffixes, so it cannot express `build/%.o: src/%.c`, cannot match a whole filename, and cannot handle a name with no suffix at all. Directory-separated builds are impossible to write with it, which is most of why it was superseded.
+
+Know it well enough to read it, and write pattern rules instead. If you inherit a makefile with suffix rules, they still work; GNU Make supports both.
+
 ### Pattern Rules
-<!-- The modern form: %.o: %.c with the stem matched by %. How Make chooses
-among candidates, chained inference, and why one pattern rule replaces N
-hand-written rules. This is where a real build starts to get short. -->
+The modern form uses `%` as a wildcard matching one or more characters:
+
+```makefile
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+```
+
+The text matched by `%` is the **stem**, and it must be the same on both sides. Building `parser.o` matches this rule with a stem of `parser`, which makes the prerequisite `parser.c`. The [automatic variables](#automatic-variables) then carry the specifics into the recipe: `$<` is `parser.c`, `$@` is `parser.o`, and `$*` is the stem itself.
+
+That one rule replaces every hand-written compile rule in the project. Here is the small makefile rewritten with it:
+
+```makefile
+CC     := gcc
+CFLAGS := -Wall
+
+OBJS := main.o util.o
+
+app: $(OBJS)
+	$(CC) -o $@ $^
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+main.o util.o: util.h
+
+.PHONY: clean
+clean:
+	-rm -f app *.o
+```
+
+Adding a source file now means adding one word to `OBJS`. The pattern rule does not change.
+
+Note the recipe-less rule near the bottom, the form introduced in [Rules Without Recipes](#rules-without-recipes). It contributes the header dependency to targets whose recipe comes from the pattern rule. Prerequisites from an explicit rule and a pattern rule are *combined*, not overridden, which is exactly the mechanism [Auto-Generated Dependencies](#auto-generated-dependencies) relies on.
+
+#### Paths and the Stem
+Because `%` matches directory separators too, pattern rules handle out-of-tree builds directly:
+
+```makefile
+build/%.o: src/%.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+```
+
+Building `build/net/socket.o` gives a stem of `net/socket` and a prerequisite of `src/net/socket.c`. The `%` spans the subdirectory without any special handling. This is the shape most real makefiles use, and it is worth noting that the target's directory must exist before the compiler writes into it, hence the order-only `| build`. For nested output directories, `@mkdir -p $(@D)` in the recipe is the more robust choice.
+
+#### How Make Chooses Among Candidates
+When Make needs a target with no explicit recipe, it searches its pattern rules for one whose target pattern matches. Several may. The resolution rules, in order:
+
+1. **A rule whose prerequisites already exist or can be built wins over one whose cannot.** A rule that would require a nonexistent `foo.y` is discarded in favor of one needing an existing `foo.c`.
+2. **Among viable rules, the one with the shortest stem wins.** This makes the *most specific* pattern win: matching `build/net/socket.o` against `build/%.o` (stem `net/socket`) and `build/net/%.o` (stem `socket`) selects the latter.
+3. **Among equal stems, the first rule in the file wins.** Order matters only after specificity fails to decide.
+
+The practical consequence is that you can layer a special case over a general one:
+
+```makefile
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+generated/%.o: generated/%.c
+	$(CC) $(CFLAGS) -w -c $< -o $@       # generated code compiles warning-free
+```
+
+#### Chained Inference
+Make can compose pattern rules. If it knows how to make `.c` from `.y` and `.o` from `.c`, it will build `parser.o` from `parser.y` through an intermediate `parser.c` that you never mentioned:
+
+```{mermaid}
+flowchart LR
+    Y["parser.y"] -->|"%.c: %.y"| C["parser.c<br/>(intermediate)"]
+    C -->|"%.o: %.c"| O["parser.o"]
+```
+
+Files invented this way are **intermediate**, and Make deletes them when the build finishes, on the reasoning that you never asked for them. That is tidy right up until you want to inspect the generated source, or until deleting it forces a regeneration on the next build. `.SECONDARY` and `.PRECIOUS` control this; see [Special Targets](#special-targets).
+
+Chaining is clever and it is also a common source of "where did that file come from." Chains longer than two links are rare and worth avoiding.
+
+::: {.callout-note title="Pattern rules never fail for lack of a match"}
+An explicit rule for a missing prerequisite is an error: `No rule to make target 'foo.c'`. A pattern rule that does not match is simply not used, silently, and Make moves on to try another. A typo in a pattern rule therefore does not announce itself; it just quietly stops applying, and you get a mystifying error from a different rule further along. [Static pattern rules](#static-pattern-rules) exist partly to close this gap.
+:::
+
 ### Built-in Rules and Why to Disable Them
-<!-- GNU Make ships with a large set of built-in rules and variables, visible
-via `make -p`. They cause surprising builds (a stray .c compiled by a rule you
-did not write) and slow down every target lookup. -r / --no-builtin-rules,
-MAKEFLAGS += -r, and .SUFFIXES: to clear. Recommend disabling in serious
-makefiles. -->
+GNU Make ships with a substantial catalog of built-in pattern rules and variables, ready before it reads a single line of your file. This is why the following builds:
+
+```bash
+$ ls
+hello.c
+$ make hello
+cc     hello.c   -o hello
+```
+
+There is no makefile at all. Make's built-in rules know how to link an executable from a C source, and its built-in variables supply `CC = cc` and an empty `CFLAGS`. You can see the whole table:
+
+```bash
+make -p -f /dev/null        # print the built-in database with no makefile
+```
+
+The output runs to several hundred lines and covers C, C++, Fortran, Pascal, Modula-2, Ratfor, assembly, Lex, Yacc, RCS, and SCCS. Some of those languages have been dead for thirty years, and the rules for them are still consulted on every target lookup.
+
+That catalog causes two real problems in a serious makefile.
+
+**Surprising builds.** A target you did not write a rule for may nonetheless build, using flags you never chose, from a source you did not intend. A stray `.c` file in a directory can be compiled by a rule you have never seen, producing an object that quietly joins your link line via a wildcard. Worse, a built-in rule can shadow the behavior you expected: the built-in `%.o: %.c` uses `$(CC) $(CPPFLAGS) $(CFLAGS)`, so a makefile that sets only `CFLAGS` inherits a compile line it never wrote.
+
+**Wasted work.** For every target it cannot resolve explicitly, Make tries the built-in patterns in order, `stat`ing candidate prerequisites for each. On a large project this is thousands of pointless filesystem calls, and it is measurable: disabling built-ins commonly cuts a no-op build's time by a third or more.
+
+Turn them off. The command-line flag is `-r` (`--no-builtin-rules`), and its companion `-R` (`--no-builtin-variables`), but a makefile should not depend on the user remembering to pass them. Set it in the file:
+
+```makefile
+MAKEFLAGS += --no-builtin-rules --no-builtin-variables
+```
+
+`MAKEFLAGS` is read by Make itself and applies to the current invocation and to any recursive sub-makes. The older, POSIX-portable equivalent clears the suffix list, which disables suffix rules but not pattern rules:
+
+```makefile
+.SUFFIXES:            # empty list: no suffix rules apply
+```
+
+Both are worth having in a makefile of any size. Once built-ins are off, every rule that fires is one you wrote, and an unbuildable target says so instead of silently finding an ancient Ratfor rule that half-applies.
+
+::: {.callout-warning title="Disabling built-in variables means defining your own"}
+`--no-builtin-variables` removes `CC`, `CFLAGS`, `AR`, and the rest of the default table. If your makefile relied on `CC` defaulting to `cc`, it will now invoke the empty string. Define what you use explicitly, which is better practice regardless: an explicit `CC := gcc` documents the toolchain, and `CC ?= gcc` lets the user override it.
+:::
+
 ### Static Pattern Rules
-<!-- targets: target-pattern: prereq-pattern. The controlled form: applies the
-pattern to an explicit list rather than to anything that matches. Preferred
-when you know your source list, because a typo becomes an error instead of a
-silently-skipped rule. -->
+A pattern rule applies to *anything* that matches, which is more freedom than you usually want. A **static pattern rule** applies the same pattern to an explicit list of targets, and nothing else:
+
+```makefile
+targets: target-pattern: prereq-pattern
+	recipe
+```
+
+Three colon-separated parts instead of two. The first is the list of targets the rule governs; the second is the pattern each of them is matched against to extract a stem; the third builds the prerequisite from that stem.
+
+```makefile
+OBJS := main.o util.o parser.o
+
+$(OBJS): %.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+```
+
+This behaves like `%.o: %.c` restricted to exactly those three objects. A `stray.o` in the directory will not be built by it.
+
+The advantage is diagnostics. With an ordinary pattern rule, a target that fails to match is silently skipped and the error surfaces somewhere else. With a static pattern rule, a target in the list that does not match its pattern is an error at parse time, naming the file:
+
+```
+*** target 'README' doesn't match the target pattern.  Stop.
+```
+
+That difference matters more than it sounds. A build system that fails loudly at the point of the mistake is worth real ergonomic cost, and here the cost is one extra field.
+
+Static pattern rules also let one target list drive several transformations, which is awkward otherwise:
+
+```makefile
+SRCS := $(wildcard src/*.c)
+OBJS := $(patsubst src/%.c,build/%.o,$(SRCS))
+DEPS := $(patsubst src/%.c,build/%.d,$(SRCS))
+
+$(OBJS): build/%.o: src/%.c | build
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+```
+
+::: {.callout-tip title="Prefer static pattern rules when you know the list"}
+Which is most of the time: the object list is nearly always computed from a source list you already have. Reserve bare pattern rules for genuinely open-ended cases, like a rule that any target might reach through chaining. The failure modes of the two are what separates them, not the expressiveness.
+:::
+
 ### `VPATH` and `vpath`
-<!-- Searching for prerequisites in other directories. Honest treatment: it
-solves a real problem for out-of-tree builds but interacts badly with pattern
-rules and $@, and many projects are better off constructing explicit paths.
-Say so rather than presenting it neutrally. -->
+By default Make looks for prerequisites relative to the directory it was invoked from. `VPATH` adds a search path for files it cannot find there:
+
+```makefile
+VPATH = src:src/net:src/util
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+```
+
+Now `socket.o` can be built even though `socket.c` is in `src/net/`. Make searches the `VPATH` directories in order, finds it, and `$<` expands to the *found* path, `src/net/socket.c`, so the recipe works unchanged. The directive form `vpath` (lowercase) restricts the search to a pattern, which is a little less blunt:
+
+```makefile
+vpath %.c src:src/net
+vpath %.h include
+```
+
+This is real functionality solving a real problem, and it is also the feature in this chapter most likely to cost you an afternoon. The trouble is asymmetry: [`VPATH` affects where prerequisites are *found*, and has no effect at all on where targets are *written*]{.hl-default}. `$@` is whatever the rule named, unaffected by the search. So the rule above finds `src/net/socket.c` and writes `socket.o` into the current directory, flattening a structured source tree into a pile of objects in one place. Two files named `socket.c` in different subdirectories then collide, silently, with the second overwriting the first's object.
+
+The other failure is subtler. If a stale copy of a file exists in an earlier `VPATH` directory, Make finds *that* one instead of the one you are editing, and the build compiles a file you are not looking at. Debugging that requires knowing `VPATH` is involved at all, which is not visible from the rule.
+
+The alternative is to construct paths explicitly, which is what most modern makefiles do:
+
+```makefile
+SRCS := $(wildcard src/*.c src/net/*.c src/util/*.c)
+OBJS := $(patsubst src/%.c,build/%.o,$(SRCS))
+
+$(OBJS): build/%.o: src/%.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+```
+
+More text, and every path is stated rather than searched for. Object files mirror the source layout, so nothing collides, and reading a rule tells you exactly which file it compiles. `VPATH` earns its place mainly in one situation: an out-of-tree build where you run Make from a build directory and point it back at the source tree, which is how Autotools builds work. That is a legitimate use. For a build you write yourself, prefer explicit paths.
+
 ## Functions
-<!-- Frame the set: Make's functions are text transformations over
-space-separated word lists. There are no numbers, no data structures, no
-scoping. Everything is a string. Once that lands, the function library is
-small and predictable. -->
+::: {.subheading}
+Text transformations over space-separated words
+:::
+
+Make's function library looks intimidating in the manual and is small in practice, because every function does a variant of the same thing: [take a string, treat it as a list of words separated by whitespace, and produce another string]{.hl-default}. There are no numbers, no arrays, no dictionaries, no local scope, and no return values other than text. A "list" in Make is a string that happens to contain spaces, and the only structure it has is where those spaces fall.
+
+Accepting that up front makes the library predictable. `$(words ...)` returns the count as *the text of a number*. `$(sort ...)` sorts words alphabetically and removes duplicates because that is what sorting a word list means to Make. There is no other layer underneath.
+
+The call syntax is a function name, whitespace, then comma-separated arguments:
+
+```makefile
+$(function arg1,arg2,arg3)
+```
+
+The separator between the name and the first argument is whitespace; every separator after that is a comma. Leading whitespace in an argument is stripped, trailing whitespace is not, and a literal comma inside an argument has to be smuggled in through a variable holding one. These are the sharp edges, and they account for most function-related confusion.
+
 ### Text Manipulation
-<!-- subst, patsubst (and the $(VAR:.c=.o) shorthand), strip, findstring,
-filter, filter-out, sort (which also dedupes, a common idiom), word, wordlist,
-words, firstword, lastword. Table plus a few worked lines. -->
+
+| Function                     | Result                                                        |
+|:-----------------------------|:--------------------------------------------------------------|
+| `$(subst from,to,text)`      | Replace every occurrence of `from`; plain text, no wildcards  |
+| `$(patsubst pat,repl,text)`  | Replace each *word* matching `pat`, where `%` is the wildcard |
+| `$(strip text)`              | Collapse internal whitespace, remove leading and trailing     |
+| `$(findstring find,in)`      | `find` if present, empty otherwise                            |
+| `$(filter pat...,text)`      | Words matching any pattern                                    |
+| `$(filter-out pat...,text)`  | Words matching none of the patterns                           |
+| `$(sort list)`               | Sorted, **duplicates removed**                                |
+| `$(word n,text)`             | The nth word, 1-indexed                                       |
+| `$(wordlist s,e,text)`       | Words `s` through `e` inclusive                               |
+| `$(words text)`              | How many words                                                |
+| `$(firstword text)`          | The first word; `$(lastword text)` for the last               |
+
+Worked, with the result in a comment:
+
+```makefile
+SRCS := main.c util.c parser.c
+
+$(info $(patsubst %.c,%.o,$(SRCS)))          # main.o util.o parser.o
+$(info $(subst .c,.o,$(SRCS)))               # main.o util.o parser.o  (see below)
+$(info $(filter %.c,$(SRCS) README.md))      # main.c util.c parser.c
+$(info $(filter-out main.c,$(SRCS)))         # util.c parser.c
+$(info $(words $(SRCS)))                     # 3
+$(info $(sort b a c a))                      # a b c
+```
+
+`subst` and `patsubst` produce the same answer above and are not interchangeable. `subst` is a blind substring replacement with no notion of words, so `$(subst .c,.o,src.check/main.c)` mangles the directory name into `src.oheck/main.o`. `patsubst` anchors its pattern to whole words, which is almost always what you meant. Use `patsubst`.
+
+`patsubst` has a shorthand that appears constantly in real makefiles:
+
+```makefile
+OBJS := $(SRCS:.c=.o)                # identical to $(patsubst %.c,%.o,$(SRCS))
+OBJS := $(SRCS:%.c=build/%.o)        # the general form, with %
+```
+
+Two idioms are worth recognizing on sight. `$(sort ...)` is frequently used purely to deduplicate, the ordering being incidental, which is how a list of include directories gets cleaned up. And `$(filter ...)` is the standard way to test membership, since Make has no boolean type:
+
+```makefile
+ifeq ($(filter debug,$(MAKECMDGOALS)),debug)
+    CFLAGS += -g -O0
+endif
+```
+
+`$(strip ...)` matters more than it looks. Trailing whitespace in a Make variable is real, invisible, and load-bearing: `ifeq ($(MODE),debug)` fails against `MODE := debug ` with a trailing space, and nothing in the error tells you why. Strip anything that came from a `$(shell)` call or a hand-edited configuration block before comparing it.
+
 ### Filenames
-<!-- wildcard, dir, notdir, basename, suffix, addprefix, addsuffix, join,
-realpath, abspath. Note that $(wildcard) is evaluated at parse time, so it
-cannot see files a recipe has not created yet: a real and common bug. -->
+These treat each word as a path and decompose it.
+
+| Function              | On `src/net/socket.c`   | Notes                                     |
+|:----------------------|:------------------------|:------------------------------------------|
+| `$(dir ...)`          | `src/net/`              | Keeps the trailing slash                  |
+| `$(notdir ...)`       | `socket.c`              | The filename alone                        |
+| `$(basename ...)`     | `src/net/socket`        | Strips the suffix, keeps the path         |
+| `$(suffix ...)`       | `.c`                    | Includes the dot                          |
+| `$(addprefix p,...)`  | `$(addprefix build/,$(notdir ...))` | Prepends to every word        |
+| `$(addsuffix s,...)`  | `$(addsuffix .o,names)` | Appends to every word                     |
+| `$(join a,b)`         | pairwise concatenation  | Rarely what you want                      |
+| `$(realpath ...)`     | absolute, symlinks resolved | Empty if the file does not exist      |
+| `$(abspath ...)`      | absolute, symlinks kept | Works on nonexistent paths                |
+
+All of them map over the whole list, so `$(notdir src/a.c src/b.c)` yields `a.c b.c`.
+
+`$(wildcard pattern)` is the one that touches the filesystem, expanding a glob into the matching filenames:
+
+```makefile
+SRCS := $(wildcard src/*.c)
+```
+
+It is also the function most likely to produce a build that only works the second time. `$(wildcard)` runs during [phase 1](#two-phase-evaluation), so it sees the tree as it was when Make read the file, not as a recipe will leave it. Globbing an output directory is therefore always wrong:
+
+```makefile
+OBJS := $(wildcard build/*.o)         # empty on a clean tree, forever wrong
+```
+
+Derive outputs from inputs instead. Glob the sources, which exist at parse time, and transform them:
+
+```makefile
+SRCS := $(wildcard src/*.c)
+OBJS := $(patsubst src/%.c,build/%.o,$(SRCS))
+```
+
+::: {.callout-note title="`$(wildcard)` and the missing file"}
+A glob matching nothing expands to nothing, silently. A typo in a directory name gives you an empty `SRCS`, an empty `OBJS`, and a link command with no inputs, whose error message is about the linker rather than about the path you got wrong. When a build fails inexplicably early, `$(info SRCS = $(SRCS))` is the first thing to add.
+:::
+
 ### Control and Iteration
-<!-- foreach, if, or, and, call (user-defined functions with $(1) $(2)),
-value, and eval for generating rules programmatically. Keep eval short but
-show one legitimate use, e.g. defining parallel rules for a list of targets.
-Warn that heavy eval is where makefiles become unmaintainable. -->
+Make has no loops in the ordinary sense. `$(foreach ...)` is a text-generating construct: it binds a variable to each word in turn, expands a body, and concatenates the results with spaces.
+
+```makefile
+DIRS := src lib tools
+$(info $(foreach d,$(DIRS),-I$(d)/include))
+# -Isrc/include -Ilib/include -Itools/include
+```
+
+The variable `d` exists only inside the expansion. This is Make's only local binding, and it is why `foreach` shows up wherever a per-item transformation is too irregular for `addprefix`.
+
+`$(if condition,then,else)` tests whether its first argument expands to a non-empty string. There is no boolean type, so *non-empty is true* and that is the whole semantics:
+
+```makefile
+CFLAGS += $(if $(DEBUG),-g -O0,-O2)
+```
+
+`$(or ...)` and `$(and ...)` follow the same convention, returning the first non-empty argument and the last argument respectively, with short-circuiting.
+
+`$(call ...)` invokes a user-defined function, which is just a variable whose body refers to `$(1)`, `$(2)`, and so on:
+
+```makefile
+# $(call check_tool,name)
+check_tool = $(if $(shell command -v $(1)),,$(error $(1) not found in PATH))
+
+$(call check_tool,arm-none-eabi-gcc)
+$(call check_tool,openocd)
+```
+
+Define these with `=`, never `:=`. A simply expanded variable evaluates its `$(1)` at definition time, when no arguments exist, and freezes the empty result. This is the single most common `call` bug.
+
+Multi-line bodies use `define`:
+
+```makefile
+define compile_and_size
+	$(CC) $(CFLAGS) -c $< -o $@
+	@$(SIZE) $@
+endef
+```
+
+`$(eval ...)` parses generated text as makefile source. It belongs to phase 1 and is covered in [Two-Phase Evaluation](#two-phase-evaluation), along with the reason its `$` counting is so error-prone. The short version: use it to generate a family of near-identical rules from a list, and reach for [static pattern rules](#static-pattern-rules) first.
+
 ### `shell`, and When It Runs
-<!-- $(shell ...) runs a command at EXPANSION time and captures stdout with
-newlines converted to spaces. The two-phase trap deserves its own worked
-example here. Also := vs = changing how many times the command runs, and the
-cost of shelling out on every expansion. Cross-ref two-phase evaluation. -->
+`$(shell command)` runs a command through `/bin/sh`, captures its standard output, strips the trailing newline, and converts every remaining newline to a space. That last conversion is deliberate: it turns command output into a Make word list.
+
+```makefile
+VERSION  := $(shell git describe --tags --always)
+NPROC    := $(shell nproc)
+SOURCES  := $(shell find src -name '*.c')
+```
+
+Two things about it deserve care.
+
+**It runs during phase 1, before anything is built.** This is the trap described in [What Runs When](#what-runs-when), and it is worth restating with a case that looks reasonable:
+
+```makefile
+# BROKEN: the objects do not exist when this line is read
+TOTAL_SIZE := $(shell cat build/*.o | wc -c)
+
+app: $(OBJS)
+	$(CC) -o $@ $^
+	@echo "objects totalled $(TOTAL_SIZE) bytes"
+```
+
+The `cat` runs before the first compile, fails, and `TOTAL_SIZE` is empty. Anything that must observe the state of the build after work has happened belongs in a recipe, where it is written as ordinary shell:
+
+```makefile
+app: $(OBJS)
+	$(CC) -o $@ $^
+	@echo "objects totalled $$(cat $^ | wc -c) bytes"
+```
+
+Note the `$$(...)`: that is shell command substitution, escaped so it survives Make's expansion.
+
+**The assignment flavor decides how many times it runs.** With `=`, the command re-runs on every single reference:
+
+```makefile
+VERSION  = $(shell git describe --tags)      # forks git on every use
+VERSION := $(shell git describe --tags)      # forks git exactly once
+```
+
+In a makefile that stamps `$(VERSION)` into a dozen compile lines, the first spelling is a dozen `git` invocations, each one a process spawn and a repository read. Combined with the built-in rule search, this is the usual explanation for a makefile that takes a noticeable pause before doing anything. Use `:=` for `$(shell)` unless you have a specific reason not to.
+
+`$(shell)` also sets `.SHELLSTATUS` to the command's exit code, which is how you check whether it actually succeeded:
+
+```makefile
+GIT_TAG := $(shell git describe --tags 2>/dev/null)
+ifneq ($(.SHELLSTATUS),0)
+    GIT_TAG := unknown
+endif
+```
+
+Without that check, a failed command yields an empty string that is indistinguishable from a command that succeeded and printed nothing.
+
 ### `error`, `warning`, `info`
-<!-- Make's only real diagnostics. $(info) for tracing values, $(warning) with
-its file:line prefix, $(error) to fail fast on a missing toolchain or
-unset required variable. Show the "guard clause" idiom:
-    ifndef TOOLCHAIN
-    $(error TOOLCHAIN is not set)
-    endif -->
+These are Make's entire diagnostic vocabulary, and they are the tools you debug the macro language with.
+
+| Function            | Output goes to | Prefixed with `file:line` | Stops the build |
+|:--------------------|:---------------|:--------------------------|:----------------|
+| `$(info text)`      | stdout         | No                        | No              |
+| `$(warning text)`   | stderr         | Yes                       | No              |
+| `$(error text)`     | stderr         | Yes                       | Yes, immediately |
+
+`$(info)` is printf debugging for phase 1. Because everything in Make is text and expansion order is the usual culprit, dumping a variable at a specific point in the file answers most questions faster than any other technique:
+
+```makefile
+$(info CFLAGS  = $(CFLAGS))
+$(info OBJS    = $(OBJS))
+$(info nothing = "$(MAYBE_UNSET)")     # quotes make an empty value visible
+```
+
+Wrapping the value in quotes is the trick for distinguishing empty from whitespace, which a bare `$(info)` cannot show you.
+
+`$(warning)` differs mainly in carrying its location, which makes it the better choice inside a variable definition or a function body where you need to know *which* expansion you are watching. Since it expands to nothing, it can be embedded in a value without disturbing it:
+
+```makefile
+CFLAGS := $(warning computing CFLAGS)-Wall -O2
+```
+
+`$(error)` aborts. Its purpose is failing fast, at configure time, with a message a human can act on, rather than letting the build proceed to a confusing failure fifty lines of compiler output later. The guard-clause idiom is the canonical use:
+
+```makefile
+ifndef TOOLCHAIN
+    $(error TOOLCHAIN is not set. Try: make TOOLCHAIN=arm-none-eabi-)
+endif
+
+ifeq ($(wildcard $(LINKER_SCRIPT)),)
+    $(error linker script not found: $(LINKER_SCRIPT))
+endif
+```
+
+Both checks run during phase 1, so they fire before a single compiler is invoked. Compare that with the alternative: no guard, a cross-compiler that does not exist, and a hundred lines of `command not found` before anything says what is wrong.
+
+::: {.callout-warning title="`$(error)` fires when it is expanded, not where it is written"}
+Inside a recursively expanded variable, the error triggers on first *use*, which may be far from the definition and may not happen at all. Put guard clauses at the top level of the file where they expand immediately, or inside a conditional as above. An `$(error)` hidden in a `=` variable that is never referenced is a check that silently does not exist.
+:::
+
 ## Conditionals
 <!-- ifeq, ifneq, ifdef, ifndef, else, endif. Emphasize that despite looking
 like the C preprocessor, these are Make constructs evaluated in phase 1, and
@@ -915,14 +1428,143 @@ almost always a missing prerequisite, not a Make bug.
 Also: -O (--output-sync) to stop interleaved output, .NOTPARALLEL, .WAIT for
 ordering in newer versions, and the jobserver's role across recursive make. -->
 ## Special Targets
-<!-- Reference table with the ones that matter:
-  .PHONY, .DEFAULT_GOAL, .DELETE_ON_ERROR, .SECONDARY, .INTERMEDIATE,
-  .PRECIOUS, .ONESHELL, .SUFFIXES, .NOTPARALLEL, .SILENT, .EXPORT_ALL_VARIABLES
+::: {.subheading}
+Names Make reserves for configuring itself
+:::
 
-Call out .DELETE_ON_ERROR specifically and recommend it: without it, a recipe
-that fails partway leaves a corrupt output file with a fresh timestamp, and
-the next make considers it up to date. This is a silent correctness bug in a
-large fraction of real makefiles. -->
+A handful of target names starting with a period are not targets at all. Make reserves them as directives, written in rule syntax because rule syntax was already there. `.PHONY` is the one everybody knows; the rest configure behavior that is otherwise unreachable, and at least one of them fixes a correctness bug present in most makefiles.
+
+Two forms appear. Most take prerequisites, listing the targets they apply to:
+
+```makefile
+.PHONY: clean test
+```
+
+A few take none and simply switch a global behavior on:
+
+```makefile
+.DELETE_ON_ERROR:
+```
+
+The empty prerequisite list is not a mistake; the presence of the line is the whole declaration.
+
+| Target                    | Effect                                                                     |
+|:--------------------------|:----------------------------------------------------------------------------|
+| `.PHONY`                  | Its prerequisites are actions, not files; never compared against disk      |
+| `.DELETE_ON_ERROR`        | Delete a target whose recipe failed. **Use this**                          |
+| `.DEFAULT_GOAL`           | A variable, not a rule: sets what plain `make` builds                      |
+| `.ONESHELL`               | Run each recipe in a single shell instead of one shell per line            |
+| `.SILENT`                 | Suppress echoing, for the named targets or globally if empty               |
+| `.SUFFIXES`               | The suffix-rule list; empty it to disable them                             |
+| `.PRECIOUS`               | Do not delete these targets on interrupt or failure                        |
+| `.INTERMEDIATE`           | Treat these as intermediate: delete them when the build completes          |
+| `.SECONDARY`              | Intermediate, but do not delete. Empty means "all"                         |
+| `.NOTPARALLEL`            | Run this makefile serially regardless of `-j`                              |
+| `.EXPORT_ALL_VARIABLES`   | Export every makefile variable into recipe environments                    |
+| `.LOW_RESOLUTION_TIME`    | Compare these targets' timestamps at one-second granularity                |
+
+### `.DELETE_ON_ERROR`
+::: {.subheading}
+The one to add to every makefile you own
+:::
+
+Consider what happens when a recipe fails partway through:
+
+```makefile
+report.txt: data.csv
+	./analyze data.csv > report.txt
+```
+
+The shell creates `report.txt` and opens it for writing *before* `analyze` runs. If `analyze` writes half its output and then crashes, the file exists, contains truncated garbage, and carries a modification time newer than `data.csv`. Make reports the failure and stops. So far so good.
+
+Now run `make` again:
+
+```bash
+$ make
+make: 'report.txt' is up to date.
+```
+
+The build is broken and Make sees nothing to do. Whatever consumes `report.txt` downstream now consumes corrupt input, and the only symptom is wrong results much further along. Nothing in the output points back at the failed step, which happened in a previous invocation and scrolled away.
+
+One line prevents all of it:
+
+```makefile
+.DELETE_ON_ERROR:
+```
+
+With that declaration, a recipe that exits non-zero after modifying its target causes Make to delete the target before stopping. The next run sees a missing file and rebuilds properly. The failure stays a failure instead of decaying into a stale artifact.
+
+::: {.callout-important title="Why is this not the default?"}
+Backward compatibility, entirely. Make's original behavior predates the realization that it was a bug, and changing a default that has stood since 1976 would break makefiles that depend on partial output surviving, however few of those are deliberate. The GNU Make manual recommends `.DELETE_ON_ERROR` without reservation, and the practical advice is unambiguous: put it near the top of every makefile you write. The cost is one line; the bug it prevents is silent and produces wrong output rather than a visible error.
+:::
+
+The exemption is `.PRECIOUS`, which protects specific targets from this deletion (and from deletion on `Ctrl-C`). Reach for it when a target is genuinely expensive to regenerate and safe to have in a partial state, which is rare enough that needing it is a signal worth double-checking.
+
+### `.ONESHELL`
+By default each recipe line gets its own shell, which is the source of the `cd` problem in [Multi-Line Recipes](#multi-line-recipes). `.ONESHELL` changes it globally:
+
+```makefile
+.ONESHELL:
+
+install:
+	cd build
+	cp app /usr/local/bin/
+	echo "installed"
+```
+
+Now all three lines run in one shell, `cd` persists, and shell variables set on one line are visible on the next. Recipes stop needing `&&` chains and trailing backslashes, which makes anything with real shell logic in it far more readable.
+
+The tradeoffs are real, though. It is a GNU extension, absent from BSD make and from POSIX. Error handling changes: only the shell's final exit status is checked, so an early failure no longer stops the recipe unless you add `set -e` (`.SHELLFLAGS := -ec` is the usual way). And the `@` and `-` prefixes now apply to the whole recipe rather than a line, since there is only one command.
+
+Use it when a makefile has recipes with multi-step shell logic, and know you have traded portability for it. For a makefile whose recipes are single compiler invocations, it buys nothing.
+
+### Intermediate Files: `.SECONDARY` and `.INTERMEDIATE`
+[Chained inference](#chained-inference) invents files nobody asked for, and by default Make deletes them once the build completes. That is usually tidy and occasionally infuriating, because a deleted intermediate must be regenerated next time, so a build you expected to be a no-op does work.
+
+The concrete case: a rule chain from `.proto` to `.c` to `.o` deletes the generated `.c` files after every build. You cannot read them to debug the generator, and every subsequent build regenerates and recompiles them.
+
+`.SECONDARY` marks a file as intermediate but exempt from deletion. With no prerequisites, it applies to everything:
+
+```makefile
+.SECONDARY:
+```
+
+This is a common blanket setting in makefiles that use chaining heavily, and the cost is disk space for files you might have wanted anyway.
+
+`.INTERMEDIATE` is the opposite direction: it marks a file you *wrote an explicit rule for* as intermediate, so it gets cleaned up like an inferred one. It is much rarer, and usually a sign that a temporary file should have been handled inside a single recipe instead.
+
+### Suppressing Output and Parallelism
+`.SILENT` suppresses command echoing. With prerequisites it applies to those targets; empty, it applies globally:
+
+```makefile
+.SILENT: docs           # just these
+.SILENT:                # everything
+```
+
+Global `.SILENT` is best avoided. Echoed commands are how you find out what a failing build actually ran, and hiding them project-wide trades debuggability for tidy output. Prefer per-line `@` on the messages you want quiet, or `make -s` when a specific invocation should be quiet. The same reasoning applies to `.EXPORT_ALL_VARIABLES`, which exports every makefile variable into every subprocess environment: convenient, and a good way to have a makefile variable collide with something a tool reads from the environment.
+
+`.NOTPARALLEL` forces serial execution of the current makefile even under `-j`:
+
+```makefile
+.NOTPARALLEL:
+```
+
+This is almost always the wrong fix. A makefile that fails under `-j8` and passes serially has a missing prerequisite, and `.NOTPARALLEL` hides the bug while giving up the speedup. It is legitimate in a narrow case: when recipes genuinely contend for a shared external resource, such as a single hardware programmer or a database, that the dependency graph cannot express. See [Parallelism](#parallelism).
+
+::: {.callout-tip title="A reasonable preamble"}
+Most of these decisions are the same in every serious makefile, which makes a standard opening block worth copying:
+
+```makefile
+MAKEFLAGS += --no-builtin-rules --no-builtin-variables --warn-undefined-variables
+.DELETE_ON_ERROR:
+.SUFFIXES:
+.DEFAULT_GOAL := all
+SHELL := /bin/bash
+```
+
+That is: no surprise rules, no stale targets after a failure, no suffix rules, an explicit default goal, and a known shell rather than whatever `/bin/sh` is on this machine. `--warn-undefined-variables` catches the typo'd `$(CFLGAS)` that would otherwise expand to nothing in silence.
+:::
+
 ## Debugging Makefiles
 <!-- The toolkit, roughly in order of use:
   -n / --just-print   show commands without running them

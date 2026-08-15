@@ -24,7 +24,7 @@ recognize in old projects and replace.
 ## Overview
 **CMake** occupies an odd position. It is the de facto build system for C and C++, it is what nearly every vendor SDK ships, and it is widely disliked by the people who use it every day. All three of those are true at once, and the reason is worth understanding before you write a line of it.
 
-[CMake solves a real problem that [Make](make.qmd) does not. A makefile describes how to build a project *on the machine that wrote it*.]{.hl-default} Move it to a different compiler, a different operating system, or a different build tool and it needs editing. [CMake describes a project's structure abstractly and then generates the actual build files for whatever toolchain is present]{.hl-default}: Makefiles on Unix, Ninja anywhere, Visual Studio solutions on Windows, Xcode projects on macOS. One description, many builds.
+[CMake solves a real problem that [Make](make.qmd) does not. A makefile describes how to build a project *on the machine that wrote it*.]{.hl-default-l} Move it to a different compiler, a different operating system, or a different build tool and it needs editing. [CMake describes a project's structure abstractly and then generates the actual build files for whatever toolchain is present]{.hl-default-l}: Makefiles on Unix, Ninja anywhere, Visual Studio solutions on Windows, Xcode projects on macOS. One description, many builds.
 
 The dislike is mostly about the language. CMake's syntax accumulated over twenty-five years, everything in it is a string, and the ecosystem is layered with a decade of superseded advice that still turns up first in search results. This chapter tries to teach the current style directly, so you can skip the archaeology.
 
@@ -35,7 +35,7 @@ This chapter assumes you understand dependency graphs, targets, and incremental 
 ### CMake Is Not a Build Tool
 This is the correction that has to come first, because almost every early confusion traces to it.
 
-[CMake does not compile anything. It is a **generator**: it reads your project description and writes build files for some other tool to execute]{.hl-default}. Running `cmake` produces makefiles; running `make` (or `ninja`) builds your code. Two programs, two phases, two distinct moments at which things can go wrong.
+[CMake does not compile anything. It is a **generator**: it reads your project description and writes build files for some other tool to execute]{.hl-default-l}. Running `cmake` produces makefiles; running `make` (or `ninja`) builds your code. Two programs, two phases, two distinct moments at which things can go wrong.
 
 ```bash
 cmake -S . -B build      # CONFIGURE: read CMakeLists.txt, write build files into build/
@@ -62,7 +62,7 @@ If you have read [Two-Phase Evaluation](make.qmd#two-phase-evaluation) in the Ma
 | **Generate**  | end of the same command | The accumulated target graph is written out as build files.                                                                                                | Everything configure produced              |
 | **Build**     | `cmake --build build`   | The generated build tool runs compilers and linkers.                                                                                                       | Nothing from CMake's variables             |
 
-The crucial consequence is the same one Make has: [CMake variables do not exist at build time]{.hl-default}. By the time your compiler runs, every `${VAR}` has already been resolved to text and baked into the generated files. A variable you set cannot depend on something a compile step produced, for exactly the reason a Make `$(shell)` cannot.
+The crucial consequence is the same one Make has: [CMake variables do not exist at build time]{.hl-default-l}. By the time your compiler runs, every `${VAR}` has already been resolved to text and baked into the generated files. A variable you set cannot depend on something a compile step produced, for exactly the reason a Make `$(shell)` cannot.
 
 CMake's escape hatch for genuinely build-time values is the **generator expression**, written `$<...>`, which is left unresolved through configure and evaluated when the build files are written per-configuration. They look cryptic and are covered in [Generator Expressions](#generator-expressions).
 
@@ -107,7 +107,7 @@ The third rule is the one that produced CMake's most criticized feature, and it 
 [Tcl](https://en.wikipedia.org/wiki/Tcl_(programming_language)){target="_blank" rel="noopener noreferrer"} (Tool Command Language) is a high-level, general-purpose, interpreted, [dynamic programming](https://en.wikipedia.org/wiki/Dynamic_programming_language){target="_blank" rel="noopener noreferrer"} language. It was designed with the goal of being very simple and powerful. Tcl casts everything into the mold of a command, even programming constructs like variable assignment and procedure definition. Tcl supports multiple programming paradigms, including [object-oriented](https://en.wikipedia.org/wiki/Tcl_(programming_language)#Object-oriented){target="_blank" rel="noopener noreferrer"}, imperative, functional, and procedural styles.
 :::
 
-Tcl was the obvious choice. It was *the* embeddable scripting language of the late 1990s, Kitware knew it well (VTK was scriptable in Tcl), and adopting it would have spared everyone the language you are about to learn. They declined, for a reason that sounds mundane and is not: [a build system is the most basic dependency a package has, and it cannot itself be hard to install]{.hl-default}.
+Tcl was the obvious choice. It was *the* embeddable scripting language of the late 1990s, Kitware knew it well (VTK was scriptable in Tcl), and adopting it would have spared everyone the language you are about to learn. They declined, for a reason that sounds mundane and is not: [a build system is the most basic dependency a package has, and it cannot itself be hard to install]{.hl-default-l}.
 
 If CMake required Tcl, then building any CMake project would first require building Tcl, which in 1999 was genuinely painful on Windows and on several commercial Unixes. That is a circular dependency at exactly the worst point in the chain. So CMake depends on a C++ compiler and nothing else, which is a safe assumption when the thing it is building is C++.
 
@@ -208,7 +208,7 @@ If your project instead has a `set(SOURCES ...)` list feeding `add_executable(ap
 ### `PRIVATE` or `PUBLIC`?
 The one decision in routine list management that is not mechanical. The question to ask is always the same:
 
-[**Does anything that links this target also need this setting?**]{.hl-default}
+[**Does anything that links this target also need this setting?**]{.hl-default-l}
 
 - **No** → `PRIVATE`. It is an implementation detail.
 - **Yes** → `PUBLIC`. It travels to consumers.
@@ -271,7 +271,7 @@ set(PROJECT_AUTHOR "Curtis")
 message(STATUS "author is ${PROJECT_AUTHOR}")
 ```
 
-Now the fact that governs everything else: [CMake has exactly one data type, the string. A list is a string with semicolons in it]{.hl-default}.
+Now the fact that governs everything else: [CMake has exactly one data type, the string. A list is a string with semicolons in it]{.hl-default-l}.
 
 ```cmake
 set(SOURCES a.c b.c c.c)
@@ -381,7 +381,7 @@ The single idea that separates modern CMake from the bad old style
 
 Everything above is syntax. This section is the actual model, and internalizing it is most of what it takes to write CMake that does not hurt.
 
-In Make, a target is a filename in a dependency graph, and build settings are global strings (`CFLAGS`, `LDFLAGS`) that every rule shares. In CMake, [a target is an **object with properties**, and those properties propagate along the dependency graph]{.hl-default}. That difference is the whole reason large projects migrated.
+In Make, a target is a filename in a dependency graph, and build settings are global strings (`CFLAGS`, `LDFLAGS`) that every rule shares. In CMake, [a target is an **object with properties**, and those properties propagate along the dependency graph]{.hl-default-l}. That difference is the whole reason large projects migrated.
 
 ### Declaring Targets
 Three commands create targets:
@@ -596,7 +596,7 @@ C and C++ never had a package manager in the language's first four decades, so t
 The `$<...>` syntax, and when you actually need it
 :::
 
-Generator expressions are the feature most likely to make CMake look unreadable, and they exist for a precise reason: [some values are not known at configure time because they depend on which build configuration is being generated]{.hl-default}.
+Generator expressions are the feature most likely to make CMake look unreadable, and they exist for a precise reason: [some values are not known at configure time because they depend on which build configuration is being generated]{.hl-default-l}.
 
 A single configure can produce build files for Debug and Release simultaneously (Visual Studio and Xcode do this by default). A `if(CMAKE_BUILD_TYPE STREQUAL "Debug")` cannot work there, because configure runs once for all configurations. `$<...>` defers the decision:
 
@@ -642,7 +642,7 @@ CMake ships four standard configurations, selected with `CMAKE_BUILD_TYPE` on si
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ```
 
-The trap: [if you do not set it, it is empty, and you get **no optimization flags at all**]{.hl-default}. Not `-O0`, but nothing, which is usually `-O0` by compiler default. A great many "CMake builds are slow" complaints are an unset build type. Since separate build directories are cheap, keeping `build-debug/` and `build-release/` side by side is the common practice, and it neatly avoids the [stale-object problem](make.qmd#target-specific-and-pattern-specific-variables) that variant builds cause in Make.
+The trap: [if you do not set it, it is empty, and you get **no optimization flags at all**]{.hl-default-l}. Not `-O0`, but nothing, which is usually `-O0` by compiler default. A great many "CMake builds are slow" complaints are an unset build type. Since separate build directories are cheap, keeping `build-debug/` and `build-release/` side by side is the common practice, and it neatly avoids the [stale-object problem](make.qmd#target-specific-and-pattern-specific-variables) that variant builds cause in Make.
 
 ### Cross-Compilation
 For the embedded work in the [C](c.qmd) and [Assembly](assembly.qmd) chapters, cross-compiling is the main event, and CMake handles it with a **toolchain file**: a small script that describes the target system, read before anything else.

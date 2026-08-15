@@ -57,16 +57,16 @@ Three decisions that explain everything else
 
 Make rests on three design decisions. Each one buys something significant, and each one costs something you will eventually trip over. Knowing both halves is most of what it takes to use Make well.
 
-#### You Describe Relationships, Not Order
+#### 1. You Describe Relationships, Not Order
 A shell script is imperative: it runs top to bottom and does the same work every time. A makefile is **declarative**. You state which files depend on which other files, and Make derives the build order itself by walking the resulting graph.
 
-The difference shows up the moment a project grows. A build script has to be written in a correct order, and that order has to be maintained by hand as the project changes. A makefile has no order to maintain. Rules can appear in any sequence, because the dependencies, not the layout of the file, determine what runs when.
+The difference shows up the moment a project grows. A build script has to be written in a correct order, and that order has to be maintained by hand as the project changes. [A makefile has no order to maintain.]{.hl-default-d} Rules can appear in any sequence, because the dependencies, not the layout of the file, determine what runs when.
 
-That declarative structure is also what makes `make -j8` (`--jobs=8`: compile in parallel by running up to 8 concurrent jobs (processes) simultaneously) possible. Once Make knows the graph, it knows which targets are independent, and independent targets can compile simultaneously. You get parallelism for free from a description you wrote for a different reason. A shell script cannot offer this, because it has no idea which of its lines are related.
+That declarative structure is also what makes `make --jobs=8` (compile in parallel by running up to 8 concurrent jobs (processes) simultaneously) possible. Once Make knows the graph, it knows which targets are independent, and independent targets can compile simultaneously. You get [parallelism](#parallelism) for free from a description you wrote for a different reason. A shell script cannot offer this, because it has no idea which of its lines are related.
 
 The cost is that the graph has to be *true*. Make trusts what you declare. A dependency you failed to mention is a dependency Make will happily ignore, producing a build that is subtly stale and, under `-j`, unpredictably broken.
 
-#### Timestamps, Not Content
+#### 2. Timestamps, Not Content
 Make decides a target is out of date by comparing modification times: if any prerequisite is newer than the target, the target is rebuilt. It does not read your files or hash them.
 
 This is cheap. A `stat` call per file is close to free, needs no database, no cache directory, and no state carried between runs. Make can be dropped into any directory and work immediately, which is a large part of why it spread and stayed.
@@ -75,8 +75,8 @@ It is also the root of a whole family of failures, because a timestamp is a prox
 
 The newer generation of build tools made the opposite trade. Ninja, Bazel, and Cargo hash file contents, paying to read every input in exchange for knowing precisely what changed. That is the right call for large builds, and Make's approach is the right call for being able to type `make` in an unfamiliar directory and have it work.
 
-#### The Shell Is the Recipe Language
-[Make knows nothing about compiling. It has no notion of C, no concept of an object file, no model of a linker. What it knows is how to decide *whether* a command should run. The command itself is handed to `/bin/sh`]{.hl-default}.
+#### 3. The Shell Is the Recipe Language
+[Make knows nothing about compiling. It has no notion of C, no concept of an object file, no model of a linker. What it knows is how to decide *whether* a command should run.]{.hl-default-l} The command itself is handed to `/bin/sh`.
 
 This separation is why Make outlived the toolchains it was written for. Anything you can express as "these outputs come from those inputs, via this command" fits the model. Compiling C is one instance. So is rendering LaTeX to PDF, converting images, generating code from a schema, building a container, or rendering this notebook from `.qmd` to HTML. Make does not need to be taught any of these; it only needs to be told what depends on what.
 
@@ -91,7 +91,7 @@ The cost arrives in the next section: because recipes are shell and everything a
 The chapter's organizing idea
 :::
 
-Make has a reputation for being cryptic that its size does not justify. The syntax is genuinely small. What makes makefiles hard to read is that a single file interleaves three different languages, with different rules, evaluated at different times, and the file gives you almost no visual cue about which one you are looking at.
+Make has a reputation for being cryptic; the syntax is genuinely small. What makes makefiles hard to read is that a single file interleaves three different languages, with different rules, evaluated at different times, and the file gives you almost no visual cue about which one you are looking at.
 
 Once you can identify the three on sight, the syntax stops being arbitrary. Nearly every baffling Make error is a *boundary* error: code written in one of the three languages that got evaluated as another.
 
@@ -115,12 +115,12 @@ app: $(OBJS)                      # `rule`, with `macro` expansions in it
 	$(CC) $(CFLAGS) -c $< -o $@   # `shell`, after `macros` are expanded
 ```
 
-Note what the tab-indented lines are and are not. They are shell, but Make gets to them first: [it expands every `$(...)` and *then* hands the resulting text to `/bin/sh`]{.hl-default}. Two languages occupy the same line, one after the other. That single fact generates a surprising number of bugs.
+Note what the tab-indented lines are and are not. They are shell, but Make gets to them first: [it expands every `$(...)` and *then* hands the resulting text to `/bin/sh`]{.hl-default-l}. Two languages occupy the same line, one after the other. That single fact generates a surprising number of bugs.
 
 #### Why This Framing Pays Off
-Three of the most common Make confusions are all the same confusion wearing different clothes. Each is treated fully later; the point here is that they share a cause.
+Three of the most common Make confusions are all the same confusion wearing different clothes. Each is treated later; the point here is that they share a cause.
 
-**Tabs are a language marker.** The rule that recipe lines must start with a tab looks like a pointless historical wart, and its origin genuinely was an accident. But it is doing real work: the tab is how the parser knows a line is *shell* rather than *macro or rule*. Indent with spaces and Make tries to parse your compiler invocation as a makefile construct, which is why the error reads `missing separator`. See [Tabs, and Why](#tabs-and-why).
+**Tabs are a language marker.** The rule that recipe lines must start with a tab looks like a pointless historical wart, and its origin genuinely was an accident. But it is doing real work: [the tab is how the parser knows a line is *shell* rather than *macro or rule*]{.hl-default-l}. Indent with spaces and Make tries to parse your compiler invocation as a makefile construct, which is why the error reads `missing separator`. See [Tabs, and Why](#tabs-and-why).
 
 **`$` means different things on either side of the boundary.** Make consumes `$` for its own expansions, so a `$` that should survive into the shell has to be written `$$`. This is why a shell loop inside a recipe uses `$$i` and not `$i`: `$i` would be expanded by Make, find nothing, and hand the shell an empty string. See [Common Pitfalls](#common-pitfalls).
 
@@ -169,7 +169,7 @@ app: main.o util.o parser.o network.o \
 	gcc -o app $^
 ```
 
-Order within the list does not matter for correctness. Make may build them in any order, and under `-j` it will build them simultaneously. If two prerequisites genuinely must be built in sequence, that ordering has to come from a dependency between *them*, not from their position in this list. Assuming left-to-right order is one of the most common ways a makefile works serially and then fails under `make -j8`.
+Order within the list does not matter for correctness. Make may build them in any order, and under `-j` it will build them simultaneously. If two prerequisites genuinely must be built in sequence, that ordering has to come from a dependency between *them*, not from their position in this list. Assuming left-to-right order is one of the most common ways a makefile works serially and then fails under `make --jobs=8`.
 
 #### Multiple Targets
 A rule may name several targets. The meaning is probably not what you would guess:
@@ -394,8 +394,8 @@ With that line, `all` is the default no matter where it sits in the file or what
 You can also name goals on the command line, and Make builds them in the order given:
 
 ```bash
-make clean app        # clean first, then build app
-make -j8 app docs     # build both, in parallel where the graph allows
+make clean app        		# clean first, then build app
+make --jobs=8 app docs     # build both, in parallel where the graph allows
 ```
 
 ::: {.callout-note title="`make` with no target is not `make all`"}
@@ -465,7 +465,7 @@ What Make actually computes
 A makefile looks like a list of rules. It is better understood as a **graph**: each target is a node, each prerequisite is an edge, and running Make means walking that graph to decide which nodes are stale. Every capability in this chapter, parallelism, incremental rebuilds, the freedom to write rules in any order, falls out of that one structure.
 
 ### How Make Decides What to Rebuild
-The rule is short enough to state exactly. [A target is out of date if it does not exist, or if any of its prerequisites has a more recent modification time than the target]{.hl-default}. When a target is out of date, Make runs its recipe.
+The rule is short enough to state exactly. [A target is out of date if it does not exist, or if any of its prerequisites has a more recent modification time than the target]{.hl-default-l}. When a target is out of date, Make runs its recipe.
 
 The subtlety is that this test is applied *recursively, bottom-up*. Before Make can compare `app` against `main.o`, it must know whether `main.o` is itself current, which means checking `main.o` against `main.c` and `util.h` first. So Make walks depth-first to the leaves of the graph, then evaluates staleness on the way back up. A rebuild deep in the tree updates a timestamp, which propagates staleness upward to everything that depends on it.
 
@@ -488,7 +488,7 @@ flowchart TD
 
 Touching `util.h` makes both object files stale, because both list it as a prerequisite. Rebuilding them updates their timestamps, which in turn makes `app` stale. Three recipes run. Had you edited `util.c` instead, `main.o` would have been left alone and only two would have run.
 
-Now notice what this depends on. `main.o` is rebuilt only because someone wrote `util.h` in its prerequisite list. Make cannot read `main.c`, does not know what `#include` means, and has no way to discover that relationship on its own. [The graph is not derived from your source code; it is asserted by you, and Make trusts the assertion completely]{.hl-default}. Omit `util.h` from that line and the rebuild silently does not happen, leaving an object file compiled against a header that no longer exists in that form. This is the single most common source of stale builds, and it is common enough that the fix, generating those prerequisites automatically from the compiler itself, gets its own section in [Auto-Generated Dependencies](#auto-generated-dependencies).
+Now notice what this depends on. `main.o` is rebuilt only because someone wrote `util.h` in its prerequisite list. Make cannot read `main.c`, does not know what `#include` means, and has no way to discover that relationship on its own. [The graph is not derived from your source code; it is asserted by you, and Make trusts the assertion completely]{.hl-default-l}. Omit `util.h` from that line and the rebuild silently does not happen, leaving an object file compiled against a header that no longer exists in that form. This is the single most common source of stale builds, and it is common enough that the fix, generating those prerequisites automatically from the compiler itself, gets its own section in [Auto-Generated Dependencies](#auto-generated-dependencies).
 
 ::: {.callout-note title="Newer, not different"}
 The comparison is strictly *newer than*, not *not equal to*. A prerequisite older than its target is considered fine no matter how much its contents changed. This sounds like pedantry until you restore a file from a backup or check out an old branch, at which point it is the whole problem. See [When Timestamps Lie](#when-timestamps-lie).
@@ -523,7 +523,7 @@ build:
 	mkdir -p build
 ```
 
-This builds correctly and then rebuilds far more than it should. The reason is that [a directory's modification time changes every time a file is created inside it]{.hl-default}, so `build` is a prerequisite whose timestamp moves on its own, without anyone editing a source file.
+This builds correctly and then rebuilds far more than it should. The reason is that [a directory's modification time changes every time a file is created inside it]{.hl-default-l}, so `build` is a prerequisite whose timestamp moves on its own, without anyone editing a source file.
 
 Whether that bites on the very next run is a matter of timing. If every object lands within the same timestamp tick as the directory update, the comparison is *equal* rather than *newer* and nothing rebuilds, which is why this makefile can look fine in a quick test. The failure surfaces as soon as anything is added to `build/` afterward: a newly added source file, a generated artifact, a later build step writing its output there. Any of these advances the directory's mtime past every object already in it, and the next run recompiles all of them despite nothing having changed. In a real project that is a rebuild-everything, at unpredictable intervals, for no visible reason.
 
@@ -836,7 +836,7 @@ flowchart LR
     P1 --> P2
 ```
 
-The dividing line is the tab. [Everything at the left margin is *phase 1*; everything tab-indented is *phase 2*]{.hl-default}. That is the same boundary as the [three languages](#the-three-languages-in-one-file), viewed on a timeline instead of a page: the rule and macro languages are read first and completely, and only then does the shell language start running.
+The dividing line is the tab. [Everything at the left margin is *phase 1*; everything tab-indented is *phase 2*]{.hl-default-l}. That is the same boundary as the [three languages](#the-three-languages-in-one-file), viewed on a timeline instead of a page: the rule and macro languages are read first and completely, and only then does the shell language start running.
 
 ::: {.callout-tip title="A diagnostic question"}
 When something in a makefile behaves impossibly, ask "which phase is this in?" A value that is empty when you expected content is usually *phase 1* looking for something *phase 2* has not created yet. A `$` that vanished is *phase 1* consuming something *phase 2* needed. Almost nothing else produces those two symptoms.
@@ -893,7 +893,7 @@ list:
 	for f in *.c; do echo "found $$f"; done
 ```
 
-Written as `$f`, Make would expand it first, find no variable named `f`, substitute the empty string, and the shell would receive `echo "found "`. Silently, with no error, on every iteration. The rule is mechanical: [inside a recipe, `$(...)` is Make's, `$$` is the shell's]{.hl-default}.
+Written as `$f`, Make would expand it first, find no variable named `f`, substitute the empty string, and the shell would receive `echo "found "`. Silently, with no error, on every iteration. The rule is mechanical: [inside a recipe, `$(...)` is Make's, `$$` is the shell's]{.hl-default-l}.
 
 ### Immediate and Deferred
 The GNU Make manual describes the same split in terms of *when a given expansion happens*, and the vocabulary is worth having because the manual uses it everywhere.
@@ -1139,7 +1139,7 @@ vpath %.c src:src/net
 vpath %.h include
 ```
 
-This is real functionality solving a real problem, and it is also the feature in this chapter most likely to cost you an afternoon. The trouble is asymmetry: [`VPATH` affects where prerequisites are *found*, and has no effect at all on where targets are *written*]{.hl-default}. `$@` is whatever the rule named, unaffected by the search. So the rule above finds `src/net/socket.c` and writes `socket.o` into the current directory, flattening a structured source tree into a pile of objects in one place. Two files named `socket.c` in different subdirectories then collide, silently, with the second overwriting the first's object.
+This is real functionality solving a real problem, and it is also the feature in this chapter most likely to cost you an afternoon. The trouble is asymmetry: [`VPATH` affects where prerequisites are *found*, and has no effect at all on where targets are *written*]{.hl-default-l}. `$@` is whatever the rule named, unaffected by the search. So the rule above finds `src/net/socket.c` and writes `socket.o` into the current directory, flattening a structured source tree into a pile of objects in one place. Two files named `socket.c` in different subdirectories then collide, silently, with the second overwriting the first's object.
 
 The other failure is subtler. If a stale copy of a file exists in an earlier `VPATH` directory, Make finds *that* one instead of the one you are editing, and the build compiles a file you are not looking at. Debugging that requires knowing `VPATH` is involved at all, which is not visible from the rule.
 
@@ -1161,7 +1161,7 @@ More text, and every path is stated rather than searched for. Object files mirro
 Text transformations over space-separated words
 :::
 
-Make's function library looks intimidating in the manual and is small in practice, because every function does a variant of the same thing: [take a string, treat it as a list of words separated by whitespace, and produce another string]{.hl-default}. There are no numbers, no arrays, no dictionaries, no local scope, and no return values other than text. A "list" in Make is a string that happens to contain spaces, and the only structure it has is where those spaces fall.
+Make's function library looks intimidating in the manual and is small in practice, because every function does a variant of the same thing: [take a string, treat it as a list of words separated by whitespace, and produce another string]{.hl-default-l}. There are no numbers, no arrays, no dictionaries, no local scope, and no return values other than text. A "list" in Make is a string that happens to contain spaces, and the only structure it has is where those spaces fall.
 
 Accepting that up front makes the library predictable. `$(words ...)` returns the count as *the text of a number*. `$(sort ...)` sorts words alphabetically and removes duplicates because that is what sorting a word list means to Make. There is no other layer underneath.
 
@@ -1717,14 +1717,14 @@ $(SUBDIRS):
 	$(MAKE) -C $@
 ```
 
-`$(MAKE) -C dir` changes into a directory and runs Make there. Use `$(MAKE)` rather than a literal `make`: it carries the correct executable name and, critically, the **jobserver** file descriptors that let a single `-j8` budget be shared across the whole recursion. Write `make` instead and each sub-make starts its own unlimited job pool, which is how a build ends up spawning hundreds of compilers and thrashing the machine.
+`$(MAKE) -C dir` changes into a directory and runs Make there. Use `$(MAKE)` rather than a literal `make`: it carries the correct executable name and, critically, the **jobserver** file descriptors that let a single `--jobs=8` budget be shared across the whole recursion. Write `make` instead and each sub-make starts its own unlimited job pool, which is how a build ends up spawning hundreds of compilers and thrashing the machine.
 
 This structure dominated for decades, and its appeal is real. Each directory's build is self-contained and comprehensible. A subdirectory can be built alone during development. The top-level makefile stays short.
 
 #### Recursive Make Considered Harmful
 In 1997 Peter Miller published a paper with that title, and the argument has held up well enough that every build system designed since has taken it seriously.
 
-The core claim is that [each sub-make sees only a fragment of the dependency graph, and a fragment is not enough to be correct]{.hl-default}. When `src/Makefile` runs, it knows its own sources and nothing about `lib/`. If `src/main.c` includes `lib/util.h`, that edge exists in reality and in no makefile. The top level imposes an *order*, building `lib` before `src`, and order is a weaker guarantee than dependency: it means `lib` is built first, not that `src` rebuilds when `lib` changes.
+The core claim is that [each sub-make sees only a fragment of the dependency graph, and a fragment is not enough to be correct]{.hl-default-l}. When `src/Makefile` runs, it knows its own sources and nothing about `lib/`. If `src/main.c` includes `lib/util.h`, that edge exists in reality and in no makefile. The top level imposes an *order*, building `lib` before `src`, and order is a weaker guarantee than dependency: it means `lib` is built first, not that `src` rebuilds when `lib` changes.
 
 The failures follow directly:
 
@@ -1786,7 +1786,7 @@ ALL_TARGETS += src/app
 ALL_DEPS    += $(SRC_OBJS:.o=.d)
 ```
 
-One Make process now holds every node. `src/app` depends on `lib/libutil.a` as a genuine graph edge, so changing a library source rebuilds the application. `-j8` parallelizes across the entire project rather than within one directory at a time. The `.d` files supply header dependencies across directory boundaries, which recursion could not express at all.
+One Make process now holds every node. `src/app` depends on `lib/libutil.a` as a genuine graph edge, so changing a library source rebuilds the application. `--jobs=8` parallelizes across the entire project rather than within one directory at a time. The `.d` files supply header dependencies across directory boundaries, which recursion could not express at all.
 
 The ergonomic cost is real and worth stating plainly.
 
@@ -2096,27 +2096,27 @@ Every language ecosystem has grown its own task runner (npm scripts, `cargo make
 Free speedup, if the graph is true
 :::
 
-`make -j8` runs up to eight recipes at once:
+`make --jobs=8` runs up to eight recipes at once:
 
 ```bash
-make -j8              # up to 8 concurrent jobs
+make --jobs=8         # up to 8 concurrent jobs
 make -j               # unlimited: as many as the graph allows
 make -j$(nproc)       # one per core, the usual choice
 ```
 
 On a multi-core machine this is close to a linear speedup for the compile phase, and it costs nothing to ask for. That is the payoff promised back in [You Describe Relationships, Not Order](#you-describe-relationships-not-order): you described dependencies for a different reason, and parallelism fell out of the description. Make already knows which nodes are unrelated, so it already knows what can run simultaneously. No annotation, no thread pool, no change to a single rule.
 
-Bare `-j` with no number is worth avoiding. It imposes no limit at all, so a large project spawns hundreds of compilers, exhausts memory, and runs slower than `-j8` would have. Give it a number.
+Bare `-j` with no number is worth avoiding. It imposes no limit at all, so a large project spawns hundreds of compilers, exhausts memory, and runs slower than `--jobs=8` would have. Give it a number.
 
 ### Parallelism Is a Correctness Test
-Here is the part that matters. [`-j` does not introduce bugs; it reveals them]{.hl-default}. A missing prerequisite is a lie in the graph whether or not you build in parallel. Serially, Make happens to visit targets in an order that often masks the lie, because file order accidentally matches the true order. In parallel, that accident stops holding.
+Here is the part that matters. [`-j` does not introduce bugs; it reveals them]{.hl-default-l}. A missing prerequisite is a lie in the graph whether or not you build in parallel. Serially, Make happens to visit targets in an order that often masks the lie, because file order accidentally matches the true order. In parallel, that accident stops holding.
 
 The symptom is unmistakable once you know it:
 
 ```bash
-$ make -j8
+$ make --jobs=8
 ... build fails somewhere odd ...
-$ make -j8
+$ make --jobs=8
 ... succeeds ...
 ```
 
@@ -2133,7 +2133,7 @@ version.h:
 	./gen-version > $@
 ```
 
-Serially, if `version.h` is built first, everything works and you never notice. Under `-j8`, the compile of `main.c` starts while `gen-version` is still writing, and you get a missing header, or worse, a *half-written* one. The fix is to state the truth:
+Serially, if `version.h` is built first, everything works and you never notice. Under `--jobs=8`, the compile of `main.c` starts while `gen-version` is still writing, and you get a missing header, or worse, a *half-written* one. The fix is to state the truth:
 
 ```makefile
 main.o: main.c version.h
@@ -2143,7 +2143,7 @@ main.o: main.c version.h
 A related failure is two recipes writing the same file. Nothing in Make prevents it, and under `-j` they interleave. If two rules both `>>` into a log, or both produce an intermediate with the same name, the output is nondeterministic garbage. Every output file should be produced by exactly one rule.
 
 ::: {.callout-tip title="Test with `-j` even if you build serially"}
-Running `make -j8` in CI on a clean tree is a cheap and effective audit of the dependency graph. It converts latent missing-prerequisite bugs into loud failures, at the point where they are still easy to fix. A makefile that survives repeated clean parallel builds has a graph you can trust; one that has only ever been built serially has a graph nobody has checked.
+Running `make --jobs=8` in CI on a clean tree is a cheap and effective audit of the dependency graph. It converts latent missing-prerequisite bugs into loud failures, at the point where they are still easy to fix. A makefile that survives repeated clean parallel builds has a graph you can trust; one that has only ever been built serially has a graph nobody has checked.
 :::
 
 ::: {.callout-warning title="`-j` and recursive make"}
@@ -2154,9 +2154,9 @@ This is where [recursive make](#recursive-make) hurts most. Each sub-make sees o
 Parallel jobs write to the same terminal at the same time, so a failing compiler's error message arrives shredded between two other jobs' output. `-O` (`--output-sync`) buffers each job's output and prints it in one piece:
 
 ```bash
-make -j8 -O            # or: -Otarget, the default granularity
-make -j8 -Oline        # per line
-make -j8 -Orecurse     # group a whole sub-make together
+make --jobs=8 -O            # or: -Otarget, the default granularity
+make --jobs=8 -Oline        # per line
+make --jobs=8 -Orecurse     # group a whole sub-make together
 ```
 
 `-Otarget` groups all output from one target, which is what you want almost always: an error message stays attached to the compile that produced it. `-Orecurse` is the right choice with recursive make, keeping each subdirectory's output contiguous.
@@ -2185,7 +2185,7 @@ This expresses a barrier without inventing fake dependencies, which is what peop
 **Order-only prerequisites** remain the right answer when the constraint is genuinely "this must exist first," which is the [directory case](#order-only-prerequisites). They impose ordering without falsely marking the target stale.
 
 ### The Jobserver
-One detail explains how `-j8` stays `-j8` across a recursive build. If each sub-make independently honored `-j8`, a tree with six subdirectories could run 48 compilers.
+One detail explains how `--jobs=8` stays `--jobs=8` across a recursive build. If each sub-make independently honored `--jobs=8`, a tree with six subdirectories could run 48 compilers.
 
 Make solves this with the **jobserver**: the top-level process creates a pipe holding one token per available job slot. A sub-make wanting to start a job reads a token from the pipe, and returns it when the job finishes. No token, no job. Because the pipe is inherited through the process tree, every make in the recursion draws from one shared pool, and the total stays at eight.
 
@@ -2317,7 +2317,7 @@ Global `.SILENT` is best avoided. Echoed commands are how you find out what a fa
 .NOTPARALLEL:
 ```
 
-This is almost always the wrong fix. A makefile that fails under `-j8` and passes serially has a missing prerequisite, and `.NOTPARALLEL` hides the bug while giving up the speedup. It is legitimate in a narrow case: when recipes genuinely contend for a shared external resource, such as a single hardware programmer or a database, that the dependency graph cannot express. See [Parallelism](#parallelism).
+This is almost always the wrong fix. A makefile that fails under `--jobs=8` and passes serially has a missing prerequisite, and `.NOTPARALLEL` hides the bug while giving up the speedup. It is legitimate in a narrow case: when recipes genuinely contend for a shared external resource, such as a single hardware programmer or a database, that the dependency graph cannot express. See [Parallelism](#parallelism).
 
 ::: {.callout-tip title="A reasonable preamble"}
 Most of these decisions are the same in every serious makefile, which makes a standard opening block worth copying:
@@ -2600,7 +2600,7 @@ The same reasoning applies to `$(shell)` inspecting build products, and to condi
 This is the most consequential single line in this chapter, because the failure is silent and produces wrong output rather than an error. Full discussion in [`.DELETE_ON_ERROR`](#delete_on_error).
 
 ### Works Serially, Fails Under `-j`
-**Symptom.** `make` succeeds, `make -j8` fails intermittently and passes on retry.
+**Symptom.** `make` succeeds, `make --jobs=8` fails intermittently and passes on retry.
 
 **Cause.** A missing prerequisite. The graph does not connect two targets that must be ordered, and serial execution happened to visit them in a workable order. Parallelism removes that accident.
 

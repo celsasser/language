@@ -2092,13 +2092,105 @@ Every language ecosystem has grown its own task runner (npm scripts, `cargo make
 **There is no error handling worth the name.** A recipe is a sequence of shell commands, each checked only for exit status. Anything conditional or recoverable has to be written in shell inside the recipe, and at that point the makefile is a shell script with extra parsing rules between you and it. When a task grows past a few lines, move it into `scripts/` and have the makefile call it.
 
 ## Parallelism
-<!-- -j N and why it is nearly free speedup, given a correct graph. Then the
-catch: -j exposes every missing dependency as a nondeterministic failure, so a
-makefile that "works" serially can fail at -j8 and pass on retry. That is
-almost always a missing prerequisite, not a Make bug.
+::: {.subheading}
+Free speedup, if the graph is true
+:::
 
-Also: -O (--output-sync) to stop interleaved output, .NOTPARALLEL, .WAIT for
-ordering in newer versions, and the jobserver's role across recursive make. -->
+`make -j8` runs up to eight recipes at once:
+
+```bash
+make -j8              # up to 8 concurrent jobs
+make -j               # unlimited: as many as the graph allows
+make -j$(nproc)       # one per core, the usual choice
+```
+
+On a multi-core machine this is close to a linear speedup for the compile phase, and it costs nothing to ask for. That is the payoff promised back in [You Describe Relationships, Not Order](#you-describe-relationships-not-order): you described dependencies for a different reason, and parallelism fell out of the description. Make already knows which nodes are unrelated, so it already knows what can run simultaneously. No annotation, no thread pool, no change to a single rule.
+
+Bare `-j` with no number is worth avoiding. It imposes no limit at all, so a large project spawns hundreds of compilers, exhausts memory, and runs slower than `-j8` would have. Give it a number.
+
+### Parallelism Is a Correctness Test
+Here is the part that matters. [`-j` does not introduce bugs; it reveals them]{.hl-default}. A missing prerequisite is a lie in the graph whether or not you build in parallel. Serially, Make happens to visit targets in an order that often masks the lie, because file order accidentally matches the true order. In parallel, that accident stops holding.
+
+The symptom is unmistakable once you know it:
+
+```bash
+$ make -j8
+... build fails somewhere odd ...
+$ make -j8
+... succeeds ...
+```
+
+A build that fails intermittently under `-j` and passes on retry is **almost never a Make bug**. It is a missing edge. Two targets that must be ordered are not connected in the graph, so Make, correctly reasoning from what you told it, runs them together.
+
+The classic instance is a generated header:
+
+```makefile
+# BROKEN under -j: nothing says main.o needs version.h
+main.o: main.c
+	$(CC) -c $< -o $@
+
+version.h:
+	./gen-version > $@
+```
+
+Serially, if `version.h` is built first, everything works and you never notice. Under `-j8`, the compile of `main.c` starts while `gen-version` is still writing, and you get a missing header, or worse, a *half-written* one. The fix is to state the truth:
+
+```makefile
+main.o: main.c version.h
+	$(CC) -c $< -o $@
+```
+
+A related failure is two recipes writing the same file. Nothing in Make prevents it, and under `-j` they interleave. If two rules both `>>` into a log, or both produce an intermediate with the same name, the output is nondeterministic garbage. Every output file should be produced by exactly one rule.
+
+::: {.callout-tip title="Test with `-j` even if you build serially"}
+Running `make -j8` in CI on a clean tree is a cheap and effective audit of the dependency graph. It converts latent missing-prerequisite bugs into loud failures, at the point where they are still easy to fix. A makefile that survives repeated clean parallel builds has a graph you can trust; one that has only ever been built serially has a graph nobody has checked.
+:::
+
+::: {.callout-warning title="`-j` and recursive make"}
+This is where [recursive make](#recursive-make) hurts most. Each sub-make sees only its fragment, so cross-directory ordering rests on the `SUBDIRS` sequence rather than on real edges, and that sequence is exactly the guarantee `-j` is entitled to ignore *within* a level. Always invoke sub-makes as `$(MAKE)`, never a literal `make`, so the jobserver is inherited.
+:::
+
+### Interleaved Output
+Parallel jobs write to the same terminal at the same time, so a failing compiler's error message arrives shredded between two other jobs' output. `-O` (`--output-sync`) buffers each job's output and prints it in one piece:
+
+```bash
+make -j8 -O            # or: -Otarget, the default granularity
+make -j8 -Oline        # per line
+make -j8 -Orecurse     # group a whole sub-make together
+```
+
+`-Otarget` groups all output from one target, which is what you want almost always: an error message stays attached to the compile that produced it. `-Orecurse` is the right choice with recursive make, keeping each subdirectory's output contiguous.
+
+This is a genuinely large quality-of-life improvement and it is not the default, so it is worth putting in `MAKEFLAGS`:
+
+```makefile
+MAKEFLAGS += -Otarget
+```
+
+The tradeoff is latency: a job's output appears when the job finishes rather than as it runs. For a long-running step you lose the ability to watch progress live.
+
+### Constraining Parallelism
+Sometimes concurrency genuinely must be limited, and Make offers three tools of decreasing bluntness.
+
+**`.NOTPARALLEL`** forces the entire makefile to run serially even when `-j` is given. As noted in [Suppressing Output and Parallelism](#suppressing-output-and-parallelism), this is usually the wrong fix, because it hides a graph bug while surrendering the speedup. It is legitimate only when recipes contend for a resource the graph cannot express: a single hardware programmer, a test database, a physical serial port.
+
+**`.WAIT`** (GNU Make 4.4, 2022) is the precise version. Placed between prerequisites, it forces everything before it to complete before anything after it starts:
+
+```makefile
+all: generate .WAIT compile
+```
+
+This expresses a barrier without inventing fake dependencies, which is what people previously resorted to. Being new, it is not available on macOS's Make 3.81 or on many distributions' defaults, so treat it as a tool for controlled environments.
+
+**Order-only prerequisites** remain the right answer when the constraint is genuinely "this must exist first," which is the [directory case](#order-only-prerequisites). They impose ordering without falsely marking the target stale.
+
+### The Jobserver
+One detail explains how `-j8` stays `-j8` across a recursive build. If each sub-make independently honored `-j8`, a tree with six subdirectories could run 48 compilers.
+
+Make solves this with the **jobserver**: the top-level process creates a pipe holding one token per available job slot. A sub-make wanting to start a job reads a token from the pipe, and returns it when the job finishes. No token, no job. Because the pipe is inherited through the process tree, every make in the recursion draws from one shared pool, and the total stays at eight.
+
+This is also the mechanism you break by writing `make -C subdir` instead of `$(MAKE) -C subdir`. `$(MAKE)` is special-cased: Make recognizes it and passes the jobserver file descriptors through. A literal `make` gets no tokens, so it either warns and runs serially, or starts its own unlimited pool. GNU Make 4.4 moved to a named-pipe implementation that is more robust across shells and tools, and Ninja and Cargo can participate in the same protocol, which is how a Rust build invoked from a makefile stays inside your job budget.
+
 ## Special Targets
 ::: {.subheading}
 Names Make reserves for configuring itself
@@ -2242,32 +2334,295 @@ That is: no surprise rules, no stale targets after a failure, no suffix rules, a
 :::
 
 ## Debugging Makefiles
-<!-- The toolkit, roughly in order of use:
-  -n / --just-print   show commands without running them
-  --trace             show why each recipe is being run
-  -p / --print-data-base   dump all rules and variables (huge; pipe it)
-  -d / --debug=b,v,i  decision-level tracing at varying volume
-  $(info)/$(warning)  printf debugging in phase 1
-  make -pn -f/dev/null  see the built-in rules alone
-  $(VAR) vs $(origin VAR) and $(flavor VAR) to ask where a value came from
+::: {.subheading}
+Asking Make what it thinks it is doing
+:::
 
-Then a short worked session: a target that rebuilds every time, diagnosed with
---trace. That symptom is the most common real complaint and deserves a
-demonstrated fix. -->
+Make's error messages are famously unhelpful, but its introspection tools are good and underused. Nearly every question you will have is one of two kinds: *what would you run* (phase 2) or *what is this variable* (phase 1). Different tools answer each.
+
+### The Toolkit
+
+| Command                | Answers                                                    |
+|:-----------------------|:------------------------------------------------------------|
+| `make -n`              | What would you run, without running it                      |
+| `make --trace`         | Which recipe is running, and why                            |
+| `make --debug=b`       | The decisions: what is out of date and what caused it       |
+| `make -p`              | Every rule and variable Make knows, including built-ins     |
+| `make -p -f /dev/null` | The built-in database alone, with none of your makefile     |
+| `$(info ...)`          | Printf debugging during phase 1                             |
+| `$(origin VAR)`        | Where a value came from                                     |
+| `$(flavor VAR)`        | Whether it was `=` or `:=`                                  |
+
+**`-n` (`--just-print`)** is the first thing to reach for. It prints commands without executing them, so you can confirm what a build would do before letting it. It is also the safe way to inspect a `clean` or `install` target you did not write.
+
+```bash
+make -n install
+```
+
+Note one limitation: `-n` still *expands* everything, so any `$(shell)` call runs. A makefile that does real work at parse time is not fully inert under `-n`.
+
+**`--trace`** annotates each recipe with the rule that triggered it and the reason, which is exactly the question "why is this being rebuilt." It requires GNU Make 4.0 or newer.
+
+**`--debug=b`** is the portable equivalent and is available on older versions including the 3.81 that macOS ships. The `b` is "basic"; `v` (verbose), `i` (implicit rules), and `m` (makefile remaking) add detail, and bare `-d` turns on everything at a volume that is rarely useful.
+
+**`-p` (`--print-data-base`)** dumps the entire internal state: every variable with its origin, every rule including built-ins, and the files Make considered. It runs to hundreds of lines, so pipe it:
+
+```bash
+make -p | grep -A2 '^CFLAGS'
+make -p -f /dev/null | less     # built-in rules with no makefile at all
+```
+
+### A Worked Session: The Target That Always Rebuilds
+This is the most common real complaint about a makefile, and it has a small number of causes. Here is a build that relinks on every invocation despite nothing changing:
+
+```makefile
+CC := gcc
+
+.PHONY: all version
+all: app
+
+app: main.o version
+	$(CC) -o $@ main.o
+
+main.o: main.c
+	$(CC) -c $< -o $@
+
+version:
+	@echo "stamping version"
+```
+
+The symptom, on a tree where everything is already built:
+
+```bash
+$ make
+stamping version
+gcc -o app main.o
+$ make
+stamping version
+gcc -o app main.o
+```
+
+Nothing changed, and `app` relinks anyway. Ask Make why:
+
+```bash
+$ make --debug=b
+Updating goal targets....
+ File `all' does not exist.
+     File `version' does not exist.
+    Must remake target `version'.
+stamping version
+    Successfully remade target file `version'.
+   Prerequisite `version' of target `app' does not exist.
+  Must remake target `app'.
+gcc -o app main.o
+```
+
+The diagnosis is in one line: `Prerequisite 'version' of target 'app' does not exist.` A [phony target](#phony-targets) never corresponds to a file, so it is *never* up to date, and anything depending on it is therefore always stale. The `.PHONY` declaration is correct; using that target as a prerequisite of a real file is the mistake.
+
+The fix depends on intent. If the version stamp is genuinely an input, it must produce a real file so Make can compare timestamps:
+
+```makefile
+app: main.o version.txt
+	$(CC) -o $@ main.o
+
+version.txt: $(shell git rev-parse HEAD > /dev/null && echo .git/HEAD)
+	git describe --always > $@
+```
+
+If it is just a message, it does not belong in the graph at all; move it into the recipe:
+
+```makefile
+app: main.o
+	@echo "stamping version"
+	$(CC) -o $@ main.o
+```
+
+#### The Other Causes
+When `--debug=b` reports something else, the phrasing points at the cause:
+
+**`File 'x' does not exist`** for a target you believe exists usually means a path mismatch: the rule writes `build/app` and something depends on `app`, or a [`VPATH`](#vpath-and-vpath) search found a different file than you assumed.
+
+**A prerequisite is newer for no reason** is typically a directory used as a normal prerequisite rather than an [order-only](#order-only-prerequisites) one, since a directory's mtime changes whenever a file is written into it.
+
+**Everything rebuilds after a branch switch** is version control not preserving mtimes, covered in [When Timestamps Lie](#when-timestamps-lie).
+
+**A rule fires that you did not write** is a [built-in rule](#built-in-rules-and-why-to-disable-them). Confirm with `make -p -f /dev/null` and disable them.
+
+### Debugging Phase 1
+Everything above inspects the build. When the problem is a variable that is empty, wrong, or mysteriously overridden, you need the [read phase](#two-phase-evaluation) instead, and the tools are the [diagnostic functions](#error-warning-info):
+
+```makefile
+$(info CFLAGS = "$(CFLAGS)")
+$(info OBJS   = $(OBJS))
+$(info origin = $(origin CC))
+$(info flavor = $(flavor CFLAGS))
+```
+
+The quotes matter. `$(info CFLAGS = $(CFLAGS))` cannot distinguish an empty variable from one holding a space, and trailing whitespace in a Make variable is both invisible and load-bearing.
+
+`$(origin)` is the tool for "why is this value not what my makefile says." It returns `undefined`, `default`, `environment`, `file`, `command line`, `override`, or `automatic`, which maps onto the precedence table in [Where Values Come From](#where-values-come-from). If `$(origin CC)` says `environment`, someone's shell profile is in your build.
+
+Two flags complete the set. `--warn-undefined-variables` catches the typo that expands to nothing:
+
+```bash
+$ make --warn-undefined-variables
+Makefile:8: warning: undefined variable 'CFLGAS'
+```
+
+And `-B` (`--always-make`) rebuilds everything unconditionally, which is useful for separating "the graph is wrong" from "the recipe is wrong." If `make -B` produces a correct result and plain `make` does not, the recipes are fine and the dependency graph is lying.
+
+::: {.callout-tip title="A fast triage order"}
+1. `make -n`: is it running what you expect?
+2. `make --debug=b` (or `--trace`): why is that target considered stale?
+3. `$(info ...)` on the suspect variable: is the value what you think?
+4. `$(origin VAR)`: if not, where did it come from?
+5. `make -p | grep VAR`: the exhaustive answer, when the first four fail.
+:::
+
 ## Common Pitfalls
-<!-- Callout-heavy section, each item stated as symptom then cause then fix:
-  - "missing separator" = spaces where a tab belongs
-  - trailing whitespace in a variable, invisible and load-bearing
-  - $ vs $$ crossing the macro/shell boundary; shell loops needing $$i
-  - each recipe line is a separate shell, so `cd` does not persist
-    (fix: && continuation, or .ONESHELL)
-  - recursive variable self-reference looping
-  - $(wildcard) at parse time missing files a recipe will create
-  - a failed recipe leaving a stale target (see .DELETE_ON_ERROR)
-  - missing prerequisites that only surface under -j
-  - `clean` breaking because a file named clean exists (see .PHONY)
-Every one of these ties back to the three-languages or two-phase model. Say so
-explicitly; that is what makes the chapter cohere. -->
+::: {.subheading}
+Nine failures, and the two ideas behind all of them
+:::
+
+Everything that goes wrong in a makefile is collected here, stated as symptom, cause, and fix. What makes the list worth reading straight through is that these are not nine unrelated quirks. Almost every one is a [boundary error between the three languages](#the-three-languages-in-one-file) or a [phase confusion](#two-phase-evaluation), and the last column of the table below says which:
+
+| Symptom                                | Root cause                          |
+|:---------------------------------------|:--------------------------------------|
+| `missing separator`                    | Three languages: spaces where a tab marks shell |
+| Shell variable is empty                | Three languages: `$` consumed by Make |
+| `cd` does not persist                  | Three languages: one shell per recipe line |
+| Comparison fails on equal-looking text | Three languages: invisible trailing whitespace |
+| Variable references itself             | Phases: deferred expansion loops     |
+| `$(wildcard)` finds nothing            | Phases: parse time precedes recipes  |
+| Stale target after a failure           | Timestamps: mtime updated on partial output |
+| Works serially, fails under `-j`       | Graph: a missing edge                |
+| `make clean` says up to date           | Graph: a target that is also a filename |
+
+### `missing separator`
+**Symptom.** `Makefile:5: *** missing separator.  Stop.`
+
+**Cause.** A recipe line indented with spaces instead of a tab. Make uses the leading tab to know a line is *shell* rather than rule or macro, so without it, your `gcc` command is parsed as a makefile construct. Finding neither `=` nor `:`, Make reports the missing separator. The message names the symptom of a failed parse, not the cause.
+
+**Fix.** Use a tab. Configure the editor so it cannot happen: `[{Makefile,*.mk}]` with `indent_style = tab` in `.editorconfig`. Full treatment in [Tabs, and Why](#tabs-and-why).
+
+::: {.callout-warning title="The same error from an indented conditional"}
+A tab in front of `ifeq` makes it a recipe line, and the shell has no `ifeq`. That one produces `ifeq: command not found` rather than `missing separator`, but the cause is identical: leading whitespace decided which language the line was in. Conditional bodies indent with **spaces**.
+:::
+
+### `$` Crossing the Boundary
+**Symptom.** A shell loop does nothing, or a command receives an empty string where a variable should be.
+
+```makefile
+# BROKEN: prints "found " repeatedly
+list:
+	for f in *.c; do echo "found $f"; done
+```
+
+**Cause.** Make expands the recipe before handing it to the shell. `$f` is read by Make, which finds no variable `f` and substitutes nothing. The shell never sees it.
+
+**Fix.** `$$` escapes a dollar sign so it survives into the shell:
+
+```makefile
+list:
+	for f in *.c; do echo "found $$f"; done
+```
+
+The rule is mechanical: inside a recipe, `$(...)` belongs to Make and `$$` belongs to the shell. This applies equally to shell command substitution, `$$(date)`, and to `awk` scripts needing `$$1`.
+
+### `cd` Does Not Persist
+**Symptom.** A recipe changes directory and the next line runs somewhere else.
+
+**Cause.** Each recipe line gets its own shell process. The `cd` affects only the shell that ran it, which exits immediately.
+
+**Fix.** Join the lines into one command, or enable `.ONESHELL`:
+
+```makefile
+install:
+	cd build && cp app /usr/local/bin/
+```
+
+Covered in [Multi-Line Recipes](#multi-line-recipes); the `.ONESHELL` tradeoffs are in [Special Targets](#oneshell).
+
+### Trailing Whitespace
+**Symptom.** A conditional fails against a value that looks correct.
+
+```makefile
+MODE := debug
+ifeq ($(MODE),debug)      # does not match if MODE has a trailing space
+```
+
+**Cause.** Trailing whitespace is part of a Make variable's value and is invisible in an editor. It commonly arrives from a `$(shell)` call or a hand-edited configuration block, and `$(info MODE = $(MODE))` will not reveal it.
+
+**Fix.** Quote when printing, `$(info "$(MODE)")`, and `$(strip ...)` anything whose provenance you do not control. Note also that `VAR := value # comment` includes the space before `#` in the value, which is a frequent source of this.
+
+### Recursive Variable Self-Reference
+**Symptom.** `*** Recursive variable 'A' references itself (eventually).  Stop.`
+
+**Cause.** `A = $(A) more` with `=` stores the right side unexpanded, so every reference re-expands it forever. Make detects the loop and refuses.
+
+**Fix.** Use `:=`, which expands the old value once and reassigns:
+
+```makefile
+A := $(A) more
+```
+
+Or `+=`, which does the right thing for appending. See [The Two Flavors](#the-two-flavors).
+
+### `$(wildcard)` Sees Nothing
+**Symptom.** A build fails on a clean tree and succeeds on the second run.
+
+```makefile
+OBJS := $(wildcard build/*.o)     # empty until something has been built
+```
+
+**Cause.** `$(wildcard)` runs in phase 1, before any recipe. It cannot see files a recipe is about to create. Globbing an *output* directory is therefore always wrong.
+
+**Fix.** Derive outputs from inputs, which do exist at parse time:
+
+```makefile
+SRCS := $(wildcard src/*.c)
+OBJS := $(patsubst src/%.c,build/%.o,$(SRCS))
+```
+
+The same reasoning applies to `$(shell)` inspecting build products, and to conditionals testing them. See [What Runs When](#what-runs-when).
+
+### A Failed Recipe Leaves a Stale Target
+**Symptom.** A build fails, you run `make` again, and it reports the broken target is up to date.
+
+**Cause.** The shell creates the output file before the command runs. A command that fails partway leaves a truncated file with a fresh timestamp, which Make reads as current.
+
+**Fix.** One line, near the top of every makefile:
+
+```makefile
+.DELETE_ON_ERROR:
+```
+
+This is the most consequential single line in this chapter, because the failure is silent and produces wrong output rather than an error. Full discussion in [`.DELETE_ON_ERROR`](#delete_on_error).
+
+### Works Serially, Fails Under `-j`
+**Symptom.** `make` succeeds, `make -j8` fails intermittently and passes on retry.
+
+**Cause.** A missing prerequisite. The graph does not connect two targets that must be ordered, and serial execution happened to visit them in a workable order. Parallelism removes that accident.
+
+**Fix.** Find the true dependency and declare it. This is not a Make bug and `.NOTPARALLEL` is not the answer; it hides the defect while surrendering the speedup. See [Parallelism Is a Correctness Test](#parallelism-is-a-correctness-test).
+
+### `make clean` Says Up To Date
+**Symptom.** `make: 'clean' is up to date.`
+
+**Cause.** A file or directory named `clean` exists. Make compared the target against it, found no newer prerequisites, and concluded there was nothing to do.
+
+**Fix.** Declare action targets phony:
+
+```makefile
+.PHONY: all clean test install docs
+```
+
+A `docs/` directory silently disabling `make docs` is the version of this you are most likely to meet. See [Phony Targets](#phony-targets).
+
+::: {.callout-tip title="The two questions"}
+When a makefile misbehaves, almost every cause above is reached by asking two questions in order. **Which language is this line?** resolves tabs, `$` versus `$$`, the per-line shell, and stray whitespace. **Which phase does this run in?** resolves wildcards, shell calls, conditionals, and variable flavors. What remains after both is a graph problem: a missing edge, or a target that is secretly a filename.
+:::
+
 ## Make and CMake
 ::: {.subheading}
 What generates the makefiles you were never meant to read
@@ -2397,26 +2752,45 @@ Ninja was designed for exactly this role: a build language nobody writes by hand
 :::
 
 ## Where Make Sits Today
-<!-- An honest closing assessment rather than a defense.
+::: {.subheading}
+What it still wins at, and what it has lost
+:::
 
-Still wins at: being installed everywhere, zero configuration, small projects,
-task running, gluing heterogeneous tools (LaTeX, Quarto, containers, codegen),
-and being readable in full by one person.
+Make is fifty years old, and the honest assessment is neither that it is obsolete nor that the newer tools are hype. It occupies a narrower niche than it once did, and inside that niche nothing has displaced it.
 
-Lost to newer tools at: large C/C++ projects (CMake for configuration and
-portability, Ninja for speed), correctness under change (content hashing beats
-timestamps), hermetic and distributed builds (Bazel), and anything with a
-language-native toolchain (Cargo, Go).
+### What Make Still Wins At
+**It is already there.** No installation, no version pin, no lockfile, no daemon. A makefile in a repository works on a stranger's machine, in a container, over SSH on a box you cannot install software on. For a small project this is worth more than any feature, because the alternative starts with a paragraph of setup instructions.
 
-The idea that outlived the tool: the dependency graph. Every successor
-implements it. A reader who understands Make's model can read any of them.
-Tie back to the Overview. -->
+**Zero configuration for small builds.** Ten lines gets you a correct incremental build of a C program. The equivalent CMake project is comparable in length but requires CMake, a generator, and a build directory; the ceremony does not pay off until the project is large enough to need it.
+
+**Gluing heterogeneous tools.** This is where Make is genuinely unmatched, and it follows directly from [The Shell Is the Recipe Language](#the-shell-is-the-recipe-language). A pipeline that renders LaTeX, converts images with ImageMagick, generates code from a schema, builds a container, and publishes the result is not a C build, and no language-native toolchain covers it. Make does, because it never assumed anything about the work. This notebook is built that way.
+
+**Task running.** The command menu described in [Make as a Task Runner](#make-as-a-task-runner) is a legitimate modern use, and its advantage is again ubiquity rather than quality.
+
+**One person can read the whole thing.** A 60-line makefile is fully comprehensible in an afternoon, including its failure modes. That is not true of a generated Ninja file or a large CMake project, and for a small team it matters.
+
+### What Make Has Lost
+**Large C/C++ projects, to CMake and Ninja.** Not because Make cannot express them, but because [target-based CMake carries build requirements along the dependency graph](#the-concept-map) and Make has only a global `CFLAGS` string. Add cross-platform configuration and toolchain detection, which Make has no answer for at all, and the case is decided. Ninja then beats Make on raw execution speed for the generated output.
+
+**Correctness under change, to content hashing.** Every failure in [When Timestamps Lie](#when-timestamps-lie) is structural. Ninja, Bazel, and Cargo hash inputs, so a restored backup, a branch switch, or a regenerated-but-identical file behaves correctly. They also track *flags* as inputs, which is why Make needs the separate-directory trick for debug and release builds and they do not.
+
+**Hermetic and distributed builds, to Bazel.** Make's recipes can read anything on the machine, so a build is reproducible only by convention. Bazel sandboxes each action, which is what makes remote execution and shared caching possible. At a thousand engineers that is transformative; at one it is overhead.
+
+**Language-native builds, to Cargo and Go.** When a language ships a build tool that understands its module system, that tool wins by default. Nobody writes a makefile to build a Rust crate, and [Cargo](rust-cc.qmd) needs no dependency graph from you because it derives one from the source.
+
+### The Idea That Outlived the Tool
+The closing observation is the one from the [Overview](#overview): the reason Make's successors all look somewhat like Make is that they inherited its model rather than replaced it.
+
+Ninja is a dependency graph with faster execution. Bazel is a dependency graph with hermetic actions and content hashing. Cargo is a dependency graph specialized to one language's module system. CMake is a *generator* of dependency graphs. Every one of them is targets, prerequisites, and staleness, with the trades adjusted.
+
+That is why learning Make pays off beyond Make. The model transfers: once you know why a build is incremental, why an incomplete graph fails under parallelism, and why timestamps are a proxy rather than an answer, you can read any of the successors and know what questions to ask. Feldman's afternoon in 1976 produced a tool that is now a poor choice for the job it was written for, and a model that every replacement still implements.
+
 ## Further Reading
-<!-- .see-more div:
-  - GNU Make Manual (the reference; genuinely well written)
-  - Robert Mecklenburg, "Managing Projects with GNU Make" (3rd ed.)
-  - Peter Miller, "Recursive Make Considered Harmful" (1997)
-  - John Graham-Cumming, "GNU Make Standard Library" and his makefile debugging
-    writing
-  - CMake documentation, for the section above
-All external links need {target="_blank" rel="noopener noreferrer"}. -->
+::: {.see-more}
+- [GNU Make Manual](https://www.gnu.org/software/make/manual/){target="_blank" rel="noopener noreferrer"}. The reference, and unusually well written for a GNU manual: readable front to back, with the two-phase evaluation model explained properly.
+- Robert Mecklenburg, *Managing Projects with GNU Make*, 3rd edition (O'Reilly, 2004). The standard book. Dated in its examples and still the best extended treatment of the language itself.
+- Peter Miller, [*Recursive Make Considered Harmful*](https://aegis.sourceforge.net/auug97.pdf){target="_blank" rel="noopener noreferrer"} (AUUG, 1997). The paper that changed how build systems are structured. Short, and the argument is as relevant as it was then.
+- John Graham-Cumming, [*The GNU Make Standard Library*](http://gmsl.sourceforge.net/){target="_blank" rel="noopener noreferrer"}. A function library for Make, and a working demonstration of how far the macro language can be pushed. His *GNU Make Unleashed* collects his writing on debugging makefiles.
+- [POSIX `make`](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/make.html){target="_blank" rel="noopener noreferrer"}. The portable core, worth a look to see how much of what you use is a GNU extension.
+- [CMake Documentation](https://cmake.org/cmake/help/latest/){target="_blank" rel="noopener noreferrer"} and [Ninja](https://ninja-build.org/){target="_blank" rel="noopener noreferrer"}, for the tools that generate and execute what Make used to.
+:::

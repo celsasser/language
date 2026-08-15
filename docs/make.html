@@ -500,7 +500,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#where-it-strains" id="toc-where-it-strains" class="nav-link" data-scroll-target="#where-it-strains">Where It Strains</a></li>
   </ul></li>
   </ul></li>
-  <li><a href="#parallelism" id="toc-parallelism" class="nav-link" data-scroll-target="#parallelism">Parallelism</a></li>
+  <li><a href="#parallelism" id="toc-parallelism" class="nav-link" data-scroll-target="#parallelism">Parallelism</a>
+  <ul>
+  <li><a href="#parallelism-is-a-correctness-test" id="toc-parallelism-is-a-correctness-test" class="nav-link" data-scroll-target="#parallelism-is-a-correctness-test">Parallelism Is a Correctness Test</a></li>
+  <li><a href="#interleaved-output" id="toc-interleaved-output" class="nav-link" data-scroll-target="#interleaved-output">Interleaved Output</a></li>
+  <li><a href="#constraining-parallelism" id="toc-constraining-parallelism" class="nav-link" data-scroll-target="#constraining-parallelism">Constraining Parallelism</a></li>
+  <li><a href="#the-jobserver" id="toc-the-jobserver" class="nav-link" data-scroll-target="#the-jobserver">The Jobserver</a></li>
+  </ul></li>
   <li><a href="#special-targets" id="toc-special-targets" class="nav-link" data-scroll-target="#special-targets">Special Targets</a>
   <ul>
   <li><a href="#delete_on_error" id="toc-delete_on_error" class="nav-link" data-scroll-target="#delete_on_error"><code>.DELETE_ON_ERROR</code></a></li>
@@ -508,8 +514,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#intermediate-files" id="toc-intermediate-files" class="nav-link" data-scroll-target="#intermediate-files">Intermediate Files</a></li>
   <li><a href="#suppressing-output-and-parallelism" id="toc-suppressing-output-and-parallelism" class="nav-link" data-scroll-target="#suppressing-output-and-parallelism">Suppressing Output and Parallelism</a></li>
   </ul></li>
-  <li><a href="#debugging-makefiles" id="toc-debugging-makefiles" class="nav-link" data-scroll-target="#debugging-makefiles">Debugging Makefiles</a></li>
-  <li><a href="#common-pitfalls" id="toc-common-pitfalls" class="nav-link" data-scroll-target="#common-pitfalls">Common Pitfalls</a></li>
+  <li><a href="#debugging-makefiles" id="toc-debugging-makefiles" class="nav-link" data-scroll-target="#debugging-makefiles">Debugging Makefiles</a>
+  <ul>
+  <li><a href="#the-toolkit" id="toc-the-toolkit" class="nav-link" data-scroll-target="#the-toolkit">The Toolkit</a></li>
+  <li><a href="#a-worked-session-the-target-that-always-rebuilds" id="toc-a-worked-session-the-target-that-always-rebuilds" class="nav-link" data-scroll-target="#a-worked-session-the-target-that-always-rebuilds">A Worked Session: The Target That Always Rebuilds</a>
+  <ul class="collapse">
+  <li><a href="#the-other-causes" id="toc-the-other-causes" class="nav-link" data-scroll-target="#the-other-causes">The Other Causes</a></li>
+  </ul></li>
+  <li><a href="#debugging-phase-1" id="toc-debugging-phase-1" class="nav-link" data-scroll-target="#debugging-phase-1">Debugging Phase 1</a></li>
+  </ul></li>
+  <li><a href="#common-pitfalls" id="toc-common-pitfalls" class="nav-link" data-scroll-target="#common-pitfalls">Common Pitfalls</a>
+  <ul>
+  <li><a href="#missing-separator" id="toc-missing-separator" class="nav-link" data-scroll-target="#missing-separator"><code>missing separator</code></a></li>
+  <li><a href="#crossing-the-boundary" id="toc-crossing-the-boundary" class="nav-link" data-scroll-target="#crossing-the-boundary"><code>$</code> Crossing the Boundary</a></li>
+  <li><a href="#cd-does-not-persist" id="toc-cd-does-not-persist" class="nav-link" data-scroll-target="#cd-does-not-persist"><code>cd</code> Does Not Persist</a></li>
+  <li><a href="#trailing-whitespace" id="toc-trailing-whitespace" class="nav-link" data-scroll-target="#trailing-whitespace">Trailing Whitespace</a></li>
+  <li><a href="#recursive-variable-self-reference" id="toc-recursive-variable-self-reference" class="nav-link" data-scroll-target="#recursive-variable-self-reference">Recursive Variable Self-Reference</a></li>
+  <li><a href="#wildcard-sees-nothing" id="toc-wildcard-sees-nothing" class="nav-link" data-scroll-target="#wildcard-sees-nothing"><code>$(wildcard)</code> Sees Nothing</a></li>
+  <li><a href="#a-failed-recipe-leaves-a-stale-target" id="toc-a-failed-recipe-leaves-a-stale-target" class="nav-link" data-scroll-target="#a-failed-recipe-leaves-a-stale-target">A Failed Recipe Leaves a Stale Target</a></li>
+  <li><a href="#works-serially-fails-under--j" id="toc-works-serially-fails-under--j" class="nav-link" data-scroll-target="#works-serially-fails-under--j">Works Serially, Fails Under <code>-j</code></a></li>
+  <li><a href="#make-clean-says-up-to-date" id="toc-make-clean-says-up-to-date" class="nav-link" data-scroll-target="#make-clean-says-up-to-date"><code>make clean</code> Says Up To Date</a></li>
+  </ul></li>
   <li><a href="#make-and-cmake" id="toc-make-and-cmake" class="nav-link" data-scroll-target="#make-and-cmake">Make and CMake</a>
   <ul>
   <li><a href="#how-the-tree-is-collected" id="toc-how-the-tree-is-collected" class="nav-link" data-scroll-target="#how-the-tree-is-collected">How the Tree Is Collected</a></li>
@@ -517,7 +542,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#reading-a-cmake-project" id="toc-reading-a-cmake-project" class="nav-link" data-scroll-target="#reading-a-cmake-project">Reading a CMake Project</a></li>
   <li><a href="#make-or-ninja" id="toc-make-or-ninja" class="nav-link" data-scroll-target="#make-or-ninja">Make or Ninja</a></li>
   </ul></li>
-  <li><a href="#where-make-sits-today" id="toc-where-make-sits-today" class="nav-link" data-scroll-target="#where-make-sits-today">Where Make Sits Today</a></li>
+  <li><a href="#where-make-sits-today" id="toc-where-make-sits-today" class="nav-link" data-scroll-target="#where-make-sits-today">Where Make Sits Today</a>
+  <ul>
+  <li><a href="#what-make-still-wins-at" id="toc-what-make-still-wins-at" class="nav-link" data-scroll-target="#what-make-still-wins-at">What Make Still Wins At</a></li>
+  <li><a href="#what-make-has-lost" id="toc-what-make-has-lost" class="nav-link" data-scroll-target="#what-make-has-lost">What Make Has Lost</a></li>
+  <li><a href="#the-idea-that-outlived-the-tool" id="toc-the-idea-that-outlived-the-tool" class="nav-link" data-scroll-target="#the-idea-that-outlived-the-tool">The Idea That Outlived the Tool</a></li>
+  </ul></li>
   <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further Reading</a></li>
   </ul>
 </nav>
@@ -2732,13 +2762,88 @@ Makefile:1: warning: ignoring old recipe for target 'app'</code></pre>
 </section>
 <section id="parallelism" class="level2">
 <h2 class="anchored" data-anchor-id="parallelism">Parallelism</h2>
-<!-- -j N and why it is nearly free speedup, given a correct graph. Then the
-catch: -j exposes every missing dependency as a nondeterministic failure, so a
-makefile that "works" serially can fail at -j8 and pass on retry. That is
-almost always a missing prerequisite, not a Make bug.
-
-Also: -O (--output-sync) to stop interleaved output, .NOTPARALLEL, .WAIT for
-ordering in newer versions, and the jobserver's role across recursive make. -->
+<div class="subheading">
+<p>Free speedup, if the graph is true</p>
+</div>
+<p><code>make -j8</code> runs up to eight recipes at once:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb124"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-j8</span>              <span class="co"># up to 8 concurrent jobs</span></span>
+<span id="cb124-2"><a href="#cb124-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-j</span>               <span class="co"># unlimited: as many as the graph allows</span></span>
+<span id="cb124-3"><a href="#cb124-3" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-j</span><span class="va">$(</span><span class="fu">nproc</span><span class="va">)</span>       <span class="co"># one per core, the usual choice</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>On a multi-core machine this is close to a linear speedup for the compile phase, and it costs nothing to ask for. That is the payoff promised back in <a href="#you-describe-relationships-not-order">You Describe Relationships, Not Order</a>: you described dependencies for a different reason, and parallelism fell out of the description. Make already knows which nodes are unrelated, so it already knows what can run simultaneously. No annotation, no thread pool, no change to a single rule.</p>
+<p>Bare <code>-j</code> with no number is worth avoiding. It imposes no limit at all, so a large project spawns hundreds of compilers, exhausts memory, and runs slower than <code>-j8</code> would have. Give it a number.</p>
+<section id="parallelism-is-a-correctness-test" class="level3">
+<h3 class="anchored" data-anchor-id="parallelism-is-a-correctness-test">Parallelism Is a Correctness Test</h3>
+<p>Here is the part that matters. <span class="hl-default"><code>-j</code> does not introduce bugs; it reveals them</span>. A missing prerequisite is a lie in the graph whether or not you build in parallel. Serially, Make happens to visit targets in an order that often masks the lie, because file order accidentally matches the true order. In parallel, that accident stops holding.</p>
+<p>The symptom is unmistakable once you know it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb125"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> make <span class="at">-j8</span></span>
+<span id="cb125-2"><a href="#cb125-2" aria-hidden="true" tabindex="-1"></a><span class="ex">...</span> build fails somewhere odd ...</span>
+<span id="cb125-3"><a href="#cb125-3" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> make <span class="at">-j8</span></span>
+<span id="cb125-4"><a href="#cb125-4" aria-hidden="true" tabindex="-1"></a><span class="ex">...</span> succeeds ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A build that fails intermittently under <code>-j</code> and passes on retry is <strong>almost never a Make bug</strong>. It is a missing edge. Two targets that must be ordered are not connected in the graph, so Make, correctly reasoning from what you told it, runs them together.</p>
+<p>The classic instance is a generated header:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb126"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a><span class="co"># BROKEN under -j: nothing says main.o needs version.h</span></span>
+<span id="cb126-2"><a href="#cb126-2" aria-hidden="true" tabindex="-1"></a><span class="dv">main.o:</span><span class="dt"> main.c</span></span>
+<span id="cb126-3"><a href="#cb126-3" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> -c <span class="ch">$&lt;</span> -o <span class="ch">$@</span></span>
+<span id="cb126-4"><a href="#cb126-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb126-5"><a href="#cb126-5" aria-hidden="true" tabindex="-1"></a><span class="dv">version.h:</span></span>
+<span id="cb126-6"><a href="#cb126-6" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>./gen-version &gt; <span class="ch">$@</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Serially, if <code>version.h</code> is built first, everything works and you never notice. Under <code>-j8</code>, the compile of <code>main.c</code> starts while <code>gen-version</code> is still writing, and you get a missing header, or worse, a <em>half-written</em> one. The fix is to state the truth:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb127"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a><span class="dv">main.o:</span><span class="dt"> main.c version.h</span></span>
+<span id="cb127-2"><a href="#cb127-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> -c <span class="ch">$&lt;</span> -o <span class="ch">$@</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A related failure is two recipes writing the same file. Nothing in Make prevents it, and under <code>-j</code> they interleave. If two rules both <code>&gt;&gt;</code> into a log, or both produce an intermediate with the same name, the output is nondeterministic garbage. Every output file should be produced by exactly one rule.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Test with `-j` even if you build serially">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Test with <code>-j</code> even if you build serially
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Running <code>make -j8</code> in CI on a clean tree is a cheap and effective audit of the dependency graph. It converts latent missing-prerequisite bugs into loud failures, at the point where they are still easy to fix. A makefile that survives repeated clean parallel builds has a graph you can trust; one that has only ever been built serially has a graph nobody has checked.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled" title="`-j` and recursive make">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>-j</code> and recursive make
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This is where <a href="#recursive-make">recursive make</a> hurts most. Each sub-make sees only its fragment, so cross-directory ordering rests on the <code>SUBDIRS</code> sequence rather than on real edges, and that sequence is exactly the guarantee <code>-j</code> is entitled to ignore <em>within</em> a level. Always invoke sub-makes as <code>$(MAKE)</code>, never a literal <code>make</code>, so the jobserver is inherited.</p>
+</div>
+</div>
+</section>
+<section id="interleaved-output" class="level3">
+<h3 class="anchored" data-anchor-id="interleaved-output">Interleaved Output</h3>
+<p>Parallel jobs write to the same terminal at the same time, so a failing compiler’s error message arrives shredded between two other jobs’ output. <code>-O</code> (<code>--output-sync</code>) buffers each job’s output and prints it in one piece:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb128"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb128-1"><a href="#cb128-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-j8</span> <span class="at">-O</span>            <span class="co"># or: -Otarget, the default granularity</span></span>
+<span id="cb128-2"><a href="#cb128-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-j8</span> <span class="at">-Oline</span>        <span class="co"># per line</span></span>
+<span id="cb128-3"><a href="#cb128-3" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-j8</span> <span class="at">-Orecurse</span>     <span class="co"># group a whole sub-make together</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>-Otarget</code> groups all output from one target, which is what you want almost always: an error message stays attached to the compile that produced it. <code>-Orecurse</code> is the right choice with recursive make, keeping each subdirectory’s output contiguous.</p>
+<p>This is a genuinely large quality-of-life improvement and it is not the default, so it is worth putting in <code>MAKEFLAGS</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb129"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb129-1"><a href="#cb129-1" aria-hidden="true" tabindex="-1"></a><span class="dt">MAKEFLAGS</span> <span class="ch">+=</span><span class="st"> -Otarget</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The tradeoff is latency: a job’s output appears when the job finishes rather than as it runs. For a long-running step you lose the ability to watch progress live.</p>
+</section>
+<section id="constraining-parallelism" class="level3">
+<h3 class="anchored" data-anchor-id="constraining-parallelism">Constraining Parallelism</h3>
+<p>Sometimes concurrency genuinely must be limited, and Make offers three tools of decreasing bluntness.</p>
+<p><strong><code>.NOTPARALLEL</code></strong> forces the entire makefile to run serially even when <code>-j</code> is given. As noted in <a href="#suppressing-output-and-parallelism">Suppressing Output and Parallelism</a>, this is usually the wrong fix, because it hides a graph bug while surrendering the speedup. It is legitimate only when recipes contend for a resource the graph cannot express: a single hardware programmer, a test database, a physical serial port.</p>
+<p><strong><code>.WAIT</code></strong> (GNU Make 4.4, 2022) is the precise version. Placed between prerequisites, it forces everything before it to complete before anything after it starts:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb130"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb130-1"><a href="#cb130-1" aria-hidden="true" tabindex="-1"></a><span class="dv">all:</span><span class="dt"> generate .WAIT compile</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This expresses a barrier without inventing fake dependencies, which is what people previously resorted to. Being new, it is not available on macOS’s Make 3.81 or on many distributions’ defaults, so treat it as a tool for controlled environments.</p>
+<p><strong>Order-only prerequisites</strong> remain the right answer when the constraint is genuinely “this must exist first,” which is the <a href="#order-only-prerequisites">directory case</a>. They impose ordering without falsely marking the target stale.</p>
+</section>
+<section id="the-jobserver" class="level3">
+<h3 class="anchored" data-anchor-id="the-jobserver">The Jobserver</h3>
+<p>One detail explains how <code>-j8</code> stays <code>-j8</code> across a recursive build. If each sub-make independently honored <code>-j8</code>, a tree with six subdirectories could run 48 compilers.</p>
+<p>Make solves this with the <strong>jobserver</strong>: the top-level process creates a pipe holding one token per available job slot. A sub-make wanting to start a job reads a token from the pipe, and returns it when the job finishes. No token, no job. Because the pipe is inherited through the process tree, every make in the recursion draws from one shared pool, and the total stays at eight.</p>
+<p>This is also the mechanism you break by writing <code>make -C subdir</code> instead of <code>$(MAKE) -C subdir</code>. <code>$(MAKE)</code> is special-cased: Make recognizes it and passes the jobserver file descriptors through. A literal <code>make</code> gets no tokens, so it either warns and runs serially, or starts its own unlimited pool. GNU Make 4.4 moved to a named-pipe implementation that is more robust across shells and tools, and Ninja and Cargo can participate in the same protocol, which is how a Rust build invoked from a makefile stays inside your job budget.</p>
+</section>
 </section>
 <section id="special-targets" class="level2">
 <h2 class="anchored" data-anchor-id="special-targets">Special Targets</h2>
@@ -2747,9 +2852,9 @@ ordering in newer versions, and the jobserver's role across recursive make. -->
 </div>
 <p>A handful of target names starting with a period are not targets at all. Make reserves them as directives, written in rule syntax because rule syntax was already there. <code>.PHONY</code> is the one everybody knows; the rest configure behavior that is otherwise unreachable, and at least one of them fixes a correctness bug present in most makefiles.</p>
 <p>Two forms appear. Most take prerequisites, listing the targets they apply to:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb124"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.PHONY:</span><span class="dt"> clean test</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb131"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.PHONY:</span><span class="dt"> clean test</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A few take none and simply switch a global behavior on:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb125"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.DELETE_ON_ERROR:</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb132"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.DELETE_ON_ERROR:</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The empty prerequisite list is not a mistake; the presence of the line is the whole declaration.</p>
 <table class="caption-top table">
 <colgroup>
@@ -2819,15 +2924,15 @@ ordering in newer versions, and the jobserver's role across recursive make. -->
 <p>The one to add to every makefile you own</p>
 </div>
 <p>Consider what happens when a recipe fails partway through:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb126"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a><span class="dv">report.txt:</span><span class="dt"> data.csv</span></span>
-<span id="cb126-2"><a href="#cb126-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>./analyze data.csv &gt; report.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb133"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb133-1"><a href="#cb133-1" aria-hidden="true" tabindex="-1"></a><span class="dv">report.txt:</span><span class="dt"> data.csv</span></span>
+<span id="cb133-2"><a href="#cb133-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>./analyze data.csv &gt; report.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The shell creates <code>report.txt</code> and opens it for writing <em>before</em> <code>analyze</code> runs. If <code>analyze</code> writes half its output and then crashes, the file exists, contains truncated garbage, and carries a modification time newer than <code>data.csv</code>. Make reports the failure and stops. So far so good.</p>
 <p>Now run <code>make</code> again:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb127"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> make</span>
-<span id="cb127-2"><a href="#cb127-2" aria-hidden="true" tabindex="-1"></a><span class="ex">make:</span> <span class="st">'report.txt'</span> is up to date.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb134"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb134-1"><a href="#cb134-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> make</span>
+<span id="cb134-2"><a href="#cb134-2" aria-hidden="true" tabindex="-1"></a><span class="ex">make:</span> <span class="st">'report.txt'</span> is up to date.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The build is broken and Make sees nothing to do. Whatever consumes <code>report.txt</code> downstream now consumes corrupt input, and the only symptom is wrong results much further along. Nothing in the output points back at the failed step, which happened in a previous invocation and scrolled away.</p>
 <p>One line prevents all of it:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb128"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb128-1"><a href="#cb128-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.DELETE_ON_ERROR:</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb135"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb135-1"><a href="#cb135-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.DELETE_ON_ERROR:</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>With that declaration, a recipe that exits non-zero after modifying its target causes Make to delete the target before stopping. The next run sees a missing file and rebuilds properly. The failure stays a failure instead of decaying into a stale artifact.</p>
 <div class="callout callout-style-default callout-important callout-titled" title="Why is this not the default?">
 <div class="callout-header d-flex align-content-center">
@@ -2847,12 +2952,12 @@ ordering in newer versions, and the jobserver's role across recursive make. -->
 <section id="oneshell" class="level3">
 <h3 class="anchored" data-anchor-id="oneshell"><code>.ONESHELL</code></h3>
 <p>By default each recipe line gets its own shell, which is the source of the <code>cd</code> problem in <a href="#multi-line-recipes">Multi-Line Recipes</a>. <code>.ONESHELL</code> changes it globally:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb129"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb129-1"><a href="#cb129-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.ONESHELL:</span></span>
-<span id="cb129-2"><a href="#cb129-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb129-3"><a href="#cb129-3" aria-hidden="true" tabindex="-1"></a><span class="dv">install:</span></span>
-<span id="cb129-4"><a href="#cb129-4" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>cd build</span>
-<span id="cb129-5"><a href="#cb129-5" aria-hidden="true" tabindex="-1"></a>    cp app /usr/local/bin/</span>
-<span id="cb129-6"><a href="#cb129-6" aria-hidden="true" tabindex="-1"></a>    echo <span class="st">"installed"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb136"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb136-1"><a href="#cb136-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.ONESHELL:</span></span>
+<span id="cb136-2"><a href="#cb136-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb136-3"><a href="#cb136-3" aria-hidden="true" tabindex="-1"></a><span class="dv">install:</span></span>
+<span id="cb136-4"><a href="#cb136-4" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>cd build</span>
+<span id="cb136-5"><a href="#cb136-5" aria-hidden="true" tabindex="-1"></a>    cp app /usr/local/bin/</span>
+<span id="cb136-6"><a href="#cb136-6" aria-hidden="true" tabindex="-1"></a>    echo <span class="st">"installed"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Now all three lines run in one shell, <code>cd</code> persists, and shell variables set on one line are visible on the next. Recipes stop needing <code>&amp;&amp;</code> chains and trailing backslashes, which makes anything with real shell logic in it far more readable.</p>
 <p>The tradeoffs are real, though. It is a GNU extension, absent from BSD make and from POSIX. Error handling changes: only the shell’s final exit status is checked, so an early failure no longer stops the recipe unless you add <code>set -e</code> (<code>.SHELLFLAGS := -ec</code> is the usual way). And the <code>@</code> and <code>-</code> prefixes now apply to the whole recipe rather than a line, since there is only one command.</p>
 <p>Use it when a makefile has recipes with multi-step shell logic, and know you have traded portability for it. For a makefile whose recipes are single compiler invocations, it buys nothing.</p>
@@ -2865,18 +2970,18 @@ ordering in newer versions, and the jobserver's role across recursive make. -->
 <p><a href="#chained-inference">Chained inference</a> invents files nobody asked for, and by default Make deletes them once the build completes. That is usually tidy and occasionally infuriating, because a deleted intermediate must be regenerated next time, so a build you expected to be a no-op does work.</p>
 <p>The concrete case: a rule chain from <code>.proto</code> to <code>.c</code> to <code>.o</code> deletes the generated <code>.c</code> files after every build. You cannot read them to debug the generator, and every subsequent build regenerates and recompiles them.</p>
 <p><code>.SECONDARY</code> marks a file as intermediate but exempt from deletion. With no prerequisites, it applies to everything:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb130"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb130-1"><a href="#cb130-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.SECONDARY:</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb137"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb137-1"><a href="#cb137-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.SECONDARY:</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This is a common blanket setting in makefiles that use chaining heavily, and the cost is disk space for files you might have wanted anyway.</p>
 <p><code>.INTERMEDIATE</code> is the opposite direction: it marks a file you <em>wrote an explicit rule for</em> as intermediate, so it gets cleaned up like an inferred one. It is much rarer, and usually a sign that a temporary file should have been handled inside a single recipe instead.</p>
 </section>
 <section id="suppressing-output-and-parallelism" class="level3">
 <h3 class="anchored" data-anchor-id="suppressing-output-and-parallelism">Suppressing Output and Parallelism</h3>
 <p><code>.SILENT</code> suppresses command echoing. With prerequisites it applies to those targets; empty, it applies globally:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb131"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.SILENT:</span><span class="dt"> docs           </span><span class="co"># just these</span></span>
-<span id="cb131-2"><a href="#cb131-2" aria-hidden="true" tabindex="-1"></a><span class="ot">.SILENT:</span><span class="dt">                </span><span class="co"># everything</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb138"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb138-1"><a href="#cb138-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.SILENT:</span><span class="dt"> docs           </span><span class="co"># just these</span></span>
+<span id="cb138-2"><a href="#cb138-2" aria-hidden="true" tabindex="-1"></a><span class="ot">.SILENT:</span><span class="dt">                </span><span class="co"># everything</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Global <code>.SILENT</code> is best avoided. Echoed commands are how you find out what a failing build actually ran, and hiding them project-wide trades debuggability for tidy output. Prefer per-line <code>@</code> on the messages you want quiet, or <code>make -s</code> when a specific invocation should be quiet. The same reasoning applies to <code>.EXPORT_ALL_VARIABLES</code>, which exports every makefile variable into every subprocess environment: convenient, and a good way to have a makefile variable collide with something a tool reads from the environment.</p>
 <p><code>.NOTPARALLEL</code> forces serial execution of the current makefile even under <code>-j</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb132"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.NOTPARALLEL:</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb139"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb139-1"><a href="#cb139-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.NOTPARALLEL:</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This is almost always the wrong fix. A makefile that fails under <code>-j8</code> and passes serially has a missing prerequisite, and <code>.NOTPARALLEL</code> hides the bug while giving up the speedup. It is legitimate in a narrow case: when recipes genuinely contend for a shared external resource, such as a single hardware programmer or a database, that the dependency graph cannot express. See <a href="#parallelism">Parallelism</a>.</p>
 <div class="callout callout-style-default callout-tip callout-titled" title="A reasonable preamble">
 <div class="callout-header d-flex align-content-center">
@@ -2889,11 +2994,11 @@ ordering in newer versions, and the jobserver's role across recursive make. -->
 </div>
 <div class="callout-body-container callout-body">
 <p>Most of these decisions are the same in every serious makefile, which makes a standard opening block worth copying:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb133"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb133-1"><a href="#cb133-1" aria-hidden="true" tabindex="-1"></a><span class="dt">MAKEFLAGS</span> <span class="ch">+=</span><span class="st"> --no-builtin-rules --no-builtin-variables --warn-undefined-variables</span></span>
-<span id="cb133-2"><a href="#cb133-2" aria-hidden="true" tabindex="-1"></a><span class="ot">.DELETE_ON_ERROR:</span></span>
-<span id="cb133-3"><a href="#cb133-3" aria-hidden="true" tabindex="-1"></a><span class="ot">.SUFFIXES:</span></span>
-<span id="cb133-4"><a href="#cb133-4" aria-hidden="true" tabindex="-1"></a><span class="dt">.DEFAULT_GOAL</span> <span class="ch">:=</span><span class="st"> all</span></span>
-<span id="cb133-5"><a href="#cb133-5" aria-hidden="true" tabindex="-1"></a><span class="dt">SHELL</span> <span class="ch">:=</span><span class="st"> /bin/bash</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb140"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb140-1"><a href="#cb140-1" aria-hidden="true" tabindex="-1"></a><span class="dt">MAKEFLAGS</span> <span class="ch">+=</span><span class="st"> --no-builtin-rules --no-builtin-variables --warn-undefined-variables</span></span>
+<span id="cb140-2"><a href="#cb140-2" aria-hidden="true" tabindex="-1"></a><span class="ot">.DELETE_ON_ERROR:</span></span>
+<span id="cb140-3"><a href="#cb140-3" aria-hidden="true" tabindex="-1"></a><span class="ot">.SUFFIXES:</span></span>
+<span id="cb140-4"><a href="#cb140-4" aria-hidden="true" tabindex="-1"></a><span class="dt">.DEFAULT_GOAL</span> <span class="ch">:=</span><span class="st"> all</span></span>
+<span id="cb140-5"><a href="#cb140-5" aria-hidden="true" tabindex="-1"></a><span class="dt">SHELL</span> <span class="ch">:=</span><span class="st"> /bin/bash</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>That is: no surprise rules, no stale targets after a failure, no suffix rules, an explicit default goal, and a known shell rather than whatever <code>/bin/sh</code> is on this machine. <code>--warn-undefined-variables</code> catches the typo’d <code>$(CFLGAS)</code> that would otherwise expand to nothing in silence.</p>
 </div>
 </div>
@@ -2901,34 +3006,312 @@ ordering in newer versions, and the jobserver's role across recursive make. -->
 </section>
 <section id="debugging-makefiles" class="level2">
 <h2 class="anchored" data-anchor-id="debugging-makefiles">Debugging Makefiles</h2>
-<!-- The toolkit, roughly in order of use:
-  -n / --just-print   show commands without running them
-  --trace             show why each recipe is being run
-  -p / --print-data-base   dump all rules and variables (huge; pipe it)
-  -d / --debug=b,v,i  decision-level tracing at varying volume
-  $(info)/$(warning)  printf debugging in phase 1
-  make -pn -f/dev/null  see the built-in rules alone
-  $(VAR) vs $(origin VAR) and $(flavor VAR) to ask where a value came from
-
-Then a short worked session: a target that rebuilds every time, diagnosed with
---trace. That symptom is the most common real complaint and deserves a
-demonstrated fix. -->
+<div class="subheading">
+<p>Asking Make what it thinks it is doing</p>
+</div>
+<p>Make’s error messages are famously unhelpful, but its introspection tools are good and underused. Nearly every question you will have is one of two kinds: <em>what would you run</em> (phase 2) or <em>what is this variable</em> (phase 1). Different tools answer each.</p>
+<section id="the-toolkit" class="level3">
+<h3 class="anchored" data-anchor-id="the-toolkit">The Toolkit</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 28%">
+<col style="width: 71%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Answers</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>make -n</code></td>
+<td style="text-align: left;">What would you run, without running it</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>make --trace</code></td>
+<td style="text-align: left;">Which recipe is running, and why</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>make --debug=b</code></td>
+<td style="text-align: left;">The decisions: what is out of date and what caused it</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>make -p</code></td>
+<td style="text-align: left;">Every rule and variable Make knows, including built-ins</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>make -p -f /dev/null</code></td>
+<td style="text-align: left;">The built-in database alone, with none of your makefile</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>$(info ...)</code></td>
+<td style="text-align: left;">Printf debugging during phase 1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>$(origin VAR)</code></td>
+<td style="text-align: left;">Where a value came from</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>$(flavor VAR)</code></td>
+<td style="text-align: left;">Whether it was <code>=</code> or <code>:=</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>-n</code> (<code>--just-print</code>)</strong> is the first thing to reach for. It prints commands without executing them, so you can confirm what a build would do before letting it. It is also the safe way to inspect a <code>clean</code> or <code>install</code> target you did not write.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb141"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb141-1"><a href="#cb141-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-n</span> install</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Note one limitation: <code>-n</code> still <em>expands</em> everything, so any <code>$(shell)</code> call runs. A makefile that does real work at parse time is not fully inert under <code>-n</code>.</p>
+<p><strong><code>--trace</code></strong> annotates each recipe with the rule that triggered it and the reason, which is exactly the question “why is this being rebuilt.” It requires GNU Make 4.0 or newer.</p>
+<p><strong><code>--debug=b</code></strong> is the portable equivalent and is available on older versions including the 3.81 that macOS ships. The <code>b</code> is “basic”; <code>v</code> (verbose), <code>i</code> (implicit rules), and <code>m</code> (makefile remaking) add detail, and bare <code>-d</code> turns on everything at a volume that is rarely useful.</p>
+<p><strong><code>-p</code> (<code>--print-data-base</code>)</strong> dumps the entire internal state: every variable with its origin, every rule including built-ins, and the files Make considered. It runs to hundreds of lines, so pipe it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb142"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb142-1"><a href="#cb142-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-p</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-A2</span> <span class="st">'^CFLAGS'</span></span>
+<span id="cb142-2"><a href="#cb142-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-p</span> <span class="at">-f</span> /dev/null <span class="kw">|</span> <span class="fu">less</span>     <span class="co"># built-in rules with no makefile at all</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="a-worked-session-the-target-that-always-rebuilds" class="level3">
+<h3 class="anchored" data-anchor-id="a-worked-session-the-target-that-always-rebuilds">A Worked Session: The Target That Always Rebuilds</h3>
+<p>This is the most common real complaint about a makefile, and it has a small number of causes. Here is a build that relinks on every invocation despite nothing changing:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb143"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb143-1"><a href="#cb143-1" aria-hidden="true" tabindex="-1"></a><span class="dt">CC</span> <span class="ch">:=</span><span class="st"> gcc</span></span>
+<span id="cb143-2"><a href="#cb143-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb143-3"><a href="#cb143-3" aria-hidden="true" tabindex="-1"></a><span class="ot">.PHONY:</span><span class="dt"> all version</span></span>
+<span id="cb143-4"><a href="#cb143-4" aria-hidden="true" tabindex="-1"></a><span class="dv">all:</span><span class="dt"> app</span></span>
+<span id="cb143-5"><a href="#cb143-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb143-6"><a href="#cb143-6" aria-hidden="true" tabindex="-1"></a><span class="dv">app:</span><span class="dt"> main.o version</span></span>
+<span id="cb143-7"><a href="#cb143-7" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> -o <span class="ch">$@</span> main.o</span>
+<span id="cb143-8"><a href="#cb143-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb143-9"><a href="#cb143-9" aria-hidden="true" tabindex="-1"></a><span class="dv">main.o:</span><span class="dt"> main.c</span></span>
+<span id="cb143-10"><a href="#cb143-10" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> -c <span class="ch">$&lt;</span> -o <span class="ch">$@</span></span>
+<span id="cb143-11"><a href="#cb143-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb143-12"><a href="#cb143-12" aria-hidden="true" tabindex="-1"></a><span class="dv">version:</span></span>
+<span id="cb143-13"><a href="#cb143-13" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">@</span><span class="fu">echo </span><span class="st">"stamping version"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The symptom, on a tree where everything is already built:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb144"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb144-1"><a href="#cb144-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> make</span>
+<span id="cb144-2"><a href="#cb144-2" aria-hidden="true" tabindex="-1"></a><span class="ex">stamping</span> version</span>
+<span id="cb144-3"><a href="#cb144-3" aria-hidden="true" tabindex="-1"></a><span class="fu">gcc</span> <span class="at">-o</span> app main.o</span>
+<span id="cb144-4"><a href="#cb144-4" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> make</span>
+<span id="cb144-5"><a href="#cb144-5" aria-hidden="true" tabindex="-1"></a><span class="ex">stamping</span> version</span>
+<span id="cb144-6"><a href="#cb144-6" aria-hidden="true" tabindex="-1"></a><span class="fu">gcc</span> <span class="at">-o</span> app main.o</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Nothing changed, and <code>app</code> relinks anyway. Ask Make why:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb145"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb145-1"><a href="#cb145-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> make <span class="at">--debug</span><span class="op">=</span>b</span>
+<span id="cb145-2"><a href="#cb145-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Updating</span> goal targets....</span>
+<span id="cb145-3"><a href="#cb145-3" aria-hidden="true" tabindex="-1"></a> <span class="ex">File</span> <span class="kw">`</span><span class="ex">all</span><span class="st">' does not exist.</span></span>
+<span id="cb145-4"><a href="#cb145-4" aria-hidden="true" tabindex="-1"></a><span class="st">     File `version'</span> does not exist.</span>
+<span id="cb145-5"><a href="#cb145-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Must</span> remake target <span class="kw">`</span>version<span class="st">'.</span></span>
+<span id="cb145-6"><a href="#cb145-6" aria-hidden="true" tabindex="-1"></a><span class="st">stamping version</span></span>
+<span id="cb145-7"><a href="#cb145-7" aria-hidden="true" tabindex="-1"></a><span class="st">    Successfully remade target file `version'</span>.</span>
+<span id="cb145-8"><a href="#cb145-8" aria-hidden="true" tabindex="-1"></a>   <span class="ex">Prerequisite</span> <span class="kw">`</span><span class="ex">version</span><span class="st">' of target `app'</span> does not exist.</span>
+<span id="cb145-9"><a href="#cb145-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">Must</span> remake target <span class="kw">`</span>app<span class="st">'.</span></span>
+<span id="cb145-10"><a href="#cb145-10" aria-hidden="true" tabindex="-1"></a><span class="st">gcc -o app main.o</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The diagnosis is in one line: <code>Prerequisite 'version' of target 'app' does not exist.</code> A <a href="#phony-targets">phony target</a> never corresponds to a file, so it is <em>never</em> up to date, and anything depending on it is therefore always stale. The <code>.PHONY</code> declaration is correct; using that target as a prerequisite of a real file is the mistake.</p>
+<p>The fix depends on intent. If the version stamp is genuinely an input, it must produce a real file so Make can compare timestamps:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb146"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb146-1"><a href="#cb146-1" aria-hidden="true" tabindex="-1"></a><span class="dv">app:</span><span class="dt"> main.o version.txt</span></span>
+<span id="cb146-2"><a href="#cb146-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> -o <span class="ch">$@</span> main.o</span>
+<span id="cb146-3"><a href="#cb146-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb146-4"><a href="#cb146-4" aria-hidden="true" tabindex="-1"></a><span class="dv">version.txt:</span><span class="dt"> </span><span class="ch">$(</span><span class="kw">shell</span><span class="st"> git rev-parse HEAD &gt; /dev/null &amp;&amp; echo .git/HEAD</span><span class="ch">)</span></span>
+<span id="cb146-5"><a href="#cb146-5" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>git describe --always &gt; <span class="ch">$@</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>If it is just a message, it does not belong in the graph at all; move it into the recipe:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb147"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb147-1"><a href="#cb147-1" aria-hidden="true" tabindex="-1"></a><span class="dv">app:</span><span class="dt"> main.o</span></span>
+<span id="cb147-2"><a href="#cb147-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span><span class="ch">@</span><span class="fu">echo </span><span class="st">"stamping version"</span></span>
+<span id="cb147-3"><a href="#cb147-3" aria-hidden="true" tabindex="-1"></a>    <span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> -o <span class="ch">$@</span> main.o</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="the-other-causes" class="level4">
+<h4 class="anchored" data-anchor-id="the-other-causes">The Other Causes</h4>
+<p>When <code>--debug=b</code> reports something else, the phrasing points at the cause:</p>
+<p><strong><code>File 'x' does not exist</code></strong> for a target you believe exists usually means a path mismatch: the rule writes <code>build/app</code> and something depends on <code>app</code>, or a <a href="#vpath-and-vpath"><code>VPATH</code></a> search found a different file than you assumed.</p>
+<p><strong>A prerequisite is newer for no reason</strong> is typically a directory used as a normal prerequisite rather than an <a href="#order-only-prerequisites">order-only</a> one, since a directory’s mtime changes whenever a file is written into it.</p>
+<p><strong>Everything rebuilds after a branch switch</strong> is version control not preserving mtimes, covered in <a href="#when-timestamps-lie">When Timestamps Lie</a>.</p>
+<p><strong>A rule fires that you did not write</strong> is a <a href="#built-in-rules-and-why-to-disable-them">built-in rule</a>. Confirm with <code>make -p -f /dev/null</code> and disable them.</p>
+</section>
+</section>
+<section id="debugging-phase-1" class="level3">
+<h3 class="anchored" data-anchor-id="debugging-phase-1">Debugging Phase 1</h3>
+<p>Everything above inspects the build. When the problem is a variable that is empty, wrong, or mysteriously overridden, you need the <a href="#two-phase-evaluation">read phase</a> instead, and the tools are the <a href="#error-warning-info">diagnostic functions</a>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb148"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb148-1"><a href="#cb148-1" aria-hidden="true" tabindex="-1"></a><span class="ch">$(</span><span class="kw">info</span><span class="st"> CFLAGS = "</span><span class="ch">$(</span><span class="dt">CFLAGS</span><span class="ch">)</span><span class="st">"</span><span class="ch">)</span></span>
+<span id="cb148-2"><a href="#cb148-2" aria-hidden="true" tabindex="-1"></a><span class="ch">$(</span><span class="kw">info</span><span class="st"> OBJS   = </span><span class="ch">$(</span><span class="dt">OBJS</span><span class="ch">))</span></span>
+<span id="cb148-3"><a href="#cb148-3" aria-hidden="true" tabindex="-1"></a><span class="ch">$(</span><span class="kw">info</span><span class="st"> origin = </span><span class="ch">$(</span><span class="kw">origin</span><span class="st"> CC</span><span class="ch">))</span></span>
+<span id="cb148-4"><a href="#cb148-4" aria-hidden="true" tabindex="-1"></a><span class="ch">$(</span><span class="kw">info</span><span class="st"> flavor = </span><span class="ch">$(</span><span class="kw">flavor</span><span class="st"> CFLAGS</span><span class="ch">))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The quotes matter. <code>$(info CFLAGS = $(CFLAGS))</code> cannot distinguish an empty variable from one holding a space, and trailing whitespace in a Make variable is both invisible and load-bearing.</p>
+<p><code>$(origin)</code> is the tool for “why is this value not what my makefile says.” It returns <code>undefined</code>, <code>default</code>, <code>environment</code>, <code>file</code>, <code>command line</code>, <code>override</code>, or <code>automatic</code>, which maps onto the precedence table in <a href="#where-values-come-from">Where Values Come From</a>. If <code>$(origin CC)</code> says <code>environment</code>, someone’s shell profile is in your build.</p>
+<p>Two flags complete the set. <code>--warn-undefined-variables</code> catches the typo that expands to nothing:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb149"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb149-1"><a href="#cb149-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> make <span class="at">--warn-undefined-variables</span></span>
+<span id="cb149-2"><a href="#cb149-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Makefile:8:</span> warning: undefined variable <span class="st">'CFLGAS'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>And <code>-B</code> (<code>--always-make</code>) rebuilds everything unconditionally, which is useful for separating “the graph is wrong” from “the recipe is wrong.” If <code>make -B</code> produces a correct result and plain <code>make</code> does not, the recipes are fine and the dependency graph is lying.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="A fast triage order">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>A fast triage order
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ol type="1">
+<li><code>make -n</code>: is it running what you expect?</li>
+<li><code>make --debug=b</code> (or <code>--trace</code>): why is that target considered stale?</li>
+<li><code>$(info ...)</code> on the suspect variable: is the value what you think?</li>
+<li><code>$(origin VAR)</code>: if not, where did it come from?</li>
+<li><code>make -p | grep VAR</code>: the exhaustive answer, when the first four fail.</li>
+</ol>
+</div>
+</div>
+</section>
 </section>
 <section id="common-pitfalls" class="level2">
 <h2 class="anchored" data-anchor-id="common-pitfalls">Common Pitfalls</h2>
-<!-- Callout-heavy section, each item stated as symptom then cause then fix:
-  - "missing separator" = spaces where a tab belongs
-  - trailing whitespace in a variable, invisible and load-bearing
-  - $ vs $$ crossing the macro/shell boundary; shell loops needing $$i
-  - each recipe line is a separate shell, so `cd` does not persist
-    (fix: && continuation, or .ONESHELL)
-  - recursive variable self-reference looping
-  - $(wildcard) at parse time missing files a recipe will create
-  - a failed recipe leaving a stale target (see .DELETE_ON_ERROR)
-  - missing prerequisites that only surface under -j
-  - `clean` breaking because a file named clean exists (see .PHONY)
-Every one of these ties back to the three-languages or two-phase model. Say so
-explicitly; that is what makes the chapter cohere. -->
+<div class="subheading">
+<p>Nine failures, and the two ideas behind all of them</p>
+</div>
+<p>Everything that goes wrong in a makefile is collected here, stated as symptom, cause, and fix. What makes the list worth reading straight through is that these are not nine unrelated quirks. Almost every one is a <a href="#the-three-languages-in-one-file">boundary error between the three languages</a> or a <a href="#two-phase-evaluation">phase confusion</a>, and the last column of the table below says which:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 49%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Symptom</th>
+<th style="text-align: left;">Root cause</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>missing separator</code></td>
+<td style="text-align: left;">Three languages: spaces where a tab marks shell</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Shell variable is empty</td>
+<td style="text-align: left;">Three languages: <code>$</code> consumed by Make</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>cd</code> does not persist</td>
+<td style="text-align: left;">Three languages: one shell per recipe line</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Comparison fails on equal-looking text</td>
+<td style="text-align: left;">Three languages: invisible trailing whitespace</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Variable references itself</td>
+<td style="text-align: left;">Phases: deferred expansion loops</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>$(wildcard)</code> finds nothing</td>
+<td style="text-align: left;">Phases: parse time precedes recipes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Stale target after a failure</td>
+<td style="text-align: left;">Timestamps: mtime updated on partial output</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Works serially, fails under <code>-j</code></td>
+<td style="text-align: left;">Graph: a missing edge</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>make clean</code> says up to date</td>
+<td style="text-align: left;">Graph: a target that is also a filename</td>
+</tr>
+</tbody>
+</table>
+<section id="missing-separator" class="level3">
+<h3 class="anchored" data-anchor-id="missing-separator"><code>missing separator</code></h3>
+<p><strong>Symptom.</strong> <code>Makefile:5: *** missing separator.  Stop.</code></p>
+<p><strong>Cause.</strong> A recipe line indented with spaces instead of a tab. Make uses the leading tab to know a line is <em>shell</em> rather than rule or macro, so without it, your <code>gcc</code> command is parsed as a makefile construct. Finding neither <code>=</code> nor <code>:</code>, Make reports the missing separator. The message names the symptom of a failed parse, not the cause.</p>
+<p><strong>Fix.</strong> Use a tab. Configure the editor so it cannot happen: <code>[{Makefile,*.mk}]</code> with <code>indent_style = tab</code> in <code>.editorconfig</code>. Full treatment in <a href="#tabs-and-why">Tabs, and Why</a>.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="The same error from an indented conditional">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>The same error from an indented conditional
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A tab in front of <code>ifeq</code> makes it a recipe line, and the shell has no <code>ifeq</code>. That one produces <code>ifeq: command not found</code> rather than <code>missing separator</code>, but the cause is identical: leading whitespace decided which language the line was in. Conditional bodies indent with <strong>spaces</strong>.</p>
+</div>
+</div>
+</section>
+<section id="crossing-the-boundary" class="level3">
+<h3 class="anchored" data-anchor-id="crossing-the-boundary"><code>$</code> Crossing the Boundary</h3>
+<p><strong>Symptom.</strong> A shell loop does nothing, or a command receives an empty string where a variable should be.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb150"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb150-1"><a href="#cb150-1" aria-hidden="true" tabindex="-1"></a><span class="co"># BROKEN: prints "found " repeatedly</span></span>
+<span id="cb150-2"><a href="#cb150-2" aria-hidden="true" tabindex="-1"></a><span class="dv">list:</span></span>
+<span id="cb150-3"><a href="#cb150-3" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>for f in *.c; do echo <span class="st">"found </span><span class="ch">$f</span><span class="st">"</span>; done</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Cause.</strong> Make expands the recipe before handing it to the shell. <code>$f</code> is read by Make, which finds no variable <code>f</code> and substitutes nothing. The shell never sees it.</p>
+<p><strong>Fix.</strong> <code>$$</code> escapes a dollar sign so it survives into the shell:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb151"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb151-1"><a href="#cb151-1" aria-hidden="true" tabindex="-1"></a><span class="dv">list:</span></span>
+<span id="cb151-2"><a href="#cb151-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>for f in *.c; do echo <span class="st">"found </span><span class="ch">$$</span><span class="st">f"</span>; done</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The rule is mechanical: inside a recipe, <code>$(...)</code> belongs to Make and <code>$$</code> belongs to the shell. This applies equally to shell command substitution, <code>$$(date)</code>, and to <code>awk</code> scripts needing <code>$$1</code>.</p>
+</section>
+<section id="cd-does-not-persist" class="level3">
+<h3 class="anchored" data-anchor-id="cd-does-not-persist"><code>cd</code> Does Not Persist</h3>
+<p><strong>Symptom.</strong> A recipe changes directory and the next line runs somewhere else.</p>
+<p><strong>Cause.</strong> Each recipe line gets its own shell process. The <code>cd</code> affects only the shell that ran it, which exits immediately.</p>
+<p><strong>Fix.</strong> Join the lines into one command, or enable <code>.ONESHELL</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb152"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb152-1"><a href="#cb152-1" aria-hidden="true" tabindex="-1"></a><span class="dv">install:</span></span>
+<span id="cb152-2"><a href="#cb152-2" aria-hidden="true" tabindex="-1"></a><span class="er">    </span>cd build &amp;&amp; cp app /usr/local/bin/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Covered in <a href="#multi-line-recipes">Multi-Line Recipes</a>; the <code>.ONESHELL</code> tradeoffs are in <a href="#oneshell">Special Targets</a>.</p>
+</section>
+<section id="trailing-whitespace" class="level3">
+<h3 class="anchored" data-anchor-id="trailing-whitespace">Trailing Whitespace</h3>
+<p><strong>Symptom.</strong> A conditional fails against a value that looks correct.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb153"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb153-1"><a href="#cb153-1" aria-hidden="true" tabindex="-1"></a><span class="dt">MODE</span> <span class="ch">:=</span><span class="st"> debug</span></span>
+<span id="cb153-2"><a href="#cb153-2" aria-hidden="true" tabindex="-1"></a><span class="cf">ifeq</span> (<span class="ch">$(</span><span class="dt">MODE</span><span class="ch">)</span>,debug)      <span class="co"># does not match if MODE has a trailing space</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Cause.</strong> Trailing whitespace is part of a Make variable’s value and is invisible in an editor. It commonly arrives from a <code>$(shell)</code> call or a hand-edited configuration block, and <code>$(info MODE = $(MODE))</code> will not reveal it.</p>
+<p><strong>Fix.</strong> Quote when printing, <code>$(info "$(MODE)")</code>, and <code>$(strip ...)</code> anything whose provenance you do not control. Note also that <code>VAR := value # comment</code> includes the space before <code>#</code> in the value, which is a frequent source of this.</p>
+</section>
+<section id="recursive-variable-self-reference" class="level3">
+<h3 class="anchored" data-anchor-id="recursive-variable-self-reference">Recursive Variable Self-Reference</h3>
+<p><strong>Symptom.</strong> <code>*** Recursive variable 'A' references itself (eventually).  Stop.</code></p>
+<p><strong>Cause.</strong> <code>A = $(A) more</code> with <code>=</code> stores the right side unexpanded, so every reference re-expands it forever. Make detects the loop and refuses.</p>
+<p><strong>Fix.</strong> Use <code>:=</code>, which expands the old value once and reassigns:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb154"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb154-1"><a href="#cb154-1" aria-hidden="true" tabindex="-1"></a><span class="dt">A</span> <span class="ch">:=</span><span class="st"> </span><span class="ch">$(</span><span class="dt">A</span><span class="ch">)</span><span class="st"> more</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Or <code>+=</code>, which does the right thing for appending. See <a href="#the-two-flavors">The Two Flavors</a>.</p>
+</section>
+<section id="wildcard-sees-nothing" class="level3">
+<h3 class="anchored" data-anchor-id="wildcard-sees-nothing"><code>$(wildcard)</code> Sees Nothing</h3>
+<p><strong>Symptom.</strong> A build fails on a clean tree and succeeds on the second run.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb155"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb155-1"><a href="#cb155-1" aria-hidden="true" tabindex="-1"></a><span class="dt">OBJS</span> <span class="ch">:=</span><span class="st"> </span><span class="ch">$(</span><span class="kw">wildcard</span><span class="st"> build/*.o</span><span class="ch">)</span><span class="st">     </span><span class="co"># empty until something has been built</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Cause.</strong> <code>$(wildcard)</code> runs in phase 1, before any recipe. It cannot see files a recipe is about to create. Globbing an <em>output</em> directory is therefore always wrong.</p>
+<p><strong>Fix.</strong> Derive outputs from inputs, which do exist at parse time:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb156"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb156-1"><a href="#cb156-1" aria-hidden="true" tabindex="-1"></a><span class="dt">SRCS</span> <span class="ch">:=</span><span class="st"> </span><span class="ch">$(</span><span class="kw">wildcard</span><span class="st"> src/*.c</span><span class="ch">)</span></span>
+<span id="cb156-2"><a href="#cb156-2" aria-hidden="true" tabindex="-1"></a><span class="dt">OBJS</span> <span class="ch">:=</span><span class="st"> </span><span class="ch">$(</span><span class="kw">patsubst</span><span class="st"> src/%.c</span><span class="kw">,</span><span class="st">build/%.o</span><span class="kw">,</span><span class="ch">$(</span><span class="dt">SRCS</span><span class="ch">))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The same reasoning applies to <code>$(shell)</code> inspecting build products, and to conditionals testing them. See <a href="#what-runs-when">What Runs When</a>.</p>
+</section>
+<section id="a-failed-recipe-leaves-a-stale-target" class="level3">
+<h3 class="anchored" data-anchor-id="a-failed-recipe-leaves-a-stale-target">A Failed Recipe Leaves a Stale Target</h3>
+<p><strong>Symptom.</strong> A build fails, you run <code>make</code> again, and it reports the broken target is up to date.</p>
+<p><strong>Cause.</strong> The shell creates the output file before the command runs. A command that fails partway leaves a truncated file with a fresh timestamp, which Make reads as current.</p>
+<p><strong>Fix.</strong> One line, near the top of every makefile:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb157"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb157-1"><a href="#cb157-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.DELETE_ON_ERROR:</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is the most consequential single line in this chapter, because the failure is silent and produces wrong output rather than an error. Full discussion in <a href="#delete_on_error"><code>.DELETE_ON_ERROR</code></a>.</p>
+</section>
+<section id="works-serially-fails-under--j" class="level3">
+<h3 class="anchored" data-anchor-id="works-serially-fails-under--j">Works Serially, Fails Under <code>-j</code></h3>
+<p><strong>Symptom.</strong> <code>make</code> succeeds, <code>make -j8</code> fails intermittently and passes on retry.</p>
+<p><strong>Cause.</strong> A missing prerequisite. The graph does not connect two targets that must be ordered, and serial execution happened to visit them in a workable order. Parallelism removes that accident.</p>
+<p><strong>Fix.</strong> Find the true dependency and declare it. This is not a Make bug and <code>.NOTPARALLEL</code> is not the answer; it hides the defect while surrendering the speedup. See <a href="#parallelism-is-a-correctness-test">Parallelism Is a Correctness Test</a>.</p>
+</section>
+<section id="make-clean-says-up-to-date" class="level3">
+<h3 class="anchored" data-anchor-id="make-clean-says-up-to-date"><code>make clean</code> Says Up To Date</h3>
+<p><strong>Symptom.</strong> <code>make: 'clean' is up to date.</code></p>
+<p><strong>Cause.</strong> A file or directory named <code>clean</code> exists. Make compared the target against it, found no newer prerequisites, and concluded there was nothing to do.</p>
+<p><strong>Fix.</strong> Declare action targets phony:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb158"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb158-1"><a href="#cb158-1" aria-hidden="true" tabindex="-1"></a><span class="ot">.PHONY:</span><span class="dt"> all clean test install docs</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A <code>docs/</code> directory silently disabling <code>make docs</code> is the version of this you are most likely to meet. See <a href="#phony-targets">Phony Targets</a>.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="The two questions">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>The two questions
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>When a makefile misbehaves, almost every cause above is reached by asking two questions in order. <strong>Which language is this line?</strong> resolves tabs, <code>$</code> versus <code>$$</code>, the per-line shell, and stray whitespace. <strong>Which phase does this run in?</strong> resolves wildcards, shell calls, conditionals, and variable flavors. What remains after both is a graph problem: a missing edge, or a target that is secretly a filename.</p>
+</div>
+</div>
+</section>
 </section>
 <section id="make-and-cmake" class="level2">
 <h2 class="anchored" data-anchor-id="make-and-cmake">Make and CMake</h2>
@@ -2951,24 +3334,24 @@ explicitly; that is what makes the chapter cohere. -->
 </div>
 </div>
 <p>More importantly, CMake is not a build tool at all. It is a <strong>generator</strong>. It reads your <code>CMakeLists.txt</code> tree once, at <em>configure time</em>, and writes out real build files for some other tool to execute. By default on Unix that other tool is Make, so the thing that actually builds your project is a set of generated makefiles that no human wrote and no human should edit.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb134"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb134-1"><a href="#cb134-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build      <span class="co"># configure: read CMakeLists.txt, generate build/</span></span>
-<span id="cb134-2"><a href="#cb134-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build      <span class="co"># build: run the generated makefiles</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb159"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb159-1"><a href="#cb159-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build      <span class="co"># configure: read CMakeLists.txt, generate build/</span></span>
+<span id="cb159-2"><a href="#cb159-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build      <span class="co"># build: run the generated makefiles</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>That two-step split is the whole architecture. Everything else follows from it.</p>
 <section id="how-the-tree-is-collected" class="level3">
 <h3 class="anchored" data-anchor-id="how-the-tree-is-collected">How the Tree Is Collected</h3>
 <p>The mechanism is <code>add_subdirectory()</code>. The top-level <code>CMakeLists.txt</code> names its children, each child is read in turn, and each may name children of its own:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb135"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb135-1"><a href="#cb135-1" aria-hidden="true" tabindex="-1"></a><span class="co"># CMakeLists.txt (top level)</span></span>
-<span id="cb135-2"><a href="#cb135-2" aria-hidden="true" tabindex="-1"></a><span class="kw">cmake_minimum_required</span>(<span class="ot">VERSION</span> <span class="dt">3.16</span>)</span>
-<span id="cb135-3"><a href="#cb135-3" aria-hidden="true" tabindex="-1"></a><span class="kw">project</span>(demo <span class="ot">C</span>)</span>
-<span id="cb135-4"><a href="#cb135-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb135-5"><a href="#cb135-5" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(lib)</span>
-<span id="cb135-6"><a href="#cb135-6" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(src)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb136"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb136-1"><a href="#cb136-1" aria-hidden="true" tabindex="-1"></a><span class="co"># lib/CMakeLists.txt</span></span>
-<span id="cb136-2"><a href="#cb136-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> util.c)</span>
-<span id="cb136-3"><a href="#cb136-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_include_directories</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span> <span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb137"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb137-1"><a href="#cb137-1" aria-hidden="true" tabindex="-1"></a><span class="co"># src/CMakeLists.txt</span></span>
-<span id="cb137-2"><a href="#cb137-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c)</span>
-<span id="cb137-3"><a href="#cb137-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> util)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb160"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb160-1"><a href="#cb160-1" aria-hidden="true" tabindex="-1"></a><span class="co"># CMakeLists.txt (top level)</span></span>
+<span id="cb160-2"><a href="#cb160-2" aria-hidden="true" tabindex="-1"></a><span class="kw">cmake_minimum_required</span>(<span class="ot">VERSION</span> <span class="dt">3.16</span>)</span>
+<span id="cb160-3"><a href="#cb160-3" aria-hidden="true" tabindex="-1"></a><span class="kw">project</span>(demo <span class="ot">C</span>)</span>
+<span id="cb160-4"><a href="#cb160-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb160-5"><a href="#cb160-5" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(lib)</span>
+<span id="cb160-6"><a href="#cb160-6" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(src)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb161"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb161-1"><a href="#cb161-1" aria-hidden="true" tabindex="-1"></a><span class="co"># lib/CMakeLists.txt</span></span>
+<span id="cb161-2"><a href="#cb161-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">util</span> util.c)</span>
+<span id="cb161-3"><a href="#cb161-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_include_directories</span>(<span class="bn">util</span> <span class="ot">PUBLIC</span> <span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb162"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb162-1"><a href="#cb162-1" aria-hidden="true" tabindex="-1"></a><span class="co"># src/CMakeLists.txt</span></span>
+<span id="cb162-2"><a href="#cb162-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">app</span> main.c)</span>
+<span id="cb162-3"><a href="#cb162-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span> util)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Reading is recursive, but the <em>result</em> is not. Every directory contributes its targets to one global picture, and CMake emits a single flat build graph covering the entire project.</p>
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
@@ -3101,7 +3484,7 @@ explicitly; that is what makes the chapter cohere. -->
 <h3 class="anchored" data-anchor-id="reading-a-cmake-project">Reading a CMake Project</h3>
 <p>A few things make a generated build tractable when you need to debug it.</p>
 <p><strong>See the real compiler command.</strong> The default output shows progress, not invocations:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb138"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb138-1"><a href="#cb138-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-C</span> build VERBOSE=1        <span class="co"># or: cmake --build build --verbose</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb163"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb163-1"><a href="#cb163-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-C</span> build VERBOSE=1        <span class="co"># or: cmake --build build --verbose</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Generate a compile database.</strong> Configuring with <code>-DCMAKE_EXPORT_COMPILE_COMMANDS=ON</code> writes <code>build/compile_commands.json</code>, containing the exact command for every source file. Language servers such as <code>clangd</code> consume this, and it is the fastest way to answer “what flags is this file actually being compiled with.”</p>
 <p><strong>Know where the real rules live.</strong> In a Makefiles build, the per-target rules are in <code>build/&lt;dir&gt;/CMakeFiles/&lt;target&gt;.dir/build.make</code>, and the flags are split out into <code>flags.make</code> next to it. Worth reading once, to see that the generated output is ordinary Make using the same <code>-MD</code> dependency mechanism described in <a href="#auto-generated-dependencies">Auto-Generated Dependencies</a>.</p>
 <p><strong>You do not re-run <code>cmake</code> by hand.</strong> The generated makefiles depend on the <code>CMakeLists.txt</code> files, so editing one causes the next <code>make</code> to re-run CMake automatically. This is the <a href="#include-and-include"><code>include</code> restart mechanism</a> applied at project scale.</p>
@@ -3110,7 +3493,7 @@ explicitly; that is what makes the chapter cohere. -->
 <section id="make-or-ninja" class="level3">
 <h3 class="anchored" data-anchor-id="make-or-ninja">Make or Ninja</h3>
 <p>CMake’s default generator on Unix is Unix Makefiles, but Ninja is the better choice for anything large:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb139"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb139-1"><a href="#cb139-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-G</span> Ninja</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb164"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb164-1"><a href="#cb164-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-G</span> Ninja</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Ninja was designed for exactly this role: a build language nobody writes by hand, optimized for a generator to emit and for a machine to execute quickly. It parallelizes by default, and its no-op builds are dramatically faster than Make’s on large projects, which matters because a no-op build is the one you run most. The <code>CMakeLists.txt</code> files do not change; only the generated output does.</p>
 <div class="see-more">
 <ul>
@@ -3123,31 +3506,44 @@ explicitly; that is what makes the chapter cohere. -->
 </section>
 <section id="where-make-sits-today" class="level2">
 <h2 class="anchored" data-anchor-id="where-make-sits-today">Where Make Sits Today</h2>
-<!-- An honest closing assessment rather than a defense.
-
-Still wins at: being installed everywhere, zero configuration, small projects,
-task running, gluing heterogeneous tools (LaTeX, Quarto, containers, codegen),
-and being readable in full by one person.
-
-Lost to newer tools at: large C/C++ projects (CMake for configuration and
-portability, Ninja for speed), correctness under change (content hashing beats
-timestamps), hermetic and distributed builds (Bazel), and anything with a
-language-native toolchain (Cargo, Go).
-
-The idea that outlived the tool: the dependency graph. Every successor
-implements it. A reader who understands Make's model can read any of them.
-Tie back to the Overview. -->
+<div class="subheading">
+<p>What it still wins at, and what it has lost</p>
+</div>
+<p>Make is fifty years old, and the honest assessment is neither that it is obsolete nor that the newer tools are hype. It occupies a narrower niche than it once did, and inside that niche nothing has displaced it.</p>
+<section id="what-make-still-wins-at" class="level3">
+<h3 class="anchored" data-anchor-id="what-make-still-wins-at">What Make Still Wins At</h3>
+<p><strong>It is already there.</strong> No installation, no version pin, no lockfile, no daemon. A makefile in a repository works on a stranger’s machine, in a container, over SSH on a box you cannot install software on. For a small project this is worth more than any feature, because the alternative starts with a paragraph of setup instructions.</p>
+<p><strong>Zero configuration for small builds.</strong> Ten lines gets you a correct incremental build of a C program. The equivalent CMake project is comparable in length but requires CMake, a generator, and a build directory; the ceremony does not pay off until the project is large enough to need it.</p>
+<p><strong>Gluing heterogeneous tools.</strong> This is where Make is genuinely unmatched, and it follows directly from <a href="#the-shell-is-the-recipe-language">The Shell Is the Recipe Language</a>. A pipeline that renders LaTeX, converts images with ImageMagick, generates code from a schema, builds a container, and publishes the result is not a C build, and no language-native toolchain covers it. Make does, because it never assumed anything about the work. This notebook is built that way.</p>
+<p><strong>Task running.</strong> The command menu described in <a href="#make-as-a-task-runner">Make as a Task Runner</a> is a legitimate modern use, and its advantage is again ubiquity rather than quality.</p>
+<p><strong>One person can read the whole thing.</strong> A 60-line makefile is fully comprehensible in an afternoon, including its failure modes. That is not true of a generated Ninja file or a large CMake project, and for a small team it matters.</p>
+</section>
+<section id="what-make-has-lost" class="level3">
+<h3 class="anchored" data-anchor-id="what-make-has-lost">What Make Has Lost</h3>
+<p><strong>Large C/C++ projects, to CMake and Ninja.</strong> Not because Make cannot express them, but because <a href="#the-concept-map">target-based CMake carries build requirements along the dependency graph</a> and Make has only a global <code>CFLAGS</code> string. Add cross-platform configuration and toolchain detection, which Make has no answer for at all, and the case is decided. Ninja then beats Make on raw execution speed for the generated output.</p>
+<p><strong>Correctness under change, to content hashing.</strong> Every failure in <a href="#when-timestamps-lie">When Timestamps Lie</a> is structural. Ninja, Bazel, and Cargo hash inputs, so a restored backup, a branch switch, or a regenerated-but-identical file behaves correctly. They also track <em>flags</em> as inputs, which is why Make needs the separate-directory trick for debug and release builds and they do not.</p>
+<p><strong>Hermetic and distributed builds, to Bazel.</strong> Make’s recipes can read anything on the machine, so a build is reproducible only by convention. Bazel sandboxes each action, which is what makes remote execution and shared caching possible. At a thousand engineers that is transformative; at one it is overhead.</p>
+<p><strong>Language-native builds, to Cargo and Go.</strong> When a language ships a build tool that understands its module system, that tool wins by default. Nobody writes a makefile to build a Rust crate, and <a href="./rust-cc.html">Cargo</a> needs no dependency graph from you because it derives one from the source.</p>
+</section>
+<section id="the-idea-that-outlived-the-tool" class="level3">
+<h3 class="anchored" data-anchor-id="the-idea-that-outlived-the-tool">The Idea That Outlived the Tool</h3>
+<p>The closing observation is the one from the <a href="#overview">Overview</a>: the reason Make’s successors all look somewhat like Make is that they inherited its model rather than replaced it.</p>
+<p>Ninja is a dependency graph with faster execution. Bazel is a dependency graph with hermetic actions and content hashing. Cargo is a dependency graph specialized to one language’s module system. CMake is a <em>generator</em> of dependency graphs. Every one of them is targets, prerequisites, and staleness, with the trades adjusted.</p>
+<p>That is why learning Make pays off beyond Make. The model transfers: once you know why a build is incremental, why an incomplete graph fails under parallelism, and why timestamps are a proxy rather than an answer, you can read any of the successors and know what questions to ask. Feldman’s afternoon in 1976 produced a tool that is now a poor choice for the job it was written for, and a model that every replacement still implements.</p>
+</section>
 </section>
 <section id="further-reading" class="level2">
 <h2 class="anchored" data-anchor-id="further-reading">Further Reading</h2>
-<!-- .see-more div:
-  - GNU Make Manual (the reference; genuinely well written)
-  - Robert Mecklenburg, "Managing Projects with GNU Make" (3rd ed.)
-  - Peter Miller, "Recursive Make Considered Harmful" (1997)
-  - John Graham-Cumming, "GNU Make Standard Library" and his makefile debugging
-    writing
-  - CMake documentation, for the section above
-All external links need {target="_blank" rel="noopener noreferrer"}. -->
+<div class="see-more">
+<ul>
+<li><a href="https://www.gnu.org/software/make/manual/" target="_blank" rel="noopener noreferrer">GNU Make Manual</a>. The reference, and unusually well written for a GNU manual: readable front to back, with the two-phase evaluation model explained properly.</li>
+<li>Robert Mecklenburg, <em>Managing Projects with GNU Make</em>, 3rd edition (O’Reilly, 2004). The standard book. Dated in its examples and still the best extended treatment of the language itself.</li>
+<li>Peter Miller, <a href="https://aegis.sourceforge.net/auug97.pdf" target="_blank" rel="noopener noreferrer"><em>Recursive Make Considered Harmful</em></a> (AUUG, 1997). The paper that changed how build systems are structured. Short, and the argument is as relevant as it was then.</li>
+<li>John Graham-Cumming, <a href="http://gmsl.sourceforge.net/" target="_blank" rel="noopener noreferrer"><em>The GNU Make Standard Library</em></a>. A function library for Make, and a working demonstration of how far the macro language can be pushed. His <em>GNU Make Unleashed</em> collects his writing on debugging makefiles.</li>
+<li><a href="https://pubs.opengroup.org/onlinepubs/9699919799/utilities/make.html" target="_blank" rel="noopener noreferrer">POSIX <code>make</code></a>. The portable core, worth a look to see how much of what you use is a GNU extension.</li>
+<li><a href="https://cmake.org/cmake/help/latest/" target="_blank" rel="noopener noreferrer">CMake Documentation</a> and <a href="https://ninja-build.org/" target="_blank" rel="noopener noreferrer">Ninja</a>, for the tools that generate and execute what Make used to.</li>
+</ul>
+</div>
 
 
 </section>

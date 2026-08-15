@@ -36,23 +36,23 @@ No. Rust deliberately omits implementation inheritance, and the omission is a de
 
 Inheritance bundles two distinct things: *code reuse* (sharing implementation) and *subtype polymorphism* (treating a derived type as its base). Object-oriented languages couple them; you inherit the implementation to get the polymorphism. Decades of experience showed that this coupling causes problems: fragile base class syndrome, deep hierarchies that are hard to reason about, and the pressure to contort a design to fit a tree when the real relationships form a graph.
 
-Rust separates the two concerns cleanly. For code reuse, you use *traits with default methods* — a [trait](rust-ho.qmd#traits) can provide a default implementation of any method, and any type that implements the trait gets that implementation for free (or overrides it). For subtype polymorphism, you use [*trait objects*](https://doc.rust-lang.org/reference/types/trait-object.html?highlight=dyn%20Trait#trait-objects){target=_blank} (`dyn Trait`), which let you write code that works over any type implementing a given trait. You can also compose behavior by having one struct hold another as a field and delegating to it, which is explicit and therefore more honest about what is actually happening.
+Rust separates the two concerns cleanly. For code reuse, you use *traits with default methods* — a [trait](rust-ho.qmd#traits) can provide a default implementation of any method, and any type that implements the trait gets that implementation for free (or overrides it). For subtype polymorphism, you use [*trait objects*](https://doc.rust-lang.org/reference/types/trait-object.html?highlight=dyn%20Trait#trait-objects){target="_blank" rel="noopener noreferrer"} (`dyn Trait`), which let you write code that works over any type implementing a given trait. You can also compose behavior by having one struct hold another as a field and delegating to it, which is explicit and therefore more honest about what is actually happening.
 
 The payoff is that Rust's type system is simpler to reason about. There is no implicit behavior coming from somewhere up the hierarchy, and the borrow checker doesn't have to contend with inherited mutable state. If you miss inheritance, you usually find that a trait with default methods plus composition covers the real need without the baggage.
 
 ##### 2. Is Rust as efficient and fast as C?
-Yes, with one honest qualification.
+Yes, with one qualification.
 
 On the machine-code level, Rust and C compile to essentially identical output. Both use LLVM (Clang also uses LLVM), both have no runtime or garbage collector, and Rust's abstractions — iterators, generics, closures — are zero-cost: they disappear at compile time. Benchmarks between idiomatic Rust and idiomatic C are routinely within a percent or two of each other, and Rust sometimes wins because the compiler can apply optimizations that would be illegal in C due to aliasing rules (`restrict` in C is opt-in; Rust's ownership model gives the compiler that guarantee automatically).
 
-The qualification: Rust has bounds-checked array indexing in debug builds. In optimized builds, those checks are often eliminated when the compiler can prove an access is in range, and idiomatic safe Rust often uses iterators or slice methods that compile down without per-access bounds checks. In tight inner loops over arrays this can still matter in some cases, and C has no such checks by default. If you truly need manual unchecked indexing, Rust gives you the escape hatch via [`unsafe`](https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword){target=_blank}, but you have to ask for it deliberately. In practice, for most systems code, the difference does not appear outside of microbenchmarks.
+The qualification: Rust has bounds-checked array indexing in debug builds. In optimized builds, those checks are often eliminated when the compiler can prove an access is in range, and idiomatic safe Rust often uses iterators or slice methods that compile down without per-access bounds checks. In tight inner loops over arrays this can still matter in some cases, and C has no such checks by default. If you truly need manual unchecked indexing, Rust gives you the escape hatch via [`unsafe`](https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword){target="_blank" rel="noopener noreferrer"}, but you have to ask for it deliberately. In practice, for most systems code, the difference does not appear outside of microbenchmarks.
 
 ##### 3. Is it possible for a Rust app to experience a segfault?
 Yes, but it requires deliberate effort.
 
-In safe Rust, a segfault is essentially impossible by construction. The borrow checker prevents dangling pointers, use-after-free, and out-of-bounds memory access at compile time. What you get instead of a segfault is a compile error. The few things that could cause memory problems at runtime (like out-of-bounds slice indexing) are caught and turned into a controlled [`panic`](https://doc.rust-lang.org/reference/panic.html){target=_blank} rather than undefined behavior.
+In safe Rust, a segfault is essentially impossible by construction. The borrow checker prevents dangling pointers, use-after-free, and out-of-bounds memory access at compile time. What you get instead of a segfault is a compile error. The few things that could cause memory problems at runtime (like out-of-bounds slice indexing) are caught and turned into a controlled [`panic`](https://doc.rust-lang.org/reference/panic.html){target="_blank" rel="noopener noreferrer"} rather than undefined behavior.
 
-However, Rust has [`unsafe`](https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword){target=_blank} blocks, and `unsafe` suspends those guarantees. Code inside an `unsafe` block can dereference raw pointers, call C functions via FFI, and do other things the compiler cannot verify. Any of those can produce a segfault if you get them wrong. The critical design point is that `unsafe` is explicit and lexically scoped, so when something does go wrong you know exactly where to look: somewhere inside an `unsafe` block, not anywhere in the program.
+However, Rust has [`unsafe`](https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword){target="_blank" rel="noopener noreferrer"} blocks, and `unsafe` suspends those guarantees. Code inside an `unsafe` block can dereference raw pointers, call C functions via FFI, and do other things the compiler cannot verify. Any of those can produce a segfault if you get them wrong. The critical design point is that `unsafe` is explicit and lexically scoped, so when something does go wrong you know exactly where to look: somewhere inside an `unsafe` block, not anywhere in the program.
 
 So: pure safe Rust, no segfaults. Unsafe Rust, yes — but you opted in, and the surface area is small and visible.
 
@@ -95,7 +95,7 @@ Rust and Go are both modern systems-adjacent languages that improve on C in term
 The practical heuristic: if you are writing a web service, a CLI tool, or infrastructure software where developer velocity matters more than squeezing every nanosecond, Go is faster to ship. If you are writing a database engine, an OS component, a codec, an embedded runtime, or anything where performance predictability or memory safety guarantees are non-negotiable, Rust is the better tool.
 
 ## Cheat Sheet
-I looked over here, and I looked over there. Then I found the cheat sheet I was looking for. He's all squished together and highly 2 dimensional. I edited him a little to get him to fit on a single page, but otherwise it's all [RefMint](https://refmint.com/topics/rust/){target=_blank}.
+I looked over here, and I looked over there. Then I found the cheat sheet I was looking for. He's all squished together and highly 2 dimensional. I edited him a little to get him to fit on a single page, but otherwise it's all [RefMint](https://refmint.com/topics/rust/){target="_blank" rel="noopener noreferrer"}.
 
 ![](images/rust-cs.png){fig-align="center" width=14in}
 
@@ -138,41 +138,41 @@ Two kinds of crates:
 :::
 
 #### The Most Popular Crates
-The following list is a top 30 crates capture from [Most popular Rust Libraries](https://lib.rs/std){target="_blank"}. When I finish this document, I'm going to put it in a time-capsule bury it.
+The following list is a top 30 crates capture from [Most popular Rust Libraries](https://lib.rs/std){target="_blank" rel="noopener noreferrer"}. When I finish this document, I'm going to put it in a time-capsule bury it.
 
 > To whoever is reading this, the date is 4/8/2026. We drank too much Orange Crush and not enough Tang and we died. Follows is a list of the top 30 most popular Rust crates. I have also left some Tang in the capsule. Live long and prosper.
 
 | Library                                                                         | Description                                                                                                                                                                                                             |
 |---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [serde](https://lib.rs/crates/serde){target="_blank"}                           | A generic serialization/deserialization framework                                                                                                                                                                       |
-| [thiserror](https://lib.rs/crates/thiserror){target="_blank"}                   | derive(Error)                                                                                                                                                                                                           |
-| [serde_json](https://lib.rs/crates/serde_json){target="_blank"}                 | A JSON serialization file format                                                                                                                                                                                        |
-| [rand](https://lib.rs/crates/rand){target="_blank"}                             | Random number generators and other randomness functionality                                                                                                                                                             |
-| [tokio](https://lib.rs/crates/tokio){target="_blank"}                           | An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications                                                                                                                             |
-| [clap](https://lib.rs/crates/clap){target="_blank"}                             | efficient, and full-featured Command Line Argument Parser                                                                                                                                                               |
-| [anyhow](https://lib.rs/crates/anyhow){target="_blank"}                         | Flexible concrete Error type built on std::error::Error                                                                                                                                                                 |
-| [syn](https://lib.rs/crates/syn){target="_blank"}                               | Parser for Rust source code                                                                                                                                                                                             |
-| [regex](https://lib.rs/crates/regex){target="_blank"}                           | regular expressions for Rust. This implementation uses finite automata and guarantees linear time matching on all inputs.                                                                                               |
-| [base64](https://lib.rs/crates/base64){target="_blank"}                         | encodes and decodes base64 as bytes or utf8                                                                                                                                                                             |
-| [log](https://lib.rs/crates/log){target="_blank"}                               | A lightweight logging facade for Rust                                                                                                                                                                                   |
-| [tracing](https://lib.rs/crates/tracing){target="_blank"}                       | Application-level tracing for Rust                                                                                                                                                                                      |
-| [tempfile](https://lib.rs/crates/tempfile){target="_blank"}                     | managing temporary files and directories                                                                                                                                                                                |
-| [chrono](https://lib.rs/crates/chrono){target="_blank"}                         | Date and time library for Rust                                                                                                                                                                                          |
-| [quote](https://lib.rs/crates/quote){target="_blank"}                           | Quasi-quoting macro quote!(...)                                                                                                                                                                                         |
-| [reqwest](https://lib.rs/crates/reqwest){target="_blank"}                       | higher level HTTP client library                                                                                                                                                                                        |
-| [libc](https://lib.rs/crates/libc){target="_blank"}                             | Raw FFI bindings to platform libraries like libc                                                                                                                                                                        |
-| [proc-macro2](https://lib.rs/crates/proc-macro2){target="_blank"}               | A substitute implementation of the compiler’s proc_macro API to decouple token-based libraries from the procedural macro use case                                                                                       |
-| [toml](https://lib.rs/crates/toml){target="_blank"}                             | A native Rust encoder and decoder of TOML-formatted files and streams. Provides implementations of the standard Serialize/Deserialize traits for TOML data to facilitate deserializing and serializing Rust structures. |
-| [sha2](https://lib.rs/crates/sha2){target="_blank"}                             | Pure Rust implementation of the SHA-2 hash function family including SHA-224, SHA-256, SHA-384, and SHA-512                                                                                                             |
-| [futures](https://lib.rs/crates/futures){target="_blank"}                       | streams featuring zero allocations, composability, and iterator-like interfaces                                                                                                                                         |
-| [uuid](https://lib.rs/crates/uuid){target="_blank"}                             | generate and parse UUIDs                                                                                                                                                                                                |
-| [tracing-subscriber](https://lib.rs/crates/tracing-subscriber){target="_blank"} | implementing and composing tracing subscribers                                                                                                                                                                          |
-| [bytes](https://lib.rs/crates/bytes){target="_blank"}                           | Types and traits for working with bytes                                                                                                                                                                                 |
-| [url](https://lib.rs/crates/url){target="_blank"}                               | based on the WHATWG URL Standard                                                                                                                                                                                        |
-| [itertools](https://lib.rs/crates/itertools){target="_blank"}                   | Extra iterator adaptors, iterator methods, free functions, and macros                                                                                                                                                   |
-| [once_cell](https://lib.rs/crates/once_cell){target="_blank"}                   | Single assignment cells and lazy values                                                                                                                                                                                 |
-| [getrandom](https://lib.rs/crates/getrandom){target="_blank"}                   | A small cross-platform library for retrieving random data from system source                                                                                                                                            |
-| [indexmap](https://lib.rs/crates/indexmap){target="_blank"}                     | A hash table with consistent order and fast iteration                                                                                                                                                                   |
+| [serde](https://lib.rs/crates/serde){target="_blank" rel="noopener noreferrer"}                           | A generic serialization/deserialization framework                                                                                                                                                                       |
+| [thiserror](https://lib.rs/crates/thiserror){target="_blank" rel="noopener noreferrer"}                   | derive(Error)                                                                                                                                                                                                           |
+| [serde_json](https://lib.rs/crates/serde_json){target="_blank" rel="noopener noreferrer"}                 | A JSON serialization file format                                                                                                                                                                                        |
+| [rand](https://lib.rs/crates/rand){target="_blank" rel="noopener noreferrer"}                             | Random number generators and other randomness functionality                                                                                                                                                             |
+| [tokio](https://lib.rs/crates/tokio){target="_blank" rel="noopener noreferrer"}                           | An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications                                                                                                                             |
+| [clap](https://lib.rs/crates/clap){target="_blank" rel="noopener noreferrer"}                             | efficient, and full-featured Command Line Argument Parser                                                                                                                                                               |
+| [anyhow](https://lib.rs/crates/anyhow){target="_blank" rel="noopener noreferrer"}                         | Flexible concrete Error type built on std::error::Error                                                                                                                                                                 |
+| [syn](https://lib.rs/crates/syn){target="_blank" rel="noopener noreferrer"}                               | Parser for Rust source code                                                                                                                                                                                             |
+| [regex](https://lib.rs/crates/regex){target="_blank" rel="noopener noreferrer"}                           | regular expressions for Rust. This implementation uses finite automata and guarantees linear time matching on all inputs.                                                                                               |
+| [base64](https://lib.rs/crates/base64){target="_blank" rel="noopener noreferrer"}                         | encodes and decodes base64 as bytes or utf8                                                                                                                                                                             |
+| [log](https://lib.rs/crates/log){target="_blank" rel="noopener noreferrer"}                               | A lightweight logging facade for Rust                                                                                                                                                                                   |
+| [tracing](https://lib.rs/crates/tracing){target="_blank" rel="noopener noreferrer"}                       | Application-level tracing for Rust                                                                                                                                                                                      |
+| [tempfile](https://lib.rs/crates/tempfile){target="_blank" rel="noopener noreferrer"}                     | managing temporary files and directories                                                                                                                                                                                |
+| [chrono](https://lib.rs/crates/chrono){target="_blank" rel="noopener noreferrer"}                         | Date and time library for Rust                                                                                                                                                                                          |
+| [quote](https://lib.rs/crates/quote){target="_blank" rel="noopener noreferrer"}                           | Quasi-quoting macro quote!(...)                                                                                                                                                                                         |
+| [reqwest](https://lib.rs/crates/reqwest){target="_blank" rel="noopener noreferrer"}                       | higher level HTTP client library                                                                                                                                                                                        |
+| [libc](https://lib.rs/crates/libc){target="_blank" rel="noopener noreferrer"}                             | Raw FFI bindings to platform libraries like libc                                                                                                                                                                        |
+| [proc-macro2](https://lib.rs/crates/proc-macro2){target="_blank" rel="noopener noreferrer"}               | A substitute implementation of the compiler’s proc_macro API to decouple token-based libraries from the procedural macro use case                                                                                       |
+| [toml](https://lib.rs/crates/toml){target="_blank" rel="noopener noreferrer"}                             | A native Rust encoder and decoder of TOML-formatted files and streams. Provides implementations of the standard Serialize/Deserialize traits for TOML data to facilitate deserializing and serializing Rust structures. |
+| [sha2](https://lib.rs/crates/sha2){target="_blank" rel="noopener noreferrer"}                             | Pure Rust implementation of the SHA-2 hash function family including SHA-224, SHA-256, SHA-384, and SHA-512                                                                                                             |
+| [futures](https://lib.rs/crates/futures){target="_blank" rel="noopener noreferrer"}                       | streams featuring zero allocations, composability, and iterator-like interfaces                                                                                                                                         |
+| [uuid](https://lib.rs/crates/uuid){target="_blank" rel="noopener noreferrer"}                             | generate and parse UUIDs                                                                                                                                                                                                |
+| [tracing-subscriber](https://lib.rs/crates/tracing-subscriber){target="_blank" rel="noopener noreferrer"} | implementing and composing tracing subscribers                                                                                                                                                                          |
+| [bytes](https://lib.rs/crates/bytes){target="_blank" rel="noopener noreferrer"}                           | Types and traits for working with bytes                                                                                                                                                                                 |
+| [url](https://lib.rs/crates/url){target="_blank" rel="noopener noreferrer"}                               | based on the WHATWG URL Standard                                                                                                                                                                                        |
+| [itertools](https://lib.rs/crates/itertools){target="_blank" rel="noopener noreferrer"}                   | Extra iterator adaptors, iterator methods, free functions, and macros                                                                                                                                                   |
+| [once_cell](https://lib.rs/crates/once_cell){target="_blank" rel="noopener noreferrer"}                   | Single assignment cells and lazy values                                                                                                                                                                                 |
+| [getrandom](https://lib.rs/crates/getrandom){target="_blank" rel="noopener noreferrer"}                   | A small cross-platform library for retrieving random data from system source                                                                                                                                            |
+| [indexmap](https://lib.rs/crates/indexmap){target="_blank" rel="noopener noreferrer"}                     | A hash table with consistent order and fast iteration                                                                                                                                                                   |
 
 ### Packages
 A **package** is what Cargo manages: a directory with a `Cargo.toml` manifest. A package contains at least one crate. Most projects you will work on are a single package with a single binary crate:
@@ -198,7 +198,7 @@ In modern Rust (since 2018), `mod.rs` is often replaced by a file with the same 
 :::
 
 ### Modules
-A **module** is a namespace within a crate — the closest equivalent to a Python module. Modules organize code into logical units and control what is visible outside (`pub`) versus private. Items are *private by default* — you opt into visibility explicitly. Before we dive deep on our own, we are to share *The Rust Programming Language*'s  ["Modules Cheat Sheet"](https://doc.rust-lang.org/book/ch07-02-defining-modules-to-control-scope-and-privacy.html){target="_blank"}. It was just what I was looking for when learning about modules; so, here it is word for word:
+A **module** is a namespace within a crate — the closest equivalent to a Python module. Modules organize code into logical units and control what is visible outside (`pub`) versus private. Items are *private by default* — you opt into visibility explicitly. Before we dive deep on our own, we are to share *The Rust Programming Language*'s  ["Modules Cheat Sheet"](https://doc.rust-lang.org/book/ch07-02-defining-modules-to-control-scope-and-privacy.html){target="_blank" rel="noopener noreferrer"}. It was just what I was looking for when learning about modules; so, here it is word for word:
 
 ::: {.exploration data-label="Modules Cheat Sheet"}
 Before we get to the details of modules and paths, here we provide a quick reference on how modules, paths, the `use` keyword, and the `pub` keyword work in the compiler, and how most developers organize their code. We’ll be going through examples of each of these rules throughout this chapter, but this is a great place to refer to as a reminder of how modules work.
@@ -413,7 +413,7 @@ pub fn origin() -> Point { Point { x: 0.0, y: 0.0 } }
 `use` is your friend. Love him.
 :::
 
-`use` is an extremely useful and flexible keyword that was described to me to an "alias injector". [The Rust Reference](https://doc.rust-lang.org/reference/items/use-declarations.html){target="_blank"} has the following to say about `use`:
+`use` is an extremely useful and flexible keyword that was described to me to an "alias injector". [The Rust Reference](https://doc.rust-lang.org/reference/items/use-declarations.html){target="_blank" rel="noopener noreferrer"} has the following to say about `use`:
 
 > A `use` declaration creates one or more local name bindings synonymous with some other path. Usually a `use` declaration is used to shorten the path required to refer to a module item. These declarations may appear in modules and blocks, usually at the top. A `use` declaration is also sometimes called an `import`, or, if it is public, a re-export.
 
@@ -546,7 +546,7 @@ See [Use declarations](https://doc.rust-lang.org/reference/items/use-declaration
 :::
 
 ### External Dependencies
-Dependencies from [crates.io](https://crates.io/){target=_blank} (Rust's public registry, the equivalent of PyPI) go in `Cargo.toml`:
+Dependencies from [crates.io](https://crates.io/){target="_blank" rel="noopener noreferrer"} (Rust's public registry, the equivalent of PyPI) go in `Cargo.toml`:
 
 ```toml
 [dependencies]
@@ -636,7 +636,7 @@ These look like operators but are actually conventions or syntax:
 | `.await`  | Async/await syntax (postfix keyword)                   | `future.await`                |
 
 #### Operator Overloading
-Many operators can be overloaded by implementing traits from [`std::ops`](https://doc.rust-lang.org/std/ops/index.html){target="_blank"}. For example:
+Many operators can be overloaded by implementing traits from [`std::ops`](https://doc.rust-lang.org/std/ops/index.html){target="_blank" rel="noopener noreferrer"}. For example:
 
 ```rust
 use std::ops::Add;
@@ -659,19 +659,19 @@ let p2 = Point { x: 3, y: 4 };
 let p3 = p1 + p2;  // uses our Add implementation
 ```
 
-In the following table we include some of A listers and indicate the operator, the trait (in `std::ops`) and the method signature. For a complete list, see [`std::ops`](https://doc.rust-lang.org/std/ops/index.html#traits){target="_blank"}.
+In the following table we include some of A listers and indicate the operator, the trait (in `std::ops`) and the method signature. For a complete list, see [`std::ops`](https://doc.rust-lang.org/std/ops/index.html#traits){target="_blank" rel="noopener noreferrer"}.
 
 | Operator             | Trait                                                                                    | Method                                                             |
 |----------------------|------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
-| `+`                  | [`Add`](https://doc.rust-lang.org/std/ops/trait.Add.html){target="_blank"}               | `add(self, rhs: Rhs) -> Self`                                      |
-| `-`                  | [`Sub`](https://doc.rust-lang.org/std/ops/trait.Sub.html){target="_blank"}               | `sub(self, rhs: Rhs) -> Self`                                      |
-| `*`                  | [`Mul`](https://doc.rust-lang.org/std/ops/trait.Mul.html){target="_blank"}               | `mul(self, rhs: Rhs) -> Self`                                      |
-| `/`                  | [`Div`](https://doc.rust-lang.org/std/ops/trait.Div.html){target="_blank"}               | `div(self, rhs: Rhs) -> Self`                                      |
-| `%`                  | [`Rem`](https://doc.rust-lang.org/std/ops/trait.Rem.html){target="_blank"}               | `rem(self, rhs: Rhs) -> Self`                                      |
-| `==`, `!=`           | [`PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html){target="_blank"}   | `eq(&self, other: &Rhs) -> bool`, `ne(&self, other: &Rhs) -> bool` |
-| `<`, `>`, `<=`, `>=` | [`PartialOrd`](https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html){target="_blank"} | `partial_cmp(&self, rhs: &Rhs) -> Option<Ordering>`                |
-| `[]`                 | [`Index`](https://doc.rust-lang.org/std/ops/trait.Index.html){target="_blank"}           | `index(&self, index: Idx) -> &Self::Output`                        |
-| `[]` (mut)           | [`IndexMut`](https://doc.rust-lang.org/std/ops/trait.IndexMut.html){target="_blank"}     | `index_mut(&mut self, index: Idx) -> &mut Self::Output`            |
+| `+`                  | [`Add`](https://doc.rust-lang.org/std/ops/trait.Add.html){target="_blank" rel="noopener noreferrer"}               | `add(self, rhs: Rhs) -> Self`                                      |
+| `-`                  | [`Sub`](https://doc.rust-lang.org/std/ops/trait.Sub.html){target="_blank" rel="noopener noreferrer"}               | `sub(self, rhs: Rhs) -> Self`                                      |
+| `*`                  | [`Mul`](https://doc.rust-lang.org/std/ops/trait.Mul.html){target="_blank" rel="noopener noreferrer"}               | `mul(self, rhs: Rhs) -> Self`                                      |
+| `/`                  | [`Div`](https://doc.rust-lang.org/std/ops/trait.Div.html){target="_blank" rel="noopener noreferrer"}               | `div(self, rhs: Rhs) -> Self`                                      |
+| `%`                  | [`Rem`](https://doc.rust-lang.org/std/ops/trait.Rem.html){target="_blank" rel="noopener noreferrer"}               | `rem(self, rhs: Rhs) -> Self`                                      |
+| `==`, `!=`           | [`PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html){target="_blank" rel="noopener noreferrer"}   | `eq(&self, other: &Rhs) -> bool`, `ne(&self, other: &Rhs) -> bool` |
+| `<`, `>`, `<=`, `>=` | [`PartialOrd`](https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html){target="_blank" rel="noopener noreferrer"} | `partial_cmp(&self, rhs: &Rhs) -> Option<Ordering>`                |
+| `[]`                 | [`Index`](https://doc.rust-lang.org/std/ops/trait.Index.html){target="_blank" rel="noopener noreferrer"}           | `index(&self, index: Idx) -> &Self::Output`                        |
+| `[]` (mut)           | [`IndexMut`](https://doc.rust-lang.org/std/ops/trait.IndexMut.html){target="_blank" rel="noopener noreferrer"}     | `index_mut(&mut self, index: Idx) -> &mut Self::Output`            |
 
 ::: {.callout-note title="Why are some by Reference and others by Value?"}
 The reason comes down to **Copy semantics**. For `PartialEq`, the signature is:
@@ -688,7 +688,7 @@ For `Add`, the signature is:
 fn add(self, rhs: Self) -> Self::Output;
 ```
 
-The operands are taken *by value* because addition is modeled as **consumption and transformation** — you take the inputs and produce a new output. For types where this makes sense (like integers), the values are [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html){target="_blank"}, so "moving" them is a no-op anyway. The compiler just copies the bits and you never notice.
+The operands are taken *by value* because addition is modeled as **consumption and transformation** — you take the inputs and produce a new output. For types where this makes sense (like integers), the values are [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html){target="_blank" rel="noopener noreferrer"}, so "moving" them is a no-op anyway. The compiler just copies the bits and you never notice.
 
 The reason Rust doesn't default to references for `Add` is that it would be unnecessarily restrictive for *non-Copy* types. Consider a hypothetical big integer or a matrix type — you might genuinely want to consume both operands and reuse their memory in constructing the result, avoiding an extra allocation. If the trait required `&Self`, you'd lose that option.
 
@@ -860,8 +860,8 @@ Rust has two string types. The distinction maps directly onto [owned](rust-ho.qm
 
 | Type                                                                                 | Owned? | Mutable? | Lives on | Analogy                   |
 |--------------------------------------------------------------------------------------|--------|----------|----------|---------------------------|
-| [`String`](https://doc.rust-lang.org/std/string/struct.String.html){target="_blank"} | Yes    | Yes      | Heap     | `std::string` in C++      |
-| [`&str`](https://doc.rust-lang.org/std/primitive.str.html){target="_blank"}          | No     | No       | Anywhere | `std::string_view` in C++ |
+| [`String`](https://doc.rust-lang.org/std/string/struct.String.html){target="_blank" rel="noopener noreferrer"} | Yes    | Yes      | Heap     | `std::string` in C++      |
+| [`&str`](https://doc.rust-lang.org/std/primitive.str.html){target="_blank" rel="noopener noreferrer"}          | No     | No       | Anywhere | `std::string_view` in C++ |
 
 ##### Representation
 ::: {.definition data-label="Laurel and Hardy"}
@@ -876,9 +876,9 @@ Some common uses of *fat pointers* are:
 - **Memory Safety**: Some research implementations use fat pointers to store bounds (base and end address) to prevent buffer overflows or keys/locks for temporal memory safety.
 :::
 
-[`String`](https://doc.rust-lang.org/std/string/struct.String.html){target="_blank"} stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is *not* null-terminated. The length field is what tells Rust where the string ends.
+[`String`](https://doc.rust-lang.org/std/string/struct.String.html){target="_blank" rel="noopener noreferrer"} stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is *not* null-terminated. The length field is what tells Rust where the string ends.
 
-[`&str`](https://doc.rust-lang.org/std/primitive.str.html){target="_blank"} is a **fat pointer**: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.
+[`&str`](https://doc.rust-lang.org/std/primitive.str.html){target="_blank" rel="noopener noreferrer"} is a **fat pointer**: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.
 
 Both types are guaranteed to contain valid UTF-8. Rust will not let you construct an invalid string.
 
@@ -1078,7 +1078,7 @@ let b: u8  = 255i32 as u8;    // truncates if out of range — be careful
 
 #### `From` and `Into`
 ::: {.explanation}
-In the following you will see syntax that looks a little like inheritance in other languages: `A: From<B>`. But we know it's not inheritance, \`cuz Rust doesn't support inheritance. It is called a **trait bound**. It means "A implements the `From` trait for `B`." In other words, you can convert from `B` to `A` using the From trait's method. The following example is in [The Rust Reference](https://doc.rust-lang.org/reference/trait-bounds.html){target="_blank"} (there is a wicked looking syntax diagram on that page):
+In the following you will see syntax that looks a little like inheritance in other languages: `A: From<B>`. But we know it's not inheritance, \`cuz Rust doesn't support inheritance. It is called a **trait bound**. It means "A implements the `From` trait for `B`." In other words, you can convert from `B` to `A` using the From trait's method. The following example is in [The Rust Reference](https://doc.rust-lang.org/reference/trait-bounds.html){target="_blank" rel="noopener noreferrer"} (there is a wicked looking syntax diagram on that page):
 
 ```rust
 trait Shape {
@@ -1142,7 +1142,7 @@ Because `.parse()` returns `Result`, you handle failure explicitly. In real code
 The `String` → `&str` direction is free: it is just taking a reference to the existing buffer.
 
 ::: {.callout-important title="Wonder-Twin Power Activate in the form of Turbofish"}
-The following example is taken out of our [exs24](https://github.com/celsasser/exs24-parser){target=_blank} parser:
+The following example is taken out of our [exs24](https://github.com/celsasser/exs24-parser){target="_blank" rel="noopener noreferrer"} parser:
 
 ```rust
 let seconds: f32 = seconds_text
@@ -1186,7 +1186,7 @@ The `::<>` spelling looks strange but follows the same pattern as other generic 
 :::
 
 ### Functions
-Functions are beautiful, reusable blocks of logic. [Wikipedia](https://en.wikipedia.org/wiki/Function_(computer_programming){target="_blank"}) describes a **function** as "a callable unit of software logic that has a well-formed interface and behavior and can be invoked multiple times... Their primary purpose is to allow for the decomposition of a large and/or complicated problem into chunks that have relatively low cognitive load and to assign the chunks meaningful names (unless they are anonymous). Judicious application can reduce the cost of developing and maintaining software, while increasing its quality and reliability." Where would any language be without them?
+Functions are beautiful, reusable blocks of logic. [Wikipedia](https://en.wikipedia.org/wiki/Function_(computer_programming){target="_blank" rel="noopener noreferrer"}) describes a **function** as "a callable unit of software logic that has a well-formed interface and behavior and can be invoked multiple times... Their primary purpose is to allow for the decomposition of a large and/or complicated problem into chunks that have relatively low cognitive load and to assign the chunks meaningful names (unless they are anonymous). Judicious application can reduce the cost of developing and maintaining software, while increasing its quality and reliability." Where would any language be without them?
 
 #### Common Type
 The most commonly used function type in rust is declared with `fn`:
@@ -1216,7 +1216,7 @@ let add = |a, b|                    { a + b }
 let add = |a: i32, b: i32| -> i32   { a + b}
 ```
 
-We cover [closures](https://doc.rust-lang.org/book/ch13-01-closures.html){target="_blank"} in more detail [later](rust-ho.qmd#closures).
+We cover [closures](https://doc.rust-lang.org/book/ch13-01-closures.html){target="_blank" rel="noopener noreferrer"} in more detail [later](rust-ho.qmd#closures).
 
 ### Control Flow
 #### Conditional

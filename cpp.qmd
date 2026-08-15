@@ -82,18 +82,18 @@ The papercuts that greet a C programmer on day one
 
 The features above are the headline additions, each with its own section below. But a C programmer's first hour with C++ is rarely spent on templates. It is spent on a scatter of small changes that make otherwise-valid C either fail to compile or, worse, compile into something subtly different. They are worth knowing up front because none of them are hard, and every one of them will happen to you.
 
-| Concern             | C                                                     | C++                                                              |
-|---------------------|-------------------------------------------------------|------------------------------------------------------------------|
-| Booleans            | `_Bool` (C99), or `int` with `#define TRUE 1`          | `bool`, `true`, `false` are keywords                             |
-| Null pointer        | `NULL`, a macro for `0` or `((void*)0)`               | `nullptr`, with its own type `std::nullptr_t`                    |
-| `struct` names      | `struct Point p;` unless you `typedef`                | `Point p;` works directly                                        |
-| `void*` conversion  | Implicitly converts to any object pointer            | Requires an explicit cast                                        |
-| Casts               | `(int)x`                                              | `static_cast<int>(x)` and friends preferred                      |
-| Character literals  | `'a'` has type `int`                                  | `'a'` has type `char`                                            |
-| Empty parameter list| `void f()` means "unspecified arguments"              | `void f()` means "takes no arguments", identical to `f(void)`    |
-| Function names      | One symbol per name                                   | [Mangled](#name-mangling) with types; overloading is legal        |
-| `const` at file scope | External linkage                                    | Internal linkage, so it may live in a header                     |
-| Initialization      | `= value` or `= { ... }`                              | Braces work everywhere; see [uniform initialization](#uniform-initialization) |
+| Concern               | C                                             | C++                                                                           |
+|-----------------------|-----------------------------------------------|-------------------------------------------------------------------------------|
+| Booleans              | `_Bool` (C99), or `int` with `#define TRUE 1` | `bool`, `true`, `false` are keywords                                          |
+| Null pointer          | `NULL`, a macro for `0` or `((void*)0)`       | `nullptr`, with its own type `std::nullptr_t`                                 |
+| `struct` names        | `struct Point p;` unless you `typedef`        | `Point p;` works directly                                                     |
+| `void*` conversion    | Implicitly converts to any object pointer     | Requires an explicit cast                                                     |
+| Casts                 | `(int)x`                                      | `static_cast<int>(x)` and friends preferred                                   |
+| Character literals    | `'a'` has type `int`                          | `'a'` has type `char`                                                         |
+| Empty parameter list  | `void f()` means "unspecified arguments"      | `void f()` means "takes no arguments", identical to `f(void)`                 |
+| Function names        | One symbol per name                           | [Mangled](#name-mangling) with types; overloading is legal                    |
+| `const` at file scope | External linkage                              | Internal linkage, so it may live in a header                                  |
+| Initialization        | `= value` or `= { ... }`                      | Braces work everywhere; see [uniform initialization](#uniform-initialization) |
 
 Three of these deserve a sentence more than the table gives them.
 
@@ -112,7 +112,9 @@ Single-line `//` comments came from C++ (by way of BCPL) and were only adopted i
 Anonymous functions and the C++11-and-later additions
 :::
 
-Several of the features that define modern C++ are additions layered on top of the C++98 core rather than replacements for it. This section houses them. We start with [`auto`](#auto-and-type-deduction), since it underpins how the others read, then move to the [lambda](#lambdas): an anonymous function you can write inline and pass around like a value. Other members of this cluster (structured bindings, [`constexpr`](#consteval-and-constinit)) get their own sub-sections later; the [`concepts`](#concepts) that constrain templates live under [Templates](#templates), since that is where they do their work.
+Several of the features that define modern C++ are additions layered on top of the C++98 core rather than replacements for it. This section houses the ones that change how everyday code *reads*. We start with [`auto`](#auto-and-type-deduction), since it underpins how the others look on the page, then move to the [lambda](#lambdas): an anonymous function you can write inline and pass around like a value. Last comes [structured bindings](#structured-bindings), which unpack a composite object into named pieces.
+
+Two neighboring clusters live elsewhere because they belong to larger topics. The features that move work to build time (`constexpr` and its relatives, type traits, `<bit>`) are gathered under [Compile-Time Programming](#compile-time-programming), which follows immediately. The [concepts](#concepts) that constrain templates live under [Templates](#templates), since that is where they do their work.
 
 ### `auto` and Type Deduction
 ::: {.subheading}
@@ -383,6 +385,26 @@ The limitations are what motivated the language feature: `std::tie` requires the
 
 If you have read the other chapters, this is well-trodden ground. Python has had `name, score = pair` since the beginning and applies it in `for` loops the same way. Rust's [pattern matching](rust-ho.qmd#pattern-matching) is the most general of the three: `let (a, b) = pair;` and `let Point { x, y } = p;` are the direct analogues, but the same patterns work in `match` arms, nest arbitrarily, and can bind by reference or by move. C++ made a deliberately narrower choice. A structured binding is a *declaration* form only; it destructures, but it never tests, so there is no C++ equivalent of matching a struct against a pattern and taking a branch when it fails to fit. That capability lives in `std::visit` over a `std::variant`, and it is considerably less pleasant.
 
+## Compile-Time Programming
+::: {.subheading}
+Work the compiler does so the program does not have to
+:::
+
+Every language draws a line between what is decided when the program is built and what is decided when it runs. C draws that line early and low: the preprocessor pastes text, the compiler folds a few obvious constants, and everything else waits for run time. C++ has spent two decades pushing the line in the other direction, and the cumulative result is that a startling amount of a modern C++ program is *finished* before `main` is ever entered. Lookup tables are computed and sitting in read-only memory. Type errors that other languages discover in a test suite have already failed the build. Branches that could never be taken were discarded before they were compiled.
+
+There is no single official name for this body of features. **Metaprogramming** is the traditional word, but it has come to connote one specific and now largely superseded technique: recursive template instantiation, where you coax the type system into computing for you because nothing better existed. What replaced it is simply *ordinary code that happens to run at compile time*, which is why "compile-time programming" is the more honest label and the one this chapter uses.
+
+Four strands make it up, and they developed somewhat independently:
+
+| Strand                | Question it answers                                    | Principal tools                                        |
+|:----------------------|:-------------------------------------------------------|:-------------------------------------------------------|
+| Constant evaluation   | Can this *value* be computed now?                      | `constexpr`, `consteval`, `constinit`, `static_assert` |
+| Type introspection    | What is true about this *type*?                        | `<type_traits>`, concepts                              |
+| Compile-time dispatch | Which code should be generated at all?                 | `if constexpr`, templates, overload resolution         |
+| Reflection            | What are this type's *parts*, and can I generate more? | C++26 `^^` and `[: :]`                                 |
+
+The first three are mature and are what the rest of this section covers. The fourth arrives with C++26 and gets a short forward-looking treatment at the end.
+
 ### `constexpr` and `if constexpr`
 ::: {.subheading}
 Moving work from run time to compile time
@@ -467,9 +489,9 @@ With a plain `if`, the `*value` dereference would be compiled even for `describe
 
 `if constexpr` decides *which code to compile*; the C++20 [Concepts](#concepts) feature decides *which types a template will accept at all*, and produces far clearer errors when a caller violates the constraint. The two are complementary tools for taming templates, and modern generic code uses both.
 
-#### `consteval` and `constinit`
+#### `consteval`, `constinit`, and `if consteval` {#consteval-and-constinit}
 ::: {.subheading}
-The C++20 refinements
+The C++20 refinements, and a C++23 correction
 :::
 
 C++20 added two keywords that sharpen the picture. A `constexpr` function *may* run at compile time; sometimes you want to insist that it *must*. That is `consteval`, which marks an **immediate function**: every call is evaluated at compile time, and any call that cannot be is a compile error. It is the strict sibling of `constexpr`, useful when a function only makes sense as a compile-time computation and you want the compiler to enforce that.
@@ -493,9 +515,216 @@ Four keywords now cluster around this idea, and keeping them straight is half th
 | `consteval` | (Functions only) *must* be evaluated at compile time.                | no               |
 | `constinit` | Static/thread-local variable is initialized at compile time.         | no               |
 
+##### Asking Which World You Are In
+A `constexpr` function runs in two worlds, and occasionally it wants to behave differently in each. The usual reason is that the fastest runtime implementation is unavailable at compile time: it calls a compiler intrinsic, inspects raw bytes, or uses hand-written assembly, none of which the constant evaluator can execute. What you want is one function that uses the fast path when it can and a portable path when the compiler is doing the work.
+
+C++20 offered `std::is_constant_evaluated()`, and it came with a trap sharp enough that C++23 added a language feature to eliminate it. The function returns a `bool` reporting whether the current evaluation is happening at compile time, but it is an ordinary function call, not a keyword. Write it as the condition of an `if constexpr` and the compiler must evaluate that condition at compile time to decide the branch, which means the answer is *always* `true`:
+
+```cpp
+constexpr int compute(int n) {
+    if constexpr (std::is_constant_evaluated()) {   // BUG: always true
+        return slow_but_portable(n);                 // the runtime path is never generated
+    } else {
+        return fast_intrinsic(n);                    // discarded, unreachable
+    }
+}
+```
+
+The correct C++20 spelling uses a plain `if`, which reads like a runtime test but is folded away by the compiler in each context:
+
+```cpp
+constexpr int compute(int n) {
+    if (std::is_constant_evaluated()) { ... }        // correct, if easy to get wrong
+}
+```
+
+C++23's `if consteval` makes the mistake unwriteable by giving the question its own syntax. There is no condition to accidentally wrap, and as a bonus the true branch is an immediate-function context, so it may call `consteval` functions that a plain `if` could not:
+
+```cpp
+constexpr int compute(int n) {
+    if consteval {
+        return slow_but_portable(n);    // taken during constant evaluation
+    } else {
+        return fast_intrinsic(n);       // taken at run time
+    }
+}
+```
+
+This is a small feature, but it is a clean illustration of how the standard tends to evolve: a library function exposes a capability, real use reveals a footgun, and a later standard promotes the capability to syntax that cannot be misused.
+
 ::: {.callout-note title="Rust's `const fn` is the direct analog"}
 If you have read the Rust chapters, `constexpr` functions map almost exactly onto Rust's [`const fn`](rust-ho.qmd), and Rust's `const` and `static` items play the role of `constexpr` variables. The parallel even extends to the history: like C++'s `constexpr`, Rust's `const fn` began tightly restricted and has steadily gained the ability to run more of the language at compile time across editions. The chief difference is emphasis. Rust evaluates const contexts eagerly and treats the const/runtime split as an ordinary part of the type system, whereas C++ exposes the finer gradations (`constexpr` vs. `consteval` vs. `constinit`) as distinct keywords you choose between. C, by contrast, has nothing comparable: its only compile-time constants come from the preprocessor's `#define` and the `enum` hack, neither of which is typed, scoped, or able to run a function.
 :::
+
+### Type Traits
+::: {.subheading}
+Asking questions about types at compile time
+:::
+
+`constexpr` computes with values. **Type traits** compute with *types*: they are compile-time functions whose arguments are types and whose results are either a constant or another type. They live in `<type_traits>`, and once you notice them you will see them everywhere in the standard library, because they are the mechanism by which generic code inspects what it has been handed.
+
+You have already met one. The `if constexpr (std::is_pointer_v<T>)` example above asks a question about `T` and gets back a `bool` the compiler can branch on. That is the whole idea; the library simply supplies a large catalog of such questions.
+
+#### The Two Flavors, and Their Suffixes
+Traits come in two kinds, distinguished by a naming convention that is worth learning because it tells you what you are getting:
+
+- **Predicates** end in `_v` and yield a `constexpr bool`: `std::is_integral_v<T>`, `std::is_pointer_v<T>`, `std::is_same_v<A, B>`.
+- **Transformations** end in `_t` and yield a *type*: `std::remove_reference_t<T>`, `std::decay_t<T>`, `std::underlying_type_t<E>`.
+
+```cpp
+#include <type_traits>
+
+static_assert(std::is_integral_v<int>);              // a bool, usable in static_assert
+static_assert(!std::is_integral_v<double>);
+static_assert(std::is_same_v<std::remove_reference_t<int&>, int>);   // a type
+
+template <typename T>
+void takes_anything(T&& value) {
+    using Bare = std::decay_t<T>;    // strip references, const, and array-to-pointer decay
+    static_assert(!std::is_same_v<Bare, void>);
+}
+```
+
+The suffixes are shorthand. `std::is_integral_v<T>` is defined as `std::is_integral<T>::value`, and `std::remove_reference_t<T>` as `typename std::remove_reference<T>::type`. The underlying class templates are what existed in C++11; the `_v` and `_t` aliases arrived in C++17 and C++14 respectively, purely to spare you the `::value` and `typename ...::type` noise. Older code and older tutorials use the long forms, which is the only reason to know they exist.
+
+#### The Ones You Actually Reach For
+The catalog runs to well over a hundred entries. This is the working subset:
+
+| Trait                                                  | Yields | Used for                                              |
+|:-------------------------------------------------------|:-------|:------------------------------------------------------|
+| `std::is_same_v<A, B>`                                 | `bool` | Exact type equality; the workhorse of `static_assert` |
+| `std::is_integral_v<T>`, `std::is_floating_point_v<T>` | `bool` | Numeric category dispatch                             |
+| `std::is_pointer_v<T>`, `std::is_reference_v<T>`       | `bool` | Indirection checks                                    |
+| `std::is_const_v<T>`                                   | `bool` | Qualifier checks                                      |
+| `std::is_base_of_v<Base, Derived>`                     | `bool` | Inheritance relationships                             |
+| `std::is_trivially_copyable_v<T>`                      | `bool` | Deciding whether `memcpy` is legal                    |
+| `std::is_nothrow_move_constructible_v<T>`              | `bool` | Whether a container may move on reallocation          |
+| `std::remove_reference_t<T>`                           | type   | Stripping `&` / `&&`                                  |
+| `std::remove_cv_t<T>`, `std::decay_t<T>`               | type   | Normalizing a deduced type                            |
+| `std::underlying_type_t<E>`                            | type   | The integer type behind an `enum class`               |
+| `std::conditional_t<B, A, C>`                          | type   | A compile-time ternary that selects a *type*          |
+| `std::enable_if_t<B, T>`                               | type   | Legacy SFINAE; prefer concepts in new code            |
+
+`std::conditional_t` deserves a second look, because it has no runtime counterpart at all. It is an `if`/`else` whose result is a type:
+
+```cpp
+// Pick the smallest index type that can address N elements.
+template <std::size_t N>
+using IndexType = std::conditional_t<(N <= 255), std::uint8_t,
+                  std::conditional_t<(N <= 65535), std::uint16_t, std::uint32_t>>;
+
+static_assert(std::is_same_v<IndexType<100>, std::uint8_t>);
+static_assert(std::is_same_v<IndexType<1000>, std::uint16_t>);
+```
+
+On an 8-bit or 16-bit target that is a real saving, chosen by the compiler from a single definition.
+
+#### Why This Matters
+::: {.subheading}
+The `memcpy` Optimization
+:::
+
+The payoff is easiest to see in a concrete case. Suppose you are writing a container that must relocate its elements when it grows. The correct general answer is to move-construct each element into the new storage one at a time. But for a type with no pointers, no virtual functions, and no user-defined copy constructor, that loop is doing by hand what `memcpy` does in a single vectorized call.
+
+`std::is_trivially_copyable_v<T>` is exactly the question "may I `memcpy` this?", and `if constexpr` turns the answer into two different generated functions:
+
+```cpp
+template <typename T>
+void relocate(T* destination, T* source, std::size_t count) {
+    if constexpr (std::is_trivially_copyable_v<T>) {
+        std::memcpy(destination, source, count * sizeof(T));   // one call, vectorized
+    } else {
+        for (std::size_t i = 0; i < count; ++i) {
+            new (destination + i) T(std::move(source[i]));      // placement new, one at a time
+            source[i].~T();
+        }
+    }
+}
+```
+
+`relocate<int>` compiles to a `memcpy`. `relocate<std::string>` compiles to the loop, because a `std::string` owns a heap buffer and copying its bytes would produce two objects pointing at the same allocation. Neither instantiation contains a runtime test, and neither contains the other's code. This is not a hypothetical: it is very close to what your standard library actually does inside `std::vector`'s reallocation path, and it is why `std::vector<int>` grows at `memcpy` speed while `std::vector<std::string>` does not.
+
+::: {.callout-note title="Traits are what concepts are made of"}
+A [concept](#concepts) is a named compile-time predicate on types, and traits are the most common thing to build one from. `template <typename T> concept Integral = std::is_integral_v<T>;` is very nearly how `std::integral` is defined. The relationship is worth keeping straight: traits *ask* questions, concepts *impose* the answers as requirements on a template parameter. Where older code used `std::enable_if_t` to turn a trait into a constraint through SFINAE, new code names a concept and gets a readable error message for free.
+:::
+
+### Compile-Time Bit Manipulation
+::: {.subheading}
+`<bit>` and the end of union punning (C++20)
+:::
+
+Bit manipulation is the one area where C programmers have long been forced to choose between portability, defined behavior, and speed. C++20's `<bit>` header ends that compromise, and every operation in it is `constexpr`.
+
+The centerpiece is `std::bit_cast`, which reinterprets an object's bits as another type of the same size. The C idiom for this is a union, or a `char*` cast, and the [strict-aliasing rules](c.qmd#undefined-behavior) make both of them formally undefined behavior even though they usually work:
+
+```cpp
+#include <bit>
+
+// The classic: extract the raw bits of a float.
+constexpr std::uint32_t bits = std::bit_cast<std::uint32_t>(1.0f);   // 0x3F800000
+static_assert(bits == 0x3F800000);
+```
+
+Note that `static_assert`: this ran during compilation. The union version cannot, because reading an inactive union member is not permitted in a constant expression, and the `memcpy` version could not before C++20 either. `bit_cast` is defined behavior, compiles to nothing (the bits do not move; only their interpretation changes), and works at compile time.
+
+The header also standardizes the bit-counting operations that were previously compiler intrinsics with names like `__builtin_popcount` or `_BitScanReverse`:
+
+| Function                                     | Returns                         |
+|:---------------------------------------------|:--------------------------------|
+| `std::popcount(x)`                           | Number of set bits              |
+| `std::countl_zero(x)`, `std::countr_zero(x)` | Leading / trailing zero count   |
+| `std::countl_one(x)`, `std::countr_one(x)`   | Leading / trailing one count    |
+| `std::bit_width(x)`                          | Bits needed to represent `x`    |
+| `std::bit_ceil(x)`, `std::bit_floor(x)`      | Nearest power of two, up / down |
+| `std::rotl(x, n)`, `std::rotr(x, n)`         | Bit rotation (not shifting)     |
+| `std::has_single_bit(x)`                     | Whether `x` is a power of two   |
+
+Each maps to a single instruction on hardware that has one (`POPCNT`, `LZCNT`, `ROL`) and to a correct fallback where it does not. `std::rotl` is quietly the most valuable of them: the obvious hand-written rotation, `(x << n) | (x >> (32 - n))`, is undefined behavior when `n` is zero, a bug that has shipped in a great many hash functions and cipher implementations.
+
+```cpp
+constexpr std::size_t round_up_to_power_of_two(std::size_t n) {
+    return std::bit_ceil(n);        // computed at compile time when n is constant
+}
+static_assert(round_up_to_power_of_two(100) == 128);
+```
+
+For a hash table sizing its bucket array, or a ring buffer that wants a power-of-two capacity so it can mask instead of divide, this is the entire calculation, done at build time and correct on every target.
+
+### Where It Is Heading: Reflection
+::: {.subheading}
+C++26, and a note on availability
+:::
+
+Everything so far shares a limitation: you can ask whether a type *is* something, but you cannot ask what it is *made of*. There is no standard way to enumerate a struct's members, recover an enumerator's name as a string, or generate a new type from an existing one's shape. Every serialization library, every ORM, and every logging framework works around this with macros, code generators, or elaborate template tricks, and the workarounds are the ugliest code in the C++ ecosystem.
+
+**Static reflection**, voted into C++26, closes that gap. Two pieces of syntax carry it. The `^^` operator *reflects* an entity into a value of type `std::meta::info`, an opaque handle the compiler understands. The splice operator `[: :]` goes the other way, turning such a value back into the entity it denotes, in a position where real code is expected.
+
+The canonical demonstration is the function every C++ programmer has hand-written a macro for:
+
+```cpp
+#include <meta>
+
+template <typename E>
+constexpr std::string_view enum_to_string(E value) {
+    template for (constexpr auto entry : std::define_static_array(std::meta::enumerators_of(^^E))) {
+        if (value == [:entry:]) {
+            return std::meta::identifier_of(entry);
+        }
+    }
+    return "<unknown>";
+}
+
+enum class Color { red, green, blue };
+static_assert(enum_to_string(Color::green) == "green");
+```
+
+`enumerators_of(^^E)` hands back a sequence describing every enumerator of `E`. `template for` is C++26's expansion statement, which loops over that sequence at compile time, generating one iteration per element. `[:entry:]` splices an element back into an expression so it can be compared, and `identifier_of` recovers its name. The whole thing is a `constexpr` function over ordinary data, works for any enum, and needs no macro and no registration step.
+
+::: {.callout-warning title="Do not write this in production yet"}
+Reflection was voted into the C++26 working draft, and the standard is expected to be published this year, but compiler support is experimental: recent GCC and Clang builds implement portions of it behind flags, library support is incomplete, and details of the syntax have shifted more than once during standardization. Treat this subsection as a map of where the language is going, not as a technique to adopt. The stable tools for the problems reflection solves remain the ones above, plus code generation as an external build step.
+:::
+
+The direction, though, is unmistakable, and it is the same one the whole section has traced. C gave you a preprocessor that could paste text. C++11 gave you a compiler that could evaluate a single `return` statement. C++20 gave you one that could run loops, allocate memory, and construct a `std::vector`. C++26 gives you one that can inspect your program's own structure and write code from it. The line between build time and run time has moved a very long way, and it has not stopped.
 
 ## Types and Declarations
 ::: {.subheading}
@@ -549,7 +778,10 @@ increment(count);                             // no & at the call site
 
 The C++ version has no `*`, no `&` at the call site, and no possibility of a null argument. That last clause is the reason to prefer it, but the missing `&` at the call site has a cost worth naming: **you cannot tell from the call whether `count` will be modified.** In C, `increment(&count)` announces itself. This is the standing tradeoff of references, and it is why the convention below matters so much.
 
-#### `const&`: The Default for Parameters
+#### `const&`
+::: {.subheading}
+The Default for Parameters
+:::
 
 The most common use of references is not to modify anything. Passing a large object by value copies it; passing it by `const` reference passes an alias and forbids modification through it:
 
@@ -1051,13 +1283,77 @@ The `: x_(0), y_(0)` part is the **member initializer list**, and it is worth dw
 ::: {.callout-note title="Modern change: initialization got safer and less surprising"}
 Two C++11 additions smoothed over classic constructor traps.
 
-- **In-class member initializers** let you give a member a default right where it is declared (`int x_ = 0;`), so every constructor need not repeat it.
+- **Default member initializers** let you give a member a value right where it is declared (`int x_ = 0;`), so every constructor need not repeat it. They get their own treatment in [Default Member Initializers](#default-member-initializers) below.
 - **uniform (brace) initialization**, covered under [Uniform Initialization](#uniform-initialization), lets you write `Point p{3, 4};`; it sidesteps the "most vexing parse" (where `Point p();` is read as a *function declaration*, not an object) and forbids narrowing conversions that the old `()` syntax silently allowed.
 
 For new code, brace-init is the default choice.
 :::
 
 A constructor taking a single argument doubles as an *implicit conversion*, which is occasionally handy and frequently a trap. Marking it `explicit` (as on the `File` constructor in the RAII section) disables that implicit conversion, so `File f = "path";` will not silently compile. Reach for `explicit` by default on single-argument constructors.
+
+#### Default Member Initializers {#default-member-initializers}
+::: {.subheading}
+Giving a member its value where it is declared (C++11)
+:::
+
+In C++98 a non-static data member could not be initialized in the class body. Its value had to come from a constructor's initializer list, and if a class had several constructors, every one of them had to repeat the same defaults. That duplication was pure maintenance liability: add a member and you must remember to touch each constructor, and a member forgotten in one of them is left uninitialized in exactly one code path.
+
+C++11 removed the restriction. A member may be given a value at its declaration, and any constructor that does not say otherwise uses it:
+
+```cpp
+class Widget {
+    int         count = 10;             // default member initializer
+    std::string name{"default"};        // braces work here too
+    bool        ready = false;
+
+public:
+    Widget() = default;                 // count=10, name="default", ready=false
+    Widget(int n) : count(n) {}         // count=n; the other two keep their defaults
+};
+```
+
+Both constructors are now honest about what they actually do. The second one says "this constructor is about `count`" and stays silent on the members it does not care about, rather than restating them for the compiler's benefit.
+
+**The initializer list wins.** When a member has both a default member initializer and an entry in a constructor's initializer list, the constructor's value is used and the in-class one is ignored. In the example above, `Widget w{5}` gives `count` the value 5, not 10. Read the default as "the value when nobody says otherwise."
+
+##### Where This Really Pays: Structs
+
+The pattern's natural home is the plain data struct, where it has become the standard way to express configuration and options:
+
+```cpp
+struct Config {
+    int         retry_count_max = 3;
+    bool        verbose         = false;
+    std::string log_path{"/var/log/app.log"};
+};
+
+Config a;                                  // every default
+Config b{5};                               // retry_count_max=5, rest defaulted
+Config c{5, true, "/tmp/debug.log"};       // all specified
+```
+
+No constructor is written and none is needed. `Config` remains an **aggregate**, so brace initialization still fills members positionally, and any member you leave out keeps its declared default. Compare this to the C approach, where a `struct` with defaults means either an `init_config()` function everyone must remember to call or a `#define`-laden initializer macro.
+
+This also closes one of C++'s oldest hazards. A local `struct Config c;` with no default member initializers leaves every scalar member holding garbage, and reading one is undefined behavior. Give the members defaults at their declarations and that failure mode is gone for good, with no runtime cost: the values are compiled in exactly as an initializer list's would be.
+
+::: {.callout-note title="C++14 finished the job"}
+In C++11, adding a default member initializer disqualified a type from being an aggregate, so `Config c{5, true}` would not compile: you got defaults or brace initialization, not both. C++14 lifted that restriction and the two have worked together ever since. The rule matters only if you are pinned to C++11, but it explains why older references describe the feature as a tradeoff rather than a free win.
+:::
+
+C++20's **designated initializers** pair naturally with this pattern, letting you name the members you are setting and leave the rest at their defaults:
+
+```cpp
+Config c{.verbose = true};                      // the other two keep their defaults
+Config d{.retry_count_max = 5, .verbose = true};
+```
+
+This is C99's feature arriving in C++ two decades later, with one restriction C does not impose: the standard requires the designators to appear in **declaration order**, so `{.verbose = true, .retry_count_max = 5}` is ill-formed where the C equivalent is fine. Enforcement varies in practice, and Clang in particular accepts the out-of-order form without complaint, so this is a portability trap rather than a reliable compile error. Keep them in declaration order and it never arises.
+
+::: {.callout-warning title="Members initialize in declaration order, always"}
+This predates default member initializers and catches people regardless, but it is worth stating here because in-class initializers make member order easier to overlook. Members are initialized in the order they are **declared in the class**, never the order they appear in a constructor's initializer list. Writing `Widget() : second_(1), first_(second_) {}` reads as though `second_` is ready first; if `first_` is declared first, it is initialized first, from an uninitialized `second_`. Compilers warn about this under `-Wreorder`, which is included in `-Wall`. Keep the initializer list in declaration order so the code reads the way it runs.
+:::
+
+If you have read the Rust chapters, the comparison is unflattering in an instructive way. Rust has no equivalent, because it does not need one: a struct literal must name every field, so there is nothing to default and nothing to forget. Where a C++ programmer reaches for default member initializers, a Rust programmer implements [`Default`](rust-ho.qmd#traits) and writes `Config { verbose: true, ..Default::default() }`. C++ builds the defaults into the type; Rust makes them a trait you opt into. The C++ version is terser at the point of use, and the Rust version cannot leave a field uninitialized by accident, which is the same tradeoff the two languages make almost everywhere.
 
 #### Destructors
 The destructor is `~ClassName()`, takes no parameters, and there is exactly one. It runs automatically when the object's lifetime ends: at the closing brace for a stack object, or at `delete` for a heap object. As the [RAII section](#raii) laid out, this automatic, guaranteed invocation is the hook the entire resource-management story hangs on. If your class owns a resource, the destructor is where you give it back:
@@ -1515,7 +1811,7 @@ The rule: **if a class has any virtual function, give it a virtual destructor.**
 :::
 
 ### Abstract Classes and Pure Virtual Functions
-Often a base has no sensible default implementation. What is the area of a generic `Shape`? The honest answer is that the question is malformed: there is no such thing as a generic shape, only circles and squares. A **pure virtual** function says exactly that, by declaring an operation with no implementation:
+Often a base has no sensible default implementation. What is the area of a generic `Shape`? The answer is that the question is malformed: there is no such thing as a generic shape, only circles and squares. A **pure virtual** function says exactly that, by declaring an operation with no implementation:
 
 ```cpp
 class Shape {
@@ -1630,6 +1926,56 @@ max<double>(3, 7.5);    // explicit: forces T = double, converting 3 to 3.0
 
 Deduction is a pattern match, not a conversion, and this is where it surprises people. `max(3, 7.5)` does *not* compile: the first argument says `T` is `int`, the second says `T` is `double`, and the compiler will not pick a winner. It reports a deduction conflict rather than quietly promoting the `int`, which is consistent with C++'s preference for explicitness over convenience. Naming the type yourself, as in the third line above, resolves it.
 
+##### Deduction Matches Types, Not Names {#deduction-matches-types}
+
+The `max(3, 7.5)` failure is easy to accept because `int` and `double` are obviously different. The confusing version of the same rule appears when two types are *not* obviously different, and it is worth being precise about what deduction actually compares.
+
+Deduction compares **types**, and only types. It never looks at how a type was spelled. An alias introduced by `using` or `typedef` is a second name for an existing type, not a new type, so it is transparent by the time deduction runs:
+
+```cpp
+using Meters  = double;
+using Seconds = double;
+
+template <typename T> T mid(T a, T b) { return (a + b) / 2; }
+
+mid(Meters{1.0}, Seconds{3.0});     // fine: T = double, one instantiation
+```
+
+`Meters` and `Seconds` are the same type. There is one `mid<double>` in the binary, and no amount of naming discipline will make the compiler treat those arguments as distinct. (If you *want* them distinct, an alias cannot do it. You need a genuinely new type: an `enum class`, or a one-member struct wrapper, the pattern usually called a *strong typedef*.)
+
+The inverse is where people actually get hurt, and the fixed-width integer aliases are the classic case. `std::int32_t` is not a type. The standard requires only that it name *some* signed integer type that is exactly 32 bits wide, two's complement, with no padding, and on a target where both `int` and `long` are 32 bits, either one satisfies that. Implementations pick differently:
+
+```cpp
+// Apple's headers:        typedef int  int32_t;
+// newlib (arm-none-eabi): typedef long int32_t;
+```
+
+Both are conforming. `sizeof` is 4 either way, the value ranges are identical, arithmetic is identical, and any assignment or comparison between them compiles because implicit conversion handles it. But `int` and `long` are *distinct types* in the type system, distinct in overload resolution and distinct in [name mangling](#name-mangling), regardless of sharing a width on this particular target. The type system does not identify types by their bit layout.
+
+So this code is portable in every respect except deduction:
+
+```cpp
+std::int32_t frame  = 0;
+int          offset = 4;
+
+std::max(frame, offset);            // macOS: T = int, compiles
+                                    // arm-none-eabi: long vs. int, deduction conflict
+```
+
+The desktop build was never more correct than the embedded one. It matched by accident of which typedef the vendor chose. Deduction runs *before* conversions are on the table, so the compiler will not widen `int` to `long` to make the two agree, exactly as it refused to promote `3` to `3.0` above.
+
+The fix is to stop relying on deduction wherever a fixed-width type meets a plain `int`, and name the type instead:
+
+```cpp
+std::max<std::int32_t>(frame, offset);      // explicit: no deduction, offset converts
+```
+
+::: {.callout-note title="The same trap, one layer down: `printf` and `%d`"}
+`printf("%d", myInt32)` compiles clean on macOS and warns on ARM embedded for precisely this reason: `%d` expects an `int`, and there `std::int32_t` *is* `long`. Same 32 bits, different type, and the format checker is machinery that notices. The portable fix is the macros in `<cinttypes>`: `printf("%" PRId32, myInt32)`.
+:::
+
+The rule to carry away is short. Aliases are windows onto types; they are never types themselves. Deduction sees through every window, so two spellings of one type always match, and one spelling of two types never does. The only place where *names* genuinely drive resolution inside a template is [two-phase lookup](#two-phase-lookup), which is a separate mechanism entirely.
+
 #### Class Templates
 Classes parameterize the same way, and the parameter can appear anywhere a type can: in members, in parameters, in return types.
 
@@ -1685,12 +2031,144 @@ Array<int, 4> quad;         // N = 4
 
 The critical detail is that `N` must be a constant expression. This is the same requirement discussed under [`constexpr`](#constexpr-and-if-constexpr), where template arguments were listed alongside array bounds and `case` labels as places the language *demands* a compile-time value. Passing a runtime `int` as `N` is not a conversion error but a category error: the type `Array<int, 4>` is decided when the program is compiled, and a value that does not exist yet cannot decide it. It follows that `Array<int, 4>` and `Array<int, 8>` are unrelated types, as different from one another as `int` and `double`.
 
+Two later relaxations widened what may appear in that slot.
+
+**`template <auto>`** (C++17) deduces the parameter's *type* as well as its value, which spares you from writing a separate type parameter beside every value parameter:
+
+```cpp
+template <auto Value>                       // type of Value is deduced
+struct Constant {
+    static constexpr auto value = Value;
+    using type = decltype(Value);
+};
+
+Constant<42>        an_int;                 // type is int
+Constant<'x'>       a_char;                 // type is char
+Constant<Color::red> an_enum;               // type is Color
+```
+
+Before this, a template that accepted "some integral constant, whatever its type" had to take `<typename T, T Value>` and be instantiated as `Constant<int, 42>`, repeating what the compiler could plainly see.
+
+**Structural types as arguments** (C++20) lifted the restriction that a non-type parameter must be an integer, enum, pointer, or reference. A class type now qualifies if it is a *structural type*: all members public and non-mutable, and all of those members themselves structural. This is the rule that finally admits compile-time strings, by way of a small wrapper that captures a literal into a member array:
+
+```cpp
+template <std::size_t N>
+struct FixedString {
+    char data[N]{};
+    constexpr FixedString(const char (&literal)[N]) {
+        std::copy_n(literal, N, data);
+    }
+};
+
+template <FixedString Name>                 // a string as a template argument
+struct Named {
+    static constexpr std::string_view name() { return Name.data; }
+};
+
+static_assert(Named<"sensor">::name() == "sensor");
+```
+
+The payoff is that a string can now participate in type identity and in compile-time computation: `std::format`'s compile-time format-string checking rests on exactly this machinery, and so does much of the compile-time parsing that once required macros. The restriction to structural types exists because the compiler must be able to compare two arguments for equality to decide whether `Named<"a">` and `Named<"a">` name the same type, and that comparison is only well defined when the value is transparent all the way down.
+
 #### Why Templates Live in Headers
 Here is the consequence that bites first in practice, and it is a direct corollary of instantiation.
 
 An ordinary function can be declared in a header and defined in a `.cpp`. The compiler needs only the declaration to generate a call; the linker connects it to the definition later. A template cannot work this way. To instantiate `max<int>`, the compiler needs the template's entire *body*, because it must generate new code from it. If the body sits in another translation unit that the compiler never sees, there is nothing to stamp out, and you get a link error for a function that was never generated.
 
 So template definitions go in headers. This is why so much of the C++ ecosystem, and the whole standard library, ships as **header-only libraries**: there is often no other option. The cost is paid at build time. Every translation unit that includes the header re-parses the full template body and re-instantiates whatever it uses, so the same code is compiled repeatedly across your project and the linker discards the duplicates afterward. Heavy template use is the main reason C++ builds are notoriously slow, and C++20 **modules** exist in large part to break this cycle by letting a compiled interface be imported rather than textually re-included. See [Compilation and the Build](#compilation-and-the-build) for how the pieces fit together.
+
+##### `.ipp` and the Split-Header Convention {#split-header-convention}
+
+Forcing definitions into the header costs you something beyond build time: readability. A class template of any size ends up as a wall of code in which the interface, the part a reader actually wants, is buried among the bodies. C++ offers no language mechanism to fix this, so the ecosystem settled on a convention instead.
+
+The implementation is moved to a separate file, and the header includes it **at the bottom**:
+
+```cpp
+// ring-buffer.hpp
+#pragma once
+
+template <typename T, std::size_t N>
+class RingBuffer {
+public:
+    void push(const T& value);
+    T pop();
+    bool empty() const { return count_ == 0; }   // trivial bodies can stay inline
+
+private:
+    T data_[N];
+    std::size_t write_ = 0;
+    std::size_t read_ = 0;
+    std::size_t count_ = 0;
+};
+
+#include "ring-buffer.ipp"      // last line: the definitions follow the declaration
+```
+
+```cpp
+// ring-buffer.ipp
+template <typename T, std::size_t N>
+void RingBuffer<T, N>::push(const T& value) {
+    data_[write_] = value;
+    write_ = (write_ + 1) % N;
+    ++count_;
+}
+
+template <typename T, std::size_t N>
+T RingBuffer<T, N>::pop() {
+    T value = data_[read_];
+    read_ = (read_ + 1) % N;
+    --count_;
+    return value;
+}
+```
+
+Nothing here is a language feature. The preprocessor pastes the `.ipp` in where the `#include` sits, so the compiler still sees one translation unit containing the class declaration followed by its template definitions, exactly as if you had typed it all into the header. The reader gets an interface they can take in at a glance; the compiler gets the full body it needs to instantiate from.
+
+Three properties of this arrangement matter, and each is a way people get it wrong:
+
+- **The include goes last, not first.** The definitions refer to `RingBuffer<T, N>::` and to its private members, so the class must already be declared when they are parsed. An `.ipp` included at the top of the header fails immediately.
+- **The `.ipp` is not a translation unit.** Never add it to your build's source list and never compile it directly. On its own it is a fragment referring to a class that has not been declared. This is the point on which it differs from every `.cpp` in your project, and it is why the file is not a build artifact but ordinary hand-written source, checked into version control like anything else.
+- **Only its own header includes it.** Client code includes `ring-buffer.hpp` and never `ring-buffer.ipp`. Some projects enforce this with a header guard that errors out when the `.ipp` is reached without the header having been read first.
+
+The extension is convention rather than anything the compiler recognizes, and it is not standardized. `.ipp` ("inline/implementation `.hpp`") is the Boost-influenced spelling and probably the most widespread; `.inl` is common in game engines and Microsoft-influenced code; `.tpp` and `.hxx` also appear. They all mean the same thing, and a compiler treats any of them as plain text to paste in. Pick one and be consistent, because the only thing the extension communicates is *do not compile me directly*.
+
+Two caveats. This is a readability convention, not an optimization: it does nothing for build times, since every translation unit still parses every line. And a project that has adopted C++20 modules has a real solution to the underlying problem rather than a cosmetic one, so it will not need the convention at all.
+
+#### Two-Phase Lookup {#two-phase-lookup}
+Deduction settles what `T` *is*. A separate question is what the ordinary names inside the template body refer to, and C++ answers it in two passes rather than one.
+
+When the compiler first reads a template definition, it sorts every name in the body into two piles. A name is **dependent** if its meaning could vary with the template arguments, and **non-dependent** otherwise. Non-dependent names are resolved immediately, at the point of definition, using only what is visible there. Dependent names are set aside and resolved later, at each point of instantiation, when `T` is finally known.
+
+```cpp
+void log(int);                          // (1) visible at definition
+
+template <typename T>
+void trace(T value) {
+    log(value);                         // dependent on T: resolved at instantiation
+    ::log(42);                          // non-dependent: bound to (1) right here
+}
+
+struct Widget {};
+void log(Widget);                       // (2) declared after the template
+```
+
+`trace(Widget{})` finds `log(Widget)` even though it was declared *after* the template body. The call is dependent, so lookup was deferred, and at instantiation it considers both the names visible at definition and those found by **argument-dependent lookup**: functions declared in the namespace of the argument's own type. The `::log(42)` call, by contrast, was fixed at definition and would never see a later declaration.
+
+This is the mechanism that makes the customization idiom work. When generic code calls an unqualified `swap(a, b)` or `begin(c)`, it is deliberately leaving the name dependent so that a type can supply its own version in its own namespace and have generic code pick it up.
+
+It is also the reason for two keywords that look like noise. A dependent name gives the parser no way to know whether it denotes a type or a value, so you must say which:
+
+```cpp
+template <typename T>
+void parse(const T& container) {
+    typename T::iterator it = container.begin();    // typename: T::iterator is a type
+    container.template get<0>();                    // template: get is a template
+}
+```
+
+Without `typename`, `T::iterator * count` reads as a multiplication rather than a pointer declaration, and the compiler must commit to one reading before `T` exists.
+
+So the division of labor is clean, and it is the answer to the question this subsection opened with. Template argument *deduction* matches types and ignores spellings entirely. Two-phase *lookup* is the one part of the template machinery that genuinely resolves by name, and it operates on the identifiers in the body rather than on the template arguments.
 
 ::: {.callout-note title="C++ templates and Rust generics differ in *when* they are checked"}
 If you have read the Rust chapters, [generics](rust-ho.qmd#generics-and-trait-bounds) will look like the same feature, and mechanically they are: Rust monomorphizes exactly as C++ does, generating separate code per concrete type, which is why both languages get genericity for free at run time. The deep difference is *when the compiler checks that the code makes sense*. Rust checks the generic definition itself. `fn largest<T>(a: T, b: T) -> T { if a > b { a } else { b } }` is rejected at the definition, before anyone calls it, because nothing guarantees an arbitrary `T` supports `>`; you must write the bound `T: PartialOrd` to promise it. C++ traditionally checked nothing at the definition. `template <typename T> T max(T a, T b) { return a > b ? a : b; }` compiles happily, and only when you instantiate it with a type lacking `operator>` does the error appear, deep inside the generated body rather than at your call. That is the origin of the template error walls C++ was mocked for, and it is exactly the problem [concepts](#concepts) were added to solve.
@@ -2046,18 +2524,18 @@ int  sum = std::accumulate(v.begin(), v.end(), 0);         // fold with + starti
 
 A representative slice of the catalog, enough to recognize the naming conventions:
 
-| Algorithm                          | Does                                                    |
-|------------------------------------|---------------------------------------------------------|
-| `sort`, `stable_sort`              | Order a range; `stable_` preserves ties' relative order |
-| `find`, `find_if`                  | First matching element, by value or by predicate        |
-| `count`, `count_if`                | How many match                                          |
-| `all_of`, `any_of`, `none_of`      | Quantify a predicate over the range                     |
-| `copy`, `copy_if`                  | Write elements into an output iterator                  |
-| `transform`                        | Map a function over a range into an output              |
-| `remove`, `remove_if`              | Shuffle unwanted elements to the back (see the warning) |
-| `accumulate`, `reduce`             | Fold to a single value (`<numeric>`)                    |
-| `min_element`, `max_element`       | Iterator to the smallest or largest                     |
-| `lower_bound`, `binary_search`     | Binary search over an already-sorted range              |
+| Algorithm                      | Does                                                    |
+|--------------------------------|---------------------------------------------------------|
+| `sort`, `stable_sort`          | Order a range; `stable_` preserves ties' relative order |
+| `find`, `find_if`              | First matching element, by value or by predicate        |
+| `count`, `count_if`            | How many match                                          |
+| `all_of`, `any_of`, `none_of`  | Quantify a predicate over the range                     |
+| `copy`, `copy_if`              | Write elements into an output iterator                  |
+| `transform`                    | Map a function over a range into an output              |
+| `remove`, `remove_if`          | Shuffle unwanted elements to the back (see the warning) |
+| `accumulate`, `reduce`         | Fold to a single value (`<numeric>`)                    |
+| `min_element`, `max_element`   | Iterator to the smallest or largest                     |
+| `lower_bound`, `binary_search` | Binary search over an already-sorted range              |
 
 The `_if` suffix is the pattern to internalize: the base name takes a value, the `_if` variant takes a predicate, which since C++11 is almost always a [lambda](#lambdas).
 
@@ -2111,20 +2589,173 @@ int main() {
 
 Nothing in that chain runs until the `for` loop asks for a value, and no intermediate vector is ever allocated. Each iteration pulls one number through the whole pipeline. Because `take(3)` stops after three results, the elements past `6` are never examined at all, which is the property that makes views composable without a performance penalty. The commonly used ones:
 
-| View                        | Yields                                              |
-|-----------------------------|-----------------------------------------------------|
-| `views::filter(pred)`       | Elements satisfying `pred`                          |
-| `views::transform(fn)`      | `fn` applied to each element                        |
-| `views::take(n)`            | The first `n` elements                              |
-| `views::drop(n)`            | Everything after the first `n`                      |
-| `views::reverse`            | The range back to front                             |
-| `views::iota(start)`        | An increasing sequence, optionally bounded          |
-| `views::split(delim)`       | Subranges between delimiters                        |
-| `views::join`               | A range of ranges, flattened                        |
+| View                   | Yields                                     |
+|------------------------|--------------------------------------------|
+| `views::filter(pred)`  | Elements satisfying `pred`                 |
+| `views::transform(fn)` | `fn` applied to each element               |
+| `views::take(n)`       | The first `n` elements                     |
+| `views::drop(n)`       | Everything after the first `n`             |
+| `views::reverse`       | The range back to front                    |
+| `views::iota(start)`   | An increasing sequence, optionally bounded |
+| `views::split(delim)`  | Subranges between delimiters               |
+| `views::join`          | A range of ranges, flattened               |
 
 Two caveats keep this honest. A view refers to its underlying range without owning it, so a view that outlives the container it was built from dangles exactly as a raw pointer would; this is the same lifetime discipline that governs [references](#references) and [`std::string_view`](#containers). And getting results back into a container needed the awkward `std::ranges::to` workaround until C++23 made it a proper pipeline stage: `auto result = pipeline | std::ranges::to<std::vector>();`.
 
 If you have read the Rust chapters, all of this is familiar under different spelling. Views are [Rust's iterator adapters](rust-ho.qmd#iterators) with `|` in place of `.`, and the correspondence is close to exact: `views::filter` is `.filter()`, `views::transform` is `.map()`, `views::take` is `.take()`, and laziness-until-consumed is the defining property of both. Python's generator expressions and `itertools` occupy the same niche, and a list comprehension is the eager version of the same idea. Where the languages differ is guarantees rather than expressiveness. Rust's borrow checker will not compile an adapter chain that outlives its source; C++ will compile the dangling view without complaint and fail at run time. That contrast, the same capability with and without a compiler enforcing its safety precondition, is the through-line of [the Rust comparison](#key-differences-from-rust) at the end of this chapter.
+
+### Callables and Delegates {#callables-and-delegates}
+::: {.subheading}
+Storing "a thing to call" as a value
+:::
+
+The containers hold data. This last piece of the library holds *behavior*: a value whose contents are a function to be invoked later. C solved this with the raw function pointer, and the solution has a famous hole in it. A `void (*)(int)` can point at a free function and nothing else. It cannot hold a member function, because a member function needs an object to be called on, and it cannot hold a lambda that captured anything, because the captured state has nowhere to live. The universal C workaround is to bolt a `void* context` onto every callback signature and cast it back on the other side, which is exactly the sort of type-unsafe bookkeeping C++ exists to eliminate.
+
+The name for the value that fixes this is a **delegate**: an object that bundles *what to call* with *what to call it on*, and presents the pair as an ordinary callable. C# has had the concept as a keyword since 2000, which is where most programmers first meet the word. C++ has no `delegate` keyword; it supplies the capability as a family of library types, and picking among them is the whole skill.
+
+#### `std::function`
+::: {.subheading}
+The general-purpose owning delegate
+:::
+
+[`std::function<R(Args...)>`](#storing-a-lambda) is the one you already met when storing a lambda, and it is the general answer. It is a single named type that will hold *any* callable matching its signature: a free function, a capturing lambda, a functor, or a member function bound to an object. It does this by **type erasure**, storing the callable behind an internal interface so the caller never learns the concrete type.
+
+```cpp
+#include <functional>
+#include <vector>
+#include <iostream>
+
+struct Motor {
+    int identifier;
+    void stop(int reason) {
+        std::cout << "motor " << identifier << " stopped, reason " << reason << '\n';
+    }
+};
+
+void log_event(int code) { std::cout << "event " << code << '\n'; }
+
+int main() {
+    Motor motor{7};
+    int shutdown_count = 0;
+
+    std::vector<std::function<void(int)>> handlers;
+
+    handlers.push_back(log_event);                              // free function
+    handlers.push_back([&shutdown_count](int) { ++shutdown_count; });  // capturing lambda
+    handlers.emplace_back([&motor](int reason) { motor.stop(reason); });  // bound member
+
+    for (const auto& handler : handlers) {
+        handler(3);      // one uniform call, three different underlying callables
+    }
+}
+```
+
+Three unrelated things sit in one `std::vector` and are invoked identically. That is the payoff, and it is unreachable with function pointers.
+
+The historical way to write the third line is [`std::bind`](https://en.cppreference.com/w/cpp/utility/functional/bind){target="_blank" rel="noopener noreferrer"}, which binds arguments (including the object) into a new callable: `std::bind(&Motor::stop, &motor, std::placeholders::_1)`. It works, but the placeholder syntax is opaque, it composes badly, and a lambda expresses the same thing more clearly. Treat `std::bind` as something to recognize in existing code, not to write in new code. C++20 added `std::bind_front`, which is genuinely useful and much narrower: `std::bind_front(&Motor::stop, &motor)` fixes the leading arguments and leaves the rest.
+
+The cost is the reason the story does not end here. `std::function` **owns** what it holds, which means that when the callable is too large for its small-object buffer, typically anything past a couple of pointers, it **heap-allocates**. Invoking one goes through an indirection comparable to a virtual call, so it does not inline. Neither behavior is acceptable everywhere: an allocation in an interrupt handler is a bug, and on a microcontroller with no heap it is not even possible.
+
+#### `std::function_ref`
+::: {.subheading}
+The non-owning delegate, C++26
+:::
+
+The common case is narrower than what `std::function` charges you for. When you pass a callback *into* a function that will invoke it and return, the callable already exists in the caller's frame and outlives the call. Nothing needs to be copied or owned. `std::function_ref<R(Args...)>`, added in **C++26**, is the type for exactly that: a non-owning reference to a callable, which is to `std::function` precisely what `std::string_view` is to `std::string`.
+
+It is two pointers, one to the erased object and one to a thunk that calls it. It never allocates, it is trivially copyable, and it is cheap enough to pass by value.
+
+```cpp
+#include <functional>   // std::function_ref  (C++26)
+#include <vector>
+
+// Before: a template, which forces this into a header and recompiles per callable.
+template <typename Callback>
+void for_each_sample(const std::vector<int>& samples, Callback callback) {
+    for (int sample : samples) { callback(sample); }
+}
+
+// After: an ordinary function that can live in a .cpp, with no allocation.
+void for_each_sample(const std::vector<int>& samples,
+                     std::function_ref<void(int)> callback) {
+    for (int sample : samples) { callback(sample); }
+}
+
+int main() {
+    std::vector<int> samples{1, 2, 3};
+    int total = 0;
+    for_each_sample(samples, [&total](int sample) { total += sample; });   // no heap, no vtable
+}
+```
+
+That comparison is the argument for the type. The template version is fast but viral: it must be visible in a header, and it instantiates a fresh copy of the loop for every distinct lambda passed to it. The `std::function` version is compact but allocates. `function_ref` is compact *and* free.
+
+::: {.callout-warning title="`function_ref` does not extend lifetimes"}
+Because it only refers to the callable, storing one past the enclosing expression dangles exactly as a raw pointer would. The classic error is returning one, or saving it in a member:
+
+```cpp
+std::function_ref<void()> make_handler() {
+    auto lambda = [] { /* ... */ };
+    return lambda;              // DANGLING: `lambda` dies at the closing brace
+}
+```
+
+The rule is the same one that governs [`std::string_view`](#containers) and [views](#ranges): **parameters, not members**. If the callable must outlive the call, you want an owning type, and that means `std::function` or `std::move_only_function`.
+:::
+
+#### Choosing Among Them
+The family has grown enough that a table earns its place. All four are in `<functional>`.
+
+| Type                              | Since  | Owns the callable? | Allocates?      | Use it for                                       |
+|:----------------------------------|:-------|:-------------------|:----------------|:-------------------------------------------------|
+| Function pointer `R(*)(Args...)`  | C      | n/a                | No              | C interop; stateless callbacks only              |
+| `std::function<R(Args...)>`       | C++11  | Yes (copyable)     | Often           | Stored callbacks; the general default            |
+| `std::move_only_function<...>`    | C++23  | Yes (move-only)    | Often           | Stored callbacks that capture a `unique_ptr`     |
+| `std::copyable_function<...>`     | C++26  | Yes (copyable)     | Often           | `std::function` with the `const`-correctness fixed |
+| `std::function_ref<R(Args...)>`   | C++26  | **No**             | **Never**       | Callback *parameters*, the common case           |
+
+Two of those rows deserve a sentence. `std::move_only_function` exists because `std::function` requires its target to be copyable, so a lambda that captured a `std::unique_ptr` will not fit in one, a limitation that surprises people regularly. `std::copyable_function` is the C++26 repair of `std::function`'s `const` correctness, which was specified before the committee fully understood the problem; the two are otherwise interchangeable, and `std::function` is not going anywhere.
+
+The decision reduces to one question: **does the callable need to outlive the call?** If no, take a `function_ref` parameter. If yes, store a `std::function`.
+
+::: {.callout-note title="ETL's `etl::delegate`: the embedded answer"}
+`std::function_ref` is C++26, and embedded toolchains lag the standard by years. The [Embedded Template Library](https://www.etlcpp.com/){target="_blank" rel="noopener noreferrer"} (ETL) has shipped the same idea as `etl::delegate<R(Args...)>` for far longer, and it is where many people meet the concept first. ETL exists to provide STL-shaped containers and utilities with **no dynamic allocation and no exceptions**, which is what makes it viable on a microcontroller, and `etl::delegate` is that philosophy applied to callbacks: a fixed-size, non-allocating, non-owning delegate, usable back to C++03 in ETL's older releases and C++14 in current ones.
+
+Its distinguishing feature is that binding is done at compile time through template parameters, so the call is a direct indirect jump with no type-erasure machinery behind it:
+
+```cpp
+#include <etl/delegate.h>
+
+struct Motor {
+    void stop(int reason) { /* ... */ }
+    static void emergency(int reason) { /* ... */ }
+};
+
+using Handler = etl::delegate<void(int)>;
+
+Motor motor;
+
+// Bind a member function to an instance: the function is a template argument,
+// the object a runtime one.
+auto member_handler = Handler::create<Motor, &Motor::stop>(motor);
+
+// Bind a free or static function: no object needed.
+auto static_handler = Handler::create<&Motor::emergency>();
+
+// Bind a lambda (non-owning: the lambda must outlive the delegate).
+auto counter = [](int reason) { /* ... */ };
+auto lambda_handler = Handler::create(counter);
+
+member_handler(3);                    // calls motor.stop(3)
+if (static_handler.is_valid()) {      // default-constructed delegates are unbound
+    static_handler(1);
+}
+```
+
+The `create<Motor, &Motor::stop>(motor)` spelling is the part worth internalizing. The member function is baked in as a template argument, so the delegate holds only the object pointer and a generated thunk, and the compiler can often inline straight through it. That is the trade ETL makes throughout: more explicit syntax in exchange for a fixed size, a fixed cost, and no heap.
+
+Pair it with `etl::delegate_service` or an `etl::vector<Handler, N>` and you have an event-dispatch table with a compile-time-bounded footprint, which is the embedded equivalent of the `std::vector<std::function<...>>` above. If you are on a bare-metal target today and want delegates, ETL is the practical answer; `std::function_ref` is the same idea arriving in the standard a decade later. See the [Cross-Compilation and Bare Metal](#cross-compilation-and-bare-metal) section for why the standard library's allocating types are a poor fit for those targets in the first place.
+:::
 
 ## Memory Management
 ::: {.subheading}
@@ -2564,12 +3195,12 @@ If an exception escapes a destructor *while unwinding is already in progress*, t
 #### Exception Safety
 Because an exception can leave a function at nearly any point, "does this work" is no longer the only question; "what state does it leave behind" matters too. The standard vocabulary, due largely to Dave Abrahams, names four levels of guarantee:
 
-| Guarantee     | Promise                                                                        |
-|---------------|--------------------------------------------------------------------------------|
-| **No-throw**  | Never throws. Required of destructors, swaps, and move operations.              |
-| **Strong**    | Either succeeds, or leaves everything exactly as it was. Commit-or-rollback.    |
-| **Basic**     | Invariants hold and nothing leaks, but the state may have changed observably.   |
-| **None**      | All bets are off. Not acceptable in code you intend to keep.                    |
+| Guarantee    | Promise                                                                       |
+|--------------|-------------------------------------------------------------------------------|
+| **No-throw** | Never throws. Required of destructors, swaps, and move operations.            |
+| **Strong**   | Either succeeds, or leaves everything exactly as it was. Commit-or-rollback.  |
+| **Basic**    | Invariants hold and nothing leaks, but the state may have changed observably. |
+| **None**     | All bets are off. Not acceptable in code you intend to keep.                  |
 
 Basic is the floor; anything less is a bug. Strong is what you want for operations a caller might retry, and the classic technique for achieving it is **copy-and-swap**: do all the failure-prone work on a copy, then commit with an operation that cannot fail.
 
@@ -2660,7 +3291,7 @@ Rust's `Result` is `#[must_use]`, so **ignoring one is a compiler warning**. A d
 
 Rust has [`?`](rust-ho.qmd#errors-as-values), which propagates an error to the caller in one character and converts the error type on the way. That is the ergonomic gap that kept value-based error handling unpopular in C++ for decades: without it, propagating an `expected` through five call layers means five explicit `if (!result) return std::unexpected(result.error());` blocks, and exceptions start looking attractive again purely for the brevity. C++23 added monadic operations (`and_then`, `transform`, `or_else`) that chain without the boilerplate, which helps, but nothing as concise as `?` is in the language yet.
 
-The honest summary is that C++ has arrived at the right *types* without the *enforcement* or the *ergonomics* that make them pleasant, and cannot abandon exceptions without breaking the standard library and thirty years of code. Rust had the advantage of choosing once, at the start.
+The summary is that C++ has arrived at the right *types* without the *enforcement* or the *ergonomics* that make them pleasant, and cannot abandon exceptions without breaking the standard library and thirty years of code. Rust had the advantage of choosing once, at the start.
 
 ## Namespaces
 ::: {.subheading}
@@ -2690,7 +3321,11 @@ Namespaces are **open**: you may reopen the same namespace in as many files as y
 
 Names are looked up from the innermost enclosing scope outward, so inside `namespace audio` you write `Buffer` and `detail::gcd` without qualification. A leading `::` forces the global scope, useful when a local name shadows one you need: `::malloc` when `audio::malloc` also exists.
 
-### `using`: Declarations and Directives
+### `using`
+::: {.subheading}
+Declarations and Directives
+:::
+
 Fully qualified names get verbose, and C++ offers two ways to shorten them. They differ enormously in how much damage they can do.
 
 A **`using` declaration** brings in one specific name:
@@ -3075,20 +3710,20 @@ Most of C survives intact. The type system's foundations, the pointer model, the
 
 What changes is not the machinery but the *idioms*. The habits that make you a good C programmer, managing lifetime by hand, returning error codes, passing pointers so callees can write through them, using macros for genericity, are each replaced by something the compiler participates in. The table is a map from habit to habit:
 
-| Concern             | C                                              | C++                                                          |
-|---------------------|------------------------------------------------|--------------------------------------------------------------|
-| Resource lifetime   | Manual `malloc`/`free`, `goto` cleanup ladder  | [RAII](#raii): destructors run automatically                 |
-| Heap ownership      | Raw pointers, ownership by convention          | [`unique_ptr`](#unique-ptr) / [`shared_ptr`](#shared-ptr) |
-| Out-parameters      | `T*` the callee writes through                 | [`T&`](#references): cannot be null, cannot be reseated      |
-| Failure reporting   | Return code, `errno`                           | [Exceptions](#exceptions) or [`optional`/`expected`](#alternatives) |
-| Generic code        | `void*` plus casts, or preprocessor macros     | [Templates](#templates), type-checked and monomorphized      |
-| Dynamic dispatch    | Hand-built struct of function pointers         | [`virtual` functions](#virtual-functions) and the vtable     |
-| Name collisions     | Prefixes: `png_read_info`                      | [Namespaces](#namespaces)                                    |
-| Data structures     | Hand-rolled per project                        | [STL containers](#containers) and [algorithms](#algorithms-and-ranges) |
-| Compile-time values | `#define`, the enum hack                       | [`constexpr`](#constexpr-and-if-constexpr): typed and scoped |
-| Encapsulation       | Convention, plus `static` in a `.c` file       | [`private`](#access-control), enforced by the compiler       |
-| Strings             | `char*` and `<string.h>`                       | `std::string`, `std::string_view`                            |
-| Symbols             | One per name                                   | [Mangled](#name-mangling); overloading is legal              |
+| Concern             | C                                             | C++                                                                    |
+|---------------------|-----------------------------------------------|------------------------------------------------------------------------|
+| Resource lifetime   | Manual `malloc`/`free`, `goto` cleanup ladder | [RAII](#raii): destructors run automatically                           |
+| Heap ownership      | Raw pointers, ownership by convention         | [`unique_ptr`](#unique-ptr) / [`shared_ptr`](#shared-ptr)              |
+| Out-parameters      | `T*` the callee writes through                | [`T&`](#references): cannot be null, cannot be reseated                |
+| Failure reporting   | Return code, `errno`                          | [Exceptions](#exceptions) or [`optional`/`expected`](#alternatives)    |
+| Generic code        | `void*` plus casts, or preprocessor macros    | [Templates](#templates), type-checked and monomorphized                |
+| Dynamic dispatch    | Hand-built struct of function pointers        | [`virtual` functions](#virtual-functions) and the vtable               |
+| Name collisions     | Prefixes: `png_read_info`                     | [Namespaces](#namespaces)                                              |
+| Data structures     | Hand-rolled per project                       | [STL containers](#containers) and [algorithms](#algorithms-and-ranges) |
+| Compile-time values | `#define`, the enum hack                      | [`constexpr`](#constexpr-and-if-constexpr): typed and scoped           |
+| Encapsulation       | Convention, plus `static` in a `.c` file      | [`private`](#access-control), enforced by the compiler                 |
+| Strings             | `char*` and `<string.h>`                      | `std::string`, `std::string_view`                                      |
+| Symbols             | One per name                                  | [Mangled](#name-mangling); overloading is legal                        |
 
 The single most consequential row is the first. In C, the lifetime of a resource is tracked in the programmer's head and documented in comments; in C++, it is tracked by the type system and enforced by the compiler inserting destructor calls you never write. Nearly every other difference follows from it. Smart pointers are RAII applied to the heap, containers are RAII applied to collections, and [move semantics](#move-semantics) exist to make RAII cheap enough to use everywhere. If you internalize one thing from this chapter, that is the one.
 
@@ -3105,21 +3740,21 @@ The same goals, thirty years apart
 
 Rust and C++ want the same things: abstraction that costs nothing at run time, control over memory layout and lifetime, and performance competitive with C. They largely agree on the answers, too. Rust's ownership model is a direct descendant of C++'s RAII, its generics monomorphize exactly as templates do, and `Box`/`Rc`/`Arc` are recognizably `unique_ptr`/`shared_ptr` with the atomicity split out. Graydon Hoare and the early Rust team knew C++ intimately, and the design reads as a considered response to it rather than a rejection.
 
-| Concern            | C++                                              | Rust                                                    |
-|--------------------|--------------------------------------------------|---------------------------------------------------------|
-| Ownership          | RAII by convention; compiler does not verify     | Ownership in the type system; borrow checker verifies    |
-| Use-after-move     | Legal: moved-from is [valid but unspecified](#the-moved-from-state) | Compile error: the value is gone         |
-| Dangling reference | Compiles; undefined behavior at run time         | Compile error via [lifetimes](rust-ho.qmd#lifetimes)     |
-| Mutability         | Mutable by default; `const` opts out             | Immutable by default; `mut` opts in                      |
-| Aliasing           | Unrestricted; the optimizer must be pessimistic  | One `&mut` **or** many `&`, never both                   |
-| Data races         | Your responsibility                              | Prevented at compile time by `Send`/`Sync`               |
-| Null               | `nullptr` on any pointer                         | No null; absence is [`Option<T>`](rust-ho.qmd#option-t)  |
-| Errors             | [Exceptions **and**](#error-handling) value returns | [`Result<T, E>`](rust-ho.qmd#errors-as-values) only, and `#[must_use]` |
-| Generics           | [Templates](#templates), structurally checked at instantiation | Trait bounds, checked at definition        |
-| Interfaces         | [Concepts](#concepts) (structural) / abstract classes | [Traits](rust-ho.qmd#traits) (nominal, opt-in)      |
-| Initialization     | Reading an uninitialized value is UB             | Cannot compile; every value is initialized               |
-| Build              | Headers, ODR, `#include`; CMake by convention    | Modules and `Cargo`, one system, in the box              |
-| Escape hatch       | The whole language                               | `unsafe`, and it is greppable                            |
+| Concern            | C++                                                                 | Rust                                                                   |
+|--------------------|---------------------------------------------------------------------|------------------------------------------------------------------------|
+| Ownership          | RAII by convention; compiler does not verify                        | Ownership in the type system; borrow checker verifies                  |
+| Use-after-move     | Legal: moved-from is [valid but unspecified](#the-moved-from-state) | Compile error: the value is gone                                       |
+| Dangling reference | Compiles; undefined behavior at run time                            | Compile error via [lifetimes](rust-ho.qmd#lifetimes)                   |
+| Mutability         | Mutable by default; `const` opts out                                | Immutable by default; `mut` opts in                                    |
+| Aliasing           | Unrestricted; the optimizer must be pessimistic                     | One `&mut` **or** many `&`, never both                                 |
+| Data races         | Your responsibility                                                 | Prevented at compile time by `Send`/`Sync`                             |
+| Null               | `nullptr` on any pointer                                            | No null; absence is [`Option<T>`](rust-ho.qmd#option-t)                |
+| Errors             | [Exceptions **and**](#error-handling) value returns                 | [`Result<T, E>`](rust-ho.qmd#errors-as-values) only, and `#[must_use]` |
+| Generics           | [Templates](#templates), structurally checked at instantiation      | Trait bounds, checked at definition                                    |
+| Interfaces         | [Concepts](#concepts) (structural) / abstract classes               | [Traits](rust-ho.qmd#traits) (nominal, opt-in)                         |
+| Initialization     | Reading an uninitialized value is UB                                | Cannot compile; every value is initialized                             |
+| Build              | Headers, ODR, `#include`; CMake by convention                       | Modules and `Cargo`, one system, in the box                            |
+| Escape hatch       | The whole language                                                  | `unsafe`, and it is greppable                                          |
 
 The pattern in that table is one difference wearing many hats. C++ *knows* the right discipline, states it clearly in the [Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/){target="_blank" rel="noopener noreferrer"}, and cannot enforce it. Rust encodes the same discipline in the type system and refuses to compile violations. `unique_ptr` and `Box` express identical intent; only one of them stops you from reading the pointer after the move.
 

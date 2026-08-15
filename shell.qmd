@@ -139,7 +139,7 @@ A handful of environment variables are conventional across Unix systems. Program
 | `$EDITOR`          | your preferred editor, used by `git`, `crontab`, etc.                                                                                                                                                      |
 | `$TERM`            | terminal type, used for colors and capabilities.                                                                                                                                                           |
 | `$TMPDIR`          | directory for temporary files.                                                                                                                                                                             |
-| `$PROMPT` / `$PS1` | prompt [specification](https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html){target="_blank"} expanded by the shell. The same expansion is available using the `-P` option to the `print` builtin. |
+| `$PROMPT` / `$PS1` | prompt [specification](https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html){target="_blank" rel="noopener noreferrer"} expanded by the shell. The same expansion is available using the `-P` option to the `print` builtin. |
 
 Let's take a closer look at a couple of these fellas.
 
@@ -159,7 +159,7 @@ echo "$PATH"
 Order matters: a directory earlier in `$PATH` shadows the same-named command later. This is why `/usr/local/bin` usually comes first, so your installed tools win over the system defaults.
 
 #### `$PROMPT`
-A prompt sequence is a combination of literal text and *escape sequences*. An escape sequence is two or more characters that start with `%`. At the moment the shell draws the prompt, it expands each escape sequence into the data it represents, so the prompt is recomputed fresh every time it appears. [zsh.sourceforge.io](https://zsh.sourceforge.io){target="_blank"} includes a [Prompt Expansion](https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html){target="_blank"} reference.
+A prompt sequence is a combination of literal text and *escape sequences*. An escape sequence is two or more characters that start with `%`. At the moment the shell draws the prompt, it expands each escape sequence into the data it represents, so the prompt is recomputed fresh every time it appears. [zsh.sourceforge.io](https://zsh.sourceforge.io){target="_blank" rel="noopener noreferrer"} includes a [Prompt Expansion](https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html){target="_blank" rel="noopener noreferrer"} reference.
 
 My `$PROMPT` is defined as: `%{(language) %n@%m %1~ %# %}`. Using the prompt expansion reference, we shall break it down.
 
@@ -217,7 +217,7 @@ PROMPT='$(venv_prompt)%n@%m %1~ %# '
 The single quotes are the crux: they keep `$(venv_prompt)` *unexpanded* when `PROMPT` is assigned, so the literal text `$(venv_prompt)` is stored in the variable. Then, because `prompt_subst` is set, zsh re-expands that stored string on every redraw, running the function fresh each time. The `(language)` tag therefore appears and disappears as you activate and deactivate. Use double quotes instead and the substitution would fire once at assignment, freezing whatever the venv was at that moment.
 
 ::: {.callout-tip title="Let a prompt framework do this"}
-Hand-rolling venv, git branch, exit status, and timing into `$PROMPT` gets tedious fast. The common move is to install a prompt engine that does it for you: [Starship](https://starship.rs){target="_blank"} (a single binary, config in TOML, works across shells) is the popular modern choice; `powerlevel10k` and `oh-my-posh` are alternatives. They read the same `VIRTUAL_ENV` and run `git` under the hood; they just spare you the escape-sequence bookkeeping. This is also the clean way to get a rich prompt on a terminal like Ghostty that, unlike Warp, draws the prompt straight from `$PROMPT` and does no scraping of its own.
+Hand-rolling venv, git branch, exit status, and timing into `$PROMPT` gets tedious fast. The common move is to install a prompt engine that does it for you: [Starship](https://starship.rs){target="_blank" rel="noopener noreferrer"} (a single binary, config in TOML, works across shells) is the popular modern choice; `powerlevel10k` and `oh-my-posh` are alternatives. They read the same `VIRTUAL_ENV` and run `git` under the hood; they just spare you the escape-sequence bookkeeping. This is also the clean way to get a rich prompt on a terminal like Ghostty that, unlike Warp, draws the prompt straight from `$PROMPT` and does no scraping of its own.
 :::
 
 ### The Special Shell Parameters
@@ -829,7 +829,7 @@ Bare words are what you want when you *intend* the expansion, for example `ls *.
 ### Quote Removal in Action
 The quote characters are removed before the program runs. The program receives the *content*, never the quotes:
 
-When the following is run over our [DATA 605 notebook](https://celsasser.github.io/sps-605-notes/){target="_blank"}.
+When the following is run over our [DATA 605 notebook](https://celsasser.github.io/sps-605-notes/){target="_blank" rel="noopener noreferrer"}.
 
 ```bash
 grep "matrix" la-eigenspace.qmd | head -1

@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-08-02">
+<meta name="dcterms.date" content="2026-08-15">
 
 <title>Rust: Introduction – Computer Language Notebook</title>
 <style>
@@ -468,7 +468,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 2, 2026</p>
+      <p class="date">August 15, 2026</p>
     </div>
   </div>
   
@@ -517,20 +517,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h5 class="anchored" data-anchor-id="does-rust-support-inheritance-if-not-then-why">1. Does Rust support Inheritance? If not, then why?</h5>
 <p>No.&nbsp;Rust deliberately omits implementation inheritance, and the omission is a design choice, not an oversight.</p>
 <p>Inheritance bundles two distinct things: <em>code reuse</em> (sharing implementation) and <em>subtype polymorphism</em> (treating a derived type as its base). Object-oriented languages couple them; you inherit the implementation to get the polymorphism. Decades of experience showed that this coupling causes problems: fragile base class syndrome, deep hierarchies that are hard to reason about, and the pressure to contort a design to fit a tree when the real relationships form a graph.</p>
-<p>Rust separates the two concerns cleanly. For code reuse, you use <em>traits with default methods</em> — a <a href="./rust-ho.html#traits">trait</a> can provide a default implementation of any method, and any type that implements the trait gets that implementation for free (or overrides it). For subtype polymorphism, you use <a href="https://doc.rust-lang.org/reference/types/trait-object.html?highlight=dyn%20Trait#trait-objects" target="_blank"><em>trait objects</em></a> (<code>dyn Trait</code>), which let you write code that works over any type implementing a given trait. You can also compose behavior by having one struct hold another as a field and delegating to it, which is explicit and therefore more honest about what is actually happening.</p>
+<p>Rust separates the two concerns cleanly. For code reuse, you use <em>traits with default methods</em> — a <a href="./rust-ho.html#traits">trait</a> can provide a default implementation of any method, and any type that implements the trait gets that implementation for free (or overrides it). For subtype polymorphism, you use <a href="https://doc.rust-lang.org/reference/types/trait-object.html?highlight=dyn%20Trait#trait-objects" target="_blank" rel="noopener noreferrer"><em>trait objects</em></a> (<code>dyn Trait</code>), which let you write code that works over any type implementing a given trait. You can also compose behavior by having one struct hold another as a field and delegating to it, which is explicit and therefore more honest about what is actually happening.</p>
 <p>The payoff is that Rust’s type system is simpler to reason about. There is no implicit behavior coming from somewhere up the hierarchy, and the borrow checker doesn’t have to contend with inherited mutable state. If you miss inheritance, you usually find that a trait with default methods plus composition covers the real need without the baggage.</p>
 </section>
 <section id="is-rust-as-efficient-and-fast-as-c" class="level5">
 <h5 class="anchored" data-anchor-id="is-rust-as-efficient-and-fast-as-c">2. Is Rust as efficient and fast as C?</h5>
 <p>Yes, with one qualification.</p>
 <p>On the machine-code level, Rust and C compile to essentially identical output. Both use LLVM (Clang also uses LLVM), both have no runtime or garbage collector, and Rust’s abstractions — iterators, generics, closures — are zero-cost: they disappear at compile time. Benchmarks between idiomatic Rust and idiomatic C are routinely within a percent or two of each other, and Rust sometimes wins because the compiler can apply optimizations that would be illegal in C due to aliasing rules (<code>restrict</code> in C is opt-in; Rust’s ownership model gives the compiler that guarantee automatically).</p>
-<p>The qualification: Rust has bounds-checked array indexing in debug builds. In optimized builds, those checks are often eliminated when the compiler can prove an access is in range, and idiomatic safe Rust often uses iterators or slice methods that compile down without per-access bounds checks. In tight inner loops over arrays this can still matter in some cases, and C has no such checks by default. If you truly need manual unchecked indexing, Rust gives you the escape hatch via <a href="https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword" target="_blank"><code>unsafe</code></a>, but you have to ask for it deliberately. In practice, for most systems code, the difference does not appear outside of microbenchmarks.</p>
+<p>The qualification: Rust has bounds-checked array indexing in debug builds. In optimized builds, those checks are often eliminated when the compiler can prove an access is in range, and idiomatic safe Rust often uses iterators or slice methods that compile down without per-access bounds checks. In tight inner loops over arrays this can still matter in some cases, and C has no such checks by default. If you truly need manual unchecked indexing, Rust gives you the escape hatch via <a href="https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword" target="_blank" rel="noopener noreferrer"><code>unsafe</code></a>, but you have to ask for it deliberately. In practice, for most systems code, the difference does not appear outside of microbenchmarks.</p>
 </section>
 <section id="is-it-possible-for-a-rust-app-to-experience-a-segfault" class="level5">
 <h5 class="anchored" data-anchor-id="is-it-possible-for-a-rust-app-to-experience-a-segfault">3. Is it possible for a Rust app to experience a segfault?</h5>
 <p>Yes, but it requires deliberate effort.</p>
-<p>In safe Rust, a segfault is essentially impossible by construction. The borrow checker prevents dangling pointers, use-after-free, and out-of-bounds memory access at compile time. What you get instead of a segfault is a compile error. The few things that could cause memory problems at runtime (like out-of-bounds slice indexing) are caught and turned into a controlled <a href="https://doc.rust-lang.org/reference/panic.html" target="_blank"><code>panic</code></a> rather than undefined behavior.</p>
-<p>However, Rust has <a href="https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword" target="_blank"><code>unsafe</code></a> blocks, and <code>unsafe</code> suspends those guarantees. Code inside an <code>unsafe</code> block can dereference raw pointers, call C functions via FFI, and do other things the compiler cannot verify. Any of those can produce a segfault if you get them wrong. The critical design point is that <code>unsafe</code> is explicit and lexically scoped, so when something does go wrong you know exactly where to look: somewhere inside an <code>unsafe</code> block, not anywhere in the program.</p>
+<p>In safe Rust, a segfault is essentially impossible by construction. The borrow checker prevents dangling pointers, use-after-free, and out-of-bounds memory access at compile time. What you get instead of a segfault is a compile error. The few things that could cause memory problems at runtime (like out-of-bounds slice indexing) are caught and turned into a controlled <a href="https://doc.rust-lang.org/reference/panic.html" target="_blank" rel="noopener noreferrer"><code>panic</code></a> rather than undefined behavior.</p>
+<p>However, Rust has <a href="https://doc.rust-lang.org/reference/unsafe-keyword.html?highlight=unsafe#the-unsafe-keyword" target="_blank" rel="noopener noreferrer"><code>unsafe</code></a> blocks, and <code>unsafe</code> suspends those guarantees. Code inside an <code>unsafe</code> block can dereference raw pointers, call C functions via FFI, and do other things the compiler cannot verify. Any of those can produce a segfault if you get them wrong. The critical design point is that <code>unsafe</code> is explicit and lexically scoped, so when something does go wrong you know exactly where to look: somewhere inside an <code>unsafe</code> block, not anywhere in the program.</p>
 <p>So: pure safe Rust, no segfaults. Unsafe Rust, yes — but you opted in, and the surface area is small and visible.</p>
 </section>
 <section id="what-makes-rust-good-for-systems-development" class="level5">
@@ -615,7 +615,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="cheat-sheet" class="level2">
 <h2 class="anchored" data-anchor-id="cheat-sheet">Cheat Sheet</h2>
-<p>I looked over here, and I looked over there. Then I found the cheat sheet I was looking for. He’s all squished together and highly 2 dimensional. I edited him a little to get him to fit on a single page, but otherwise it’s all <a href="https://refmint.com/topics/rust/" target="_blank">RefMint</a>.</p>
+<p>I looked over here, and I looked over there. Then I found the cheat sheet I was looking for. He’s all squished together and highly 2 dimensional. I edited him a little to get him to fit on a single page, but otherwise it’s all <a href="https://refmint.com/topics/rust/" target="_blank" rel="noopener noreferrer">RefMint</a>.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="images/rust-cs.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:14in"></p>
@@ -705,7 +705,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="the-most-popular-crates" class="level4">
 <h4 class="anchored" data-anchor-id="the-most-popular-crates">The Most Popular Crates</h4>
-<p>The following list is a top 30 crates capture from <a href="https://lib.rs/std" target="_blank">Most popular Rust Libraries</a>. When I finish this document, I’m going to put it in a time-capsule bury it.</p>
+<p>The following list is a top 30 crates capture from <a href="https://lib.rs/std" target="_blank" rel="noopener noreferrer">Most popular Rust Libraries</a>. When I finish this document, I’m going to put it in a time-capsule bury it.</p>
 <blockquote class="blockquote">
 <p>To whoever is reading this, the date is 4/8/2026. We drank too much Orange Crush and not enough Tang and we died. Follows is a list of the top 30 most popular Rust crates. I have also left some Tang in the capsule. Live long and prosper.</p>
 </blockquote>
@@ -718,119 +718,119 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/serde" target="_blank">serde</a></td>
+<td><a href="https://lib.rs/crates/serde" target="_blank" rel="noopener noreferrer">serde</a></td>
 <td>A generic serialization/deserialization framework</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/thiserror" target="_blank">thiserror</a></td>
+<td><a href="https://lib.rs/crates/thiserror" target="_blank" rel="noopener noreferrer">thiserror</a></td>
 <td>derive(Error)</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/serde_json" target="_blank">serde_json</a></td>
+<td><a href="https://lib.rs/crates/serde_json" target="_blank" rel="noopener noreferrer">serde_json</a></td>
 <td>A JSON serialization file format</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/rand" target="_blank">rand</a></td>
+<td><a href="https://lib.rs/crates/rand" target="_blank" rel="noopener noreferrer">rand</a></td>
 <td>Random number generators and other randomness functionality</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/tokio" target="_blank">tokio</a></td>
+<td><a href="https://lib.rs/crates/tokio" target="_blank" rel="noopener noreferrer">tokio</a></td>
 <td>An event-driven, non-blocking I/O platform for writing asynchronous I/O backed applications</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/clap" target="_blank">clap</a></td>
+<td><a href="https://lib.rs/crates/clap" target="_blank" rel="noopener noreferrer">clap</a></td>
 <td>efficient, and full-featured Command Line Argument Parser</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/anyhow" target="_blank">anyhow</a></td>
+<td><a href="https://lib.rs/crates/anyhow" target="_blank" rel="noopener noreferrer">anyhow</a></td>
 <td>Flexible concrete Error type built on std::error::Error</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/syn" target="_blank">syn</a></td>
+<td><a href="https://lib.rs/crates/syn" target="_blank" rel="noopener noreferrer">syn</a></td>
 <td>Parser for Rust source code</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/regex" target="_blank">regex</a></td>
+<td><a href="https://lib.rs/crates/regex" target="_blank" rel="noopener noreferrer">regex</a></td>
 <td>regular expressions for Rust. This implementation uses finite automata and guarantees linear time matching on all inputs.</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/base64" target="_blank">base64</a></td>
+<td><a href="https://lib.rs/crates/base64" target="_blank" rel="noopener noreferrer">base64</a></td>
 <td>encodes and decodes base64 as bytes or utf8</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/log" target="_blank">log</a></td>
+<td><a href="https://lib.rs/crates/log" target="_blank" rel="noopener noreferrer">log</a></td>
 <td>A lightweight logging facade for Rust</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/tracing" target="_blank">tracing</a></td>
+<td><a href="https://lib.rs/crates/tracing" target="_blank" rel="noopener noreferrer">tracing</a></td>
 <td>Application-level tracing for Rust</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/tempfile" target="_blank">tempfile</a></td>
+<td><a href="https://lib.rs/crates/tempfile" target="_blank" rel="noopener noreferrer">tempfile</a></td>
 <td>managing temporary files and directories</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/chrono" target="_blank">chrono</a></td>
+<td><a href="https://lib.rs/crates/chrono" target="_blank" rel="noopener noreferrer">chrono</a></td>
 <td>Date and time library for Rust</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/quote" target="_blank">quote</a></td>
+<td><a href="https://lib.rs/crates/quote" target="_blank" rel="noopener noreferrer">quote</a></td>
 <td>Quasi-quoting macro quote!(…)</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/reqwest" target="_blank">reqwest</a></td>
+<td><a href="https://lib.rs/crates/reqwest" target="_blank" rel="noopener noreferrer">reqwest</a></td>
 <td>higher level HTTP client library</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/libc" target="_blank">libc</a></td>
+<td><a href="https://lib.rs/crates/libc" target="_blank" rel="noopener noreferrer">libc</a></td>
 <td>Raw FFI bindings to platform libraries like libc</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/proc-macro2" target="_blank">proc-macro2</a></td>
+<td><a href="https://lib.rs/crates/proc-macro2" target="_blank" rel="noopener noreferrer">proc-macro2</a></td>
 <td>A substitute implementation of the compiler’s proc_macro API to decouple token-based libraries from the procedural macro use case</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/toml" target="_blank">toml</a></td>
+<td><a href="https://lib.rs/crates/toml" target="_blank" rel="noopener noreferrer">toml</a></td>
 <td>A native Rust encoder and decoder of TOML-formatted files and streams. Provides implementations of the standard Serialize/Deserialize traits for TOML data to facilitate deserializing and serializing Rust structures.</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/sha2" target="_blank">sha2</a></td>
+<td><a href="https://lib.rs/crates/sha2" target="_blank" rel="noopener noreferrer">sha2</a></td>
 <td>Pure Rust implementation of the SHA-2 hash function family including SHA-224, SHA-256, SHA-384, and SHA-512</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/futures" target="_blank">futures</a></td>
+<td><a href="https://lib.rs/crates/futures" target="_blank" rel="noopener noreferrer">futures</a></td>
 <td>streams featuring zero allocations, composability, and iterator-like interfaces</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/uuid" target="_blank">uuid</a></td>
+<td><a href="https://lib.rs/crates/uuid" target="_blank" rel="noopener noreferrer">uuid</a></td>
 <td>generate and parse UUIDs</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/tracing-subscriber" target="_blank">tracing-subscriber</a></td>
+<td><a href="https://lib.rs/crates/tracing-subscriber" target="_blank" rel="noopener noreferrer">tracing-subscriber</a></td>
 <td>implementing and composing tracing subscribers</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/bytes" target="_blank">bytes</a></td>
+<td><a href="https://lib.rs/crates/bytes" target="_blank" rel="noopener noreferrer">bytes</a></td>
 <td>Types and traits for working with bytes</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/url" target="_blank">url</a></td>
+<td><a href="https://lib.rs/crates/url" target="_blank" rel="noopener noreferrer">url</a></td>
 <td>based on the WHATWG URL Standard</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/itertools" target="_blank">itertools</a></td>
+<td><a href="https://lib.rs/crates/itertools" target="_blank" rel="noopener noreferrer">itertools</a></td>
 <td>Extra iterator adaptors, iterator methods, free functions, and macros</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/once_cell" target="_blank">once_cell</a></td>
+<td><a href="https://lib.rs/crates/once_cell" target="_blank" rel="noopener noreferrer">once_cell</a></td>
 <td>Single assignment cells and lazy values</td>
 </tr>
 <tr class="even">
-<td><a href="https://lib.rs/crates/getrandom" target="_blank">getrandom</a></td>
+<td><a href="https://lib.rs/crates/getrandom" target="_blank" rel="noopener noreferrer">getrandom</a></td>
 <td>A small cross-platform library for retrieving random data from system source</td>
 </tr>
 <tr class="odd">
-<td><a href="https://lib.rs/crates/indexmap" target="_blank">indexmap</a></td>
+<td><a href="https://lib.rs/crates/indexmap" target="_blank" rel="noopener noreferrer">indexmap</a></td>
 <td>A hash table with consistent order and fast iteration</td>
 </tr>
 </tbody>
@@ -867,7 +867,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="modules" class="level3">
 <h3 class="anchored" data-anchor-id="modules">Modules</h3>
-<p>A <strong>module</strong> is a namespace within a crate — the closest equivalent to a Python module. Modules organize code into logical units and control what is visible outside (<code>pub</code>) versus private. Items are <em>private by default</em> — you opt into visibility explicitly. Before we dive deep on our own, we are to share <em>The Rust Programming Language</em>’s <a href="https://doc.rust-lang.org/book/ch07-02-defining-modules-to-control-scope-and-privacy.html" target="_blank">“Modules Cheat Sheet”</a>. It was just what I was looking for when learning about modules; so, here it is word for word:</p>
+<p>A <strong>module</strong> is a namespace within a crate — the closest equivalent to a Python module. Modules organize code into logical units and control what is visible outside (<code>pub</code>) versus private. Items are <em>private by default</em> — you opt into visibility explicitly. Before we dive deep on our own, we are to share <em>The Rust Programming Language</em>’s <a href="https://doc.rust-lang.org/book/ch07-02-defining-modules-to-control-scope-and-privacy.html" target="_blank" rel="noopener noreferrer">“Modules Cheat Sheet”</a>. It was just what I was looking for when learning about modules; so, here it is word for word:</p>
 <div class="exploration" data-label="Modules Cheat Sheet">
 <p>Before we get to the details of modules and paths, here we provide a quick reference on how modules, paths, the <code>use</code> keyword, and the <code>pub</code> keyword work in the compiler, and how most developers organize their code. We’ll be going through examples of each of these rules throughout this chapter, but this is a great place to refer to as a reminder of how modules work.</p>
 <p><strong>Start from the crate root:</strong> When compiling a crate, the compiler first looks in the crate root file (usually src/lib.rs for a library crate or src/main.rs for a binary crate) for code to compile.</p>
@@ -1053,7 +1053,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="subheading">
 <p><code>use</code> is your friend. Love him.</p>
 </div>
-<p><code>use</code> is an extremely useful and flexible keyword that was described to me to an “alias injector”. <a href="https://doc.rust-lang.org/reference/items/use-declarations.html" target="_blank">The Rust Reference</a> has the following to say about <code>use</code>:</p>
+<p><code>use</code> is an extremely useful and flexible keyword that was described to me to an “alias injector”. <a href="https://doc.rust-lang.org/reference/items/use-declarations.html" target="_blank" rel="noopener noreferrer">The Rust Reference</a> has the following to say about <code>use</code>:</p>
 <blockquote class="blockquote">
 <p>A <code>use</code> declaration creates one or more local name bindings synonymous with some other path. Usually a <code>use</code> declaration is used to shorten the path required to refer to a module item. These declarations may appear in modules and blocks, usually at the top. A <code>use</code> declaration is also sometimes called an <code>import</code>, or, if it is public, a re-export.</p>
 </blockquote>
@@ -1129,7 +1129,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="external-dependencies" class="level3">
 <h3 class="anchored" data-anchor-id="external-dependencies">External Dependencies</h3>
-<p>Dependencies from <a href="https://crates.io/" target="_blank">crates.io</a> (Rust’s public registry, the equivalent of PyPI) go in <code>Cargo.toml</code>:</p>
+<p>Dependencies from <a href="https://crates.io/" target="_blank" rel="noopener noreferrer">crates.io</a> (Rust’s public registry, the equivalent of PyPI) go in <code>Cargo.toml</code>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode toml code-with-copy"><code class="sourceCode toml"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[dependencies]</span></span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="dt">serde</span> <span class="op">=</span> <span class="op">{ </span><span class="dt">version</span><span class="op"> =</span> <span class="st">"1.0"</span><span class="op">, </span><span class="dt">features</span><span class="op"> =</span> <span class="op">[</span><span class="st">"derive"</span><span class="op">] }</span></span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="dt">regex</span> <span class="op">=</span> <span class="st">"1.10"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -1509,7 +1509,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="operator-overloading" class="level4">
 <h4 class="anchored" data-anchor-id="operator-overloading">Operator Overloading</h4>
-<p>Many operators can be overloaded by implementing traits from <a href="https://doc.rust-lang.org/std/ops/index.html" target="_blank"><code>std::ops</code></a>. For example:</p>
+<p>Many operators can be overloaded by implementing traits from <a href="https://doc.rust-lang.org/std/ops/index.html" target="_blank" rel="noopener noreferrer"><code>std::ops</code></a>. For example:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">std::ops::</span><span class="bu">Add</span><span class="op">;</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Point <span class="op">{</span> x<span class="op">:</span> <span class="dt">i32</span><span class="op">,</span> y<span class="op">:</span> <span class="dt">i32</span> <span class="op">}</span></span>
@@ -1528,7 +1528,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> p1 <span class="op">=</span> Point <span class="op">{</span> x<span class="op">:</span> <span class="dv">1</span><span class="op">,</span> y<span class="op">:</span> <span class="dv">2</span> <span class="op">};</span></span>
 <span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> p2 <span class="op">=</span> Point <span class="op">{</span> x<span class="op">:</span> <span class="dv">3</span><span class="op">,</span> y<span class="op">:</span> <span class="dv">4</span> <span class="op">};</span></span>
 <span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> p3 <span class="op">=</span> p1 <span class="op">+</span> p2<span class="op">;</span>  <span class="co">// uses our Add implementation</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>In the following table we include some of A listers and indicate the operator, the trait (in <code>std::ops</code>) and the method signature. For a complete list, see <a href="https://doc.rust-lang.org/std/ops/index.html#traits" target="_blank"><code>std::ops</code></a>.</p>
+<p>In the following table we include some of A listers and indicate the operator, the trait (in <code>std::ops</code>) and the method signature. For a complete list, see <a href="https://doc.rust-lang.org/std/ops/index.html#traits" target="_blank" rel="noopener noreferrer"><code>std::ops</code></a>.</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1540,47 +1540,47 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><code>+</code></td>
-<td><a href="https://doc.rust-lang.org/std/ops/trait.Add.html" target="_blank"><code>Add</code></a></td>
+<td><a href="https://doc.rust-lang.org/std/ops/trait.Add.html" target="_blank" rel="noopener noreferrer"><code>Add</code></a></td>
 <td><code>add(self, rhs: Rhs) -&gt; Self</code></td>
 </tr>
 <tr class="even">
 <td><code>-</code></td>
-<td><a href="https://doc.rust-lang.org/std/ops/trait.Sub.html" target="_blank"><code>Sub</code></a></td>
+<td><a href="https://doc.rust-lang.org/std/ops/trait.Sub.html" target="_blank" rel="noopener noreferrer"><code>Sub</code></a></td>
 <td><code>sub(self, rhs: Rhs) -&gt; Self</code></td>
 </tr>
 <tr class="odd">
 <td><code>*</code></td>
-<td><a href="https://doc.rust-lang.org/std/ops/trait.Mul.html" target="_blank"><code>Mul</code></a></td>
+<td><a href="https://doc.rust-lang.org/std/ops/trait.Mul.html" target="_blank" rel="noopener noreferrer"><code>Mul</code></a></td>
 <td><code>mul(self, rhs: Rhs) -&gt; Self</code></td>
 </tr>
 <tr class="even">
 <td><code>/</code></td>
-<td><a href="https://doc.rust-lang.org/std/ops/trait.Div.html" target="_blank"><code>Div</code></a></td>
+<td><a href="https://doc.rust-lang.org/std/ops/trait.Div.html" target="_blank" rel="noopener noreferrer"><code>Div</code></a></td>
 <td><code>div(self, rhs: Rhs) -&gt; Self</code></td>
 </tr>
 <tr class="odd">
 <td><code>%</code></td>
-<td><a href="https://doc.rust-lang.org/std/ops/trait.Rem.html" target="_blank"><code>Rem</code></a></td>
+<td><a href="https://doc.rust-lang.org/std/ops/trait.Rem.html" target="_blank" rel="noopener noreferrer"><code>Rem</code></a></td>
 <td><code>rem(self, rhs: Rhs) -&gt; Self</code></td>
 </tr>
 <tr class="even">
 <td><code>==</code>, <code>!=</code></td>
-<td><a href="https://doc.rust-lang.org/std/cmp/trait.PartialEq.html" target="_blank"><code>PartialEq</code></a></td>
+<td><a href="https://doc.rust-lang.org/std/cmp/trait.PartialEq.html" target="_blank" rel="noopener noreferrer"><code>PartialEq</code></a></td>
 <td><code>eq(&amp;self, other: &amp;Rhs) -&gt; bool</code>, <code>ne(&amp;self, other: &amp;Rhs) -&gt; bool</code></td>
 </tr>
 <tr class="odd">
 <td><code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code></td>
-<td><a href="https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html" target="_blank"><code>PartialOrd</code></a></td>
+<td><a href="https://doc.rust-lang.org/std/cmp/trait.PartialOrd.html" target="_blank" rel="noopener noreferrer"><code>PartialOrd</code></a></td>
 <td><code>partial_cmp(&amp;self, rhs: &amp;Rhs) -&gt; Option&lt;Ordering&gt;</code></td>
 </tr>
 <tr class="even">
 <td><code>[]</code></td>
-<td><a href="https://doc.rust-lang.org/std/ops/trait.Index.html" target="_blank"><code>Index</code></a></td>
+<td><a href="https://doc.rust-lang.org/std/ops/trait.Index.html" target="_blank" rel="noopener noreferrer"><code>Index</code></a></td>
 <td><code>index(&amp;self, index: Idx) -&gt; &amp;Self::Output</code></td>
 </tr>
 <tr class="odd">
 <td><code>[]</code> (mut)</td>
-<td><a href="https://doc.rust-lang.org/std/ops/trait.IndexMut.html" target="_blank"><code>IndexMut</code></a></td>
+<td><a href="https://doc.rust-lang.org/std/ops/trait.IndexMut.html" target="_blank" rel="noopener noreferrer"><code>IndexMut</code></a></td>
 <td><code>index_mut(&amp;mut self, index: Idx) -&gt; &amp;mut Self::Output</code></td>
 </tr>
 </tbody>
@@ -1600,7 +1600,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Both sides take references because equality is a <em>read-only inspection</em> — you just need to look at both values, and you’re done. Neither side is consumed. Taking references here is the obvious choice regardless of whether the type is Copy or not.</p>
 <p>For <code>Add</code>, the signature is:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> add(<span class="kw">self</span><span class="op">,</span> rhs<span class="op">:</span> <span class="dt">Self</span>) <span class="op">-&gt;</span> <span class="dt">Self</span><span class="pp">::</span>Output<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The operands are taken <em>by value</em> because addition is modeled as <strong>consumption and transformation</strong> — you take the inputs and produce a new output. For types where this makes sense (like integers), the values are <a href="https://doc.rust-lang.org/std/marker/trait.Copy.html" target="_blank"><code>Copy</code></a>, so “moving” them is a no-op anyway. The compiler just copies the bits and you never notice.</p>
+<p>The operands are taken <em>by value</em> because addition is modeled as <strong>consumption and transformation</strong> — you take the inputs and produce a new output. For types where this makes sense (like integers), the values are <a href="https://doc.rust-lang.org/std/marker/trait.Copy.html" target="_blank" rel="noopener noreferrer"><code>Copy</code></a>, so “moving” them is a no-op anyway. The compiler just copies the bits and you never notice.</p>
 <p>The reason Rust doesn’t default to references for <code>Add</code> is that it would be unnecessarily restrictive for <em>non-Copy</em> types. Consider a hypothetical big integer or a matrix type — you might genuinely want to consume both operands and reuse their memory in constructing the result, avoiding an extra allocation. If the trait required <code>&amp;Self</code>, you’d lose that option.</p>
 <p>So the general principle is:</p>
 <ul>
@@ -1742,14 +1742,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="https://doc.rust-lang.org/std/string/struct.String.html" target="_blank"><code>String</code></a></td>
+<td><a href="https://doc.rust-lang.org/std/string/struct.String.html" target="_blank" rel="noopener noreferrer"><code>String</code></a></td>
 <td>Yes</td>
 <td>Yes</td>
 <td>Heap</td>
 <td><code>std::string</code> in C++</td>
 </tr>
 <tr class="even">
-<td><a href="https://doc.rust-lang.org/std/primitive.str.html" target="_blank"><code>&amp;str</code></a></td>
+<td><a href="https://doc.rust-lang.org/std/primitive.str.html" target="_blank" rel="noopener noreferrer"><code>&amp;str</code></a></td>
 <td>No</td>
 <td>No</td>
 <td>Anywhere</td>
@@ -1769,8 +1769,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>Memory Safety</strong>: Some research implementations use fat pointers to store bounds (base and end address) to prevent buffer overflows or keys/locks for temporal memory safety.</li>
 </ul>
 </div>
-<p><a href="https://doc.rust-lang.org/std/string/struct.String.html" target="_blank"><code>String</code></a> stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is <em>not</em> null-terminated. The length field is what tells Rust where the string ends.</p>
-<p><a href="https://doc.rust-lang.org/std/primitive.str.html" target="_blank"><code>&amp;str</code></a> is a <strong>fat pointer</strong>: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.</p>
+<p><a href="https://doc.rust-lang.org/std/string/struct.String.html" target="_blank" rel="noopener noreferrer"><code>String</code></a> stores three things: a pointer to heap memory, a length (bytes used), and a capacity (bytes allocated). It is <em>not</em> null-terminated. The length field is what tells Rust where the string ends.</p>
+<p><a href="https://doc.rust-lang.org/std/primitive.str.html" target="_blank" rel="noopener noreferrer"><code>&amp;str</code></a> is a <strong>fat pointer</strong>: a pointer into some UTF-8 buffer plus a length. It borrows that buffer — it owns nothing and cannot outlive the data it points into.</p>
 <p>Both types are guaranteed to contain valid UTF-8. Rust will not let you construct an invalid string.</p>
 </section>
 <section id="creating-a-string" class="level5">
@@ -2069,7 +2069,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="from-and-into" class="level4">
 <h4 class="anchored" data-anchor-id="from-and-into"><code>From</code> and <code>Into</code></h4>
 <div class="explanation">
-<p>In the following you will see syntax that looks a little like inheritance in other languages: <code>A: From&lt;B&gt;</code>. But we know it’s not inheritance, `cuz Rust doesn’t support inheritance. It is called a <strong>trait bound</strong>. It means “A implements the <code>From</code> trait for <code>B</code>.” In other words, you can convert from <code>B</code> to <code>A</code> using the From trait’s method. The following example is in <a href="https://doc.rust-lang.org/reference/trait-bounds.html" target="_blank">The Rust Reference</a> (there is a wicked looking syntax diagram on that page):</p>
+<p>In the following you will see syntax that looks a little like inheritance in other languages: <code>A: From&lt;B&gt;</code>. But we know it’s not inheritance, `cuz Rust doesn’t support inheritance. It is called a <strong>trait bound</strong>. It means “A implements the <code>From</code> trait for <code>B</code>.” In other words, you can convert from <code>B</code> to <code>A</code> using the From trait’s method. The following example is in <a href="https://doc.rust-lang.org/reference/trait-bounds.html" target="_blank" rel="noopener noreferrer">The Rust Reference</a> (there is a wicked looking syntax diagram on that page):</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="kw">trait</span> Shape <span class="op">{</span></span>
 <span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">fn</span> draw(<span class="op">&amp;</span><span class="kw">self</span><span class="op">,</span> surface<span class="op">:</span> Surface)<span class="op">;</span></span>
 <span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">fn</span> name() <span class="op">-&gt;</span> <span class="op">&amp;</span><span class="ot">'static</span> <span class="dt">str</span><span class="op">;</span></span>
@@ -2155,7 +2155,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The following example is taken out of our <a href="https://github.com/celsasser/exs24-parser" target="_blank">exs24</a> parser:</p>
+<p>The following example is taken out of our <a href="https://github.com/celsasser/exs24-parser" target="_blank" rel="noopener noreferrer">exs24</a> parser:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> seconds<span class="op">:</span> <span class="dt">f32</span> <span class="op">=</span> seconds_text</span>
 <span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="pp">parse::</span><span class="op">&lt;</span><span class="dt">f32</span><span class="op">&gt;</span>()</span>
 <span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>map_err(<span class="op">|</span>error<span class="op">|</span> <span class="pp">format!</span>(<span class="st">"Invalid seconds value '{}': {}"</span><span class="op">,</span> seconds_text<span class="op">,</span> error))<span class="op">?;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -2181,7 +2181,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="functions" class="level3">
 <h3 class="anchored" data-anchor-id="functions">Functions</h3>
-<p>Functions are beautiful, reusable blocks of logic. <a href="https://en.wikipedia.org/wiki/Function_(computer_programming)%7Btarget=%22_blank%22%7D">Wikipedia</a> describes a <strong>function</strong> as “a callable unit of software logic that has a well-formed interface and behavior and can be invoked multiple times… Their primary purpose is to allow for the decomposition of a large and/or complicated problem into chunks that have relatively low cognitive load and to assign the chunks meaningful names (unless they are anonymous). Judicious application can reduce the cost of developing and maintaining software, while increasing its quality and reliability.” Where would any language be without them?</p>
+<p>Functions are beautiful, reusable blocks of logic. <a href="https://en.wikipedia.org/wiki/Function_(computer_programming)%7Btarget=%22_blank%22%20rel=%22noopener%20noreferrer%22%7D">Wikipedia</a> describes a <strong>function</strong> as “a callable unit of software logic that has a well-formed interface and behavior and can be invoked multiple times… Their primary purpose is to allow for the decomposition of a large and/or complicated problem into chunks that have relatively low cognitive load and to assign the chunks meaningful names (unless they are anonymous). Judicious application can reduce the cost of developing and maintaining software, while increasing its quality and reliability.” Where would any language be without them?</p>
 <section id="common-type" class="level4">
 <h4 class="anchored" data-anchor-id="common-type">Common Type</h4>
 <p>The most commonly used function type in rust is declared with <code>fn</code>:</p>
@@ -2204,7 +2204,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> add <span class="op">=</span> <span class="op">|</span>a<span class="op">,</span> b<span class="op">|</span>                      a <span class="op">+</span> b</span>
 <span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> add <span class="op">=</span> <span class="op">|</span>a<span class="op">,</span> b<span class="op">|</span>                    <span class="op">{</span> a <span class="op">+</span> b <span class="op">}</span></span>
 <span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> add <span class="op">=</span> <span class="op">|</span>a<span class="op">:</span> <span class="dt">i32</span><span class="op">,</span> b<span class="op">:</span> <span class="dt">i32</span><span class="op">|</span> <span class="op">-&gt;</span> <span class="dt">i32</span>   <span class="op">{</span> a <span class="op">+</span> b<span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>We cover <a href="https://doc.rust-lang.org/book/ch13-01-closures.html" target="_blank">closures</a> in more detail <a href="./rust-ho.html#closures">later</a>.</p>
+<p>We cover <a href="https://doc.rust-lang.org/book/ch13-01-closures.html" target="_blank" rel="noopener noreferrer">closures</a> in more detail <a href="./rust-ho.html#closures">later</a>.</p>
 </section>
 </section>
 <section id="control-flow" class="level3">

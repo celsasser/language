@@ -6,7 +6,7 @@
 #
 # Usage: make -f qbld.mak [target]
 #
-# Known gap: `all` renders files individually, which leaves the sidebar and
+# Known gap: `mods` renders files individually, which leaves the sidebar and
 # search index reflecting the previous build. Use `site` after adding, removing,
 # or retitling a document.
 

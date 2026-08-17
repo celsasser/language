@@ -2425,10 +2425,12 @@ A generalized pointer into a container
 Here is the concept the rest of the STL is built on, stated as plainly as it can be: [an iterator is an object that behaves like a pointer into a container]{.hl-default-l}. That is not an analogy for teaching purposes; it is close to the literal truth. An iterator supports exactly the operations you already use on a C pointer walking an array:
 
 - `*it` **dereferences** it to get the element it currently refers to (read or write).
-- `++it` **advances** it to the next element.
+- `++it` **advances** it to the next element, `--it` **retreats** it to the previous element.
 - `it == other` and `it != other` **compare** two iterators for position.
 
 For a `std::vector`, whose elements are contiguous in memory, an iterator quite literally *is* a pointer (or a thin wrapper around one), and `++it` is ordinary pointer arithmetic. For a `std::map`, whose elements live in a balanced tree, an iterator is a small object holding a node pointer, and `++it` is the code that walks to the in-order-next node. The internals differ completely, but the *interface* is identical: `*it`, `++it`, `!=`. That uniformity is the whole trick. An algorithm written in terms of `*it` and `++it` neither knows nor cares which container it is walking, which is exactly why one `std::sort` serves them all.
+
+![](./images/cpp-01.png){fig-align="center" width="7.5in"}
 
 #### The Half-Open Range `[begin, end)`
 Every container hands out two iterators that define its extent: `begin()` points at the first element, and `end()` points at **one position past the last element**. `end()` is deliberately not the last element; it is a sentinel you are never meant to dereference, marking where the sequence stops. A range written this way, first included, last excluded, is called half-open and conventionally notated `[begin, end)`.

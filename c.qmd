@@ -1,22 +1,69 @@
 ---
 title: "The C Language"
+subtitle: "The portable assembler that everything else is built on"
 ---
 
+<!--
+Audience: experienced systems programmers, same as the C++ and Rust chapters.
+This is a LANGUAGE chapter, not an embedded/DSP chapter. Embedded material now
+lives in the Applied DSP notebook; where embedded C genuinely diverges, mark it
+with a brief callout and do NOT elaborate. Mirror cpp.qmd's presentation order
+and level of detail (Overview -> history -> philosophy -> concepts in dependency
+order), anchoring to what the reader knows and contrasting with C++/Rust where
+the comparison illuminates.
+-->
 ## Overview
 ![](images/c-00.png){width=2in style="float: left; padding: 0 2em 0 1em"}
 
-<br/>**C** is a general-purpose, procedural computer programming language supporting structured programming, lexical variable scope, and recursion. It provides constructs that map efficiently to typical machine instructions, making it the "lingua franca" of embedded systems and Digital Signal Processing (DSP). It sits at the intersection of high-level readability and low-level hardware control.
+<br/>**C** is a small, procedural systems language designed to be a portable alternative to assembly. It has no objects, no generics, no exceptions, no garbage collector, and no string type, and this poverty is the entire point: every construct in C maps to a handful of machine instructions you can predict without reading the generated code. That predictability is why C became the substrate the rest of computing is built on. Operating system kernels, language runtimes (CPython and the original Rust compiler among them), device drivers, and embedded firmware are overwhelmingly C, and a great many languages define their foreign function interface as "whatever C does."
+
+C was written by Dennis Ritchie at Bell Labs between 1972 and 1973, for the purpose of rewriting Unix in something other than PDP-11 assembly. That origin explains most of the language. C is not a design that anticipated general-purpose programming; it is a tool that had one job, was good enough at it that Unix went with it, and inherited a universe by accident. Nearly every wart in the language, and nearly every strength, traces back to that: a small team solving an immediate problem on a machine with 64KB of memory, with no reason to believe the result would outlive the hardware.
 
 ::: {style="clear: both"}
 
 :::
 
 ::: {.callout-note title="C is not C++"}
-It is tempting to think of C as "C++ without the classes," but the two are distinct languages with distinct philosophies. C is small, procedural, and deliberately close to the machine: what you write is roughly what the hardware does. C++ layers on classes, templates, RAII, exceptions, and a large standard library, trading C's transparency for expressive power. Much valid C is also valid C++, but the reverse is far from true, and idiomatic code in each language looks nothing like the other. This chapter is strictly about C; C++ warrants its own treatment.
+It is tempting to think of C as "C++ without the classes," but the two are distinct languages with distinct philosophies. C is small, procedural, and deliberately close to the machine: what you write is roughly what the hardware does. C++ layers on classes, templates, RAII, exceptions, and a large standard library, trading C's transparency for expressive power. Much valid C is also valid C++, but the reverse is far from true, and idiomatic code in each language looks nothing like the other. This chapter is strictly about C; C++ warrants [its own treatment](cpp.qmd).
+:::
+
+### A Short History of the Standard
+C is old, and it has evolved. Code you encounter in the wild may target any one of several standards, and knowing which is which explains why some features are present in one codebase and absent in another. Each revision was largely additive and backward-compatible, so newer compilers still happily compile decades-old code. This is a sharp contrast with C++, which had a genuine inflection at C++11 that split the language into "classic" and "modern" dialects. C never had such a break; C89 code is still idiomatic C today, for better and for worse.
+
+| Standard         | Year | Common name | What it introduced                                                                                                                                                             |
+|:-----------------|:----:|:-----------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| K&R C            | 1978 | "K&R"       | The original language from Kernighan & Ritchie's book. No function prototypes; loose typing.                                                                                   |
+| ANSI C / ISO C90 | 1989 | C89 / C90   | The first standard. Function prototypes, the standard library, `void`, `const`, `volatile`. The lowest common denominator; still the baseline many embedded toolchains assume. |
+| C99              | 1999 | C99         | `//` line comments, `stdint.h` fixed-width types, `bool` (`stdbool.h`), `inline`, designated initializers, variable-length arrays, mixed declarations and code, `long long`.   |
+| C11              | 2011 | C11         | `_Static_assert`, `_Generic`, atomics (`stdatomic.h`), threads (`threads.h`), anonymous structs/unions.                                                                        |
+| C17 / C18        | 2017 | C17         | A bug-fix release. No new features; clarifications only.                                                                                                                       |
+| C23              | 2023 | C23         | `true`/`false`/`bool` as keywords, `nullptr`, `constexpr`, binary literals (`0b1010`), `#embed`, `typeof`.                                                                     |
+
+::: {.callout-note title="You are probably writing C99 already"}
+Several conveniences this chapter uses are C99 features, not original C: the fixed-width types `int16_t`/`uint8_t` (from `<stdint.h>`), `//` comments, declaring a loop variable inside `for`, and declaring variables partway through a function rather than only at the top of a block. If a codebase forbids these, it is targeting C89, which is still common in conservative or safety-critical work. Compilers select a standard with a flag such as `-std=c99` or `-std=c11`.
+:::
+
+### The C Philosophy
+::: {.subheading}
+Trust the programmer
+:::
+
+C's design commitments were codified after the fact, in the rationale document accompanying the C89 standard. They read less like a language philosophy than a set of refusals:
+
+> **Trust the programmer.** Don't prevent the programmer from doing what needs to be done. Keep the language small and simple. Provide only one way to do an operation. Make it fast, even if it is not guaranteed to be portable.
+
+The first of these defines the language, and it is the one that has aged worst. C does not check array bounds, does not track object lifetimes, does not distinguish a pointer to one object from a pointer to an array of them, and will let you read uninitialized memory without comment. Every one of those omissions is a deliberate decision to skip a runtime check that would cost cycles. The result is a language with no runtime overhead and no safety net, which was a defensible trade in 1973 on a machine with 64KB of memory, and which is the direct cause of a large fraction of the memory-safety vulnerabilities of the last four decades. Microsoft and Google have each reported that roughly 70% of their severe security bugs are memory-safety issues in C and C++. This is not a knock on the language so much as the bill arriving for a choice made when the threat model was "the other person with an account on this PDP-11."
+
+"Keep the language small" C genuinely honored. There are 32 keywords in C89 and only a handful more since, against roughly 90 in C++. The grammar fits on a few pages; the standard library fits in an afternoon. What does *not* fit in an afternoon is **undefined behavior**, which is the price of the other commitments. Where a safer language would define a wrong answer, C declines to define anything at all, which frees the compiler to assume the situation never arises and optimize on that assumption. This is simultaneously the source of C's speed and of its most surprising bugs, and it gets [its own section](#undefined-behavior) below.
+
+The last commitment, one way to do an operation, is why C feels sparse next to its descendants. There is no overloading, so `abs`, `labs`, and `fabs` are three separate functions. There are no generics, so a generic container is a `void*` and an element size. There are no namespaces, so library authors prefix every public symbol by hand, which is why you see `pthread_mutex_lock` and `png_read_info`. C++ and Rust each grew, in part, from a judgment that these particular economies cost more than they saved.
+
+::: {.callout-note title="The virtue of a language you can hold in your head"}
+It is easy to read the list above as a catalogue of deficiencies, and much of it is. But the same smallness is why C remains the lingua franca. A language with no runtime, no name mangling, and a trivial calling convention is one that every other language can call into and every platform can host. C is the interoperability layer of computing precisely because there is so little of it to disagree about.
 :::
 
 ### The 32 Keywords
-The original ANSI C standard defined **32 keywords**. These are reserved words that cannot be used as variable names. They form the skeleton of the language:
+The original ANSI C standard defined **32 keywords**. These are reserved words that cannot be used as identifiers. They form the skeleton of the language:
 
 | Data Types | Control Flow                | Storage Classes | Other      |
 |:-----------|:----------------------------|:----------------|:-----------|
@@ -29,73 +76,29 @@ The original ANSI C standard defined **32 keywords**. These are reserved words t
 | `signed`   |                             |                 | `union`    |
 | `unsigned` |                             |                 |            |
 
-### The Standard Library and I/O
-C provides a rich [Standard Library](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"} (often referred to as `libc`). Unlike higher-level languages, C does not have built-in statements for Input/Output (I/O). Instead, I/O is handled by functions in the standard library, primarily defined in `<stdio.h>`.
+Later standards added a few more, nearly all spelled with a leading underscore and capital letter so they could not collide with existing identifiers: `_Bool`, `inline`, and `restrict` (C99); `_Static_assert`, `_Generic`, `_Atomic`, `_Noreturn`, `_Alignas`, and `_Alignof` (C11). C23 finally promoted several to ordinary spellings, making `bool`, `true`, `false`, `static_assert`, and `constexpr` keywords in their own right.
 
-- **`printf` / `scanf`**: The workhorses for formatted output and input.
-- **`fprintf` / `fscanf`**: Versions that work with file streams.
+Two of the original 32 are effectively dead. `auto` meant "automatic storage duration," which is the default for every local variable, so no one ever wrote it; C++11 recycled the keyword for type deduction, and C23 followed. `register` was a hint to keep a variable in a CPU register, and modern optimizers make far better allocation decisions than a human annotation can, so compilers now ignore it. Its one surviving effect is that you cannot take the address of a `register` variable.
 
-::: {.callout-note title="What is `stdout` on Embedded Systems?"}
-In an embedded context (like the dsPIC): There is no "screen" or "keyboard" by default. The standard library functions must be "retargeted." This usually means the low-level functions that `printf` calls (often named `write` or `_mon_putc`) are implemented by the developer to send characters byte-by-byte over a peripheral like [UART](glossary.qmd#uart) (Universal Asynchronous Receiver-Transmitter). Thus, `printf("Hello")` effectively sends 5 bytes out of the serial port to your computer's terminal.
-:::
-
-##### See Also
-- [Strings](#strings)
-- [IO](#io)
-- [C Standard Library headers](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"}
-
-### The Compiler
-A **compiler** is a program that translates computer code written in one programming language (the source language, like C) into another language (the target language, usually machine code or assembly). For the dsPIC, we typically use the [XC16](https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers/xc16){target="_blank" rel="noopener noreferrer"} compiler.
-
-##### See Also
-- [The Build](#the-build)
-- [Cross Compilation](cpp.qmd#cross-compilation-and-bare-metal)
-
-### The Linker
-A **linker** is a utility program that takes one or more object files generated by a compiler and combines them into a single executable file, library file, or another 'object' file. It resolves references between different modules (e.g., if `main.c` calls a function defined in `dsp.c`).
-
-##### See Also
-- [The Build](#the-build)
-- [Cross Compilation](cpp.qmd#cross-compilation-and-bare-metal)
-
-## A Short History of the Standard
-C is old, and it has evolved. Code you encounter in the wild may target any one of several standards, and knowing which is which explains why some features are present in one codebase and absent in another. Each revision was largely additive and backward-compatible, so newer compilers still happily compile decades-old code.
-
-| Standard         | Year | Common name | What it introduced                                                                                                                                                             |
-|:-----------------|:----:|:-----------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| K&R C            | 1978 | "K&R"       | The original language from Kernighan & Ritchie's book. No function prototypes; loose typing.                                                                                   |
-| ANSI C / ISO C90 | 1989 | C89 / C90   | The first standard. Function prototypes, the standard library, `void`, `const`, `volatile`. The lowest common denominator; still the baseline many embedded toolchains assume. |
-| C99              | 1999 | C99         | `//` line comments, `stdint.h` fixed-width types, `bool` (`stdbool.h`), `inline`, designated initializers, variable-length arrays, mixed declarations and code, `long long`.   |
-| C11              | 2011 | C11         | `_Static_assert`, `_Generic`, atomics (`stdatomic.h`), threads (`threads.h`), anonymous structs/unions.                                                                        |
-| C17 / C18        | 2017 | C17         | A bug-fix release. No new features; clarifications only.                                                                                                                       |
-| C23              | 2023 | C23         | `true`/`false`/`bool` as keywords, `nullptr`, `constexpr`, binary literals (`0b1010`), `#embed`, `typeof`.                                                                     |
-
-::: {.callout-note title="You are probably writing C99 already"}
-Several conveniences this chapter uses are C99 features, not original C: the fixed-width types `int16_t`/`uint8_t` (from `<stdint.h>`), `//` comments, declaring a loop variable inside `for`, and declaring variables partway through a function rather than only at the top of a block. If a codebase forbids these, it is targeting C89, which is still common in conservative or safety-critical embedded work. Compilers select a standard with a flag such as `-std=c99` or `-std=c11`.
-:::
-
-## The Basics
-Before the features that make C distinctive (pointers, manual memory, bit manipulation), it is worth grounding the fundamentals: the type system, how declarations read, functions, control flow, and strings. Readers from C++ will find much of this familiar in syntax but should note where C is deliberately more spartan.
-
-### Types
+## Types and Declarations
 C's types are a thin veneer over what the hardware provides. There are no classes, no strings as a first-class type, and no built-in containers: just numbers, characters (which *are* small numbers), and aggregates you build yourself.
 
-#### The Arithmetic Types
+### The Arithmetic Types
 The integer types are defined by *minimum* width, not exact width. The standard guarantees a lower bound; the actual size is implementation-defined and depends on the target architecture.
 
 | Type        | Typical size | Guaranteed minimum | Notes                                                                   |
 |:------------|:-------------|:-------------------|:------------------------------------------------------------------------|
 | `char`      | 1 byte       | 1 byte             | Signedness is implementation-defined; may be signed or unsigned.        |
 | `short`     | 2 bytes      | 16 bits            |                                                                         |
-| `int`       | 2 or 4 bytes | 16 bits            | The "natural" word size; 16-bit on dsPIC, 32-bit on most desktops.      |
+| `int`       | 2 or 4 bytes | 16 bits            | The "natural" word size; 16-bit on some embedded targets, 32-bit on most desktops. |
 | `long`      | 4 or 8 bytes | 32 bits            |                                                                         |
 | `long long` | 8 bytes      | 64 bits            | C99.                                                                    |
-| `float`     | 4 bytes      | —                  | Single-precision [floating point](glossary.qmd#floating-point-numbers). |
-| `double`    | 8 bytes      | —                  | Double-precision.                                                       |
+| `float`     | 4 bytes      | (n/a)              | Single-precision [floating point](glossary.qmd#floating-point-numbers). |
+| `double`    | 8 bytes      | (n/a)              | Double-precision.                                                       |
 
 Each integer type has a `signed` (default) and `unsigned` variant. This portability of *minimums* rather than *exact sizes* is exactly why C99 introduced fixed-width types.
 
-#### Fixed-Width Types
+### Fixed-Width Types
 ::: {.subheading}
 `<stdint.h>`
 :::
@@ -111,28 +114,28 @@ int16_t  c;   // exactly 16 bits, signed
 uint32_t d;   // exactly 32 bits, unsigned
 
 // Also available:
-//   int_least16_t  — smallest type with at least 16 bits
-//   int_fast16_t   — fastest type with at least 16 bits
-//   intptr_t       — an integer wide enough to hold a pointer
+//   int_least16_t  : smallest type with at least 16 bits
+//   int_fast16_t   : fastest type with at least 16 bits
+//   intptr_t       : an integer wide enough to hold a pointer
 ```
 
 Prefer `int16_t` over `short` and `uint8_t` over `unsigned char` whenever the exact width matters. The intent is explicit and the code behaves identically across targets.
 
-#### `sizeof`
+### `sizeof`
 `sizeof` yields the size of a type or object in bytes, evaluated at *compile time*. It is an operator, not a function, and its result has type `size_t` (an unsigned type wide enough to describe any object's size).
 
 ```c
 sizeof(int)         // e.g. 4
 sizeof(uint16_t)    // 2
 int16_t buf[64];
-sizeof(buf)         // 128 (64 elements × 2 bytes), NOT the pointer size
+sizeof(buf)         // 128 (64 elements at 2 bytes), NOT the pointer size
 sizeof(buf) / sizeof(buf[0])   // 64: the idiom for array length
 ```
 
 That last idiom is the canonical way to compute an array's element count. Note it only works on a true array in scope, not on a pointer (a distinction developed in [Arrays and Pointers](#arrays-and-pointers)).
 
-#### `bool`
-C had no Boolean type until C99, which added `bool`, `true`, and `false` via `<stdbool.h>`. Before that, and still in much embedded code, any integer serves: zero is false, any non-zero value is true.
+### `bool`
+C had no Boolean type until C99, which added `bool`, `true`, and `false` via `<stdbool.h>`. Before that, and still in much older code, any integer serves: zero is false, any non-zero value is true.
 
 ```c
 #include <stdbool.h>
@@ -145,7 +148,9 @@ int flag = 1;
 if (flag) { /* ... */ }
 ```
 
-#### `enum`
+C23 finally makes `bool`, `true`, and `false` proper keywords, so the `<stdbool.h>` include becomes unnecessary.
+
+### `enum` {#enum}
 An `enum` defines a set of named integer constants. By default they count up from zero, but any member may be assigned explicitly.
 
 ```c
@@ -159,7 +164,7 @@ typedef enum {
 
 Unlike C++'s `enum class`, C enums are not type-safe: they are interchangeable with `int`, and nothing stops you assigning `STATE_IDLE` to an unrelated integer variable. They exist chiefly to give names to magic numbers and to make `switch` statements self-documenting.
 
-#### `typedef`
+### `typedef`
 `typedef` creates an alias for an existing type. It introduces no new type, only a new name, but that name can dramatically improve readability, particularly for structs and function pointers.
 
 ```c
@@ -168,93 +173,143 @@ typedef struct Point Point;      // avoid writing 'struct Point' everywhere
 typedef int (*Comparator)(int, int);  // a name for a function-pointer type
 ```
 
-The `_t` suffix (as in `int16_t`, `size_t`, `State_t`) is a widespread convention marking a type name. Strictly, POSIX reserves `_t` for future additions to its own headers, so a name you invent today could in principle collide with a standard one tomorrow. In practice the convention is near-universal and the risk is small; this chapter uses it throughout (`State_t`, `CircularBuffer_t`). Projects that care about strict portability sidestep it with a project prefix instead, such as `dsp_state_t` or `AudioState`.
+The `_t` suffix (as in `int16_t`, `size_t`, `State_t`) is a widespread convention marking a type name. Strictly, POSIX reserves `_t` for future additions to its own headers, so a name you invent today could in principle collide with a standard one tomorrow. In practice the convention is near-universal and the risk is small; this chapter uses it throughout. Projects that care about strict portability sidestep it with a project prefix instead, such as `dsp_state_t` or `AudioState`.
 
 ### Reading Declarations
-C's declaration syntax is famously puzzling. The guiding principle is *"declaration mirrors use"*: a declaration reads the way the variable is used in an expression. `int *p` declares `p` such that `*p` is an `int`.
+C's declaration syntax is famously puzzling, and the reason is a single design principle: *"declaration mirrors use."* A declaration is written to look like the expression that retrieves a value of the base type. `int *p` declares `p` such that the expression `*p` is an `int`; `int a[10]` declares `a` such that `a[0]` is an `int`. Most languages instead name the type first and the identifier second (`int[10] a`), which reads more easily but does not compose the way C's form does.
 
-Two traps snare newcomers immediately.
-
-**The `*` binds to the name, not the type.** In a multiple declaration, each pointer needs its own `*`:
+One consequence of that design bites immediately. **The `*` binds to the name, not to the type.** In a declaration of several names, each pointer needs its own `*`:
 
 ```c
-int* a, b;   // MISLEADING: a is int*, but b is a plain int!
-int *a, *b;  // Both pointers. This is why C programmers write the * by the name.
+int* a, b;   // MISLEADING: a is a pointer, but b is a plain int
+int *a, *b;  // both are pointers
 ```
 
-**Reading complex declarations: the spiral rule.** Start at the identifier and spiral outward, reading right then left, until you run out of tokens:
+This is why C programmers conventionally write the `*` against the name rather than against the type, even though `int* a;` and `int *a;` are identical to the compiler. The second spelling makes the binding visible and the trap above unlikely.
 
-```c
-int *ptr;              // ptr is a pointer to int
-int arr[10];           // arr is an array of 10 ints
-int *arr[10];          // arr is an array of 10 pointers to int
-int (*arr)[10];        // arr is a pointer to an array of 10 ints
-int (*fp)(int, int);   // fp is a pointer to a function taking two ints, returning int
-```
-
-The parentheses matter: `int *arr[10]` and `int (*arr)[10]` are entirely different types. When declarations get this hairy, the kindness is a `typedef`.
-
-#### `const` Placement
-Where `const` sits relative to `*` changes its meaning. Read right-to-left from the `*`:
-
-```c
-const int *p;        // pointer to const int: *p is read-only, p can be reassigned
-int const *p;        // identical to the above (const binds to what's left of it)
-int *const p;        // const pointer to int: p is fixed, *p is writable
-const int *const p;  // const pointer to const int: neither can change
-```
-
-The rule: `const` applies to whatever is immediately to its left, unless nothing is there, in which case it applies to the right. `const int *p` is by far the most common form: a function that promises not to modify the data behind a pointer parameter. This is the foundation of *const correctness*, developed further under [`const` and `static`](#the-const-and-static-keywords).
+The principle scales to genuinely hairy declarations involving pointers, arrays, and functions in combination, which is a topic that needs pointers first. It resumes under [Pointer Declarations and Qualifiers](#pointer-declarations).
 
 ### Type Qualifiers
-C has three *type qualifiers*, keywords that constrain how a type may be used without changing its size or representation. They answer three separate questions about a variable, and it helps to keep them mentally distinct.
+A *type qualifier* constrains how a type may be used without changing its size or representation. C has three, and they answer three unrelated questions. It helps to keep them mentally distinct from the outset, because they are otherwise easy to lump together as "extra keywords near the type."
 
-| Qualifier  | Question it answers                         | Meaning                                                                                 |
-|:-----------|:--------------------------------------------|:----------------------------------------------------------------------------------------|
-| `const`    | *May I change this?*                        | The object must not be modified through this name after initialization.                 |
-| `volatile` | *May the compiler assume this is stable?*   | The object may change outside the program's control; every access must actually happen. |
-| `restrict` | *Might two pointers touch the same memory?* | A promise that this pointer is the only route to the data it points at.                 |
+| Qualifier  | Question it answers                         | Meaning                                                                                 | Developed under |
+|:-----------|:--------------------------------------------|:----------------------------------------------------------------------------------------|:----------------|
+| `const`    | *May I change this?*                        | The object must not be modified through this name after initialization.                 | here, and [with pointers](#pointer-declarations) |
+| `volatile` | *May the compiler assume this is stable?*   | The object may change outside the program's control; every access must actually happen. | [Optimization Levels](#optimization-levels) |
+| `restrict` | *Might two pointers touch the same memory?* | A promise that this pointer is the only route to the data it points at.                 | [Pointer Declarations and Qualifiers](#pointer-declarations) |
 
-`const` and `volatile` are not opposites and can even coexist (`const volatile` describes a read-only hardware register: your code must not write it, yet the hardware may change it). Both get fuller, embedded-flavored treatment later: `const` under [The `const` and `static` Keywords](#the-const-and-static-keywords), and `volatile`, the single most important qualifier in embedded C, under [The `volatile` Keyword](#the-volatile-keyword). The third, `restrict`, appears nowhere else and is worth introducing here.
+Only `const` applies meaningfully to an ordinary value, so it is the only one this section develops. `volatile` is best understood as a barrier against specific optimizations, and `restrict` applies to pointers exclusively; both wait for the sections above.
 
-#### `restrict`
-Introduced in C99, `restrict` applies only to pointers. It is a promise *from you to the compiler* that, for the lifetime of the pointer, the data it points to will be accessed *only* through that pointer (or pointers derived from it). No other pointer aliases the same memory.
-
-Why does this matter? Consider copying between two buffers:
+#### `const`
+`const` is a promise about a *name*, not a guarantee about *storage*. It tells the compiler that the object must not be modified through this particular identifier, which lets the compiler both diagnose violations and optimize on the assumption that no such violation occurs.
 
 ```c
-void scale(int16_t *out, const int16_t *in, int n, int16_t gain) {
-    for (int i = 0; i < n; i++) {
-        out[i] = in[i] * gain;
-    }
-}
+const int sample_rate = 48000;
+sample_rate = 44100;              // error: assignment of read-only variable
 ```
 
-The compiler cannot assume `out` and `in` are separate. If they overlapped, writing `out[i]` might change a later `in[j]`, so the compiler must conservatively re-read `in` on every iteration and cannot vectorize or reorder freely. Adding `restrict` lifts that doubt:
+The payoff is small on a lone value like this one and large on interfaces, where `const` documents the direction of data flow and the compiler enforces it. That use involves pointers, so it is developed [with them](#pointer-declarations).
 
-```c
-void scale(int16_t *restrict out, const int16_t *restrict in, int n, int16_t gain) {
-    // Compiler now KNOWS out and in never overlap, and can optimize aggressively.
-    for (int i = 0; i < n; i++) {
-        out[i] = in[i] * gain;
-    }
-}
-```
-
-This is precisely the kind of tight signal-processing loop where the optimization pays off, which is why `restrict` shows up in DSP code and in the prototypes of library functions like `memcpy` (whose whole contract is that source and destination must not overlap).
-
-::: {.callout-warning title="restrict is a promise you must keep"}
-The compiler does not verify your claim. If you pass overlapping pointers to a `restrict` parameter, the behavior is undefined: the program may produce wrong results that appear only under optimization. Use `restrict` only when you are certain the regions are disjoint. When overlap is possible, use `memmove` rather than `memcpy`.
+::: {.callout-warning title="`const` is not `constexpr`"}
+A `const` object is *read-only*, not a *compile-time constant*. In C, `const int n = 10;` does not produce a constant expression, so `int arr[n];` declares a variable-length array (C99) rather than a fixed-size one, and the same declaration is invalid outright at file scope. This differs from C++, where `const int n = 10;` *is* usable as a constant expression. For genuine compile-time constants, C offers `#define`, the enum trick (`enum { Size = 10 };`), or, as of C23, `constexpr`.
 :::
 
-### Functions
+Casting away `const` and then writing through the result is undefined behavior if the underlying object was itself declared `const`. The cast compiles, the write may even appear to work, and the compiler remains free to have cached the old value or placed the object in genuinely read-only memory. If a function needs to write, do not lie about it in the signature.
+
+::: {.callout-note title="`const` and read-only memory"}
+`const` is what *permits* a toolchain to place data in read-only storage, not a guarantee that it will. On hosted systems, `const` file-scope data typically lands in a read-only segment (`.rodata`) that the OS marks non-writable. On embedded targets the placement rules are toolchain-specific and usually require explicit attributes or pragmas. The Applied DSP notes cover the specifics for that toolchain.
+:::
+
+## Expressions and Control Flow
+C's control flow is the ancestor of the C-family syntax found in C++, Java, JavaScript, and beyond. Little here will surprise a C++ reader; the notes below flag the C-specific edges.
+
+### Operators and Precedence
+<!-- STUB: Move the precedence table here from the pitfalls section. Add prose on
+     the arithmetic/relational/logical/bitwise families, the difference between
+     && and & (short-circuit vs. bitwise), compound assignment, the comma
+     operator, and sequence points / unsequenced modification. -->
+
+### Conditionals
+```c
+if (x > 0) {
+    positive();
+} else if (x < 0) {
+    negative();
+} else {
+    zero();
+}
+```
+
+C has no dedicated Boolean context: the condition is simply an integer expression, and any non-zero value is "true." This is why `if (ptr)` (is the pointer non-null?) and `if (count)` (is the count non-zero?) are idiomatic.
+
+The ternary operator `?:` is an expression, useful where a full `if` would be clumsy:
+
+```c
+int max = (a > b) ? a : b;
+```
+
+### Loops
+The three loop forms:
+
+```c
+for (int i = 0; i < n; i++) { /* ... */ }   // declaring i here is C99
+
+while (condition) { /* ... */ }
+
+do {
+    /* runs at least once */
+} while (condition);
+```
+
+`break` exits the enclosing loop; `continue` skips to the next iteration. Both act only on the innermost loop.
+
+### `switch`
+`switch` selects among integer cases. Its defining and dangerous characteristic is *fall-through*: without a `break`, control flows into the next case.
+
+```c
+switch (state) {
+    case STATE_IDLE:
+        start();
+        break;              // without this, execution falls into STATE_RUNNING
+    case STATE_RUNNING:
+        process();
+        break;
+    default:
+        handle_unknown();
+        break;
+}
+```
+
+Fall-through is occasionally useful (letting several cases share code), but far more often it is an accidental missing `break`. This footgun is revisited in [Common Pitfalls](#undefined-behavior).
+
+### `goto` {#goto}
+C retains `goto`, and although structured programming rightly discourages it, one use is genuinely idiomatic in C: unwinding on error in a function with several acquisition steps. Since C has no destructors or `finally`, `goto` provides a single, orderly cleanup path.
+
+```c
+int setup(void) {
+    if (acquire_a() != 0) goto fail_a;
+    if (acquire_b() != 0) goto fail_b;
+    if (acquire_c() != 0) goto fail_c;
+
+    return 0;  // success
+
+fail_c: release_b();
+fail_b: release_a();
+fail_a:
+    return -1;
+}
+```
+
+This "cleanup ladder" is common in systems code (the Linux kernel uses it heavily). Outside error handling, prefer structured control flow.
+
+## Functions
 A function in C has a *declaration* (its prototype, announcing name, return type, and parameter types) and a *definition* (the body). Declarations typically live in header files; definitions live in `.c` files. Callers need only the declaration to generate a correct call.
 
 ```c
-// Declaration (prototype) — usually in a .h file
+// Declaration (prototype), usually in a .h file
 int add(int a, int b);
 
-// Definition — in a .c file
+// Definition, in a .c file
 int add(int a, int b) {
     return a + b;
 }
@@ -264,6 +319,7 @@ int add(int a, int b) {
 A function used before the compiler has seen a declaration is, in old C, assumed to return `int` with unchecked arguments. This "implicit declaration" is a rich source of bugs and is an error in C99 and later. Declare every function before use, and write `void` explicitly for an empty parameter list: `int get_value(void)`. An empty `()` in C means "unspecified arguments," *not* "no arguments"; another trap C++ does not share.
 :::
 
+### Parameter Passing
 **C is pass-by-value, always.** A function receives *copies* of its arguments. Assigning to a parameter changes only the local copy; the caller's variable is untouched.
 
 ```c
@@ -289,83 +345,258 @@ increment(&n);  // pass the address of n
 
 Arrays are the one apparent exception, but only apparent: an array argument *decays* to a pointer to its first element, so the function receives an address, not a copy of the array. This is why a function cannot know an array's length from the parameter alone, and why length is nearly always passed as a separate argument.
 
-### Control Flow
-C's control flow is the ancestor of the C-family syntax found in C++, Java, JavaScript, and beyond. Little here will surprise a C++ reader; the notes below flag the C-specific edges.
+### Storage Class and Linkage {#static}
+::: {.subheading}
+Where data lives, and who can see it
+:::
 
-#### Conditionals
+Where a type qualifier constrains *what may be done* with an object, a **storage-class specifier** governs its *lifetime* (how long the object exists) and its *linkage* (which translation units can refer to it by name). These are independent axes, and conflating them is a common source of confusion, particularly the overloaded `static`.
+
+| Specifier  | Lifetime          | Linkage at file scope | Notes                                                    |
+|:-----------|:------------------|:----------------------|:----------------------------------------------------------|
+| (none)     | Automatic (local) | External (global)     | The default. Locals die at scope exit; globals are shared. |
+| `static`   | Whole program     | Internal (this file)  | Two distinct meanings, depending on scope. See below.      |
+| `extern`   | Whole program     | External              | A *declaration* of something defined elsewhere.             |
+| `auto`     | Automatic         | (n/a)                 | The default for locals; vestigial, never written.           |
+| `register` | Automatic         | (n/a)                 | Ignored by modern compilers; blocks taking the address.     |
+
+#### The Three Faces of `static`
+`static` is the most overloaded keyword in C, meaning materially different things depending on where it appears.
+
+**On a local variable, it changes lifetime.** The variable is initialized once, before `main` runs, and retains its value between calls. Its *scope* is still the function; only its lifetime changes.
+
 ```c
-if (x > 0) {
-    positive();
-} else if (x < 0) {
-    negative();
-} else {
-    zero();
+void count_calls(void) {
+    static int count = 0;  // initialized once, at program start
+    count++;
+    printf("Called %d times\n", count);
 }
 ```
 
-C has no dedicated Boolean context: the condition is simply an integer expression, and any non-zero value is "true." This is why `if (ptr)` (is the pointer non-null?) and `if (count)` (is the count non-zero?) are idiomatic.
-
-The ternary operator `?:` is an expression, useful where a full `if` would be clumsy:
+**On a file-scope variable, it changes linkage.** The name becomes private to its translation unit, invisible to the linker and therefore to every other `.c` file.
 
 ```c
-int max = (a > b) ? a : b;
+// audio.c
+static int16_t internal_buffer[256];   // not visible outside audio.c
 ```
 
-#### Loops
-The three loop forms:
+**On a function, it does the same.** The function becomes private to the file, which also lets the compiler inline or specialize it more aggressively, since it can see every call site.
 
 ```c
-for (int i = 0; i < n; i++) { /* ... */ }   // declaring i here is C99
-
-while (condition) { /* ... */ }
-
-do {
-    /* runs at least once */
-} while (condition);
+static void helper(void) { /* internal, not part of the public API */ }
 ```
 
-`break` exits the enclosing loop; `continue` skips to the next iteration. Both act only on the innermost loop.
+The second and third uses are C's only form of encapsulation. With just two levels of visibility, private-to-file and global-to-program, every library must defensively prefix its public names, which is why C APIs are full of identifiers like `SDL_CreateWindow` and `pthread_mutex_lock`. C++ [namespaces](cpp.qmd#namespaces) exist to solve exactly this.
 
-#### `switch`
-`switch` selects among integer cases. Its defining and dangerous characteristic is *fall-through*: without a `break`, control flows into the next case.
+::: {.callout-warning title="`static` locals are not reentrant"}
+A `static` local is shared by every invocation of the function, including recursive calls and calls from different threads or interrupt handlers. A function with `static` state is neither reentrant nor thread-safe, and the resulting bugs are timing-dependent and miserable to reproduce. This is the reason `strtok` has a `strtok_r` variant.
+:::
+
+#### `extern` and the Definition/Declaration Split
+`extern` declares that a name exists somewhere else, letting the compiler type-check uses of it without allocating storage. The canonical pattern puts the declaration in a header and the definition in exactly one `.c` file:
 
 ```c
-switch (state) {
-    case STATE_IDLE:
-        start();
-        break;              // without this, execution falls into STATE_RUNNING
-    case STATE_RUNNING:
-        process();
-        break;
-    default:
-        handle_unknown();
-        break;
+// config.h
+extern int sample_rate;      // declaration: "this exists somewhere"
+
+// config.c
+int sample_rate = 48000;     // definition: allocates the storage
+```
+
+Putting the definition in the header instead means every file that includes it defines the same symbol, and the linker rejects the duplicates. This is C's version of the One Definition Rule, enforced by the linker rather than the language.
+
+### Function Pointers
+::: {.subheading}
+Callbacks and dispatch tables
+:::
+
+**Function pointers** store the address of a function, enabling callbacks and runtime dispatch. They are C's only mechanism for polymorphism, and they are how `qsort` accepts a comparison, how a driver registers a handler, and how a virtual method table works underneath C++.
+
+```c
+// A name for the signature, which makes everything downstream readable
+typedef void (*ProcessFunc_t)(int16_t *buffer, int length);
+
+void echo_effect(int16_t *buf, int len)       { /* ... */ }
+void reverb_effect(int16_t *buf, int len)     { /* ... */ }
+void distortion_effect(int16_t *buf, int len) { /* ... */ }
+
+ProcessFunc_t current_effect = echo_effect;
+
+void process_block(int16_t *buffer, int length) {
+    current_effect(buffer, length);   // call through the pointer
 }
 ```
 
-Fall-through is occasionally useful (letting several cases share code), but far more often it is an accidental missing `break`. This footgun is revisited in [Common Pitfalls](#forgetting-break-in-switch-statements).
-
-#### `goto`
-C retains `goto`, and although structured programming rightly discourages it, one use is genuinely idiomatic in C: unwinding on error in a function with several acquisition steps. Since C has no destructors or `finally`, `goto` provides a single, orderly cleanup path.
+A **dispatch table** replaces a `switch` with an array lookup, which keeps the selection logic and the handler list in one place:
 
 ```c
-int setup(void) {
-    if (acquire_a() != 0) goto fail_a;
-    if (acquire_b() != 0) goto fail_b;
-    if (acquire_c() != 0) goto fail_c;
+static const ProcessFunc_t effect_table[] = {
+    echo_effect,
+    reverb_effect,
+    distortion_effect
+};
 
-    return 0;  // success
+#define EFFECT_COUNT (sizeof(effect_table) / sizeof(effect_table[0]))
 
-fail_c: release_b();
-fail_b: release_a();
-fail_a:
-    return -1;
+void set_effect(size_t n) {
+    if (n < EFFECT_COUNT) {
+        current_effect = effect_table[n];
+    }
 }
 ```
 
-This "cleanup ladder" is common in systems code (the Linux kernel uses it heavily). Outside error handling, prefer structured control flow.
+### Variadic Functions
+<!-- STUB: <stdarg.h>: va_list, va_start, va_arg, va_end. Why printf needs a
+     format string (no runtime type information to recover the arguments), the
+     default argument promotions that apply to variadic parameters, and why
+     these are type-unsafe in a way C++ templates and Rust macros are not. -->
 
-### Strings
+## Pointers and Memory
+Pointers are the feature that defines C. They are what let a 1972 language address hardware directly, and they are the reason so much of the language's danger is concentrated in one place.
+
+### Pointers {#pointers}
+A **pointer** is a variable that stores the memory address of another object. Declaring one uses `*`, as does dereferencing it, which is the "declaration mirrors use" principle at work: `int *ptr` declares `ptr` such that `*ptr` is an `int`.
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    int var = 10;
+    int *ptr = &var;    // ptr holds the address of var
+    int **pptr = &ptr;  // pptr holds the address of ptr
+
+    printf("Value of var:  %d\n", var);
+    printf("Value via ptr: %d\n", *ptr);
+    printf("Value via pptr: %d\n", **pptr);
+
+    return 0;
+}
+```
+
+A **pointer to a pointer** is exactly what it sounds like, and it is how a function modifies a caller's *pointer* rather than the thing it points at, which is what an allocating function or a linked-list insertion needs.
+
+Pointers underpin four things C could not otherwise do: dynamic memory allocation, efficient array traversal, letting a function modify its caller's variables, and building linked data structures.
+
+::: {.callout-note title="`NULL` is a value, not a safety feature"}
+`NULL` is C's "points at nothing" sentinel, but nothing in the type system distinguishes a pointer that might be null from one that cannot be. Every dereference is an act of faith, and a null dereference is undefined behavior. Rust's [`Option<T>`](rust-ho.qmd#option-t) and C++'s references exist to make that distinction visible to the compiler.
+:::
+
+### Pointer Declarations and Qualifiers {#pointer-declarations}
+::: {.subheading}
+Where the declaration syntax earns its reputation
+:::
+
+[Reading Declarations](#reading-declarations) introduced C's guiding principle, that a declaration mirrors the expression which uses the value. With pointers in hand, that principle can be applied to the declarations people actually find impenetrable, and the two qualifiers that only make sense alongside a `*` can finally be explained.
+
+#### The Spiral Rule
+Start at the identifier and work outward, alternating right and left, until the tokens run out:
+
+```c
+int *ptr;              // ptr is a pointer to int
+int arr[10];           // arr is an array of 10 ints
+int *arr[10];          // arr is an array of 10 pointers to int
+int (*arr)[10];        // arr is a pointer to an array of 10 ints
+int (*fp)(int, int);   // fp is a pointer to a function taking two ints, returning int
+```
+
+The parentheses carry the whole distinction. `[]` and `()` bind tighter than `*`, so `int *arr[10]` groups as an array first and `int (*arr)[10]` forces the pointer to be read first. The two types are unrelated and not interchangeable. When a declaration reaches this density, the kindness to your reader is a `typedef`, which is exactly why function-pointer types are nearly always aliased before use.
+
+#### `const` Placement
+Where `const` sits relative to the `*` changes what it qualifies:
+
+```c
+const int *p;        // pointer to const int: *p is read-only, p can be reassigned
+int const *p;        // identical to the above
+int *const p;        // const pointer to int: p is fixed, *p is writable
+const int *const p;  // const pointer to const int: neither can change
+```
+
+The rule: `const` applies to whatever is immediately to its left, unless nothing is there, in which case it applies to the right. The `*` is the boundary. In `const int *p` the qualifier has nothing to its left, so it grabs `int`; in `int const *p` it has `int` to its left, so it grabs `int` again. Same type, written two ways. Only when `const` crosses to the *right* of the `*` does it qualify the pointer itself, because now the thing on its left is the pointer.
+
+`const int *p` is by far the most common form, and it is the foundation of **const correctness**: a function that promises not to modify the data behind a pointer parameter says so in its signature.
+
+```c
+size_t count_zeros(const int16_t *data, size_t length);
+//                 ^^^^^ promises not to write through data
+```
+
+This costs nothing at run time and buys three things: the compiler rejects accidental writes, callers holding `const` data can pass it without a cast, and a reader knows the direction of data flow from the prototype alone. Adopt it by default on pointer parameters you do not intend to write through.
+
+::: {.callout-warning title="A `typedef` changes what `const` qualifies"}
+Given `typedef int *int_ptr;`, the declaration `const int_ptr p` is **not** a pointer to const int. It is `int *const p`, a const pointer to a writable int. The qualifier applies to the aliased type as a whole, and that type is already "pointer to int," so `const` has nowhere to go but the pointer. This surprises nearly everyone the first time, and it is a good reason to be wary of typedefs that hide a `*`.
+:::
+
+#### `restrict`
+Introduced in C99, `restrict` applies only to pointers. It is a promise *from you to the compiler* that, for the lifetime of the pointer, the data it points to will be accessed *only* through that pointer, or through pointers derived from it. No other pointer aliases the same memory.
+
+Why does this matter? Consider scaling one buffer into another:
+
+```c
+void scale(int16_t *out, const int16_t *in, int n, int16_t gain) {
+    for (int i = 0; i < n; i++) {
+        out[i] = in[i] * gain;
+    }
+}
+```
+
+The compiler cannot assume `out` and `in` are separate. If they overlapped, writing `out[i]` might change a later `in[j]`, so the compiler must conservatively re-read `in` on every iteration and cannot vectorize or reorder freely. Adding `restrict` lifts that doubt:
+
+```c
+void scale(int16_t *restrict out, const int16_t *restrict in, int n, int16_t gain) {
+    for (int i = 0; i < n; i++) {
+        out[i] = in[i] * gain;
+    }
+}
+```
+
+This is precisely the kind of tight loop where the optimization pays off, which is why `restrict` shows up in numerical code and in the prototypes of library functions like `memcpy`, whose whole contract is that source and destination must not overlap.
+
+::: {.callout-warning title="`restrict` is a promise you must keep"}
+The compiler does not verify your claim. If you pass overlapping pointers to a `restrict` parameter, the behavior is undefined: the program may produce wrong results that appear only under optimization. Use `restrict` only when you are certain the regions are disjoint. When overlap is possible, use `memmove` rather than `memcpy`.
+:::
+
+### Arrays and Pointers
+::: {.subheading}
+The duality
+:::
+
+One of C's most elegant and most confusing features is the relationship between arrays and pointers. Understanding it correctly resolves a large fraction of C's apparent inconsistencies.
+
+#### The Fundamental Truth
+In most contexts, an array name *decays* to a pointer to its first element:
+
+```c
+int buffer[256];
+int *ptr = buffer;  // equivalent to: int *ptr = &buffer[0];
+```
+
+Array subscripting is *defined as* pointer arithmetic:
+
+```c
+buffer[i]  ==  *(buffer + i)  ==  *(ptr + i)  ==  ptr[i]
+```
+
+All four expressions compile to identical machine code. A curious consequence of the commutativity of addition is that `arr[3]` and `3[arr]` are both legal and identical, which is a fine piece of trivia and terrible style.
+
+#### Where They Differ
+Arrays and pointers are *not* the same type, and three contexts expose the difference:
+
+```c
+int16_t arr[10];
+int16_t *ptr = arr;
+
+sizeof(arr);  // 20 on any target: 10 elements at 2 bytes each
+sizeof(ptr);  // the size of a pointer: 8 on a 64-bit desktop
+
+&arr;  // type: int16_t (*)[10]  (pointer to array of 10 int16_t)
+&ptr;  // type: int16_t **       (pointer to pointer to int16_t)
+```
+
+**Key distinction:** an array is a fixed-size block of memory whose name is not an lvalue. A pointer is a separate variable holding an address, which you can reassign.
+
+The decay rule is also why array bounds vanish at function boundaries. A parameter written `int16_t data[10]` is silently rewritten to `int16_t *data`, the `10` is discarded, and no bounds information survives. This is the root of a great deal of C's memory unsafety, and the reason a length argument almost always accompanies an array argument.
+
+### Strings {#strings}
 C has no string type. A C string is simply an array of `char` terminated by a null byte (`'\0'`, the value zero). Every standard string function relies on that terminator to know where the string ends; forget it and you get buffer overruns and undefined behavior.
 
 ```c
@@ -397,7 +628,7 @@ Declared in `<string.h>`, operating on null-terminated arrays:
 The `mem*` family (`memcpy`, `memset`, `memmove`, `memcmp`) does the same for raw bytes without caring about a terminator, and is what you use for binary data and buffers.
 
 ::: {.callout-warning title="The classic C vulnerability"}
-`strcpy` and `strcat` write until they hit the source's terminator, with no regard for the destination's size. A source longer than the destination overruns the buffer, corrupting adjacent memory. This single design choice is behind a large fraction of security exploits in C's history. The [Buffer Overruns](#buffer-overruns) pitfall shows the safe alternatives.
+`strcpy` and `strcat` write until they hit the source's terminator, with no regard for the destination's size. A source longer than the destination overruns the buffer, corrupting adjacent memory. This single design choice is behind a large fraction of security exploits in C's history. The [Common Pitfalls](#undefined-behavior) section shows the safe alternatives.
 :::
 
 #### `char` vs. `int` from Input
@@ -410,115 +641,23 @@ while ((c = getchar()) != EOF) {
 }
 ```
 
-This is the reason the `upper.c` example later in this chapter declares `int c;`.
-
-## The C Language
-C is characterized by its simplicity and efficiency. It uses a static type system to prevent unintended operations and manage memory usage. Key concepts include:
-
-- [Pointers](#pointers): Variables that store memory addresses, allowing direct memory manipulation.
-- [Memory Management](#memory-management): Manual control over allocation (stack vs. heap), though in embedded DSP, static allocation is preferred to avoid non-deterministic behavior.
-- [Bitwise Operations](#bitwise-operations): Crucial for setting hardware registers (AND, OR, XOR, SHIFT).
-
-### Pointers
-A **pointer** is a variable that stores the memory address of another variable. They are fundamental to C, allowing for:
-
-- **Dynamic Memory Allocation**: Allocating memory at runtime.
-- **Array Manipulation**: Accessing and iterating through array elements efficiently.
-- **Pass-by-Reference**: Modifying variable values inside functions.
-- **Complex Data Structures**: creating linked lists, trees, etc.
-
-A **pointer to a pointer** is simply a pointer that stores the address of another pointer. This allows for multiple levels of indirection.
-
-To declare a pointer, use the `*` operator: `int *ptr;` declares a pointer to an integer. To declare a pointer to a pointer, use two `*` operators: `int **pptr;`. To dereference a pointer (access the value it points to), use the `*` operator again.
-
-```c
-#include <stdio.h>
-
-int main() {
-    int var = 10;
-    int *ptr = &var;    // ptr holds the address of var
-    int **pptr = &ptr;  // pptr holds the address of ptr
-
-    printf("Value of var: %d\n", var);
-    printf("Value via ptr: %d\n", *ptr);
-    printf("Value via pptr: %d\n", **pptr);
-
-    return 0;
-}
-```
-
-### Arrays and Pointers
+### Structures {#structures}
 ::: {.subheading}
-The Duality
+Organizing related data
 :::
 
-One of C's most elegant (and confusing) features is the relationship between arrays and pointers. Understanding this is essential for writing efficient DSP code.
-
-#### The Fundamental Truth
-In most contexts, an array name *decays* to a pointer to its first element:
-
-```c
-int buffer[256];
-int *ptr = buffer;  // Equivalent to: int *ptr = &buffer[0];
-```
-
-Array subscripting is actually pointer arithmetic:
-
-```c
-buffer[i]  ≡  *(buffer + i)  ≡  *(ptr + i)  ≡  ptr[i]
-```
-
-All four expressions compile to identical machine code.
-
-#### Where They Differ
-Arrays and pointers are *not* the same:
-
-```c
-int16_t arr[10];
-int16_t *ptr = arr;
-
-sizeof(arr);  // 20 on any target: 10 elements × 2 bytes each
-sizeof(ptr);  // the size of a pointer: 2 on dsPIC, 8 on a 64-bit desktop
-
-&arr;  // Type: int16_t (*)[10]  (pointer to array of 10 int16_t)
-&ptr;  // Type: int16_t **       (pointer to pointer to int16_t)
-```
-
-**Key distinction:** An array is a fixed-size block of memory. A pointer is a variable holding an address.
-
-#### Pointer Arithmetic for DSP
-This equivalence makes DSP code elegant:
-
-```c
-void process_samples(int16_t *input, int16_t *output, int length) {
-    for(int i = 0; i < length; i++) {
-        *output++ = (*input++) >> 1;  // Halve amplitude
-    }
-}
-```
-
-This is often faster than array indexing because:
-
-- No index register needed
-- Increment happens in parallel with memory access
-
-### Structures
-::: {.subheading}
-Organizing Complex Data
-:::
-
-Embedded DSP often requires managing related data. **Structures** group heterogeneous data types.
+A **structure** groups values of heterogeneous types into a single object. It is C's only aggregation mechanism, and combined with function pointers it is enough to build essentially every data structure and object system C programmers have devised.
 
 ```c
 typedef struct {
-    int16_t *buffer;      // Pointer to sample buffer
-    uint16_t size;        // Buffer size
-    uint16_t head;        // Write position
-    uint16_t tail;        // Read position
-    uint8_t  overrun;     // Error flag
+    int16_t *buffer;      // pointer to the sample storage
+    uint16_t size;        // capacity
+    uint16_t head;        // write position
+    uint16_t tail;        // read position
+    uint8_t  overrun;     // error flag
 } CircularBuffer_t;
 
-// Initialize
+// Designated initializers (C99) name the members explicitly
 CircularBuffer_t audio_in = {
     .buffer = input_samples,
     .size = 512,
@@ -527,21 +666,25 @@ CircularBuffer_t audio_in = {
     .overrun = 0
 };
 
-// Use
 audio_in.buffer[audio_in.head++] = new_sample;
-if(audio_in.head >= audio_in.size) audio_in.head = 0;  // Wrap
 ```
 
-**Why use `typedef struct`?** In C (unlike C++), without `typedef` you'd need to write `struct CircularBuffer` everywhere. With typedef, just `CircularBuffer_t` suffices.
+Designated initializers are worth adopting as a default. They are order-independent, they document each value at the point of assignment, and any member you omit is zero-initialized, so adding a field to the struct does not silently corrupt existing initializers the way positional initialization does.
 
-#### Unions
-::: {.subheading}
-Multiple Views of the Same Memory
+**Why `typedef struct`?** In C, unlike C++, the struct tag lives in a separate namespace, so without a `typedef` you must write `struct CircularBuffer` at every use. The `typedef` collapses that to `CircularBuffer_t`.
+
+Members are accessed with `.` on an object and `->` on a pointer to one; `p->size` is shorthand for `(*p).size`.
+
+::: {.callout-note title="Padding is not optional"}
+The compiler inserts padding between members so each is properly aligned for the target, which means `sizeof` a struct is generally *more* than the sum of its members, and member order affects the total. Never assume a struct's layout when reading a wire format or a file header: read the fields individually. `__attribute__((packed))` suppresses the padding but makes member access slower, and on strict-alignment architectures it can produce unaligned accesses that fault outright.
 :::
 
-A **union** allows storing different types in the same memory location. Only one member is valid at a time.
+### Unions
+::: {.subheading}
+Multiple views of the same memory
+:::
 
-**Example:** Treating 32-bit data as bytes:
+A **union** stores any one of several types in the same memory, sized to its largest member. Only one member is valid at a time, and nothing in the language tracks which one, so a union is almost always paired with a separate tag field indicating the active member.
 
 ```c
 typedef union {
@@ -556,290 +699,27 @@ typedef union {
 
 Word32_t data;
 data.word = 0x12345678;
-
-// Access individual bytes without bit shifting
-uint8_t high_byte = data.bytes.byte3;  // 0x12
+uint8_t high = data.bytes.byte3;   // byte order depends on endianness
 ```
 
-**DSP Use Case:** Fast type punning (reinterpreting bits without conversion):
+The other common use is **type punning**, reinterpreting an object's bits as a different type:
 
 ```c
 typedef union {
     float    f;
-    int32_t  i;
     uint32_t u;
 } FloatBits_t;
 
-// Inspect binary representation of a float
-FloatBits_t x = {.f = 3.14159f};
+FloatBits_t x = { .f = 3.14159f };
 printf("Float bits: 0x%08X\n", x.u);
 ```
 
-::: {.callout-warning title="Alignment Matters"}
-Structures and unions must be properly aligned for efficient access. The dsPIC requires 16-bit values to be at even addresses. Use `__attribute__((packed))` cautiously: it disables alignment, slowing access.
+::: {.callout-note title="Union punning is legal in C, but not in C++"}
+Reading from a union member other than the one last written is explicitly permitted in C99 and later, and is the standard-blessed way to reinterpret bits. The same code is undefined behavior in C++, where the sanctioned tool is `std::bit_cast` (C++20) or `memcpy`. Casting a pointer to a different type and dereferencing it is undefined in *both* languages; that is a strict-aliasing violation, and it is a different thing from union punning.
 :::
-
-### The `const` and `static` Keywords
-Despite often appearing together in embedded code, `const` and `static` address entirely different concerns. `const` is a **type qualifier**: it constrains *mutability*, telling the compiler that a value must not be changed after initialization. `static` is a **storage-class specifier**: it governs *lifetime and linkage*, either extending a local variable's lifetime to the duration of the program or restricting a global variable or function's visibility to its translation unit. In short, `const` is about *what can be done with data*, while `static` is about *where data lives and who can see it*.
-
-#### `const`
-::: {.subheading}
-Putting Data in Flash
-:::
-
-::: {.callout-note title="Const Correctness"}
-**Const correctness** is a programming principle of using the `const` keyword to explicitly enforce the immutability of data that is not intended to be modified. This practice helps prevent accidental data modifications, enhances code readability, and allows the compiler to catch potential errors at compile time, leading to more robust and maintainable code.
-:::
-
-In embedded systems, *RAM is precious, ROM/Flash is abundant*. Use `const` to store read-only data in program memory:
-
-```c
-// Without const: lives in RAM (scarce!)
-int16_t filter_coeffs[128] = {123, 456, 789, ...};
-
-// With const: lives in Flash (abundant!)
-const int16_t filter_coeffs[128] = {123, 456, 789, ...};
-```
-
-On the dsPIC, accessing `const` data requires enabling **PSV (Program Space Visibility)**. The compiler handles this automatically in most cases.
-
-*Const correctness* also prevents accidental modification:
-
-```c
-void apply_filter(const int16_t *input, int16_t *output, const int16_t *coeffs, int length);
-//                ^^^^^^                                  ^^^^^^
-//                Promises not to modify input or coefficients
-```
-
-#### `static`
-::: {.subheading}
-Three Distinct Meanings
-:::
-
-The `static` keyword is overloaded in C, with different meanings depending on context:
-
-##### 1. Static Local Variables
-::: {.subheading}
-Function Scope
-:::
-
-Retains value between function calls:
-
-```c
-void count_calls(void) {
-    static int count = 0;  // Initialized ONCE at program start
-    count++;
-    printf("Called %d times\n", count);
-}
-```
-
-**Use case:** Persistent state without global pollution.
-
-##### 2. Static Global Variables
-::: {.subheading}
-File Scope
-:::
-
-Limits visibility to the current file:
-
-```c
-// In audio.c
-static int16_t internal_buffer[256];  // Only visible in audio.c
-
-void process_audio(void) {
-    // Can use internal_buffer here
-}
-
-// In main.c
-// internal_buffer is NOT accessible here
-```
-
-**Use case:** Encapsulation, preventing name collisions across files.
-
-##### 3. Static Functions
-::: {.subheading}
-File Scope
-:::
-
-Function only visible within the file:
-
-```c
-static void helper_function(void) {
-    // Internal helper, not part of public API
-}
-```
-
-The compiler can inline or optimize these more aggressively since it knows they're never called externally.
-
-### Function Pointers
-::: {.subheading}
-Callbacks and Dispatch Tables
-:::
-
-**Function pointers** store the address of a function, enabling callbacks and runtime dispatch.
-
-```c
-// Define a function pointer type
-typedef void (*ProcessFunc_t)(int16_t *buffer, int length);
-
-// Functions matching the signature
-void echo_effect(int16_t *buf, int len) { /* ... */ }
-void reverb_effect(int16_t *buf, int len) { /* ... */ }
-void distortion_effect(int16_t *buf, int len) { /* ... */ }
-
-// Use a function pointer
-ProcessFunc_t current_effect = echo_effect;
-
-void process_audio_block(int16_t *buffer, int length) {
-    // Call through function pointer
-    current_effect(buffer, length);
-}
-
-// Switch effects at runtime
-void set_effect(int effect_number) {
-    switch(effect_number) {
-        case 0: current_effect = echo_effect; break;
-        case 1: current_effect = reverb_effect; break;
-        case 2: current_effect = distortion_effect; break;
-    }
-}
-```
-
-**Dispatch table** for efficient switching:
-
-```c
-ProcessFunc_t effect_table[] = {
-    echo_effect,
-    reverb_effect,
-    distortion_effect
-};
-
-#define NUM_EFFECTS (sizeof(effect_table) / sizeof(effect_table[0]))
-
-void set_effect(int n) {
-    if(n >= 0 && n < NUM_EFFECTS) {
-        current_effect = effect_table[n];
-    }
-}
-```
-
-### Memory Management
-**Memory management** refers to the process of controlling and coordinating computer memory, assigning blocks to various running programs to optimize overall system performance.
-
-##### Standard Functions
-::: {.subheading}
-defined in `<stdlib.h>`
-:::
-
-- **`malloc(size_t size)`**: Allocates a block of uninitialized memory.
-- **`calloc(size_t n, size_t size)`**: Allocates memory for an array and initializes it to zero.
-- **`realloc(void *ptr, size_t size)`**: Resizes a previously allocated memory block.
-- **`free(void *ptr)`**: Deallocates memory, making it available for future use.
-
-##### Where Does Memory Actually Live?
-C has three distinct memory regions. Understanding the difference is essential for embedded work:
-
-| Region                                                   | What Lives There                                      | Lifetime                | Size Known At                   |
-|:---------------------------------------------------------|:------------------------------------------------------|:------------------------|:--------------------------------|
-| **Stack**                                                | Local variables, function arguments, return addresses | Scope of the function   | Runtime (bounded by stack size) |
-| **Heap**                                                 | `malloc`/`free` allocations                           | Until explicitly freed  | Runtime (unbounded)             |
-| **Static / [BSS](glossary.qmd#block-started-by-symbol)** | Global variables, `static` variables, `const` data    | Entire program lifetime | Compile time                    |
-
-::: {.callout-note title="Fixed Arrays: Stack or Static?"}
-This is a common point of confusion. Fixed arrays declared at *file/global scope* or with the `static` keyword live in the *[BSS](glossary.qmd#block-started-by-symbol)/data segment* (static memory), not the stack. They're allocated at compile time and exist for the entire duration of the program.
-
-```c
-// --- STATIC MEMORY (BSS segment) ---
-int16_t audio_buffer[512];          // Global: compile-time, lives forever
-static int16_t filter_state[8];     // Static local: same region, but file-scoped
-
-void process(void) {
-    // --- STACK ---
-    int16_t local_sample;           // Stack: only exists inside process()
-    int16_t local_buf[16];          // Stack: gone when function returns!
-}
-```
-
-When embedded programmers say "everything is in fixed arrays," they mean global or `static` arrays — all occupying statically-allocated memory, known at compile time.
-:::
-
-##### Strategies
-- **Static Allocation**: Memory is allocated at compile time and persists for the life of the program. This is the dominant strategy in safety-critical embedded systems: zero runtime overhead, completely deterministic, no fragmentation possible.
-- **Dynamic Allocation**: Memory is requested from the heap at runtime via `malloc`/`free`. Flexible, but carries risks of fragmentation, non-deterministic timing, and leaks.
-- **Pool Allocation**: A hybrid. A large static block is pre-allocated, then subdivided and managed at runtime as fixed-size chunks. You get dynamic-like flexibility with the determinism of static allocation.
-- **No Allocation (Static-Only)**: Many embedded coding standards (MISRA-C, DO-178C for aviation, IEC 61508 for industrial safety) **ban `malloc`/`free` entirely**. All memory is declared at compile time. The tradeoff: you must know your worst-case memory needs up front.
-
-##### Examples
-##### Static Allocation
-```c
-// Buffer lives in BSS segment for the entire program
-static int16_t audio_buffer[512];
-static int16_t filter_coeffs[64];
-
-void process_audio(void) {
-    for(int i = 0; i < 512; i++) {
-        audio_buffer[i] = apply_filter(audio_buffer[i], filter_coeffs);
-    }
-}
-```
-
-*Pros:* Zero runtime cost, completely predictable, no fragmentation, no failure mode. *Cons:* Memory is always reserved even when not in use. Total memory usage must be known at design time.
-
-##### Dynamic Allocation
-```c
-void process_variable_length(int length) {
-    int16_t *buffer = malloc(length * sizeof(int16_t));
-    if(buffer == NULL) { handle_error(); return; }
-
-    // Use buffer...
-
-    free(buffer);   // Must not forget this, or memory leaks
-}
-```
-
-*Pros:* Flexible sizes, only uses memory when needed. *Cons:* `malloc` can fail unpredictably, timing is non-deterministic, heap fragments over time.
-
-##### Pool Allocation
-```c
-#define POOL_BLOCK_SIZE  64   // Each block holds 64 samples
-#define POOL_NUM_BLOCKS   8   // Pool has exactly 8 blocks
-
-typedef struct {
-    int16_t data[POOL_BLOCK_SIZE];
-    uint8_t in_use;
-} PoolBlock_t;
-
-// The entire pool is statically allocated — this is the key
-static PoolBlock_t memory_pool[POOL_NUM_BLOCKS];
-
-PoolBlock_t *pool_alloc(void) {
-    for(int i = 0; i < POOL_NUM_BLOCKS; i++) {
-        if(!memory_pool[i].in_use) {
-            memory_pool[i].in_use = 1;
-            return &memory_pool[i];
-        }
-    }
-    return NULL;  // Pool exhausted — deterministic failure, not a random crash
-}
-
-void pool_free(PoolBlock_t *block) {
-    block->in_use = 0;
-}
-
-// Usage
-PoolBlock_t *buf = pool_alloc();
-if(buf) {
-    fill_samples(buf->data);
-    process(buf->data, POOL_BLOCK_SIZE);
-    pool_free(buf);
-}
-```
-
-- *Pros:* No fragmentation (all blocks are the same size), bounded and deterministic (you know exactly how many allocations are possible at any time), fast, no heap required, failure mode is explicit (`NULL` return) rather than silent.
-- *Cons:* Wastes memory when block sizes don't match your needs. Cannot handle variable-size requests without maintaining multiple pools of different sizes.
 
 ### Bitwise Operations
-Bitwise operators perform operations on the binary representations of integers. They are essential for manipulating hardware registers.
+Bitwise operators act on the binary representation of integers. They are how C manipulates hardware registers, packs flags, and implements the low-level half of nearly every protocol.
 
 | Operator | Name        | Description                          | Example (`A=60`, `B=13`)          | Result              |
 |:---------|:------------|:-------------------------------------|:----------------------------------|:--------------------|
@@ -850,399 +730,125 @@ Bitwise operators perform operations on the binary representations of integers. 
 | `<<`     | Left Shift  | Shifts bits left (multiply by $2^n$) | `A << 2` (`0011 1100 << 2`)       | `240` (`1111 0000`) |
 | `>>`     | Right Shift | Shifts bits right (divide by $2^n$)  | `A >> 2` (`0011 1100 >> 2`)       | `15` (`0000 1111`)  |
 
-## The Standard Library
-The [**C standard library**](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"} (`libc`) is not one library but a loose federation of headers, each covering a self-contained domain: string handling, memory, math, time, I/O, and more. A C program includes only the headers it needs, and a conforming compiler need not provide all of them. This chapter has already covered two corners of it in context: [The Standard String Functions](#the-standard-string-functions) (`<string.h>`) and the allocation functions under [Memory Management](#memory-management) (`<stdlib.h>`'s `malloc`/`calloc`/`realloc`/`free`). This section rounds out the tour with the rest of `<stdlib.h>`, then `<stdio.h>`, `<wchar.h>`, and `<regex.h>`.
+The four idioms worth memorizing, where `n` is a bit position:
 
-::: {.callout-note title="Hosted vs. Freestanding"}
-The C standard distinguishes two kinds of implementation. A **hosted** implementation assumes an operating system underneath it and provides the full standard library, including file I/O, wide characters, and (on POSIX systems) regular expressions. A **freestanding** implementation, the kind you get from an embedded toolchain like XC16 targeting a dsPIC with no OS, is only required to provide a minimal subset: `<stddef.h>`, `<stdint.h>`, `<stdbool.h>`, `<stdarg.h>`, `<float.h>`, `<limits.h>`, and `<iso646.h>`. Everything else, including most of what follows in this section, is present only if the vendor chose to implement or retarget it. `<stdlib.h>`'s conversion and sorting functions are pure computation and port easily to freestanding environments; `fopen`, wide-character I/O, and POSIX regex assume a filesystem or a POSIX environment that a bare-metal target simply does not have.
+```c
+reg |=  (1u << n);   // set bit n
+reg &= ~(1u << n);   // clear bit n
+reg ^=  (1u << n);   // toggle bit n
+if (reg & (1u << n))  { /* bit n is set */ }
+```
+
+::: {.callout-warning title="Shifts have sharp edges"}
+Shifting by a count greater than or equal to the width of the promoted operand is undefined, as is shifting a *negative* value left. Right-shifting a negative signed value is implementation-defined (in practice, arithmetic shift). Prefer unsigned types for bit manipulation, and note the `1u` in the idioms above: `1 << 31` overflows a 32-bit signed `int`, while `1u << 31` is well defined.
 :::
 
-### `stdlib.h`
+### Memory Management
+C hands you the allocator and gets out of the way. There is no garbage collector, no ownership tracking, and no destructor; every allocation is a manual obligation to free exactly once, and both failures (never, or twice) are serious bugs.
+
+#### Where Memory Lives
+| Region                                                  | What lives there                                      | Lifetime                | Size known at                   |
+|:--------------------------------------------------------|:------------------------------------------------------|:------------------------|:--------------------------------|
+| **Stack**                                               | Local variables, function arguments, return addresses | Scope of the function   | Runtime (bounded by stack size) |
+| **Heap**                                                | `malloc`/`free` allocations                           | Until explicitly freed  | Runtime (unbounded)             |
+| **Static / [BSS](glossary.qmd#block-started-by-symbol)** | Globals, `static` variables, `const` data             | Entire program lifetime | Compile time                    |
+
+A frequent point of confusion: a fixed array at file scope, or one marked `static`, lives in the static region rather than the stack. It is allocated at compile time and exists for the whole run.
+
+```c
+int16_t audio_buffer[512];          // static region: exists for the program's life
+static int16_t filter_state[8];     // same region, but private to this file
+
+void process(void) {
+    int16_t local_buf[16];          // stack: gone when process() returns
+}
+```
+
+Returning a pointer to a local is therefore a use-after-return bug: the storage is reclaimed the moment the function exits. Objects that must outlive their creating function belong on the heap or in static storage.
+
+#### The Allocation Functions
 ::: {.subheading}
-defined in `<stdlib.h>`
+`<stdlib.h>`
 :::
 
-Beyond the allocation functions already covered under [Memory Management](#memory-management), `<stdlib.h>` is a grab-bag of utility functions: converting strings to numbers, sorting and searching generic arrays, controlling program termination, and generating pseudo-random numbers.
-
-##### Numeric Conversion
-| Function                  | Purpose                                                                                       |
-|:--------------------------|:----------------------------------------------------------------------------------------------|
-| `atoi(s)` / `atof(s)`     | Convert a string to `int` / `double`. No error reporting: invalid input silently returns 0.   |
-| `strtol(s, endptr, base)` | Convert a string to `long`, in any base from 2 to 36 (or 0 to auto-detect `0x`/`0` prefixes). |
-| `strtod(s, endptr)`       | Convert a string to `double`, with the same error-detection mechanism.                        |
-
-`strtol` and `strtod` are strictly better than `atoi`/`atof` because they report failure. The `endptr` parameter is set to point at the first character that didn't parse; if it still points at the start of the string, nothing was converted.
+- **`malloc(size)`**: allocates uninitialized memory; contents are garbage.
+- **`calloc(n, size)`**: allocates `n * size` bytes and zeroes them.
+- **`realloc(ptr, size)`**: resizes an allocation, possibly moving it.
+- **`free(ptr)`**: releases an allocation. `free(NULL)` is safe and does nothing.
 
 ```c
-const char *input = "42abc";
-char *end;
-
-long value = strtol(input, &end, 10);
-if (end == input) {
-    // nothing parsed: not a number at all
+int16_t *samples = malloc(count * sizeof *samples);
+if (samples == NULL) {
+    return -1;              // allocation can fail; check every time
 }
-printf("parsed %ld, stopped at \"%s\"\n", value, end);   // parsed 42, stopped at "abc"
+/* ... use samples ... */
+free(samples);
+samples = NULL;             // avoids an accidental use-after-free
 ```
 
-Compare `end` against the *variable* holding the string, never against a literal: `end == "42abc"` compares addresses, and identical literals are not guaranteed to share one.
+Two habits in that snippet are worth adopting. `sizeof *samples` rather than `sizeof(int16_t)` stays correct if the type ever changes. And the `malloc` result is not cast: in C the `void*` converts implicitly, and an explicit cast can mask a missing `<stdlib.h>` include. (This is one of the places C and C++ genuinely differ; C++ requires the cast, which is a hint that you should be using `new` or a container instead.)
 
-##### Sorting and Searching
-`qsort` and `bsearch` work on any array, of any element type, because they take a **comparator function pointer** rather than assuming a type, the same pattern covered in [Function Pointers](#function-pointers).
-
-```c
-int compare_ints(const void *a, const void *b) {
-    int arg1 = *(const int *)a;
-    int arg2 = *(const int *)b;
-    return (arg1 > arg2) - (arg1 < arg2);   // -1, 0, or 1
-}
-
-int samples[5] = {30, 10, 40, 20, 50};
-qsort(samples, 5, sizeof(int), compare_ints);
-// samples is now {10, 20, 30, 40, 50}
-
-int target = 40;
-int *found = bsearch(&target, samples, 5, sizeof(int), compare_ints);
-```
-
-Both functions operate through `void *`, so the comparator must cast back to the real element type before dereferencing. `bsearch` requires the array to already be sorted (ascending, by the same comparator) or its binary search will silently return wrong results.
-
-##### Program Control
-| Function       | Purpose                                                                                                                                   |
-|:---------------|:------------------------------------------------------------------------------------------------------------------------------------------|
-| `exit(status)` | Terminate the program immediately: flushes and closes open streams, runs any `atexit` handlers, then returns `status` to the environment. |
-| `abort(void)`  | Terminate immediately without cleanup, raising `SIGABRT`. Used for unrecoverable errors.                                                  |
-| `atexit(func)` | Register a function to run automatically when the program exits normally.                                                                 |
-
-```c
-void cleanup(void) {
-    printf("shutting down\n");
-}
-
-int main(void) {
-    atexit(cleanup);
-    // ... cleanup() runs automatically when main returns or exit() is called
-}
-```
-
-::: {.callout-note title="`exit` and `abort` on Embedded Systems"}
-On a bare-metal target there is no OS to return a status code to, and often no meaningful way to "exit" a program that's supposed to run forever. Embedded codebases frequently either omit `exit`/`abort` entirely or retarget them to something like an infinite loop plus a watchdog reset.
+::: {.callout-warning title="`realloc` can leak if you are careless"}
+`realloc` returns `NULL` on failure *without* freeing the original block. Writing `p = realloc(p, n);` therefore leaks the original allocation whenever it fails. Assign to a temporary, check it, and only then overwrite `p`.
 :::
 
-##### Pseudo-Random Numbers
-```c
-srand(42);              // seed the generator (often with time(NULL) for variety)
-int r = rand() % 100;   // pseudo-random value in [0, 99]
-```
+The failure modes to know by name: **use-after-free** (dereferencing a freed pointer), **double free** (freeing twice), **memory leak** (never freeing), and **buffer overrun** (writing past the end). None are diagnosed by the language, all are undefined behavior, and all are what tools like AddressSanitizer and Valgrind exist to catch. Run them.
 
-`rand()`'s quality varies by implementation; older C libraries produce visibly patterned low-order bits (which is why `rand() % 100` is a better bet than masking), and none are suitable for anything security-related. `<stdlib.h>` has no cryptographically secure generator; that requires a platform-specific API or a dedicated library.
-
-##### See Also
-- [Memory Management](#memory-management)
-- [Function Pointers](#function-pointers)
-
-### `stdio.h`: Input and Output {#io}
-::: {.subheading}
-defined in `<stdio.h>`
+::: {.callout-note title="Dynamic allocation is often banned outright"}
+In hard-real-time and safety-critical systems, `malloc` is frequently forbidden: allocation time is unbounded, and fragmentation can cause a failure hours into a run that testing never reproduced. Such systems allocate everything statically up front. The Applied DSP notes cover the pools-and-fixed-buffers approach in context.
 :::
 
-C has no built-in I/O statements; all of it goes through functions in `<stdio.h>`, operating on a `FILE *` **stream**. Three streams are open automatically: `stdin`, `stdout`, and `stderr`.
-
-Two independent questions shape every I/O call. First, what the call does with the bytes: interpret them against a format string (**formatted**) or move them verbatim (**unformatted**). Second, how the stream schedules them: accumulate in a buffer (**buffered**) or hand them to the OS immediately (**unbuffered**). The two axes are orthogonal; `fprintf` is formatted whether the stream buffers or not.
-
-#### Buffered vs. Unbuffered I/O
-Every stream buffers by one of three strategies:
-
-| Mode               | Behavior                                                                     | Typical Use                                                                                                          |
-|:-------------------|:-----------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------|
-| **Fully buffered** | Data accumulates until the buffer fills, then is flushed in one system call. | Files: `fopen`'d streams default to this.                                                                            |
-| **Line buffered**  | Data flushes whenever a newline is written.                                  | Interactive terminals: `stdout` defaults to this when connected to a terminal.                                       |
-| **Unbuffered**     | Every write happens immediately.                                             | `stderr`, by convention, so error messages appear even if the program crashes before a buffer would otherwise flush. |
-
-`setvbuf(stream, buf, mode, size)` overrides the default, and `fflush(stream)` forces a flush of a fully- or line-buffered stream on demand:
-
-```c
-setvbuf(stdout, NULL, _IOFBF, 8192);   // force full buffering, 8 KB buffer
-printf("this may sit in the buffer...");
-fflush(stdout);                        // ...until this forces it out
-```
-
-Buffering matters because it trades latency for throughput: fewer, larger writes are far cheaper than many small ones, but data can be lost if the program crashes before a buffer is flushed, which is exactly why `stderr` opts out.
-
-::: {.callout-note title="Buffering on Embedded Systems"}
-The dsPIC has no filesystem and no OS-level buffered writes. When `printf` is retargeted to a UART (see [What is `stdout` on Embedded Systems?](#the-standard-library-and-i-o)), "buffering" is whatever the developer implements: often a small ring buffer (see [Ring Buffers](#ring-buffers)) that the UART's transmit interrupt drains one byte at a time. The standard library's notion of buffering modes is a hosted-environment concept; embedded code usually manages its own buffer explicitly instead of relying on `setvbuf`.
-:::
-
-#### Buffered
-##### Formatted I/O
-The `printf`/`scanf` family, already introduced in the [Overview](#the-standard-library-and-i-o): `printf`/`fprintf`/`sprintf` for output, `scanf`/`fscanf`/`sscanf` for input, each parsing or producing text according to a format string. `sprintf`/`sscanf` work against an in-memory buffer instead of a stream, which is how C formats or parses strings without a `<sstream>`-style abstraction.
-
-```c
-char name[32];
-int age;
-FILE *fp = fopen("people.txt", "a");
-
-fprintf(fp, "%s is %d years old\n", "Ada", 36);   // formatted write, buffered
-
-FILE *in = fopen("people.txt", "r");
-fscanf(in, "%31s is %d years old", name, &age);   // formatted read, buffered
-
-char line[64];
-sprintf(line, "%s: %d", name, age);   // format into memory, no stream involved
-```
-
-`fp` and `in` are both file streams, so each defaults to fully buffered with its own private buffer: the `fprintf` and `fscanf` calls above go through the C library rather than triggering a system call apiece.
-
-##### Unformatted (Binary) I/O
-| Function                             | Purpose                                                |
-|:-------------------------------------|:-------------------------------------------------------|
-| `fgetc(stream)` / `fputc(c, stream)` | Read or write a single byte.                           |
-| `fgets(buf, n, stream)`              | Read a line (or up to `n - 1` bytes), null-terminated. |
-| `fread(ptr, size, count, stream)`    | Read `count` objects of `size` bytes each into `ptr`.  |
-| `fwrite(ptr, size, count, stream)`   | Write `count` objects of `size` bytes each from `ptr`. |
-
-`fread`/`fwrite` move raw bytes without interpreting them, the natural choice for binary formats (structs, sample buffers) where `printf`'s text formatting would be both slower and lossy for floating-point precision.
-
-::: {.callout-warning title="`putc` vs. `fputc`: the macro trap"}
-Several stdio functions come in pairs that look redundant: `putc`/`fputc`, `getc`/`fgetc`. The `f` prefix does **not** mean "buffered"; both members of each pair are buffered identically, according to the stream's mode. The difference is that `fputc` and `fgetc` are guaranteed to be real functions, while `putc` and `getc` are permitted to be macros that evaluate their `stream` argument more than once.
-
-```c
-putc('x', streams[i++]);    // UNDEFINED: i may be incremented twice
-fputc('x', streams[i++]);   // safe: stream evaluated exactly once
-```
-
-The payoff for `putc`/`getc` is avoiding function-call overhead in tight loops; the cost is that any argument with side effects is a latent bug. `putchar(c)` and `getchar()` are simply `putc`/`getc` hardwired to `stdout`/`stdin`. Prefer the `f` versions unless you have measured a reason not to, and never pass them an expression that does more than name a stream.
-:::
-
-```c
-int16_t samples[256] = { /* ... */ };
-FILE *fp = fopen("samples.bin", "wb");
-
-fwrite(samples, sizeof(int16_t), 256, fp);   // one buffered bulk write
-fclose(fp);                                   // buffer flushes here if not already full
-
-FILE *in = fopen("samples.bin", "rb");
-int16_t loaded[256];
-size_t count = fread(loaded, sizeof(int16_t), 256, in);   // one buffered bulk read
-fclose(in);
-```
-
-A single `fwrite` call of 512 bytes still goes through the stream's internal buffer; the library only issues an actual `write()` system call when that buffer fills or the stream is flushed/closed, which is the whole point of buffering: many small logical writes collapse into few physical ones.
-
-#### Unbuffered
-There are two ways to get unbuffered behavior, and they sit at different levels.
-
-##### Turning Off a Stream's Buffer
-`stderr` is unbuffered by default, and any stream can be forced unbuffered with `setvbuf(stream, NULL, _IONBF, 0)`. Every write then goes straight through instead of accumulating:
-
-```c
-fprintf(stderr, "fatal: config file missing\n");   // appears immediately, no flush needed
-
-FILE *fp = fopen("audit.log", "w");
-setvbuf(fp, NULL, _IONBF, 0);   // force unbuffered, even though it's a file stream
-fprintf(fp, "user logged in\n");   // handed to the OS now, not at fclose
-```
-
-This is still stdio; you are just telling it to hold nothing back.
-
-##### Below stdio: File Descriptors
-::: {.subheading}
-declared in `<unistd.h>` and `<fcntl.h>`, POSIX only, not part of ISO C
-:::
-
-The genuinely unbuffered layer is the one stdio is built on. POSIX exposes the raw system calls directly, operating on an `int` **file descriptor** rather than a `FILE *`:
-
-| Buffered (ISO C stdio) | Unbuffered (POSIX) | Purpose                |
-|:-----------------------|:-------------------|:-----------------------|
-| `fopen`                | `open`             | Open a file.           |
-| `fread`                | `read`             | Read bytes.            |
-| `fwrite`               | `write`            | Write bytes.           |
-| `fclose`               | `close`            | Close a file.          |
-| `fseek`                | `lseek`            | Reposition the offset. |
-
-```c
-#include <fcntl.h>
-#include <unistd.h>
-
-int fd = open("samples.bin", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-if (fd < 0) {
-    perror("open");
-    return 1;
-}
-
-int16_t samples[256] = { /* ... */ };
-ssize_t written = write(fd, samples, sizeof(samples));   // one syscall, no userspace buffer
-if (written != (ssize_t)sizeof(samples)) {
-    // a short write is not an error: write() may transfer fewer bytes than requested
-}
-close(fd);
-```
-
-There is no userspace buffer anywhere in that sequence: `write` is a thin wrapper over the system call itself. `fwrite` is this plus a buffer, which is precisely what "buffered I/O" means.
-
-Two habits carry over from stdio and two do not. Error reporting still goes through `errno`/`perror`, but these functions signal failure with a negative return rather than `NULL` or `EOF`. And `write` is permitted to perform a **short write**, transferring fewer bytes than asked; robust code loops until the full count is written, a detail `fwrite` handles for you.
-
-::: {.callout-note title="Unbuffered is not the same as durable"}
-Turning off buffering means stdio (or your code) hands bytes to the kernel immediately. It does not mean those bytes are on the disk. The kernel's own page cache still holds them, so an unbuffered write survives a *process* crash but not a power loss. Getting data onto physical media requires `fsync(fd)` (or `fflush` followed by `fsync` when going through stdio). Audit logs and databases that must survive hardware failure use `fsync`; unbuffered alone is not enough.
-:::
-
-The tradeoff is throughput. A system call costs on the order of a microsecond, against tens of nanoseconds for a `memcpy` into a buffer, so writing a file one byte at a time through `write` is dramatically slower than through `fwrite`. Reach for the unbuffered layer when you need immediacy, exact control over syscall boundaries, or access to things stdio cannot express (sockets, `O_APPEND` semantics, non-blocking I/O), not as a default.
-
-#### File Management
-`fopen`'s mode string controls direction, truncation, and translation:
-
-| Mode   | Behavior                                                                       |
-|:-------|:-------------------------------------------------------------------------------|
-| `"r"`  | Read only. Fails if the file does not exist.                                   |
-| `"w"`  | Write only. Creates the file, or **truncates it to zero length** if it exists. |
-| `"a"`  | Append. Creates the file if needed; every write goes to the end.               |
-| `"r+"` | Read and write. Fails if the file does not exist; does not truncate.           |
-| `"w+"` | Read and write, truncating as `"w"` does.                                      |
-| `"a+"` | Read anywhere, but all writes still go to the end.                             |
-| `…"b"` | Appended to any of the above (`"rb"`, `"w+b"`) for binary mode.                |
-
-```c
-FILE *fp = fopen("config.txt", "r+");   // read and write, must already exist
-if (fp == NULL) {
-    perror("fopen failed");
-    return 1;
-}
-
-fseek(fp, 0, SEEK_END);        // reposition: end of file
-long size = ftell(fp);         // current offset, so: the file's size in bytes
-rewind(fp);                    // back to the start, equivalent to fseek(fp, 0, SEEK_SET)
-
-fclose(fp);
-```
-
-Two traps are worth internalizing. `"w"` silently destroys an existing file's contents the moment you open it, so reaching for it when you meant `"a"` or `"r+"` is unrecoverable. And the `"b"` suffix is a no-op on POSIX systems but essential for portability to Windows, where text mode silently rewrites `\n` to `\r\n` on the way out and back on the way in, corrupting any binary payload that happens to contain those byte values.
-
-#### Error Handling
-```c
-FILE *fp = fopen("data.txt", "r");
-if (fp == NULL) {
-    perror("fopen");        // prints a message based on errno
-    return 1;
-}
-
-int c;
-while ((c = fgetc(fp)) != EOF) {
-    putchar(c);
-}
-
-if (ferror(fp)) {
-    fprintf(stderr, "read error\n");
-} else if (feof(fp)) {
-    printf("reached end of file normally\n");
-}
-fclose(fp);
-```
-
-`feof`/`ferror` distinguish *why* a read loop stopped, since a function like `fgetc` returns the same `EOF` sentinel for both "end of file" and "an error occurred." This is the same `char`-vs-`int` subtlety already covered under [`char` vs. `int` from Input](#char-vs.-int-from-input): `EOF` must be distinguishable from every valid byte value.
-
-#### See Also
-- [The Standard Library and I/O](#the-standard-library-and-i-o)
-- [`char` vs. `int` from Input](#char-vs.-int-from-input)
-- [Ring Buffers](#ring-buffers)
-
-### `wchar.h`
-::: {.subheading}
-defined in `<wchar.h>`
-:::
-
-C's `char` is one byte, which is fine for ASCII but cannot hold most non-Latin characters directly. `<wchar.h>` introduces `wchar_t`, a wider integer type (commonly 16 or 32 bits, platform-dependent), along with wide analogues of familiar functions: `wprintf`/`wscanf` for formatted I/O, `wcslen`/`wcscpy`/`wcscmp` mirroring the `<string.h>` functions from [The Standard String Functions](#the-standard-string-functions).
-
-```c
-#include <wchar.h>
-#include <locale.h>
-
-wchar_t greeting[] = L"café";   // L prefix marks a wide string literal
-setlocale(LC_ALL, "");              // required before wide I/O behaves sensibly
-wprintf(L"%ls has %zu characters\n", greeting, wcslen(greeting));
-```
-
-::: {.callout-note title="C's Thin Unicode Story"}
-`<wchar.h>` predates Unicode's dominance and reflects an era when "wide character" meant "big enough for one locale's character set," not "a full Unicode code point." Compared to Rust's UTF-8-guaranteed `String` or Python's Unicode-native `str`, C's wide-character support is inconsistent across platforms (`wchar_t` is 16 bits on Windows, 32 on Linux) and rarely used in new code. In practice, most modern C code sidesteps `<wchar.h>` entirely and treats UTF-8 text as a plain `char` byte sequence, since UTF-8 is deliberately designed to be transparent to byte-oriented code (no embedded nulls, no ambiguity with ASCII). `<wchar.h>` is also irrelevant on the dsPIC-class embedded targets this book otherwise focuses on, where text handling, if it exists at all, is almost always raw ASCII bytes over a UART.
-:::
-
-### `regex.h`
-::: {.subheading}
-defined in `<regex.h>`, POSIX only, not part of ISO C
-:::
-
-Unlike everything else in this section, `<regex.h>` is a POSIX extension, not part of the ISO C standard. It provides POSIX-flavored regular expression matching in four functions:
-
-| Function                                        | Purpose                                                |
-|:------------------------------------------------|:-------------------------------------------------------|
-| `regcomp(preg, pattern, flags)`                 | Compile a pattern string into a `regex_t`.             |
-| `regexec(preg, string, nmatch, matches, flags)` | Match a compiled pattern against a string.             |
-| `regfree(preg)`                                 | Release resources held by a compiled pattern.          |
-| `regerror(code, preg, buf, size)`               | Translate an error code into a human-readable message. |
-
-```c
-#include <regex.h>
-#include <stdio.h>
-
-regex_t pattern;
-if (regcomp(&pattern, "^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$", REG_EXTENDED) != 0) {
-    fprintf(stderr, "failed to compile pattern\n");
-    return 1;
-}
-
-const char *input = "192.168.1.1";
-int result = regexec(&pattern, input, 0, NULL, 0);
-if (result == 0) {
-    printf("%s has the shape of an IPv4 address\n", input);
-} else if (result == REG_NOMATCH) {
-    printf("%s does not match\n", input);
-}
-
-regfree(&pattern);
-```
-
-::: {.callout-warning title="Shape is not validity"}
-That pattern checks *structure*, not *meaning*: `[0-9]+` accepts any run of digits, so `999.999.999.999` matches happily despite being no address at all. Constraining each octet to 0-255 in pure regex is possible but grotesque (`(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)`), which is the general lesson: regex is good at recognizing shape and poor at enforcing range. Match the shape, then validate the captured numbers in C.
-:::
-
-`regcomp` must be paired with `regfree` (compiling allocates internal state), the same discipline as `malloc`/`free` under [Memory Management](#memory-management). `REG_EXTENDED` selects POSIX Extended Regular Expressions (the more familiar `+`/`?`/`|` syntax); omitting it falls back to POSIX Basic Regular Expressions, an older and more awkward dialect.
-
-::: {.callout-note title="Availability"}
-Because `<regex.h>` is POSIX rather than ISO C, it is absent on Windows without a compatibility layer (MinGW, Cygwin, WSL) and virtually never available on embedded toolchains. C++ programmers reaching for pattern matching generally use `<regex>` instead, which is part of the C++ standard library proper and portable wherever a conforming C++ compiler runs.
-:::
-
-##### See Also
-- [C Standard Library headers](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"}
-
-## The Build
-The "build" is the process of converting your entire project (source files, headers, configuration bits) into a machine-readable format. In an embedded context, this output is often a **HEX file**. This file is not run by an OS like an `.exe` on Windows; instead, it is "flashed" directly into the microcontroller's non-volatile program memory. The build process also generates a **Map File**, which is critical for debugging. It shows exactly where every function and variable is placed in the device's memory.
+## The Preprocessor {#preprocessing}
+Before the compiler proper sees your code, the **preprocessor** performs a purely textual transformation of it: pasting in headers, expanding macros, and selecting or discarding whole regions of source. It knows nothing of C's types, scopes, or syntax; it manipulates tokens. That ignorance is the source of both its power and every one of its hazards.
 
 ### Stages of Compilation
-The build process involves four distinct stages:
+The build proceeds in four distinct stages:
 
-1. **Preprocessing**: The preprocessor obeys commands that begin with `#` (like `#include` and `#define`). It expands macros and includes header files into the source.
-2. **Compilation**: The compiler translates the preprocessed source code into assembly language specific to the target architecture (e.g., dsPIC assembly).
-3. **Assembly**: The assembler translates the assembly code into machine code (binary instructions), producing an **object file** (`.o`).
-4. **Linking**: The linker combines the object files and necessary libraries to produce the final executable (e.g., `.elf` or `.hex` file) suitable for loading onto the hardware.
+1. **Preprocessing**: directives beginning with `#` are executed. Headers are pasted in, macros expanded, conditional regions resolved. The output is a single expanded translation unit.
+2. **Compilation**: the translation unit is parsed, type-checked, optimized, and lowered to assembly for the target architecture.
+3. **Assembly**: assembly becomes machine code in an **object file** (`.o`), with a symbol table and unresolved references.
+4. **Linking**: object files and libraries are combined, symbols resolved, and a final executable produced.
 
-Sometimes stages 2 and 3 are combined and just called "compilation", which is why you'll see "three stages" in some references:
+Stages 2 and 3 are often collapsed and called "compilation," which is why some references describe three stages rather than four.
 
-1. Preprocessing
-2. Compilation (includes assembly)
-3. Linking
+### Macros
+`#define` introduces a macro, a name that the preprocessor replaces with a token sequence wherever it appears.
 
-### Preprocessing
-The preprocessor provides directives that instruct the compiler to perform specific actions before the actual compilation begins.
+```c
+#define BUFFER_SIZE 256                     // object-like
+#define SQUARE(x) ((x) * (x))               // function-like
+```
 
-- **`#include`**: Inserts the contents of a specified file into the source code at the point where the directive appears. This is commonly used to include header files.
-- **`#define`**: Creates a **macro**, which is a fragment of code which has been given a name. Whenever the name is used, it is replaced by the contents of the macro.
-- **`#undef`**: Removes a macro definition.
-- **`#pragma`**: Provides the compiler with special instructions (e.g., configuring optimization levels or hardware-specific settings like configuration bits on the dsPIC). For example:
-	- `#pragma config FOSC = INTOSC` sets the oscillator configuration.
-	- `#pragma GCC optimize ("O2")` sets the optimization level.
-- **`#error`**: Aborts the compilation process and displays a specified error message. This is often used to ensure correct configuration options are selected.
-- **`__FILE__`**: A predefined macro that expands to the name of the current input file as a string literal. It is useful for logging and debugging.
+The parentheses in `SQUARE` are not optional decoration. Because expansion is textual, `#define SQUARE(x) x * x` turns `SQUARE(a + b)` into `a + b * a + b`, which is not what anyone meant. Wrap every parameter, and wrap the whole body.
 
-#### Conditional Compilation
-Select code paths at compile time based on configuration:
+Other directives round out the set: `#undef` removes a definition, `#error` aborts the build with a message (useful for catching an unsupported configuration), and `#pragma` issues implementation-specific instructions to the compiler.
+
+::: {.callout-note title="Prefer the language to the preprocessor"}
+Most historical uses of macros now have typed, scoped alternatives: `enum` or `const` for constants, `static inline` functions for small operations, and (as of C23) `constexpr`. A macro has no type, obeys no scope, ignores namespaces, and is invisible to the debugger, which sees only the expansion. Reach for a macro when you need something the language genuinely cannot express: conditional compilation, stringification, token pasting, or capturing `__FILE__` and `__LINE__` at the call site.
+:::
+
+#### Macro Side Effects {#macro-side-effects}
+Because a macro expands its arguments textually, an argument that appears twice in the body is *evaluated* twice:
+
+```c
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+int x = 5;
+int result = MAX(x++, 10);   // x may be incremented twice
+```
+
+The comparison evaluates `x++`, then the selected branch evaluates it again. A function does not have this problem, because arguments are evaluated exactly once at the call:
+
+```c
+static inline int max_int(int a, int b) {
+    return (a > b) ? a : b;
+}
+```
+
+`static inline` gives the same performance as the macro with none of the hazards. Use it whenever the operation is monomorphic; this is precisely the gap that C++ [templates](cpp.qmd#templates) and Rust generics close properly.
+
+### Conditional Compilation
+`#if`, `#ifdef`, `#elif`, `#else`, and `#endif` include or discard regions of source before compilation. Discarded regions need not even be valid C, which is what makes this the tool for portability.
 
 ```c
 #define DEBUG_LEVEL 2
@@ -1252,330 +858,362 @@ Select code paths at compile time based on configuration:
 #elif DEBUG_LEVEL == 1
     #define DEBUG_PRINT(fmt, ...) printf(fmt "\n", ##__VA_ARGS__)
 #else
-    #define DEBUG_PRINT(fmt, ...) ((void)0)  // Compiles to nothing
+    #define DEBUG_PRINT(fmt, ...) ((void)0)   // compiles to nothing
 #endif
-
-// Usage
-DEBUG_PRINT("Sensor value: %d", adc_result);
 ```
 
-In production builds, change `DEBUG_LEVEL` to 0, and all debug prints vanish: zero code size, zero performance impact.
+With `DEBUG_LEVEL` at 0, every call site vanishes: zero code size, zero run-time cost. This is the standard mechanism for debug instrumentation, feature flags, and platform variation.
 
-#### Stringification
-Stringification (`#`) converts a macro argument to a string:
+### Stringification and Token Pasting
+Two operators exist only inside macro bodies. **Stringification** (`#`) converts an argument into a string literal:
 
 ```c
 #define STRINGIFY(x) #x
-#define REGISTER_NAME(reg) printf("Register " #reg " = 0x%04X\n", reg)
+#define SHOW(expr) printf(#expr " = %d\n", expr)
 
-REGISTER_NAME(AD1CON1);
-// Expands to: printf("Register " "AD1CON1" " = 0x%04X\n", AD1CON1);
+SHOW(count * 2);   // printf("count * 2" " = %d\n", count * 2);
 ```
 
-#### Token Pasting
-Token pasting (`##`) concatenates tokens:
+**Token pasting** (`##`) joins two tokens into one, which is how you generate families of related identifiers:
 
 ```c
-#define GPIO_SET(port, pin) LAT##port##bits.LAT##port##pin = 1
+#define DEFINE_ACCESSORS(type, name)                  \
+    static type get_##name(void)      { return name; } \
+    static void set_##name(type v)    { name = v; }
 
-GPIO_SET(B, 10);
-// Expands to: LATBbits.LATB10 = 1
+DEFINE_ACCESSORS(int, sample_rate)   // defines get_sample_rate / set_sample_rate
 ```
 
-**Practical use:** Creating similar macros for all GPIO pins without copy-paste:
+Token pasting is the closest thing C has to code generation, and it is how many container and registration macros work. It is also nearly unreadable in bulk, and errors surface as messages about the *expanded* text.
 
-```c
-#define DEFINE_LED(name, port, pin) \
-    static inline void name##_ON(void)  { LAT##port##bits.LAT##port##pin = 1; } \
-    static inline void name##_OFF(void) { LAT##port##bits.LAT##port##pin = 0; } \
-    static inline void name##_TOGGLE(void) { LAT##port##bits.LAT##port##pin ^= 1; }
-
-// Define all three LED functions at once
-DEFINE_LED(LED1, B, 10)
-DEFINE_LED(LED2, B, 11)
-DEFINE_LED(LED3, B, 12)
-
-// Use
-LED1_ON();
-LED2_TOGGLE();
-```
-
-#### Variadic Macros
-Macros that accept variable arguments using `...` and `__VA_ARGS__`:
+### Variadic Macros
+A macro can accept a variable number of arguments with `...`, expanded via `__VA_ARGS__` (C99):
 
 ```c
 #define LOG_ERROR(fmt, ...) \
     do { \
         fprintf(stderr, "[ERROR] %s:%d: " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
-    } while(0)
+    } while (0)
 
-// Usage
-LOG_ERROR("Buffer overflow: size=%d, max=%d", buffer_size, MAX_SIZE);
-// Expands to: fprintf(stderr, "[ERROR] audio.c:123: Buffer overflow: size=1024, max=512\n");
+LOG_ERROR("Buffer overflow: size=%d, max=%d", size, max);
+// [ERROR] audio.c:123: Buffer overflow: size=1024, max=512
 ```
 
-**The `do { ... } while(0)` wrapper** ensures the macro behaves like a single statement even with semicolon:
+This is the canonical example of a macro earning its place: a function cannot capture the caller's file and line, because by the time it runs, that information is gone.
 
-```c
-if(error_condition)
-    LOG_ERROR("Something failed");  // Semicolon after macro
-else
-    continue_processing();
-```
+The `##__VA_ARGS__` is a GCC extension that swallows the preceding comma when the variable arguments are empty, so `LOG_ERROR("failed")` still compiles. C23 standardizes this properly as `__VA_OPT__`.
 
-Without the wrapper, the `else` would attach incorrectly after macro expansion.
-
-#### Include Guards vs. `#pragma once`
-Prevent multiple inclusion:
-
-##### Traditional
-::: {.subheading}
-portable
+::: {.callout-note title="The `do { ... } while (0)` wrapper"}
+Wrapping a multi-statement macro body in `do { ... } while (0)` makes it a single statement that consumes a trailing semicolon correctly. Without it, an unbraced `if (x) LOG_ERROR("...") ; else ...` breaks, because the macro's second statement terminates the `if` and orphans the `else`. The wrapper costs nothing (every compiler removes it) and is the standard idiom.
 :::
 
+### Include Guards vs. `#pragma once`
+Because `#include` is literal text insertion, a header included twice in one translation unit defines everything twice, which is an error. Both solutions make the second inclusion a no-op.
+
 ```c
-// myheader.h
+// myheader.h  (traditional: guaranteed by the standard, portable everywhere)
 #ifndef MYHEADER_H
 #define MYHEADER_H
 
-// Header contents
+/* contents */
 
 #endif  // MYHEADER_H
 ```
 
-##### Modern
-::: {.subheading}
-non-standard but widely supported
-:::
-
 ```c
-// myheader.h
+// myheader.h  (modern: non-standard, but supported by every major compiler)
 #pragma once
 
-// Header contents
+/* contents */
 ```
 
-`#pragma once` is simpler and avoids name collisions, but include guards are guaranteed by the C standard.
+`#pragma once` is shorter and immune to the guard-name collisions that bite in large projects, but it relies on the compiler correctly identifying "the same file," which symlinks and network mounts can occasionally confuse. Include guards are guaranteed by the standard. Either is defensible; be consistent within a project.
 
-### Compilation
-#### Compiler Attributes
+### Predefined Macros and Compile-Time Constants
 ::: {.subheading}
-`__attribute__((..))`
+What the implementation tells you about itself
 :::
 
-**Important distinction:** `__attribute__` is NOT a preprocessor directive. It is a *compiler extension* (GCC and compatible compilers like XC16) that provides instructions to the compiler at compile time, not at preprocessing time.
+Every conforming C implementation predefines a set of macros describing the file being compiled, the standard being followed, and the features available. Together with the limits headers, they are how portable C interrogates its own build environment. They fall into four groups.
 
-[Declaring Attributes of Functions - GCC Documentation](https://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html){target="_blank" rel="noopener noreferrer"}:
+#### Standard Predefined Macros
+These are mandated by the standard and available everywhere:
+
+| Macro              | Expands to                                        | Typical use                       |
+|:-------------------|:--------------------------------------------------|:----------------------------------|
+| `__FILE__`         | The current source file name, as a string literal | Logging, assertions               |
+| `__LINE__`         | The current line number, as an integer constant   | Logging, assertions               |
+| `__DATE__`         | Compilation date, `"Mmm dd yyyy"`                 | Build stamps                      |
+| `__TIME__`         | Compilation time, `"hh:mm:ss"`                    | Build stamps                      |
+| `__func__`         | The enclosing function's name (C99)               | Logging, tracing                  |
+| `__STDC__`         | `1` in a conforming implementation                | Detecting ancient/non-standard compilers |
+| `__STDC_VERSION__` | The standard's version number                     | Feature gating by standard        |
+| `__STDC_HOSTED__`  | `1` if hosted, `0` if freestanding                | Detecting a bare-metal target     |
+
+`__STDC_VERSION__` is the one you will actually branch on. Its values are `199901L` for C99, `201112L` for C11, `201710L` for C17, and `202311L` for C23:
+
+```c
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+    #define ASSERT_STATIC(cond, msg) _Static_assert(cond, msg)
+#else
+    #define ASSERT_STATIC(cond, msg) /* unavailable before C11 */
+#endif
+```
+
+::: {.callout-warning title="`__func__` is not a macro"}
+`__func__` is a predefined *identifier*, declared as if by `static const char __func__[]` at the top of each function. It is not a preprocessor macro, so it will not participate in string-literal concatenation the way `__FILE__` does. `"in " __FILE__` compiles; `"in " __func__` does not. Pass it as a `%s` argument instead.
+:::
+
+#### Feature-Test Macros
+C11 introduced a set of macros that a conforming implementation defines to say it *lacks* an otherwise-required feature. The inverted polarity is deliberate: absence is the exceptional case, so the macro is defined only when the feature is missing.
+
+| Macro                  | Defined when the implementation lacks |
+|:-----------------------|:--------------------------------------|
+| `__STDC_NO_VLA__`      | Variable-length arrays                |
+| `__STDC_NO_ATOMICS__`  | `<stdatomic.h>` and `_Atomic`         |
+| `__STDC_NO_THREADS__`  | `<threads.h>`                         |
+| `__STDC_NO_COMPLEX__`  | `<complex.h>`                         |
+| `__STDC_IEC_559__`     | (Inverted) *Defined* when floats **do** conform to IEC 60559 / IEEE 754 |
+
+These matter most in freestanding environments, where a vendor legitimately omits large parts of the library:
+
+```c
+#ifdef __STDC_NO_THREADS__
+    #include "portable_threads.h"   // fall back to a platform API
+#else
+    #include <threads.h>
+#endif
+```
+
+#### Compiler and Target Identification
+Not standardized, but universal in practice, and how real portable headers are written:
+
+```c
+#if defined(__clang__)
+    #define COMPILER_NAME "clang"
+#elif defined(__GNUC__)                     // also defined by clang and icc
+    #define COMPILER_NAME "gcc"
+#elif defined(_MSC_VER)
+    #define COMPILER_NAME "msvc"
+#endif
+
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    /* little-endian path */
+#endif
+```
+
+Order matters here: Clang defines `__GNUC__` for compatibility, so a `__GNUC__` test placed first will match Clang too. Check for the most specific compiler before the most general. Architecture and OS macros (`__x86_64__`, `__aarch64__`, `__linux__`, `_WIN32`) follow the same pattern, and the authoritative catalogue is the compiler's own documentation.
+
+#### Implementation Limits
+Where the macros above describe the *toolchain*, the limits headers describe the *types*, as compile-time constant expressions usable in `#if`, array bounds, and static assertions.
+
+| Header        | Provides                                                                    |
+|:--------------|:----------------------------------------------------------------------------|
+| `<limits.h>`  | `CHAR_BIT`, `INT_MAX`, `INT_MIN`, `UINT_MAX`, `LONG_MAX`, `SIZE_MAX`, …      |
+| `<float.h>`   | `FLT_EPSILON`, `DBL_MAX`, `DBL_MIN`, `FLT_DIG`, …                           |
+| `<stdint.h>`  | `INT16_MAX`, `UINT32_MAX`, `INTPTR_MAX`, and the `_C` literal macros         |
+
+`CHAR_BIT` is the one that surprises people: it is the number of bits in a byte, and the standard only guarantees it is *at least* 8. It is 8 on every platform you are likely to meet, but the constant exists because the standard declines to promise it.
+
+### Static Assertions
+`_Static_assert` (C11; spelled `static_assert` in C23 and via `<assert.h>`) checks a constant expression at compile time and fails the build with your message if it does not hold. Paired with the macros above, it turns silent portability assumptions into loud build errors:
+
+```c
+#include <assert.h>
+#include <limits.h>
+#include <stdint.h>
+
+_Static_assert(CHAR_BIT == 8, "this code assumes 8-bit bytes");
+_Static_assert(sizeof(int) >= 4, "16-bit int is not supported here");
+_Static_assert(sizeof(Packet_t) == 32, "Packet_t must match the wire format");
+```
+
+That third assertion is the valuable one. Struct layout depends on padding rules you do not control, so a header describing a wire format or a hardware layout should assert its own size rather than trust that it came out right. The check costs nothing at run time and fails at the moment the mistake is introduced rather than in the field.
+
+## The Standard Library
+The [**C standard library**](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"} (`libc`) is not one library but a loose federation of headers, each covering a self-contained domain: string handling, memory, math, time, I/O, and more. A C program includes only the headers it needs, and a conforming compiler need not provide all of them. Two corners of it have already appeared in context: [The Standard String Functions](#the-standard-string-functions) (`<string.h>`) and the allocation functions under [Memory Management](#memory-management).
+
+Unlike higher-level languages, C has no built-in I/O statements. Input and output are ordinary library functions, which is a direct expression of the "keep the language small" commitment.
+
+::: {.callout-note title="Hosted vs. Freestanding"}
+The C standard distinguishes two kinds of implementation. A **hosted** implementation assumes an operating system underneath it and provides the full standard library, including file I/O, wide characters, and (on POSIX systems) regular expressions. A **freestanding** implementation, the kind an embedded toolchain targeting a bare-metal device provides, is only required to supply a minimal subset: `<stddef.h>`, `<stdint.h>`, `<stdbool.h>`, `<stdarg.h>`, `<float.h>`, `<limits.h>`, and `<iso646.h>`. Everything else is present only if the vendor chose to implement or retarget it. You can detect which you have with `__STDC_HOSTED__`.
+:::
+
+### `stdlib.h`
+<!-- STUB: General utilities beyond allocation: atoi/strtol and why strtol is the
+     correct choice (error reporting via endptr and errno), qsort and bsearch as
+     the canonical function-pointer APIs, rand/srand and their weaknesses,
+     abs/div, exit/atexit/abort, getenv. -->
+
+### `stdio.h`: Input and Output {#io}
+<!-- STUB: Streams and the FILE type. Buffered vs. unbuffered. The three standard
+     streams. printf/scanf format specifiers as a reference table, and why scanf
+     is hard to use safely. fopen/fclose/fread/fwrite/fseek. Error handling with
+     ferror/feof/perror/errno. Keep the retargeting note as a brief callout only. -->
+
+### `string.h`
+<!-- STUB: Cross-reference the string function table above rather than repeating
+     it. Cover the mem* family properly: memcpy vs. memmove and why the
+     distinction is about restrict, memset's byte-fill semantics and the common
+     mistake of using it to set a non-zero int value. -->
+
+### Other Headers Worth Knowing
+<!-- STUB: Brief tour with one-line orientation each: <math.h>, <time.h>,
+     <ctype.h> (and the unsigned-char argument trap), <errno.h>, <assert.h>,
+     <stdarg.h>, <stddef.h>. A table is probably the right form here. -->
+
+## Compilation and the Build {#the-build}
+The **build** converts a project's source files into an artifact you can run or load. For a hosted program that is an executable; for an embedded target it is typically a HEX or ELF image flashed into non-volatile memory, accompanied by a **map file** showing exactly where every function and object landed.
+
+### The Translation Unit
+The unit of compilation in C is the **translation unit**: one `.c` file after the preprocessor has finished with it, headers and all. The compiler sees exactly one at a time and knows nothing of the others, which explains nearly everything about how C projects are organized.
+
+Because of that isolation, a call to a function defined elsewhere is compiled as an unresolved reference, and it is the linker that eventually connects it. A declaration is how you promise the compiler that the definition exists somewhere; get the declaration wrong and the compiler cannot tell, because it has no access to the definition to compare against. This is precisely what headers exist to prevent: both the caller and the definition include the same declaration, so any mismatch becomes a compile error rather than a runtime mystery.
+
+### Declarations vs. Definitions Across Files
+<!-- STUB: The header/source discipline in practice. What belongs in a header
+     (declarations, types, inline functions, macros) vs. a .c file (definitions).
+     Tentative definitions and the historical "common symbol" behavior, which
+     -fno-common now rejects by default. Link errors and how to read them:
+     "undefined reference" vs. "multiple definition", and what each tells you. -->
+
+### Compiler Attributes
+::: {.subheading}
+`__attribute__((...))`
+:::
+
+`__attribute__` is **not** a preprocessor directive. It is a compiler extension, originating in GCC and supported by Clang and most vendor toolchains, that attaches metadata to a declaration for the *compiler* to act on. The preprocessor passes it through untouched.
+
+[Declaring Attributes of Functions](https://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html){target="_blank" rel="noopener noreferrer"}:
 
 > ...you can use function attributes to specify certain function properties that may help the compiler optimize calls or check code more carefully for correctness. For example, you can use attributes to specify that a function never returns (noreturn), returns a value depending only on the values of its arguments (const), or has printf-style arguments (format).
->
-> You can also use attributes to control memory placement, code generation options or call/return conventions within the function being annotated. Many of these attributes are target-specific. For example, many targets support attributes for defining interrupt handler functions, which typically must follow special register usage and return conventions. Such attributes are described in the subsection for each target. However, a considerable number of attributes are supported by most, if not all targets. Those are described in the [Common Function Attributes](https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html){target="_blank" rel="noopener noreferrer"} section.
 
-##### Syntax
-The double parentheses are intentional and distinguish attributes from function calls:
+The doubled parentheses are part of the syntax, distinguishing an attribute from a function call:
 
 ```c
 __attribute__((attribute-list))
 ```
 
-##### Common Attributes
+A few that earn their keep in ordinary hosted code:
+
+| Attribute            | Purpose                                                          |
+|:---------------------|:------------------------------------------------------------------|
+| `noreturn`           | Function never returns; improves diagnostics and codegen.          |
+| `format(printf, m, n)` | Type-check a wrapper's format string against its arguments.      |
+| `warn_unused_result` | Warn when a caller ignores the return value.                       |
+| `deprecated("msg")`  | Warn at each use, with a migration note.                           |
+| `aligned(N)`         | Force an object's alignment.                                       |
+| `packed`             | Remove struct padding. Slows access; can fault on strict targets.  |
+
+The `format` attribute is the underrated one: it makes a `printf` wrapper as type-safe as `printf` itself.
+
+```c
+__attribute__((format(printf, 2, 3)))
+void log_message(LogLevel_t level, const char *fmt, ...);
+```
+
+C23 finally standardizes an attribute syntax of its own, `[[noreturn]]` and `[[deprecated]]`, borrowed from C++.
+
+::: {.callout-note title="Mnemonic: no hash, not preprocessor"}
+Preprocessor directives start with `#`. `__attribute__` does not, so it is not a preprocessor feature; it is a note from you to the compiler saying "treat this declaration specially." Attributes describing target-specific memory placement and interrupt handlers are covered in the Applied DSP notes.
+:::
+
+### Optimization Levels
+Optimization lets the compiler restructure code for speed or size, at the cost of build time and debuggability.
+
+- `-O0`: no optimization. Code flow matches source lines exactly, which is what you want under a debugger.
+- `-O1`: modest optimization, still reasonably debuggable.
+- `-O2`: the usual release setting; aggressive but standard-conforming.
+- `-O3`: adds aggressive inlining and vectorization. Not always faster; measure.
+- `-Os`: optimize for size, which matters when program memory is the binding constraint.
+- `-Og`: optimize but preserve debuggability. The right default during development.
+
+::: {.callout-warning title="Optimization exposes undefined behavior"}
+A bug that hides at `-O0` and appears at `-O2` is almost always [undefined behavior](#undefined-behavior) rather than a compiler bug. The optimizer assumes UB never happens and transforms code on that basis, so a latent violation becomes a visible failure only once optimization is enabled. Build with `-Wall -Wextra`, and run the sanitizers (`-fsanitize=address,undefined`) before blaming the compiler.
+:::
+
+#### The `volatile` Keyword
+Optimization is also the context in which the third [type qualifier](#type-qualifiers) finally makes sense. Every transformation above rests on an assumption: that the compiler can see every way a value might change. When that assumption is false, the optimizer will happily produce a program that is faster and wrong.
+
+`volatile` withdraws the assumption. It tells the compiler that an object may change outside the control of the program's visible flow, so every read and write appearing in the source must actually occur in the object code, in the order written. The optimizer may no longer cache the value in a register, hoist a load out of a loop, or delete a store it believes no one observes.
+
+```c
+// Without volatile, the compiler may load *status once, hoist it out of the
+// loop, and generate an infinite loop that never re-reads the address.
+volatile uint16_t *status = (volatile uint16_t *)0xFF00;
+while (*status == 0) { /* wait for the hardware to set the flag */ }
+```
+
+The cast is required: assigning a bare integer to a pointer is a constraint violation that modern compilers reject outright. Note also the fixed-width `uint16_t` rather than `int`, since a hardware register has an exact width.
+
+Three situations genuinely need `volatile`: memory-mapped hardware registers, variables shared between an interrupt handler and the main flow, and local variables that must survive a `longjmp`. Note also that `const` and `volatile` are not opposites and can coexist. `const volatile` describes a read-only hardware register: your code must not write it, yet the hardware may change it underneath you.
+
+::: {.callout-warning title="`volatile` is not an atomicity or threading primitive"}
+`volatile` guarantees that accesses happen, and that they are not reordered *with respect to other volatile accesses*. It guarantees nothing about atomicity, and nothing about ordering relative to ordinary memory operations on other cores. A `volatile` increment is still a read-modify-write that an interrupt can tear in the middle. For concurrency, use C11's `<stdatomic.h>` or the platform's synchronization primitives. C++ makes the same point rather more loudly, having deprecated most compound `volatile` operations in C++20.
+:::
+
+### The Toolchain
+<!-- STUB: The pieces and their names: cc/gcc/clang as drivers, cpp, as, ld,
+     ar for static libraries, plus the inspection tools (nm, objdump, readelf,
+     size, strings). Common flags worth knowing: -c, -o, -I, -L, -l, -D, -g,
+     -Wall -Wextra -Werror, -std=. Static vs. dynamic linking and where each
+     matters. Cross-reference make.qmd for orchestration and cpp.qmd's
+     cross-compilation section for the bare-metal variant. -->
+
+Build orchestration itself belongs to a separate tool. Make tracks which outputs depend on which inputs and rebuilds only what changed, and it gets full treatment in [the Makefile chapter](make.qmd).
+
+## Undefined Behavior and Common Pitfalls {#undefined-behavior}
+C gives you enormous power and freedom, and with it the responsibility to avoid a catalogue of subtle bugs. Most of what follows traces back to one root cause, so it is worth naming that first.
+
+### Undefined Behavior
 ::: {.subheading}
-For dsPIC Embedded Systems
+The worst kind of bug
 :::
 
-| Attribute          | Purpose                                                 | Example                                                 |
-|:-------------------|:--------------------------------------------------------|---------------------------------------------------------|
-| `space(dma)`       | Place variable in DMA-accessible RAM                    | `__attribute__((space(dma))) int16_t buf[128];`         |
-| `interrupt`        | Function is an ISR (generates proper prologue/epilogue) | `__attribute__((interrupt)) void _ADC1Interrupt(void);` |
-| `aligned(N)`       | Align memory to N-byte boundary (required for DMA)      | `__attribute__((aligned(128))) int16_t buffer[64];`     |
-| `section(".name")` | Place code/data in specific memory section              | `__attribute__((section(".boot"))) void boot(void);`    |
-| `noreturn`         | Function never returns (optimization hint)              | `__attribute__((noreturn)) void fatal_error(void);`     |
+Some operations have **undefined behavior**: the standard places no requirements whatsoever on what happens. The program might work, crash, corrupt data silently, or behave differently under a different optimization level. Crucially, UB is not "the machine does whatever is natural." The compiler is entitled to *assume* undefined behavior never occurs and to optimize on that assumption, which means a single UB violation can delete a bounds check hundreds of lines away.
 
-##### Memory placement example
-```c
-// Place buffer in DMA-accessible RAM at a 128-byte aligned address
-__attribute__((space(dma), aligned(128)))
-int16_t audio_buffer[64];
+Common sources:
 
-// Without the attribute, the compiler places this in regular RAM
-int16_t regular_buffer[64];  // May not be accessible by DMA!
-```
+- **Signed integer overflow.** `INT_MAX + 1` is undefined. Unsigned overflow, by contrast, is well defined and wraps.
+- **Null pointer dereference.** `*ptr` where `ptr == NULL`.
+- **Use after free**, and dereferencing any dangling pointer.
+- **Out-of-bounds access.** `arr[100]` where `arr` has 50 elements.
+- **Reading an uninitialized variable.**
+- **Strict aliasing violations.** Accessing an object through a pointer to an incompatible type.
+- **Modifying a string literal.**
+- **Shifting by more than the operand's width**, or shifting a negative value left.
 
-##### Interrupt handler example
-```c
-// Tells compiler to generate interrupt-safe entry/exit code
-// - Use special interrupt return instruction (RETFIE)
-// - Only save necessary registers (not all of them)
-// - Disable interrupts during critical sections
-void __attribute__((interrupt, auto_psv)) _T1Interrupt(void) {
-    // ISR code here
-    IFS0bits.T1IF = 0;  // Clear interrupt flag
-}
-```
-
-##### Macros vs. Attributes
-::: {.subheading}
-Key Difference
+::: {.callout-warning title="The optimizer is not being stupid"}
+When a program works at `-O0` and breaks at `-O2`, the instinct is to blame the compiler. It is nearly always UB. The optimizer reasoned from an assumption your code violated, and the result is a transformation that looks insane and is entirely legal. Build with `-Wall -Wextra` and run `-fsanitize=undefined`; UBSan catches most of the list above at run time and prints exactly what was violated.
 :::
 
-```c
-// ===== MACRO (Preprocessor) =====
-#define DMA_BUF __attribute__((space(dma)))
-DMA_BUF int16_t buffer[128];
-
-// After PREPROCESSOR (text replacement occurs):
-__attribute__((space(dma))) int16_t buffer[128];
-
-// ===== ATTRIBUTE (Compiler) =====
-__attribute__((space(dma))) int16_t buffer[128];
-// Preprocessor IGNORES this line
-// COMPILER reads: "Place this buffer in DMA memory region"
-```
-
-##### Why this Matters for DSP
-- **`space(dma)`**: DMA controller can only access specific RAM regions. Without this attribute, your buffer might be placed where DMA cannot reach, causing silent failures.
-
-- **`aligned(N)`**: Many DSP operations and DMA transfers require data aligned to specific boundaries. Misaligned data causes performance penalties or hardware faults.
-
-- **`interrupt`**: Generates optimized entry/exit code for ISRs, saving precious cycles; critical for real-time signal processing.
-
-::: {.callout-note title="Mnemonic: No Hash, Not Preprocessor"}
-- Preprocessor directives start with `#`: `#define`, `#include`, `#pragma`
-- `__attribute__` has no `#`, so it's NOT a preprocessor feature
-- It's a note from you to the compiler: "treat this declaration specially"
-:::
-
-### Make
-**Make** is a build automation tool that builds programs and libraries by reading a file, conventionally named `Makefile`, that describes which outputs depend on which inputs and how to produce them.
-
-It matters here because it tracks dependencies. If you modify one `.c` file in a project with 50 of them, Make recompiles that one file and re-links, rather than rebuilding everything. A rule states a target, the prerequisites it is built from, and the recipe that produces it:
-
-```makefile
-processor: upper.o
-	$(CC) $(CFLAGS) -o processor upper.o
-```
-
-That is the whole model, and for a small C project it is nearly all you need. Make is a language in its own right, though, with variables, pattern rules, functions, and an evaluation order that surprises people. It gets full treatment in the [Makefile chapter](make.qmd), including the auto-generated header dependencies that a correct C build depends on.
-
-## Optimization
-Optimization allows the compiler to adjust the code to improve performance or reduce size, often at the expense of compilation time and debuggability.
-
-### Compiler Optimization Levels
-- `-O0`: No optimization. Best for debugging as code flow matches source lines exactly.
-- `-O1`: Moderate optimization.
-- `-O2`: High optimization for speed.
-- `-Os`: Optimize for size (crucial when flash memory is limited).
-
-### The `volatile` Keyword
-In embedded C, `volatile` is perhaps the most important qualifier. It tells the compiler: "The value of this variable may change at any time, without any action being taken by the code the compiler finds nearby."
-
-This prevents the compiler from optimizing away reads/writes to:
-
-- **Hardware Registers**: A status flag might change due to an interrupt, not software flow.
-- **Global Variables**: Shared between an Interrupt Service Routine (ISR) and the main loop.
-
-```c
-// Without volatile, the compiler might replace this loop with a generic 'while(true)'
-// or remove the read entirely if it thinks the value never changes.
-volatile uint16_t *status_reg = (volatile uint16_t *)0xFF00;
-while (*status_reg == 0); // Wait for hardware flag
-```
-
-The cast is required: assigning a bare integer to a pointer is a constraint violation, and modern compilers reject it outright. Note also the fixed-width `uint16_t` rather than `int`, since a hardware register has an exact width.
-
-## Features and Libraries for DSP
-Digital Signal Processing requires specific features to handle continuous signals efficiently.
-
-### Fixed-Point Arithmetic
-While [floating-point](glossary.qmd#floating-point-numbers) is easy to use, many DSCs (Digital Signal Controllers) are optimized for [fixed-point](glossary.qmd#fixed-point-numbers) arithmetic. This represents fractional numbers using integers, trading dynamic range for speed and determinism.
-
-##### Fractional Representation
-::: {.subheading}
-1.15 Format
-:::
-
-::: {.callout-note title="Q15"}
-**Q15** (or 1.15) is a fixed-point number format where:
-
-- **1 bit** is used for the sign.
-- **15 bits** are used for the fractional part. This allows representing numbers in the range $[-1, 0.999969]$. It is widely used in 16-bit DSPs because it maps perfectly to the 16-bit integer registers.
-:::
-
-In 16-bit DSPs, we often use the **Q15** (or 1.15) format.
-
-- The 16 bits are treated as a signed integer range $[-32768, +32767]$.
-- Conceptually, we divide this integer by $2^{15}$ (32768).
-- **Range**: $-1.0$ to $\approx 0.999969$.
-- **0x8000** (-32768) represents exactly $-1.0$.
-- **0x7FFF** (32767) represents $32767/32768 \approx 0.999969$, just short of $+1.0$.
-
-The range is deliberately asymmetric: $-1.0$ is exactly representable but $+1.0$ is not. This is why multiplying two Q15 values is safe (the only product that could reach $+1.0$ is $-1.0 \times -1.0$, the single case that saturates) and why DSP hardware provides saturation to handle it.
-
-**Arithmetic:** When you multiply two Q15 numbers, the result is conceptually Q30 (since $2^{-15} \times 2^{-15} = 2^{-30}$). To store this back into a 16-bit Q15 variable, you must shift the result to the right by 15 bits.
-
-$$
-Result_{Q15} = (A_{Q15} \times B_{Q15}) >> 15
-$$
-
-DSP hardware often does this shift (and handles saturation so overflows don't wrap around to negative numbers) automatically in a single cycle.
-
-### DSP Extensions and Intrinsics
-Standard C does not natively support specialized DSP hardware instructions like [MAC](./glossary.qmd#mac) (Multiply-and-Accumulate) with saturation. To bridge this, compilers provide **intrinsics**: function-like commands that map directly to assembly instructions.
-
-```c
-// Example of a built-in intrinsic for dsPIC (XC16)
-// Performs a 16x16 multiply and accumulates to an accumulator
-__builtin_mac(a, b, &accumulator, ...);
-```
-
-### Circular Buffers
-DSP algorithms (like FIR filters) often require sliding windows over data. **Circular buffers** allow the pointer to wrap around automatically when it reaches the end of the buffer, often supported by hardware modulo addressing.
-
-### The DSP Library
-Microchip provides a DSP library (often included with the compiler) containing optimized functions for:
-
-- Vector operations (add, subtract, dot product)
-- Filters (FIR, IIR)
-- Transforms (FFT)
-
-Using these pre-validated libraries is often more efficient than writing raw C implementations.
-
-## Common Pitfalls and Best Practices
-C gives you enormous power and freedom, but with that comes the responsibility to avoid subtle bugs. Here are the most common traps that snare even experienced programmers.
-
-### 1. Integer Promotion and Implicit Conversions
-C's type promotion rules are surprising. Before arithmetic, any integer type narrower than `int` is promoted to `int` (the *integer promotions*). The arithmetic therefore happens at `int` width, not at the operands' declared width, and whether that saves you or burns you depends entirely on how wide `int` is on your target.
+### Integer Promotion and Implicit Conversions
+Before arithmetic, any integer type narrower than `int` is promoted to `int` (the *integer promotions*). The arithmetic therefore happens at `int` width, not at the operands' declared width, and whether that saves you or burns you depends entirely on how wide `int` is on the target.
 
 ```c
 int16_t a = 30000;
 int16_t b = 30000;
 
 int32_t result = a + b;
-// Desktop (32-bit int): a and b promote to int, sum is 60000, correct.
-// dsPIC   (16-bit int): a and b promote to int, which is only 16 bits,
-//                       so the sum overflows to -5536 before assignment.
+// 32-bit int: a and b promote to int, sum is 60000, correct.
+// 16-bit int: promotion buys no headroom, so the sum overflows before assignment.
 ```
-
-The bug is not that the compiler used the declared 16-bit type; it is that `int` itself is 16 bits on the dsPIC, so promotion buys no extra headroom. Signed overflow is undefined behavior, so the `-5536` is what typically happens, not what is guaranteed.
 
 Casting one operand to a type at least as wide as the result forces the arithmetic to happen at that width:
 
 ```c
-int32_t result = (int32_t)a + b;   // b converts to int32_t; addition is 32-bit everywhere
+int32_t result = (int32_t)a + b;   // b converts too; the addition is 32-bit everywhere
 ```
 
-**Rule of thumb:** When arithmetic on narrow types might overflow, cast one operand to the desired result type. Do not assume promotion to `int` gives you room to spare; on a 16-bit target it does not.
+The related trap is **signed/unsigned comparison**. When one operand is signed and the other unsigned of the same rank, the signed value converts to unsigned, so `-1 < 1u` is *false*. This is why `for (size_t i = n - 1; i >= 0; i--)` never terminates: an unsigned value is always `>= 0`. Enable `-Wsign-compare` (included in `-Wextra`).
 
-### 2. Operator Precedence Surprises
+### Operator Precedence Surprises
 ```c
-// Common mistake
-if (flags & MASK == ENABLED)  // Wrong! Parsed as: flags & (MASK == ENABLED)
-
-// Correct
-if ((flags & MASK) == ENABLED)  // Mask first, then compare
+if (flags & MASK == ENABLED)     // parsed as: flags & (MASK == ENABLED)
+if ((flags & MASK) == ENABLED)   // what you meant
 ```
 
-**Bitwise operators** (`&`, `|`, `^`) have lower precedence than comparison operators (`==`, `!=`). Always use parentheses.
+**Bitwise operators bind more loosely than comparison operators**, a decision Ritchie later called a mistake, retained because code already depended on it. Parenthesize.
 
 ::: {.highlight}
 | Precedence | Operator      | Description                                       | Associativity |
@@ -1613,673 +1251,120 @@ if ((flags & MASK) == ENABLED)  // Mask first, then compare
 | 15         | `,`           | comma (expression separator)                      | Left-to-Right |
 :::
 
-### 3. Assignment vs. Comparison
+### Assignment vs. Comparison
 ```c
-if (x = 5)  // Oops! Assignment, not comparison
-            // Always true (5 is non-zero)
-
-if (x == 5) // Correct
+if (x = 5)   // assignment, not comparison; always true
+if (x == 5)  // comparison
 ```
 
-**Defensive programming:** Some teams write constants first (Yoda conditions):
+Modern compilers warn about this when the assignment is not parenthesized, so `-Wall` catches most instances. Where an assignment in a condition is genuinely intended, wrap it in extra parentheses to say so: `while ((c = getchar()) != EOF)`.
 
-```c
-if (5 == x)  // If you accidentally type =, compiler error!
-```
-
-### 4. Uninitialized Variables
-```c
-int16_t sample;  // Garbage value!
-process_sample(sample);  // Undefined behavior
-
-int16_t sample = 0;  // Always initialize
-```
-
-Global and static variables are automatically zero-initialized. Local variables are not.
-
-### 5. Buffer Overruns
+### Buffer Overruns
 The classic C vulnerability:
 
 ```c
 char buffer[10];
-strcpy(buffer, "This string is way too long");  // Buffer overflow!
+strcpy(buffer, "This string is way too long");   // overruns the buffer
 
-// No overflow, but silently truncates to "This stri"
+// Bounded, but silently truncates, and may not terminate
 strncpy(buffer, "This string is way too long", sizeof(buffer) - 1);
-buffer[sizeof(buffer) - 1] = '\0';  // strncpy may not terminate: do it yourself
+buffer[sizeof(buffer) - 1] = '\0';
 ```
 
-Or better yet, use `snprintf`:
+`snprintf` is usually the better tool:
 
 ```c
-snprintf(buffer, sizeof(buffer), "Value: %d", x);
+int n = snprintf(buffer, sizeof(buffer), "Value: %d", x);
+if (n < 0 || (size_t)n >= sizeof(buffer)) {
+    /* output was truncated */
+}
 ```
 
 ::: {.callout-warning title="Truncation is a bug too"}
-`strncpy` stops the overflow but replaces it with a quieter failure: the string is cut short and nothing tells you. If the value mattered (a path, a device identifier, a command), you now carry corrupted data forward instead of crashing. `snprintf` at least reports it: it returns the length the output *would* have needed, so storing that return in an `int n` and checking `if (n >= (int)sizeof(buffer))` detects truncation. Treat a bound as something to check, not merely something to impose.
+`strncpy` stops the overflow but replaces it with a quieter failure: the string is cut short and nothing tells you. If the value mattered (a path, a device identifier, a command), you now carry corrupted data forward instead of crashing. `snprintf` at least reports it: it returns the length the output *would* have needed, so comparing that against the buffer size detects truncation. Treat a bound as something to check, not merely something to impose.
 :::
 
-### 6. Off-by-One Errors
+### Off-by-One Errors
 ```c
 int array[10];
-for(int i = 0; i <= 10; i++) {  // Wrong! Accesses array[10] which doesn't exist
-    array[i] = 0;
-}
-
-// Correct
-for(int i = 0; i < 10; i++) {
+for (int i = 0; i <= 10; i++) {   // writes array[10]: out of bounds
     array[i] = 0;
 }
 ```
 
-**Rule:** A loop over `n` elements runs while the index is `< n`, never `<= n`. Counting down, start at `n - 1` and run while the index is `>= 0`:
+A loop over `n` elements runs while the index is `< n`, never `<= n`. Counting down, start at `n - 1` and run while the index is `>= 0`, and keep the index *signed* so the termination test can actually fail.
 
+### Pointer Arithmetic and `free`
 ```c
-for (int i = n - 1; i >= 0; i--) { /* ... */ }
+int16_t *p = malloc(10 * sizeof *p);
+p++;              // now points at the second element
+free(p);          // undefined behavior: not the pointer malloc returned
 ```
 
-Beware the unsigned version of that descending loop: if `i` is `unsigned`, `i >= 0` is always true and the loop never ends.
+`free` must receive exactly the pointer the allocator returned. Keep the original and iterate with a separate cursor.
 
-### 7. Pointer Arithmetic Gone Wrong
+### Modifying String Literals
 ```c
-int16_t *ptr = malloc(10 * sizeof(int16_t));
-ptr++;  // Now points to second element
+char *str = "Hello";   // points into read-only storage
+str[0] = 'h';          // undefined behavior; typically a segfault
 
-free(ptr);  // WRONG! Must free the original pointer
+char arr[] = "Hello";  // a modifiable copy on the stack
+arr[0] = 'h';          // fine
 ```
 
-**Rule:** Never `free()` a pointer that has been modified. Keep the original pointer.
+Declare pointers to literals as `const char *` and let the compiler catch the write.
 
-### 8. Modifying String Literals
+### Forgetting `break` in `switch`
 ```c
-char *str = "Hello";  // String literal in read-only memory
-str[0] = 'h';         // Undefined behavior! Might crash
-
-// Correct: Array on stack (modifiable)
-char str[] = "Hello";
-str[0] = 'h';  // OK
-```
-
-### 9. Forgetting `break` in `switch` Statements
-```c
-switch(state) {
+switch (state) {
     case STATE_IDLE:
         init_processing();
-        // Oops! Falls through to STATE_ACTIVE
+        // falls through to STATE_ACTIVE, almost certainly by accident
     case STATE_ACTIVE:
         process_data();
         break;
 }
 ```
 
-**Fallthrough is rarely intentional.** Always use `break` unless you explicitly want fallthrough (and comment it!):
+Deliberate fall-through should be announced, both for readers and for `-Wimplicit-fallthrough`:
 
 ```c
 case STATE_WARNING:
     flash_led();
-    // FALLTHROUGH  (intentional)
+    /* fallthrough */
 case STATE_ERROR:
     halt_system();
     break;
 ```
 
-### 10. Macro Side Effects
-```c
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-
-int x = 5;
-int result = MAX(x++, 10);  // x incremented TWICE if x > 10!
-```
-
-**Macros expand textually.** If the argument has side effects, they happen multiple times.
-
-**Solution:** Use inline functions:
-
-```c
-static inline int max(int a, int b) {
-    return (a > b) ? a : b;
-}
-```
-
-### 11. Undefined Behavior
-::: {.subheading}
-The Worst Kind of Bug
-:::
-
-Some operations have **undefined behavior**: the C standard places no requirements on what happens. The program might work, crash, or corrupt data silently.
-
-##### Common sources
-- Signed integer overflow: `INT_MAX + 1` is undefined (use unsigned for modulo arithmetic)
-- Null pointer dereference: `*ptr` where `ptr == NULL`
-- Accessing freed memory: "use after free"
-- Array out of bounds: `arr[100]` when `arr` has size 50
-- Uninitialized variables: Reading before writing
-- Violating strict aliasing: Casting pointer types incorrectly
-
-::: {.callout-warning title="Stupid Optimizer"}
-The optimizer assumes undefined behavior never happens and optimizes accordingly, potentially causing bizarre bugs in release builds that don't appear in debug builds.
-:::
-
-## Interrupts
-Interrupts are the mechanism by which hardware events can pause the normal flow of your program, execute a short handler function, and then resume where it left off. In embedded DSP systems, interrupts are essential, they allow your processor to respond to time-critical events (ADC samples ready, timer ticks, button presses) without constantly polling hardware.
-
-### What Are Interrupts?
-Think of interrupts as hardware-triggered function calls. When an event occurs (e.g., a timer expires), the processor:
-
-1. **Pauses** the currently executing code (saves context)
-2. **Jumps** to a special function called an **Interrupt Service Routine (ISR)**
-3. **Executes** the ISR
-4. **Returns** to where it left off (restores context)
-
-All of this happens automatically in hardware, you just write the ISR.
-
-##### Why use interrupts instead of polling?
-```c
-// Polling (wasteful)
-while(1) {
-    if(TIMER_FLAG) {
-        do_something();
-        TIMER_FLAG = 0;
-    }
-    // CPU sits here burning power, checking constantly
-}
-
-// Interrupt-driven (efficient)
-void __attribute__((interrupt)) _T1Interrupt(void) {
-    do_something();
-    IFS0bits.T1IF = 0;  // Clear flag
-}
-
-// Main can do other work or sleep
-while(1) {
-    do_other_work();  // ISR interrupts this when needed
-}
-```
-
-### Anatomy of an ISR
-::: {.subheading}
-dsPIC
-:::
-
-Here's a complete timer interrupt example for the dsPIC33F:
-
-```c
-// Global counter incremented by ISR
-volatile unsigned int timer1Count = 0;
-
-// Timer 1 ISR - called every time Timer1 expires
-void __attribute__((interrupt, auto_psv)) _T1Interrupt(void)
-{
-    timer1Count++;           // Increment counter
-    IFS0bits.T1IF = 0;       // Clear interrupt flag (REQUIRED!)
-
-    // Keep ISRs SHORT! No printf, no delays, no heavy math.
-}
-```
-
-##### Key elements
-1. **`__attribute__((interrupt, auto_psv))`**: Tells compiler this is an ISR
-	- Automatically saves/restores registers
-	- `auto_psv` handles program space visibility for dsPIC
-
-2. **ISR name**: Must match the vector name (e.g., `_T1Interrupt` for Timer 1)
-	- See device datasheet for all vector names
-	- Common ones: `_T1Interrupt`, `_T2Interrupt`, `_ADC1Interrupt`, `_INT0Interrupt`
-
-3. **Clear the interrupt flag**: `IFS0bits.T1IF = 0;`
-	- If you forget this, the ISR will immediately trigger again!
-	- Each interrupt source has a flag bit
-
-4. **Returns `void`, takes no parameters**: ISRs are invoked by hardware, not by your code, so there is no caller to pass arguments or receive a result
-
-### Communicating Between ISR and Main
-ISRs and main code run asynchronously, the ISR can fire at any moment. To share data safely:
-
-#### 1. Use Global Variables
-```c
-// In timer.c
-volatile unsigned int timer1Count = 0;  // Modified by ISR
-
-void __attribute__((interrupt, auto_psv)) _T1Interrupt(void) {
-    timer1Count++;
-    IFS0bits.T1IF = 0;
-}
-```
-
-```c
-// In main.c
-extern volatile unsigned int timer1Count;  // Access the same variable
-
-int main(void) {
-    timer1Init(15625);  // Start timer interrupts
-
-    while(1) {
-        if(timer1Count >= 10) {  // Check flag set by ISR
-            timer1Count = 0;
-            toggle_led();
-        }
-    }
-}
-```
-
-##### Why `volatile`?
-The `volatile` keyword tells the compiler: "This variable can change at any time (by an ISR), so always read it from memory, never cache it in a register."
-
-Without `volatile`, the compiler might optimize:
-
-```c
-while(timer1Count < 10);  // Compiler sees: "timer1Count never changes in this loop"
-                          // Optimizes to: while(1);  (infinite loop!)
-```
-
-With `volatile`:
-
-```c
-volatile unsigned int timer1Count;
-while(timer1Count < 10);  // Compiler: "Must check memory every time"
-```
-
-**Rule of thumb:** Any variable accessed by both ISR and main must be `volatile`.
-
-#### 2. Flag-Based Pattern
-A cleaner pattern for event-driven code:
-
-```c
-volatile uint8_t button_pressed = 0;  // Flag set by ISR
-
-// Button press ISR
-void __attribute__((interrupt, auto_psv)) _INT0Interrupt(void) {
-    button_pressed = 1;  // Set flag
-    IFS0bits.INT0IF = 0;
-}
-
-// Main loop
-int main(void) {
-    init_button_interrupt();
-
-    while(1) {
-        if(button_pressed) {
-            button_pressed = 0;     // Clear flag
-            handle_button_event();  // Do heavy processing here
-        }
-
-        // Do other work...
-    }
-}
-```
-
-**Philosophy:** ISR does minimal work (set a flag), main loop does the heavy lifting.
-
-#### 3. Atomic Operations
-If you need to read/write multi-byte variables that have a larger bit width than the CPU's word size (16 bits for dsPIC), you need protection for atomic access. One way is to disable interrupts temporarily:
-
-```c
-volatile uint32_t sample_count = 0;  // Modified by ISR
-
-// Reading in main (without protection)
-uint32_t count = sample_count;  // DANGER! Could be interrupted mid-read
-                                // (16-bit CPU reads 32-bit value in 2 operations)
-
-// Safe version
-uint32_t get_sample_count(void) {
-   uint32_t count;
-   uint16_t saved_ipl = SRbits.IPL;  // Save current interrupt priority
-   SRbits.IPL = 7;                   // Disable all interrupts (priority 7)
-   count = sample_count;             // Now atomic
-   SRbits.IPL = saved_ipl;           // Restore interrupts
-   return count;
-}
-```
-
-**Note:** For single-byte or single-word (16-bit on dsPIC) variables, reads/writes are inherently atomic: no protection needed.
-
-### Common Interrupt Patterns
-#### Timer-Based Real-Time Clock
-```c
-// Create a millisecond timebase
-volatile uint32_t millis = 0;
-
-void __attribute__((interrupt, auto_psv)) _T1Interrupt(void) {
-    millis++;  // Increments every 1ms
-    IFS0bits.T1IF = 0;
-}
-
-// Use in main
-void delay_ms(uint32_t ms) {
-    uint32_t start = millis;
-    while((millis - start) < ms);  // Wait
-}
-
-int main(void) {
-    timer1_init_1ms();  // Configure for 1ms ticks
-
-    while(1) {
-        LED = 1;
-        delay_ms(500);
-        LED = 0;
-        delay_ms(500);
-    }
-}
-```
-
-#### ADC Data Acquisition
-```c
-#define BUFFER_SIZE 512
-volatile int16_t adc_buffer[BUFFER_SIZE];
-volatile uint16_t buffer_index = 0;
-volatile uint8_t buffer_ready = 0;
-
-void __attribute__((interrupt, auto_psv)) _ADC1Interrupt(void) {
-    adc_buffer[buffer_index++] = ADC1BUF0;  // Read sample
-
-    if(buffer_index >= BUFFER_SIZE) {
-        buffer_index = 0;
-        buffer_ready = 1;  // Signal main: buffer full
-    }
-
-    IFS0bits.AD1IF = 0;
-}
-
-int main(void) {
-    adc_init();
-
-    while(1) {
-        if(buffer_ready) {
-            buffer_ready = 0;
-            process_buffer(adc_buffer, BUFFER_SIZE);  // FFT, filter, etc.
-        }
-    }
-}
-```
-
-### Common Pitfalls
-#### 1. Forgetting `volatile`
-```c
-uint16_t flag = 0;  // WRONG! Compiler may optimize away
-
-void ISR(void) { flag = 1; }
-
-while(!flag);  // May loop forever if compiler caches flag in register
-```
-
-**Fix:** `volatile uint16_t flag = 0;`
-
-#### 2. ISRs That Are Too Long
-```c
-void __attribute__((interrupt)) _T1Interrupt(void) {
-    printf("Timer fired\n");  // VERY BAD! printf is slow
-    delay_ms(100);            // TERRIBLE! Blocks other interrupts
-    compute_fft();            // NO! Do this in main
-    IFS0bits.T1IF = 0;
-}
-```
-
-**ISR golden rule:** Get in, do minimal work, get out. Typically < 10-20 µs.
-
-**Good ISR:** Set flags, read/write hardware registers, increment counters.
-
-**Bad ISR:** Heavy computation, [floating-point](glossary.qmd#floating-point-numbers) math, I/O operations, long delays.
-
-#### 3. Not Clearing Interrupt Flags
-```c
-void __attribute__((interrupt)) _T1Interrupt(void) {
-    do_something();
-    // Forgot: IFS0bits.T1IF = 0;
-}
-// ISR will re-trigger immediately, hanging your system!
-```
-
-#### 4. Re-entrancy Issues
-An ISR can interrupt itself if you nest interrupts. Generally, keep default behavior (ISRs don't interrupt each other) unless you have a good reason.
-
-#### 5. Stack Overflow
-Each interrupt uses stack space. Too many nested interrupts or large local variables in ISRs can overflow the stack.
-
-**Best practice:** Use global or static variables in ISRs, not large local arrays.
-
-### Setting Up Interrupts
-::: {.subheading}
-dsPIC Example
-:::
-
-```c
-void timer1_init(uint16_t period) {
-    // Configure Timer1
-    T1CON = 0x0000;              // Stop timer, clear settings
-    TMR1 = 0;                    // Clear counter
-    PR1 = period;                // Set period
-
-    // Configure interrupt
-    IPC0bits.T1IP = 4;           // Set priority (1-7, 0=disabled)
-    IFS0bits.T1IF = 0;           // Clear flag
-    IEC0bits.T1IE = 1;           // Enable interrupt
-
-    // Start timer
-    T1CONbits.TON = 1;
-}
-```
-
-##### Key steps
-1. Configure the peripheral (timer, ADC, etc.)
-2. Set interrupt priority (`IPCx` registers)
-3. Clear interrupt flag (`IFSx` registers)
-4. Enable interrupt (`IECx` registers)
-
-### Quick Reference
-| Task                           | Code                                                           |
-|:-------------------------------|:---------------------------------------------------------------|
-| Declare ISR                    | `void __attribute__((interrupt, auto_psv)) _T1Interrupt(void)` |
-| Shared variable                | `volatile uint16_t my_var;`                                    |
-| Clear flag                     | `IFS0bits.T1IF = 0;`                                           |
-| Enable interrupt               | `IEC0bits.T1IE = 1;`                                           |
-| Disable interrupts temporarily | `__builtin_disi(n);` where n = instruction cycles              |
-| Check flag in main             | `if(IFS0bits.T1IF) { ... }` (usually use a variable instead)   |
-
-### Real-World Example
-::: {.subheading}
-LED Blink with Timer
-:::
-
-Putting it all together, the example from your code:
-
-```c
-// timer.c
-volatile unsigned int timer1Count = 0;
-
-void __attribute__((interrupt, auto_psv)) _T1Interrupt(void) {
-    timer1Count++;
-    IFS0bits.T1IF = 0;
-}
-
-void timer1Init(uint16_t period) {
-    T1CON = 0x0030;      // Prescaler 1:256
-    TMR1 = 0;
-    PR1 = period;
-    IPC0bits.T1IP = 4;
-    IFS0bits.T1IF = 0;
-    IEC0bits.T1IE = 1;
-    T1CONbits.TON = 1;
-}
-```
-
-```c
-// main.c
-#include "timer.h"
-
-extern volatile unsigned int timer1Count;
-
-int main(void) {
-    init_hardware();
-
-    // Timer interrupts every 100ms
-    timer1Init(15625);  // (40MHz / 4) / 256 / 15625 = 10Hz
-
-    while(1) {
-        RED_LED = 1;
-        while(timer1Count < 10);  // Wait 1 second (10 × 100ms)
-        timer1Count = 0;
-
-        RED_LED = 0;
-        while(timer1Count < 10);
-        timer1Count = 0;
-    }
-}
-```
-
-##### How it works
-- Timer 1 fires every 100ms, incrementing `timer1Count` in the ISR
-- Main loop waits for counter to reach 10 (1 second), then resets it
-- LED blinks on/off with 1 second periods
-
-This is exactly the pattern you encountered; now you know what's happening behind the scenes!
-
-## Embedded C Idioms
-### State Machines
-Many embedded systems are best modeled as **finite state machines**:
-
-```c
-typedef enum {
-    STATE_IDLE,
-    STATE_ACQUIRING,
-    STATE_PROCESSING,
-    STATE_ERROR
-} State_t;
-
-static State_t current_state = STATE_IDLE;
-
-void state_machine_update(void) {
-    switch(current_state) {
-        case STATE_IDLE:
-            if(start_button_pressed()) {
-                current_state = STATE_ACQUIRING;
-                init_acquisition();
-            }
-            break;
-
-        case STATE_ACQUIRING:
-            if(buffer_full()) {
-                current_state = STATE_PROCESSING;
-            } else if(timeout_occurred()) {
-                current_state = STATE_ERROR;
-            }
-            break;
-
-        case STATE_PROCESSING:
-            process_buffer();
-            current_state = STATE_IDLE;
-            break;
-
-        case STATE_ERROR:
-            handle_error();
-            current_state = STATE_IDLE;
-            break;
-    }
-}
-```
-
-##### Benefits
-- Clear, maintainable code
-- Easy to visualize as a diagram
-- Deterministic behavior
-
-### Ring Buffers
-::: {.subheading}
-Circular Buffers
-:::
-
-Essential for continuous data streams (audio, serial data):
-
-```c
-#define BUFFER_SIZE 256  // Must be power of 2 for fast modulo
-
-typedef struct {
-    int16_t buffer[BUFFER_SIZE];
-    volatile uint16_t head;  // Write position (ISR writes)
-    volatile uint16_t tail;  // Read position (main reads)
-} RingBuffer_t;
-
-// ISR writes
-void buffer_write(RingBuffer_t *rb, int16_t value) {
-    rb->buffer[rb->head] = value;
-    rb->head = (rb->head + 1) & (BUFFER_SIZE - 1);  // Fast modulo
-}
-
-// Main loop reads
-int16_t buffer_read(RingBuffer_t *rb) {
-    int16_t value = rb->buffer[rb->tail];
-    rb->tail = (rb->tail + 1) & (BUFFER_SIZE - 1);
-    return value;
-}
-
-// Check if data available
-int buffer_available(RingBuffer_t *rb) {
-    return (rb->head - rb->tail) & (BUFFER_SIZE - 1);
-}
-```
-
-**Why power of 2?** Modulo becomes a simple AND: `x % 256` ≡ `x & 255` (much faster).
-
-**Why `volatile`?** The ISR and main loop access these independently; the compiler must not optimize away reads.
-
-### Bit Fields for Hardware Registers
-```c
-typedef struct {
-    unsigned pin0  : 1;
-    unsigned pin1  : 1;
-    unsigned pin2  : 1;
-    unsigned       : 5;  // Reserved bits
-    unsigned mode  : 2;
-    unsigned       : 6;  // Reserved
-} ControlRegister_t;
-
-volatile ControlRegister_t *ctrl_reg = (ControlRegister_t*)0x0040;
-
-// Access individual bits
-ctrl_reg->pin0 = 1;
-ctrl_reg->mode = 2;
-```
-
-**Caveat:** Bit field layout is compiler-dependent. For portable code, use bitwise operations instead.
-
-::: {.exploration data-label="Bit Field TRISCBITS"}
-`TRISCBITS` is a *bit field* and is used to control the direction of pins on Port C: whether each pin is an input or output. This struct overlays the 16-bit TRISC hardware [register](glossary.qmd#register), giving you named access to individual bits instead of having to manually mask and shift.
-
-It's in `p33FJ256GP506.h` which is included via `xc.h` (which is the chip selector). We use it in [BlinkBlocking](https://github.com/celsasser/blinkblocking){target="_blank" rel="noopener noreferrer"}.
-
-```c
-#define TRISC TRISC
-extern volatile uint16_t TRISC __attribute__((__sfr__));
-typedef struct tagTRISCBITS {
-  uint16_t :1;
-  uint16_t TRISC1:1;
-  uint16_t TRISC2:1;
-  uint16_t :9;
-  uint16_t TRISC12:1;
-  uint16_t TRISC13:1;
-  uint16_t TRISC14:1;
-  uint16_t TRISC15:1;
-} TRISCBITS;
-extern volatile TRISCBITS TRISCbits __attribute__((__sfr__));
-```
-
-Breaking down TRISCBITS:
-
-- `uint16_t :1;` - Anonymous 1-bit field (bit 0) - reserved/unused pin
-- `uint16_t TRISC1:1;` - Named 1-bit field for pin C1 (bit 1)
-- `uint16_t TRISC2:1;` - Pin C2 (bit 2)
-- `uint16_t :9;` - Anonymous 9-bit field (bits 3-11) - pins that don't exist on Port C
-- `uint16_t TRISC12:1;` - Pins C12 (bit 12)
-- `uint16_t TRISC13:1;` - Pins C13 (bit 13)
-- `uint16_t TRISC14:1;` - Pins C14 (bit 14)
-- `uint16_t TRISC15:1;` - Pins C15 (bit 15)
-
-The TRISC [register](glossary.qmd#register) controls pin direction on Port C:
-
-- TRISCbits.TRISC1 = 0; → Pin C1 is an output
-- TRISCbits.TRISC1 = 1; → Pin C1 is an input
-:::
+### Uninitialized Variables
+Objects with static storage duration are zero-initialized before `main`. Locals are not; they hold whatever was on the stack, and reading one is undefined behavior. Initialize at the point of declaration, which C99's mixed declarations make easy.
+
+## Key Differences from C++
+<!-- STUB: Table plus prose. The reader has cpp.qmd available, so this should be
+     oriented for someone moving C -> C++ and should not duplicate cpp.qmd's
+     "Key Differences from C" table verbatim. Candidates: no classes/RAII, no
+     overloading, no templates, no exceptions, no references, void* conversion,
+     const semantics (linkage and constant expressions), union punning legality,
+     designated initializers, struct tag namespace, VLAs. -->
+
+## Key Differences from Rust
+<!-- STUB: Table plus prose. Ownership and borrowing vs. manual malloc/free,
+     Option<T> vs. NULL, Result vs. errno and sentinel returns, slices vs. the
+     pointer+length convention, traits vs. function pointers, no UB in safe Rust
+     and what unsafe actually opts into, cargo vs. make + headers. Link to
+     rust-ho.qmd for ownership and rust-in.qmd for the basics. -->
+
+## Where to Go Next
+<!-- STUB: Annotated and subsectioned, following the rust-out.qmd / cpp.qmd
+     model: Documentation and Standards; Tooling Worth Adopting Early
+     (sanitizers, valgrind, clang-tidy, cppcheck, -Wall -Wextra -Werror);
+     Books; Practice. -->
 
 ## Further Reading
-- Kernighan, B. W., & Ritchie, D. M. (1988). *The C Programming Language* (2nd ed.). Prentice Hall. (The definitive reference).
-- Microchip Technology Inc. *MPLAB XC16 C Compiler User’s Guide*. (Essential for dsPIC specifics).
-- Koopman, P. (2021). *Better Embedded System Software*. (Great for coding standards and safety).
+- Brian Kernighan and Dennis Ritchie, *The C Programming Language*, 2nd ed. (Prentice Hall, 1988).
+- Peter van der Linden, *Expert C Programming: Deep C Secrets* (Prentice Hall, 1994).
+- ISO/IEC 9899:2018, *Programming languages: C* (C17).
+- [cppreference: C language reference](https://en.cppreference.com/w/c/language){target="_blank" rel="noopener noreferrer"}
+- [C Standard Library headers](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"}
+- Dennis Ritchie, ["The Development of the C Language"](https://www.bell-labs.com/usr/dmr/www/chist.html){target="_blank" rel="noopener noreferrer"} (HOPL-II, 1993).

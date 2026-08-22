@@ -667,31 +667,102 @@ C++ and Rust solve this at the root rather than patching it. C++ [variadic templ
 Pointers are the feature that defines C. They are what let a 1972 language address hardware directly, and they are the reason so much of the language's danger is concentrated in one place.
 
 ### Pointers {#pointers}
-A **pointer** is a variable that stores the memory address of another object. Declaring one uses `*`, as does dereferencing it, which is the "declaration mirrors use" principle at work: `int *ptr` declares `ptr` such that `*ptr` is an `int`.
+A **pointer** is a variable that stores the memory address of another object. Two operators connect a value to its address: `&` takes the address of an object, and `*` dereferences an address to reach the object. Declaring a pointer also uses `*`, which is the "declaration mirrors use" principle at work: `int *ptr` declares `ptr` such that the expression `*ptr` is an `int`.
 
 ```c
-#include <stdio.h>
+int var = 10;
+int *ptr = &var;    // ptr holds the address of var
 
-int main(void) {
-    int var = 10;
-    int *ptr = &var;    // ptr holds the address of var
-    int **pptr = &ptr;  // pptr holds the address of ptr
-
-    printf("Value of var:  %d\n", var);
-    printf("Value via ptr: %d\n", *ptr);
-    printf("Value via pptr: %d\n", **pptr);
-
-    return 0;
-}
+*ptr = 20;          // writes through the pointer; var is now 20
+printf("%d\n", var);   // 20
 ```
 
-A **pointer to a pointer** is exactly what it sounds like, and it is how a function modifies a caller's *pointer* rather than the thing it points at, which is what an allocating function or a linked-list insertion needs.
+That last pair of lines is the whole idea. `ptr` is a separate object with its own address and its own storage, holding a number that happens to be where `var` lives. Dereferencing follows the number.
+
+A pointer's *type* is not decoration. Every pointer holds an address of the same width, but the type determines how many bytes a dereference reads, how those bytes are interpreted, and how arithmetic on the pointer scales. `char *` and `double *` on the same address see one byte and eight bytes respectively.
+
+A **pointer to a pointer** stores the address of another pointer:
+
+```c
+int **pptr = &ptr;   // pptr holds the address of ptr
+**pptr = 30;         // two hops: to ptr, then to var
+```
+
+This is what a function needs when it must modify the caller's *pointer* rather than the thing pointed at, which is exactly the case for an allocating function or an insertion at the head of a linked list. Passing `int *` lets you change the pointee; passing `int **` lets you change the pointer itself.
+
+```c
+void allocate_buffer(int **out, size_t count) {
+    *out = malloc(count * sizeof **out);
+}
+
+int *buffer = NULL;
+allocate_buffer(&buffer, 256);   // buffer now points at the allocation
+```
 
 Pointers underpin four things C could not otherwise do: dynamic memory allocation, efficient array traversal, letting a function modify its caller's variables, and building linked data structures.
 
 ::: {.callout-note title="`NULL` is a value, not a safety feature"}
 `NULL` is C's "points at nothing" sentinel, but nothing in the type system distinguishes a pointer that might be null from one that cannot be. Every dereference is an act of faith, and a null dereference is undefined behavior. Rust's [`Option<T>`](rust-ho.qmd#option-t) and C++'s references exist to make that distinction visible to the compiler.
+
+A pointer that is merely *uninitialized* is worse than one that is null, because it holds a plausible-looking garbage address that may not fault. Initialize pointers at declaration, to `NULL` if you have nothing better.
 :::
+
+#### Pointer Arithmetic
+Adding an integer to a pointer does not add bytes. It advances by that many **elements**, scaling automatically by the size of the pointed-to type:
+
+```c
+int32_t values[4];
+int32_t *p = values;
+
+p + 1;   // advances 4 bytes (one int32_t), not 1
+p + 3;   // advances 12 bytes
+```
+
+This is why the pointer's type matters and why `void *` (below) cannot participate. The scaling is what makes `p[i]` and `*(p + i)` equivalent, and it is why array traversal by pointer reads so cleanly:
+
+```c
+for (int32_t *cursor = values; cursor < values + 4; cursor++) {
+    *cursor = 0;
+}
+```
+
+Subtracting two pointers into the same array yields the number of *elements* between them, with type `ptrdiff_t` (from `<stddef.h>`):
+
+```c
+ptrdiff_t distance = &values[3] - &values[0];   // 3, not 12
+```
+
+The operations C permits are deliberately few: add an integer, subtract an integer, subtract two pointers, and compare two pointers. There is no pointer multiplication, and adding two pointers is meaningless and illegal.
+
+::: {.callout-note title="One past the end is legal to form, illegal to dereference"}
+The standard specifically allows computing the address one element past the end of an array, which is what makes `cursor < values + 4` well defined in the loop above. Dereferencing that address is undefined behavior, as is computing an address *two* past the end, or anywhere before the start. Arithmetic that wanders outside an array (plus that one boundary position) is undefined even if you never dereference the result, which is why the descending loop `for (p = end - 1; p >= start; p--)` is technically UB on its final decrement. Iterate forward, or compare with `!=` against a valid boundary.
+:::
+
+#### `void *`
+A `void *` is a pointer to *unspecified* type: an address with the type information deliberately erased. It is C's mechanism for generic code, and it is why `malloc` can serve every type in the language:
+
+```c
+void *malloc(size_t size);
+int  *numbers = malloc(10 * sizeof *numbers);   // converts implicitly
+```
+
+In C, `void *` converts to and from any object pointer type without a cast, which is what makes that line work. (C++ requires an explicit cast, one of the [small but pervasive differences](cpp.qmd#small-but-pervasive-differences) between the languages.)
+
+Because the type is erased, two operations are unavailable: you cannot dereference a `void *`, and you cannot do arithmetic on it. The compiler has no size to work with. Convert to a typed pointer first.
+
+The other classic use is a generic callback interface. `qsort` sorts anything because it knows only addresses and an element size, deferring all type knowledge to a comparison function you supply:
+
+```c
+int compare_ints(const void *a, const void *b) {
+    int left  = *(const int *)a;    // cast back to the real type
+    int right = *(const int *)b;
+    return (left > right) - (left < right);   // avoids overflow of left - right
+}
+
+qsort(numbers, 10, sizeof numbers[0], compare_ints);
+```
+
+That round trip, erase the type to cross the interface and cast it back on the other side, is the closest thing C has to generics. It is also entirely unchecked: pass `compare_ints` to an array of `double` and the compiler is satisfied, while the program is not. [Templates](cpp.qmd#templates) in C++ and generics in Rust exist to make the same abstraction type-safe.
 
 ### Pointer Declarations and Qualifiers {#pointer-declarations}
 ::: {.subheading}
@@ -711,7 +782,37 @@ int (*arr)[10];        // arr is a pointer to an array of 10 ints
 int (*fp)(int, int);   // fp is a pointer to a function taking two ints, returning int
 ```
 
-The parentheses carry the whole distinction. `[]` and `()` bind tighter than `*`, so `int *arr[10]` groups as an array first and `int (*arr)[10]` forces the pointer to be read first. The two types are unrelated and not interchangeable. When a declaration reaches this density, the kindness to your reader is a `typedef`, which is exactly why function-pointer types are nearly always aliased before use.
+The parentheses carry the whole distinction. `[]` and `()` bind tighter than `*`, so `int *arr[10]` groups as an array first and `int (*arr)[10]` forces the pointer to be read first. The two types are unrelated and not interchangeable.
+
+#### Declaring a Pointer to a Function
+The last line above is worth unpacking, because function pointers are where the syntax defeats most people and where a `typedef` stops being a nicety:
+
+```c
+int  *fp(int, int);    // a FUNCTION returning int*   (probably not what you meant)
+int (*fp)(int, int);   // a POINTER to a function returning int
+```
+
+Without the parentheses, `()` binds tighter than `*` and you have declared a function. The parentheses around `*fp` force the pointer reading first. Everything else follows from that one grouping.
+
+Assignment and calling are more forgiving than the declaration suggests, because a function name decays to a pointer much as an array name does:
+
+```c
+int add(int a, int b) { return a + b; }
+
+int (*operation)(int, int) = add;    // '&add' also works, and means the same
+int result = operation(2, 3);        // '(*operation)(2, 3)' also works
+```
+
+Both spellings are legal for each step, and the short forms are conventional. The declaration is the only place the syntax is genuinely awkward, which is why a `typedef` earns its place the moment such a type appears more than once:
+
+```c
+typedef int (*BinaryOp)(int, int);   // the alias reads left to right
+
+BinaryOp operation = add;
+void apply_all(BinaryOp op, const int *data, size_t count);   // now legible in signatures
+```
+
+The payoff compounds in return types. A function returning a function pointer is `int (*get_handler(int kind))(int, int)` written out, and `BinaryOp get_handler(int kind)` with the alias. Their use in dispatch tables and callbacks is covered under [Function Pointers](#function-pointers).
 
 #### `const` Placement
 Where `const` sits relative to the `*` changes what it qualifies:
@@ -808,6 +909,35 @@ sizeof(ptr);  // the size of a pointer: 8 on a 64-bit desktop
 
 The decay rule is also why array bounds vanish at function boundaries. A parameter written `int16_t data[10]` is silently rewritten to `int16_t *data`, the `10` is discarded, and no bounds information survives. This is the root of a great deal of C's memory unsafety, and the reason a length argument almost always accompanies an array argument.
 
+#### Multidimensional Arrays
+A 2D array in C is not an array of pointers. It is a single contiguous block, stored **row-major**, with the rightmost subscript varying fastest:
+
+```c
+int grid[3][4];      // 3 rows of 4 ints: 12 ints, contiguous
+```
+
+`grid[1][2]` is computed as `*(*(grid + 1) + 2)`, which reaches element `1 * 4 + 2 == 6`. The row width is baked into the address arithmetic, which is why the compiler must know it.
+
+Decay applies here too, but only to the *outermost* dimension. `grid` decays to a pointer to its first element, and its first element is a *row*, meaning `int (*)[4]`, not `int *`:
+
+```c
+int (*row)[4] = grid;      // pointer to an array of 4 ints
+int *flat     = grid[0];   // pointer to the first int, if you want the flat view
+```
+
+This is the pointer-to-array type the spiral rule raised earlier, and it is why a function taking a 2D array must name every dimension but the first:
+
+```c
+void clear(int rows, int cols, int grid[rows][cols]);   // C99 variably-modified type
+void clear_fixed(int grid[][4], int rows);              // all but the first dimension
+```
+
+Without the column count, the compiler cannot compute where row `n` begins.
+
+::: {.callout-warning title="`int **` is not a 2D array"}
+A `int **` is a pointer to a pointer, typically the head of an array of separately allocated row pointers. That layout is also common and equally valid, but it is a *different thing*: two dereferences through scattered allocations instead of one block with computed offsets. They are not interchangeable, and passing `grid` where `int **` is expected does not compile. Choose the flat block for cache behavior and a single allocation; choose the pointer array when rows differ in length or must be reordered cheaply.
+:::
+
 ### Strings {#strings}
 C has no string type. A C string is simply an array of `char` terminated by a null byte (`'\0'`, the value zero). Every standard string function relies on that terminator to know where the string ends; forget it and you get buffer overruns and undefined behavior.
 
@@ -842,6 +972,39 @@ The `mem*` family (`memcpy`, `memset`, `memmove`, `memcmp`) does the same for ra
 ::: {.callout-warning title="The classic C vulnerability"}
 `strcpy` and `strcat` write until they hit the source's terminator, with no regard for the destination's size. A source longer than the destination overruns the buffer, corrupting adjacent memory. This single design choice is behind a large fraction of security exploits in C's history. The [Common Pitfalls](#undefined-behavior) section shows the safe alternatives.
 :::
+
+#### Building Strings Safely
+For assembling a string into a fixed buffer, `snprintf` is the tool to reach for. It always terminates, it bounds the write, and its return value reports the length the result *would* have needed, which is how you detect truncation:
+
+```c
+char path[64];
+int needed = snprintf(path, sizeof path, "%s/%s.log", directory, name);
+if (needed < 0 || (size_t)needed >= sizeof path) {
+    /* truncated: handle it rather than proceeding with a half-built path */
+}
+```
+
+Checking that return value is the step most code skips, and skipping it converts a loud overflow into a quiet wrong answer.
+
+#### Copying and Splitting
+`strdup` allocates a copy of a string and returns it, which saves the usual `malloc(strlen(s) + 1)` dance. It is POSIX rather than ISO C until C23, but is available essentially everywhere:
+
+```c
+char *copy = strdup(original);   // caller must free()
+```
+
+The `+ 1` for the terminator is the classic off-by-one in hand-rolled versions, which is reason enough to prefer the library function.
+
+`strtok` splits a string on delimiters, and it comes with two significant caveats: it **modifies its input**, writing terminators over the delimiters, and it keeps its position in a `static` variable, which makes it neither reentrant nor thread-safe.
+
+```c
+char input[] = "alpha,beta,gamma";     // must be writable, not a literal
+for (char *token = strtok(input, ","); token != NULL; token = strtok(NULL, ",")) {
+    puts(token);
+}
+```
+
+Passing `NULL` on subsequent calls is how it resumes. Because of the hidden state, two interleaved `strtok` loops will corrupt each other; use `strtok_r` (POSIX) or `strtok_s` (C11 Annex K) where that is a risk. This is the [reentrancy hazard](#static) that `static` locals introduce, in its most widely encountered form.
 
 #### `char` vs. `int` from Input
 A subtle but important convention: functions like `getchar` return an `int`, not a `char`. This is because they must return every possible byte value *and* a distinct end-of-input marker, `EOF` (typically -1). A `char` cannot hold that extra value, so storing the result in a `char` before testing for `EOF` is a genuine bug.
@@ -887,9 +1050,57 @@ Designated initializers are worth adopting as a default. They are order-independ
 
 Members are accessed with `.` on an object and `->` on a pointer to one; `p->size` is shorthand for `(*p).size`.
 
-::: {.callout-note title="Padding is not optional"}
-The compiler inserts padding between members so each is properly aligned for the target, which means `sizeof` a struct is generally *more* than the sum of its members, and member order affects the total. Never assume a struct's layout when reading a wire format or a file header: read the fields individually. `__attribute__((packed))` suppresses the padding but makes member access slower, and on strict-alignment architectures it can produce unaligned accesses that fault outright.
+#### Structs Are Values
+Unlike arrays, structs do **not** decay. A struct is a value: it can be assigned, passed to a function, and returned from one, and each of those copies every byte.
+
+```c
+CircularBuffer_t a = b;          // copies the whole struct
+void configure(CircularBuffer_t cfg);      // receives a copy
+CircularBuffer_t make_buffer(void);        // returns a copy
+```
+
+This asymmetry surprises people who expect arrays and structs to behave alike, and it has a practical consequence: a struct containing an array *does* copy that array, which is the standard trick for passing an array by value.
+
+The copy is **shallow**. In the example above, `a.buffer` and `b.buffer` are two pointers holding the same address, so the two structs now share one sample buffer. Copying a struct duplicates its pointers, never what they point at. If each copy needs its own storage, you write that deep copy yourself; C has nothing like a C++ [copy constructor](cpp.qmd#copy) to do it for you.
+
+Large structs are usually passed by pointer instead, both to avoid the copy and because `const Foo_t *` documents that the callee will not modify the original.
+
+#### Padding, Alignment, and `offsetof`
+The compiler inserts **padding** between members so each satisfies its alignment requirement, which means `sizeof` a struct is generally more than the sum of its members, and member order affects the total:
+
+```c
+struct Loose { char a; int b; char c; };   // often 12 bytes
+struct Tight { int b; char a; char c; };   // often 8 bytes
+```
+
+Both hold the same data. `Loose` pads after each `char` to align the `int`; `Tight` groups the small members together. Ordering members from largest to smallest is a cheap habit that reduces padding on most targets.
+
+When you need the actual offset of a member, `offsetof` from `<stddef.h>` reports it without guessing:
+
+```c
+#include <stddef.h>
+offsetof(struct Tight, c);   // byte offset of member c
+```
+
+::: {.callout-warning title="Never assume a struct's layout"}
+Because padding is implementation-defined, a struct is not a reliable description of a wire format, a file header, or a hardware register block. Read and write such formats field by field, or assert the layout with [static assertions](#static-assertions) so a mismatch fails the build rather than corrupting data in the field. `__attribute__((packed))` suppresses padding but slows member access, and on strict-alignment architectures it can produce unaligned accesses that fault outright.
 :::
+
+#### Flexible Array Members
+A struct may end with an array of unspecified length, which C99 calls a **flexible array member**. It lets a header and its variable-length payload live in a single allocation:
+
+```c
+typedef struct {
+    size_t  length;
+    uint8_t data[];      // must be last, and cannot be the only member
+} Packet_t;
+
+Packet_t *packet = malloc(sizeof *packet + payload_size);
+packet->length = payload_size;
+memcpy(packet->data, payload, payload_size);
+```
+
+One `malloc` and one `free` instead of two, with the payload contiguous with its header. Note that `sizeof *packet` counts only the fixed part, which is exactly what makes the addition correct. The older workaround, declaring `data[1]` and over-allocating, is still visible in legacy headers and is technically undefined behavior; the flexible member is the sanctioned form.
 
 ### Unions
 ::: {.subheading}

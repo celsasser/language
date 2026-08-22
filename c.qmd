@@ -86,15 +86,15 @@ C's types are a thin veneer over what the hardware provides. There are no classe
 ### The Arithmetic Types
 The integer types are defined by *minimum* width, not exact width. The standard guarantees a lower bound; the actual size is implementation-defined and depends on the target architecture.
 
-| Type        | Typical size | Guaranteed minimum | Notes                                                                   |
-|:------------|:-------------|:-------------------|:------------------------------------------------------------------------|
-| `char`      | 1 byte       | 1 byte             | Signedness is implementation-defined; may be signed or unsigned.        |
-| `short`     | 2 bytes      | 16 bits            |                                                                         |
+| Type        | Typical size | Guaranteed minimum | Notes                                                                              |
+|:------------|:-------------|:-------------------|:-----------------------------------------------------------------------------------|
+| `char`      | 1 byte       | 1 byte             | Signedness is implementation-defined; may be signed or unsigned.                   |
+| `short`     | 2 bytes      | 16 bits            |                                                                                    |
 | `int`       | 2 or 4 bytes | 16 bits            | The "natural" word size; 16-bit on some embedded targets, 32-bit on most desktops. |
-| `long`      | 4 or 8 bytes | 32 bits            |                                                                         |
-| `long long` | 8 bytes      | 64 bits            | C99.                                                                    |
-| `float`     | 4 bytes      | (n/a)              | Single-precision [floating point](glossary.qmd#floating-point-numbers). |
-| `double`    | 8 bytes      | (n/a)              | Double-precision.                                                       |
+| `long`      | 4 or 8 bytes | 32 bits            |                                                                                    |
+| `long long` | 8 bytes      | 64 bits            | C99.                                                                               |
+| `float`     | 4 bytes      | (n/a)              | Single-precision [floating point](glossary.qmd#floating-point-numbers).            |
+| `double`    | 8 bytes      | (n/a)              | Double-precision.                                                                  |
 
 Each integer type has a `signed` (default) and `unsigned` variant. This portability of *minimums* rather than *exact sizes* is exactly why C99 introduced fixed-width types.
 
@@ -192,10 +192,10 @@ The principle scales to genuinely hairy declarations involving pointers, arrays,
 ### Type Qualifiers
 A *type qualifier* constrains how a type may be used without changing its size or representation. C has three, and they answer three unrelated questions. It helps to keep them mentally distinct from the outset, because they are otherwise easy to lump together as "extra keywords near the type."
 
-| Qualifier  | Question it answers                         | Meaning                                                                                 | Developed under |
-|:-----------|:--------------------------------------------|:----------------------------------------------------------------------------------------|:----------------|
-| `const`    | *May I change this?*                        | The object must not be modified through this name after initialization.                 | here, and [with pointers](#pointer-declarations) |
-| `volatile` | *May the compiler assume this is stable?*   | The object may change outside the program's control; every access must actually happen. | [Optimization Levels](#optimization-levels) |
+| Qualifier  | Question it answers                         | Meaning                                                                                 | Developed under                                              |
+|:-----------|:--------------------------------------------|:----------------------------------------------------------------------------------------|:-------------------------------------------------------------|
+| `const`    | *May I change this?*                        | The object must not be modified through this name after initialization.                 | here, and [with pointers](#pointer-declarations)             |
+| `volatile` | *May the compiler assume this is stable?*   | The object may change outside the program's control; every access must actually happen. | [Optimization Levels](#optimization-levels)                  |
 | `restrict` | *Might two pointers touch the same memory?* | A promise that this pointer is the only route to the data it points at.                 | [Pointer Declarations and Qualifiers](#pointer-declarations) |
 
 Only `const` applies meaningfully to an ordinary value, so it is the only one this section develops. `volatile` is best understood as a barrier against specific optimizations, and `restrict` applies to pointers exclusively; both wait for the sections above.
@@ -224,10 +224,124 @@ Casting away `const` and then writing through the result is undefined behavior i
 C's control flow is the ancestor of the C-family syntax found in C++, Java, JavaScript, and beyond. Little here will surprise a C++ reader; the notes below flag the C-specific edges.
 
 ### Operators and Precedence
-<!-- STUB: Move the precedence table here from the pitfalls section. Add prose on
-     the arithmetic/relational/logical/bitwise families, the difference between
-     && and & (short-circuit vs. bitwise), compound assignment, the comma
-     operator, and sequence points / unsequenced modification. -->
+::: {.subheading}
+One symbol per operation, and the order they bind in
+:::
+
+C has a large operator set for a small language, and the reason is the "one way to do an operation" commitment. With no overloading, every distinct operation needs its own symbol: three different absolute-value functions, and separate operators for logical and bitwise AND. What follows is not a tour of the obvious ones; addition and comparison work as you expect. It is the handful of places where C's operators behave differently from the intuition a reader brings from elsewhere.
+
+The families are conventional: **arithmetic** (`+ - * / %`), **relational** (`< <= > >= == !=`), **logical** (`&& || !`), **bitwise** (`& | ^ ~ << >>`), and **assignment** (`=` and its compound forms). Four operators sit outside those groups: `sizeof`, the cast `(type)`, the ternary `?:`, and the comma.
+
+#### Logical vs. Bitwise
+The most consequential distinction in the section, and the one that produces the quietest bugs. `&&` and `||` are **logical**: they treat operands as true/false and produce `0` or `1`. `&` and `|` are **bitwise**: they combine operands bit by bit and produce a full-width integer.
+
+They frequently agree by accident. With operands that are already `0` or `1`, `a && b` and `a & b` give the same answer, which lets a substitution survive testing. They diverge as soon as the operands are arbitrary integers: `2 && 1` is `1`, while `2 & 1` is `0`.
+
+The deeper difference is not the result but the **evaluation**. `&&` and `||` *short-circuit*: if the left operand settles the answer, the right operand is never evaluated at all. This is a guarantee in the standard, not an optimization, which is what makes the null-check idiom safe:
+
+```c
+if (p != NULL && p->length > 0) { /* ... */ }
+```
+
+If `p` is null, `p->length` is never evaluated and the dereference never happens. Write `&` there instead and both sides are always evaluated, so a null `p` is dereferenced and the program has undefined behavior. The same guarantee underpins the guard-then-use pattern generally:
+
+```c
+if (index < count && data[index] != 0) { /* ... */ }   // bounds check first
+if (denominator == 0 || total / denominator > 1) { /* ... */ }  // no divide by zero
+```
+
+Because short-circuiting suppresses evaluation, an operand with side effects may simply not happen. `if (ready() && start())` does not call `start` when `ready` returns false, which is usually the point, and occasionally a surprise when someone relied on the call.
+
+#### Compound Assignment
+`x += 1` is shorthand for `x = x + 1`, and every binary arithmetic and bitwise operator has a compound form (`-= *= /= %= &= |= ^= <<= >>=`). The shorthand is not purely cosmetic: the standard guarantees the left operand is evaluated **exactly once**. That matters the moment the target is anything more complicated than a variable:
+
+```c
+arr[next_index()] += 1;              // next_index() is called once
+arr[next_index()] = arr[next_index()] + 1;   // called twice, on possibly different slots
+```
+
+The two lines are not equivalent, and the second is a bug waiting for `next_index` to acquire a side effect.
+
+#### The Comma Operator
+The comma evaluates its left operand, discards the result, then evaluates and yields its right. It is the lowest-precedence operator in C and is genuinely rare in practice, appearing mostly where the grammar allows one expression but you want two: the header of a `for` loop, or a macro that must do two things in a single expression.
+
+```c
+for (int i = 0, j = n - 1; i < j; i++, j--) { /* ... */ }
+```
+
+Note that the `int i = 0, j = n - 1` part is *not* the comma operator; that is the declaration syntax separating two declarators. Only `i++, j--` is the operator. This ambiguity of the same punctuation meaning different things in different contexts is one more reason the comma operator stays uncommon.
+
+#### Integer Division and Modulo
+Integer division truncates toward zero, and `%` takes its sign from the *dividend*:
+
+```c
+ 7 / 2   //  3
+-7 / 2   // -3   (truncated toward zero, not floored to -4)
+ 7 % 2   //  1
+-7 % 2   // -1   (sign follows the left operand)
+```
+
+C99 pinned this down; before it, the rounding direction for negative operands was implementation-defined. Readers coming from Python should note the difference carefully: Python floors, so `-7 // 2` is `-4` and `-7 % 2` is `1`. Code that computes a wrapping index with `%` on a possibly-negative value therefore behaves differently in the two languages, and in C can produce a negative subscript.
+
+#### The Precedence Table
+Precedence decides which operator claims an operand when two compete; associativity decides the grouping when operators of equal precedence sit side by side. The table below is the full ordering, tightest binding first.
+
+::: {.highlight}
+| Precedence | Operator      | Description                                       | Associativity |
+|:----------:|:-------------:|---------------------------------------------------|---------------|
+| 1          | `()`          | Parentheses (function call)                       | Left-to-Right |
+|            | `[]`          | Array Subscript (Square Brackets)                 | Left-to-Right |
+|            | `.`           | Dot Operator                                      | Left-to-Right |
+|            | `->`          | Structure Pointer Operator                        | Left-to-Right |
+|            | `++` , `--`   | Postfix increment, decrement                      | Left-to-Right |
+| 2          | `++`, `--`    | Prefix increment, decrement                       | Right-to-Left |
+|            | `+`, `-`      | Unary plus, minus                                 | Right-to-Left |
+|            | `!` , `~`     | Logical NOT,  Bitwise complement                  | Right-to-Left |
+|            | `(type)`      | Cast Operator                                     | Right-to-Left |
+|            | `*`           | Dereference Operator                              | Right-to-Left |
+|            | `&`           | Address-of Operator                               | Right-to-Left |
+|            | `sizeof`      | Determine size in bytes                           | Right-to-Left |
+| 3          | `*`, `/`, `%` | Multiplication, division, modulus                 | Left-to-Right |
+| 4          | `+`, `-`      | Addition, subtraction                             | Left-to-Right |
+| 5          | `<<`, `>>`    | Bitwise shift left, Bitwise shift right           | Left-to-Right |
+| 6          | `<`, `<=`     | Relational less than, less than or equal to       | Left-to-Right |
+|            | `>` , `>=`    | Relational greater than, greater than or equal to | Left-to-Right |
+| 7          | `==`, `!=`    | Relational is equal to, is not equal to           | Left-to-Right |
+| 8          | `&`           | Bitwise AND                                       | Left-to-Right |
+| 9          | `^`           | Bitwise exclusive OR                              | Left-to-Right |
+| 10         | `|`           | Bitwise inclusive OR                              | Left-to-Right |
+| 11         | `&&`          | Logical AND                                       | Left-to-Right |
+| 12         | `||`          | Logical OR                                        | Left-to-Right |
+| 13         | `?:`          | Ternary conditional                               | Right-to-Left |
+| 14         | `=`           | Assignment                                        | Right-to-Left |
+|            | `+=`, `-=`    | Addition, subtraction assignment                  | Right-to-Left |
+|            | `*=`, `/=`    | Multiplication, division assignment               | Right-to-Left |
+|            | `%=`, `&=`    | Modulus, bitwise AND assignment                   | Right-to-Left |
+|            | `^=`, `|=`    | Bitwise exclusive, inclusive OR assignment        | Right-to-Left |
+|            | `<<=`, `>>=`  | Bitwise shift left, right assignment              | Right-to-Left |
+| 15         | `,`           | comma (expression separator)                      | Left-to-Right |
+:::
+
+Two rows in that table are worth committing to memory, because they are where the ordering violates intuition.
+
+1. The bitwise operators (8, 9, 10) bind more loosely than the comparisons (6, 7), so `flags & MASK == ENABLED` parses as `flags & (MASK == ENABLED)`, which is almost never the intent.
+2. The shifts (5) bind more loosely than arithmetic (3, 4), so `1 << n + 1` is `1 << (n + 1)`.
+
+Ritchie later acknowledged the bitwise precedence as a mistake, kept only because code already depended on it. Parenthesize both cases; see [Operator Precedence Surprises](#operator-precedence-surprises) for the practical fallout.
+
+::: {.callout-warning title="Precedence is not evaluation order"}
+The table says how an expression *groups*, not the sequence in which its parts run. In `f() + g()`, precedence guarantees the addition happens last, and says nothing about whether `f` or `g` is called first; the compiler may choose either. This is why an expression that both reads and modifies the same object without an intervening **sequence point** is undefined behavior, not merely unpredictable:
+
+```c
+i = i++ + 1;      // undefined behavior
+f(i, i++);        // undefined behavior: unsequenced read and modification
+arr[i] = i++;     // undefined behavior
+```
+
+`&&`, `||`, `?:`, and the comma operator *do* impose sequencing, which is exactly why the short-circuit idioms above are safe. Everything else, including function arguments, does not. See [Undefined Behavior](#undefined-behavior) for why "it seems to work" is not evidence here.
+:::
+
+What the bitwise operators actually compute, along with the set/clear/toggle idioms built from them, is covered under [Bitwise Operations](#bitwise-operations) once pointers and memory layout are on the table.
 
 ### Conditionals
 ```c
@@ -352,13 +466,13 @@ Where data lives, and who can see it
 
 Where a type qualifier constrains *what may be done* with an object, a **storage-class specifier** governs its *lifetime* (how long the object exists) and its *linkage* (which translation units can refer to it by name). These are independent axes, and conflating them is a common source of confusion, particularly the overloaded `static`.
 
-| Specifier  | Lifetime          | Linkage at file scope | Notes                                                    |
-|:-----------|:------------------|:----------------------|:----------------------------------------------------------|
+| Specifier  | Lifetime          | Linkage at file scope | Notes                                                      |
+|:-----------|:------------------|:----------------------|:-----------------------------------------------------------|
 | (none)     | Automatic (local) | External (global)     | The default. Locals die at scope exit; globals are shared. |
 | `static`   | Whole program     | Internal (this file)  | Two distinct meanings, depending on scope. See below.      |
-| `extern`   | Whole program     | External              | A *declaration* of something defined elsewhere.             |
-| `auto`     | Automatic         | (n/a)                 | The default for locals; vestigial, never written.           |
-| `register` | Automatic         | (n/a)                 | Ignored by modern compilers; blocks taking the address.     |
+| `extern`   | Whole program     | External              | A *declaration* of something defined elsewhere.            |
+| `auto`     | Automatic         | (n/a)                 | The default for locals; vestigial, never written.          |
+| `register` | Automatic         | (n/a)                 | Ignored by modern compilers; blocks taking the address.    |
 
 #### The Three Faces of `static`
 `static` is the most overloaded keyword in C, meaning materially different things depending on where it appears.
@@ -446,10 +560,108 @@ void set_effect(size_t n) {
 ```
 
 ### Variadic Functions
-<!-- STUB: <stdarg.h>: va_list, va_start, va_arg, va_end. Why printf needs a
-     format string (no runtime type information to recover the arguments), the
-     default argument promotions that apply to variadic parameters, and why
-     these are type-unsafe in a way C++ templates and Rust macros are not. -->
+::: {.subheading}
+Accepting an unknown number of arguments, and the price of doing so
+:::
+
+A **variadic** function accepts a variable number of arguments, declared with `...` after at least one named parameter. `printf` is the one everybody has used; this section explains how it works, which retroactively explains why its first argument is a format string rather than a convenience.
+
+#### The Mechanism
+The machinery lives in `<stdarg.h>` and consists of one type and four macros: `va_list` holds the traversal state, `va_start` initializes it, `va_arg` retrieves the next argument, and `va_end` releases it.
+
+```c
+#include <stdarg.h>
+
+int sum_ints(int count, ...) {
+    va_list args;
+    va_start(args, count);        // 'count' is the last *named* parameter
+
+    int total = 0;
+    for (int i = 0; i < count; i++) {
+        total += va_arg(args, int);   // you must state the type
+    }
+
+    va_end(args);                 // required; may free resources on some ABIs
+    return total;
+}
+
+sum_ints(3, 10, 20, 30);   // 60
+```
+
+Three obligations are visible in that code, and all three are on you rather than the compiler. `va_start` needs the last named parameter, which is why a variadic function cannot be *entirely* variadic. `va_arg` needs the type of each argument, because nothing in the call conveys it. And the loop needs to know when to stop, which is why `count` is passed explicitly.
+
+That last point is the crux: **nothing about the variable arguments is available at run time.** Not their count, not their types. The values are placed in registers and on the stack according to the ABI, and the callee reads them back by asserting what it expects to find. Get the assertion wrong and you have not made a type error; you have misread raw memory.
+
+A function needing to walk the list twice must copy it first, since a `va_list` may not be reusable after traversal:
+
+```c
+va_list copy;
+va_copy(copy, args);   // C99
+```
+
+#### Why `printf` Takes a Format String
+Now `printf`'s design reads as a consequence rather than a convention. The function receives some bytes and no description of them, so the caller must supply that description out-of-band. The format string *is* the type information, transmitted as data:
+
+```c
+printf("%s scored %d\n", name, score);
+//      ^^        ^^ these tell printf to expect a char* then an int
+```
+
+Each conversion specifier tells `printf` which type to hand `va_arg` next. This is why a mismatch is dangerous rather than merely wrong. `printf("%s", 42)` instructs the function to interpret the integer `42` as a pointer and dereference it, which is a segfault at best and an information leak at worst. `printf("%d")` with no argument reads whatever happens to occupy the next argument slot. Neither is a diagnosable type error in the language; both are undefined behavior.
+
+The specifiers themselves are catalogued with the rest of `<stdio.h>` under [Input and Output](#io).
+
+#### Default Argument Promotions
+Arguments passed through `...` undergo the **default argument promotions** before the callee sees them:
+
+- `float` is promoted to `double`.
+- Integer types narrower than `int` (`char`, `short`, `_Bool`) are promoted to `int`.
+
+The consequence is that certain `va_arg` requests are always wrong, no matter what the caller wrote:
+
+```c
+va_arg(args, char)     // WRONG: a char argument arrived as an int
+va_arg(args, float)    // WRONG: a float argument arrived as a double
+va_arg(args, int)      // correct for char, short, and int alike
+va_arg(args, double)   // correct for both float and double
+```
+
+This is also why `printf` has no separate specifier for `float`: `%f` handles both, because a `float` can never actually reach it. Conversely, types *wider* than `int` are not promoted, so `long` and `int64_t` need their own specifiers (`%ld`, and the macros in `<inttypes.h>` for fixed-width types).
+
+#### Forwarding
+::: {.subheading}
+the `v` Variants
+:::
+
+Wrapping `printf` is a common need, and it cannot be done by passing `...` along, because there is no syntax for expanding it. The standard library therefore provides a `v`-prefixed variant of each formatted-output function (`vprintf`, `vfprintf`, `vsnprintf`) that takes an already-started `va_list` instead of `...`:
+
+```c
+void log_error(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+
+    fprintf(stderr, "[ERROR] ");
+    vfprintf(stderr, fmt, args);   // hand the list to the real formatter
+    fprintf(stderr, "\n");
+
+    va_end(args);
+}
+```
+
+This is the standard shape for any logging or diagnostic wrapper, and `vsnprintf` is the bounded version to reach for when writing into a fixed buffer.
+
+::: {.callout-warning title="Variadic functions defeat the type system"}
+A variadic call is one of the few places where C performs no argument checking whatsoever. The compiler cannot verify count or types, because the contract lives in a string it is not obliged to read. The practical mitigation is the `format` attribute described under [Compiler Attributes](#compiler-attributes), which asks GCC and Clang to parse the format string and check the arguments against it:
+
+```c
+__attribute__((format(printf, 1, 2)))
+void log_error(const char *fmt, ...);
+```
+
+With that in place, `log_error("%s", 42)` becomes a compile-time warning. Apply it to every `printf`-style wrapper you write; it costs one line and recovers most of the safety the mechanism gives up.
+
+C++ and Rust solve this at the root rather than patching it. C++ [variadic templates](cpp.qmd#variadic-templates) and Rust's `format!` macro both know each argument's static type at the call site, so formatting is checked by the compiler with no annotation and no run-time type assertions.
+:::
 
 ## Pointers and Memory
 Pointers are the feature that defines C. They are what let a 1972 language address hardware directly, and they are the reason so much of the language's danger is concentrated in one place.
@@ -747,10 +959,10 @@ Shifting by a count greater than or equal to the width of the promoted operand i
 C hands you the allocator and gets out of the way. There is no garbage collector, no ownership tracking, and no destructor; every allocation is a manual obligation to free exactly once, and both failures (never, or twice) are serious bugs.
 
 #### Where Memory Lives
-| Region                                                  | What lives there                                      | Lifetime                | Size known at                   |
-|:--------------------------------------------------------|:------------------------------------------------------|:------------------------|:--------------------------------|
-| **Stack**                                               | Local variables, function arguments, return addresses | Scope of the function   | Runtime (bounded by stack size) |
-| **Heap**                                                | `malloc`/`free` allocations                           | Until explicitly freed  | Runtime (unbounded)             |
+| Region                                                   | What lives there                                      | Lifetime                | Size known at                   |
+|:---------------------------------------------------------|:------------------------------------------------------|:------------------------|:--------------------------------|
+| **Stack**                                                | Local variables, function arguments, return addresses | Scope of the function   | Runtime (bounded by stack size) |
+| **Heap**                                                 | `malloc`/`free` allocations                           | Until explicitly freed  | Runtime (unbounded)             |
 | **Static / [BSS](glossary.qmd#block-started-by-symbol)** | Globals, `static` variables, `const` data             | Entire program lifetime | Compile time                    |
 
 A frequent point of confusion: a fixed array at file scope, or one marked `static`, lives in the static region rather than the stack. It is allocated at compile time and exists for the whole run.
@@ -812,6 +1024,7 @@ The build proceeds in four distinct stages:
 Stages 2 and 3 are often collapsed and called "compilation," which is why some references describe three stages rather than four.
 
 ### Macros
+<!-- Please include the unadorned #define X. I know what results to expect but don't know what it is when declared as #define X -->
 `#define` introduces a macro, a name that the preprocessor replaces with a token sequence wherever it appears.
 
 ```c
@@ -939,16 +1152,16 @@ Every conforming C implementation predefines a set of macros describing the file
 #### Standard Predefined Macros
 These are mandated by the standard and available everywhere:
 
-| Macro              | Expands to                                        | Typical use                       |
-|:-------------------|:--------------------------------------------------|:----------------------------------|
-| `__FILE__`         | The current source file name, as a string literal | Logging, assertions               |
-| `__LINE__`         | The current line number, as an integer constant   | Logging, assertions               |
-| `__DATE__`         | Compilation date, `"Mmm dd yyyy"`                 | Build stamps                      |
-| `__TIME__`         | Compilation time, `"hh:mm:ss"`                    | Build stamps                      |
-| `__func__`         | The enclosing function's name (C99)               | Logging, tracing                  |
+| Macro              | Expands to                                        | Typical use                              |
+|:-------------------|:--------------------------------------------------|:-----------------------------------------|
+| `__FILE__`         | The current source file name, as a string literal | Logging, assertions                      |
+| `__LINE__`         | The current line number, as an integer constant   | Logging, assertions                      |
+| `__DATE__`         | Compilation date, `"Mmm dd yyyy"`                 | Build stamps                             |
+| `__TIME__`         | Compilation time, `"hh:mm:ss"`                    | Build stamps                             |
+| `__func__`         | The enclosing function's name (C99)               | Logging, tracing                         |
 | `__STDC__`         | `1` in a conforming implementation                | Detecting ancient/non-standard compilers |
-| `__STDC_VERSION__` | The standard's version number                     | Feature gating by standard        |
-| `__STDC_HOSTED__`  | `1` if hosted, `0` if freestanding                | Detecting a bare-metal target     |
+| `__STDC_VERSION__` | The standard's version number                     | Feature gating by standard               |
+| `__STDC_HOSTED__`  | `1` if hosted, `0` if freestanding                | Detecting a bare-metal target            |
 
 `__STDC_VERSION__` is the one you will actually branch on. Its values are `199901L` for C99, `201112L` for C11, `201710L` for C17, and `202311L` for C23:
 
@@ -967,13 +1180,13 @@ These are mandated by the standard and available everywhere:
 #### Feature-Test Macros
 C11 introduced a set of macros that a conforming implementation defines to say it *lacks* an otherwise-required feature. The inverted polarity is deliberate: absence is the exceptional case, so the macro is defined only when the feature is missing.
 
-| Macro                  | Defined when the implementation lacks |
-|:-----------------------|:--------------------------------------|
-| `__STDC_NO_VLA__`      | Variable-length arrays                |
-| `__STDC_NO_ATOMICS__`  | `<stdatomic.h>` and `_Atomic`         |
-| `__STDC_NO_THREADS__`  | `<threads.h>`                         |
-| `__STDC_NO_COMPLEX__`  | `<complex.h>`                         |
-| `__STDC_IEC_559__`     | (Inverted) *Defined* when floats **do** conform to IEC 60559 / IEEE 754 |
+| Macro                 | Defined when the implementation lacks                                   |
+|:----------------------|:------------------------------------------------------------------------|
+| `__STDC_NO_VLA__`     | Variable-length arrays                                                  |
+| `__STDC_NO_ATOMICS__` | `<stdatomic.h>` and `_Atomic`                                           |
+| `__STDC_NO_THREADS__` | `<threads.h>`                                                           |
+| `__STDC_NO_COMPLEX__` | `<complex.h>`                                                           |
+| `__STDC_IEC_559__`    | (Inverted) *Defined* when floats **do** conform to IEC 60559 / IEEE 754 |
 
 These matter most in freestanding environments, where a vendor legitimately omits large parts of the library:
 
@@ -1007,11 +1220,11 @@ Order matters here: Clang defines `__GNUC__` for compatibility, so a `__GNUC__` 
 #### Implementation Limits
 Where the macros above describe the *toolchain*, the limits headers describe the *types*, as compile-time constant expressions usable in `#if`, array bounds, and static assertions.
 
-| Header        | Provides                                                                    |
-|:--------------|:----------------------------------------------------------------------------|
-| `<limits.h>`  | `CHAR_BIT`, `INT_MAX`, `INT_MIN`, `UINT_MAX`, `LONG_MAX`, `SIZE_MAX`, …      |
-| `<float.h>`   | `FLT_EPSILON`, `DBL_MAX`, `DBL_MIN`, `FLT_DIG`, …                           |
-| `<stdint.h>`  | `INT16_MAX`, `UINT32_MAX`, `INTPTR_MAX`, and the `_C` literal macros         |
+| Header       | Provides                                                                |
+|:-------------|:------------------------------------------------------------------------|
+| `<limits.h>` | `CHAR_BIT`, `INT_MAX`, `INT_MIN`, `UINT_MAX`, `LONG_MAX`, `SIZE_MAX`, … |
+| `<float.h>`  | `FLT_EPSILON`, `DBL_MAX`, `DBL_MIN`, `FLT_DIG`, …                       |
+| `<stdint.h>` | `INT16_MAX`, `UINT32_MAX`, `INTPTR_MAX`, and the `_C` literal macros    |
 
 `CHAR_BIT` is the one that surprises people: it is the number of bits in a byte, and the standard only guarantees it is *at least* 8. It is 8 on every platform you are likely to meet, but the constant exists because the standard declines to promise it.
 
@@ -1044,24 +1257,24 @@ The C standard distinguishes two kinds of implementation. A **hosted** implement
      correct choice (error reporting via endptr and errno), qsort and bsearch as
      the canonical function-pointer APIs, rand/srand and their weaknesses,
      abs/div, exit/atexit/abort, getenv. -->
+### `stdio.h` {#io}
+::: {.subheading}
+Input and Output
+:::
 
-### `stdio.h`: Input and Output {#io}
 <!-- STUB: Streams and the FILE type. Buffered vs. unbuffered. The three standard
      streams. printf/scanf format specifiers as a reference table, and why scanf
      is hard to use safely. fopen/fclose/fread/fwrite/fseek. Error handling with
      ferror/feof/perror/errno. Keep the retargeting note as a brief callout only. -->
-
 ### `string.h`
 <!-- STUB: Cross-reference the string function table above rather than repeating
      it. Cover the mem* family properly: memcpy vs. memmove and why the
      distinction is about restrict, memset's byte-fill semantics and the common
      mistake of using it to set a non-zero int value. -->
-
 ### Other Headers Worth Knowing
 <!-- STUB: Brief tour with one-line orientation each: <math.h>, <time.h>,
      <ctype.h> (and the unsigned-char argument trap), <errno.h>, <assert.h>,
      <stdarg.h>, <stddef.h>. A table is probably the right form here. -->
-
 ## Compilation and the Build {#the-build}
 The **build** converts a project's source files into an artifact you can run or load. For a hosted program that is an executable; for an embedded target it is typically a HEX or ELF image flashed into non-volatile memory, accompanied by a **map file** showing exactly where every function and object landed.
 
@@ -1076,7 +1289,6 @@ Because of that isolation, a call to a function defined elsewhere is compiled as
      Tentative definitions and the historical "common symbol" behavior, which
      -fno-common now rejects by default. Link errors and how to read them:
      "undefined reference" vs. "multiple definition", and what each tells you. -->
-
 ### Compiler Attributes
 ::: {.subheading}
 `__attribute__((...))`
@@ -1096,14 +1308,14 @@ __attribute__((attribute-list))
 
 A few that earn their keep in ordinary hosted code:
 
-| Attribute            | Purpose                                                          |
-|:---------------------|:------------------------------------------------------------------|
-| `noreturn`           | Function never returns; improves diagnostics and codegen.          |
-| `format(printf, m, n)` | Type-check a wrapper's format string against its arguments.      |
-| `warn_unused_result` | Warn when a caller ignores the return value.                       |
-| `deprecated("msg")`  | Warn at each use, with a migration note.                           |
-| `aligned(N)`         | Force an object's alignment.                                       |
-| `packed`             | Remove struct padding. Slows access; can fault on strict targets.  |
+| Attribute              | Purpose                                                           |
+|:-----------------------|:------------------------------------------------------------------|
+| `noreturn`             | Function never returns; improves diagnostics and codegen.         |
+| `format(printf, m, n)` | Type-check a wrapper's format string against its arguments.       |
+| `warn_unused_result`   | Warn when a caller ignores the return value.                      |
+| `deprecated("msg")`    | Warn at each use, with a migration note.                          |
+| `aligned(N)`           | Force an object's alignment.                                      |
+| `packed`               | Remove struct padding. Slows access; can fault on strict targets. |
 
 The `format` attribute is the underrated one: it makes a `printf` wrapper as type-safe as `printf` itself.
 
@@ -1159,7 +1371,6 @@ Three situations genuinely need `volatile`: memory-mapped hardware registers, va
      -Wall -Wextra -Werror, -std=. Static vs. dynamic linking and where each
      matters. Cross-reference make.qmd for orchestration and cpp.qmd's
      cross-compilation section for the bare-metal variant. -->
-
 Build orchestration itself belongs to a separate tool. Make tracks which outputs depend on which inputs and rebuilds only what changed, and it gets full treatment in [the Makefile chapter](make.qmd).
 
 ## Undefined Behavior and Common Pitfalls {#undefined-behavior}
@@ -1213,43 +1424,9 @@ if (flags & MASK == ENABLED)     // parsed as: flags & (MASK == ENABLED)
 if ((flags & MASK) == ENABLED)   // what you meant
 ```
 
-**Bitwise operators bind more loosely than comparison operators**, a decision Ritchie later called a mistake, retained because code already depended on it. Parenthesize.
+**Bitwise operators bind more loosely than comparison operators**, a decision Ritchie later called a mistake, retained because code already depended on it. The same ordering catches shifts: `1 << n + 1` shifts by `n + 1`.
 
-::: {.highlight}
-| Precedence | Operator      | Description                                       | Associativity |
-|:----------:|:-------------:|---------------------------------------------------|---------------|
-| 1          | `()`          | Parentheses (function call)                       | Left-to-Right |
-|            | `[]`          | Array Subscript (Square Brackets)                 | Left-to-Right |
-|            | `.`           | Dot Operator                                      | Left-to-Right |
-|            | `->`          | Structure Pointer Operator                        | Left-to-Right |
-|            | `++` , `--`   | Postfix increment, decrement                      | Left-to-Right |
-| 2          | `++`, `--`    | Prefix increment, decrement                       | Right-to-Left |
-|            | `+`, `-`      | Unary plus, minus                                 | Right-to-Left |
-|            | `!` , `~`     | Logical NOT,  Bitwise complement                  | Right-to-Left |
-|            | `(type)`      | Cast Operator                                     | Right-to-Left |
-|            | `*`           | Dereference Operator                              | Right-to-Left |
-|            | `&`           | Address-of Operator                               | Right-to-Left |
-|            | `sizeof`      | Determine size in bytes                           | Right-to-Left |
-| 3          | `*`, `/`, `%` | Multiplication, division, modulus                 | Left-to-Right |
-| 4          | `+`, `-`      | Addition, subtraction                             | Left-to-Right |
-| 5          | `<<`, `>>`    | Bitwise shift left, Bitwise shift right           | Left-to-Right |
-| 6          | `<`, `<=`     | Relational less than, less than or equal to       | Left-to-Right |
-|            | `>` , `>=`    | Relational greater than, greater than or equal to | Left-to-Right |
-| 7          | `==`, `!=`    | Relational is equal to, is not equal to           | Left-to-Right |
-| 8          | `&`           | Bitwise AND                                       | Left-to-Right |
-| 9          | `^`           | Bitwise exclusive OR                              | Left-to-Right |
-| 10         | `|`           | Bitwise inclusive OR                              | Left-to-Right |
-| 11         | `&&`          | Logical AND                                       | Left-to-Right |
-| 12         | `||`          | Logical OR                                        | Left-to-Right |
-| 13         | `?:`          | Ternary conditional                               | Right-to-Left |
-| 14         | `=`           | Assignment                                        | Right-to-Left |
-|            | `+=`, `-=`    | Addition, subtraction assignment                  | Right-to-Left |
-|            | `*=`, `/=`    | Multiplication, division assignment               | Right-to-Left |
-|            | `%=`, `&=`    | Modulus, bitwise AND assignment                   | Right-to-Left |
-|            | `^=`, `|=`    | Bitwise exclusive, inclusive OR assignment        | Right-to-Left |
-|            | `<<=`, `>>=`  | Bitwise shift left, right assignment              | Right-to-Left |
-| 15         | `,`           | comma (expression separator)                      | Left-to-Right |
-:::
+Neither case produces a warning by default, because both are perfectly legal expressions that simply mean something other than what you wrote. Parenthesize any expression mixing bitwise operators with comparison or arithmetic, and consult the [precedence table](#operators-and-precedence) when in doubt.
 
 ### Assignment vs. Comparison
 ```c
@@ -1347,20 +1524,17 @@ Objects with static storage duration are zero-initialized before `main`. Locals 
      overloading, no templates, no exceptions, no references, void* conversion,
      const semantics (linkage and constant expressions), union punning legality,
      designated initializers, struct tag namespace, VLAs. -->
-
 ## Key Differences from Rust
 <!-- STUB: Table plus prose. Ownership and borrowing vs. manual malloc/free,
      Option<T> vs. NULL, Result vs. errno and sentinel returns, slices vs. the
      pointer+length convention, traits vs. function pointers, no UB in safe Rust
      and what unsafe actually opts into, cargo vs. make + headers. Link to
      rust-ho.qmd for ownership and rust-in.qmd for the basics. -->
-
 ## Where to Go Next
 <!-- STUB: Annotated and subsectioned, following the rust-out.qmd / cpp.qmd
      model: Documentation and Standards; Tooling Worth Adopting Early
      (sanitizers, valgrind, clang-tidy, cppcheck, -Wall -Wextra -Werror);
      Books; Practice. -->
-
 ## Further Reading
 - Brian Kernighan and Dennis Ritchie, *The C Programming Language*, 2nd ed. (Prentice Hall, 1988).
 - Peter van der Linden, *Expert C Programming: Deep C Secrets* (Prentice Hall, 1994).

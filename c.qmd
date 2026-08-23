@@ -743,6 +743,12 @@ ptrdiff_t distance = &values[3] - &values[0];   // 3, not 12
 
 The operations C permits are deliberately few: add an integer, subtract an integer, subtract two pointers, and compare two pointers. There is no pointer multiplication, and adding two pointers is meaningless and illegal.
 
+::: {.callout-note title="The arithmetic is exact, and that is a guarantee"}
+Within these rules there is no hidden behavior. `p + n` is exactly `p` advanced by `n * sizeof *p` bytes, with no rounding, no alignment adjustment, and no bounds clamping. `(p + 3) - 3` is `p`. If `q - p` is `5`, then `p + 5` is `q`. The compiler will not silently insert a check, and nothing at run time inspects whether the result is sensible.
+
+That exactness cuts both ways, and it is the whole bargain. The arithmetic does precisely what you specify, including walking straight off the end of an array into unrelated memory, because there is nothing in a pointer that records where its object begins or ends. The rules above define what is *legal*; staying inside a real object is entirely your responsibility.
+:::
+
 ::: {.callout-note title="One past the end is legal to form, illegal to dereference"}
 The standard specifically allows computing the address one element past the end of an array, which is what makes `cursor < values + 4` well defined in the loop above. Dereferencing that address is undefined behavior, as is computing an address *two* past the end, or anywhere before the start. Arithmetic that wanders outside an array (plus that one boundary position) is undefined even if you never dereference the result, which is why the descending loop `for (p = end - 1; p >= start; p--)` is technically UB on its final decrement. Iterate forward, or compare with `!=` against a valid boundary.
 :::
@@ -757,7 +763,18 @@ int  *numbers = malloc(10 * sizeof *numbers);   // converts implicitly
 
 In C, `void *` converts to and from any object pointer type without a cast, which is what makes that line work. (C++ requires an explicit cast, one of the [small but pervasive differences](cpp.qmd#small-but-pervasive-differences) between the languages.)
 
-Because the type is erased, two operations are unavailable: you cannot dereference a `void *`, and you cannot do arithmetic on it. The compiler has no size to work with. Convert to a typed pointer first.
+Because the type is erased, two operations are unavailable: you cannot dereference a `void *`, and you cannot do arithmetic on it (see callout below for exceptions/extensions). Both need an element size, and `void` has none. Convert to a typed pointer first, which is an explicit statement of how you intend the bytes to be read:
+
+```c
+void *raw = buffer;
+/* raw + 4;  */                       // illegal in standard C: no element size
+uint8_t *bytes = raw;
+bytes + 4;                            // fine: advances 4 bytes
+```
+
+::: {.callout-warning title="GCC and Clang permit `void *` arithmetic as an extension"}
+Both compilers treat `sizeof(void)` as `1` and allow arithmetic on `void *`, advancing it by bytes as though it were `char *`. This is a GNU extension, not standard C, and it compiles silently at default warning levels. Code relying on it will be rejected by a conforming compiler, and `-pedantic` will flag it. Cast to `unsigned char *` when you mean byte arithmetic; the intent is clearer and it is portable.
+:::
 
 The other classic use is a generic callback interface. `qsort` sorts anything because it knows only addresses and an element size, deferring all type knowledge to a comparison function you supply:
 
@@ -780,21 +797,57 @@ Where the declaration syntax earns its reputation
 
 [Reading Declarations](#reading-declarations) introduced C's guiding principle, that a declaration mirrors the expression which uses the value. With pointers in hand, that principle can be applied to the declarations people actually find impenetrable, and the two qualifiers that only make sense alongside a `*` can finally be explained.
 
-#### The Spiral Rule
-Start at the identifier and work outward, alternating right and left, until the tokens run out:
+#### The Right-Left Rule {#right-left-rule}
+Any C declaration can be read aloud by following one procedure:
+
+1. **Start at the identifier.** Say its name.
+2. **Look right.** While the next token is `[`…`]` or `(`…`)`, consume it: say "array of N" or "function taking … returning". Stop when you hit a `)` that closes a group you are inside, or run out of tokens.
+3. **Look left.** Consume `*` as "pointer to", and qualifiers as "const"/"volatile". Stop when you hit a `(` that opens the group you are inside.
+4. **If you were inside parentheses, step outside them** and repeat from step 2.
+5. When nothing is left, say the base type.
+
+The **right side binds tighter than the left**, which is why step 2 comes before step 3: `[]` and `()` have higher precedence than `*`. Parentheses exist purely to override that, and they are the only reason you ever loop back to step 2.
+
+The simplest case exercises the procedure in two steps, with the "look right" finding nothing:
 
 ```c
-int *ptr;              // ptr is a pointer to int
-int arr[10];           // arr is an array of 10 ints
-int *arr[10];          // arr is an array of 10 pointers to int
-int (*arr)[10];        // arr is a pointer to an array of 10 ints
-int (*fp)(int, int);   // fp is a pointer to a function taking two ints, returning int
+int *pointer;
 ```
 
-The parentheses carry the whole distinction. `[]` and `()` bind tighter than `*`, so `int *arr[10]` groups as an array first and `int (*arr)[10]` forces the pointer to be read first. The two types are unrelated and not interchangeable.
+Start at `pointer`. Look right: nothing there, so move on immediately (an empty right side is not a blank to record; it just means there is nothing to say yet). Look left: `*`, "pointer to". Nothing further left but the base type: `int`. Reading: **`pointer` is a pointer to `int`**.
+
+Now the pair where the parentheses change everything:
+
+```c
+int *arr[10];
+```
+
+Start at `arr`. Look right: `[10]`, so "array of 10". Look right again: nothing. Turn left: `*`, "pointer to". Then `int`. Reading: **`arr` is an array of 10 pointers to `int`**.
+
+```c
+int (*arr)[10];
+```
+
+Start at `arr`. Look right: `)`, which closes the group you are inside, so you must stop and turn left. Left: `*`, "pointer to". Left again: `(`, which opens your group, so step outside it. Now resume looking right: `[10]`, "array of 10". Then left: `int`. Reading: **`arr` is a pointer to an array of 10 `int`**.
+
+That bounce, right then left then right again, only ever happens because of the parentheses. Without them you read right once, then left once, and you are done.
+
+A function pointer works the same way, with `(int, int)` consumed on the second pass right:
+
+```c
+int (*fp)(int, int);
+```
+
+`fp` → `)` blocks, turn left → `*` "pointer to" → `(` closes the group, step out → right: `(int, int)` "function taking two ints returning" → `int`. Reading: **`fp` is a pointer to a function taking two `int` and returning `int`**.
+
+::: {.callout-note title="Not quite the \"spiral rule\""}
+You will find this widely described online as the "spiral rule," which says to spiral outward from the identifier alternating right and left. That framing produces the right answer on the common cases but is not what the grammar actually does, and it misleads on two counts: it implies you always alternate (you do not; you exhaust the right side first, and only parentheses send you back), and it gives the wrong reading for some declarations mixing arrays with function parameters. The right-left rule above is the version that holds.
+
+For anything genuinely gnarly, `cdecl` (the command-line tool, or [cdecl.org](https://cdecl.org){target="_blank" rel="noopener noreferrer"}) translates declarations to English and back. Reaching for it is not cheating. The better move, when you control the code, is a `typedef` so no one has to run the procedure at all.
+:::
 
 #### Declaring a Pointer to a Function
-The last line above is worth unpacking, because function pointers are where the syntax defeats most people and where a `typedef` stops being a nicety:
+That last example is worth contrasting with its unparenthesized twin, because function pointers are where the syntax defeats most people and where a `typedef` stops being a nicety:
 
 ```c
 int  *fp(int, int);    // a FUNCTION returning int*   (probably not what you meant)
@@ -934,7 +987,7 @@ int (*row)[4] = grid;      // pointer to an array of 4 ints
 int *flat     = grid[0];   // pointer to the first int, if you want the flat view
 ```
 
-This is the pointer-to-array type the spiral rule raised earlier, and it is why a function taking a 2D array must name every dimension but the first:
+This is the pointer-to-array type the [right-left rule](#right-left-rule) worked through earlier, and it is why a function taking a 2D array must name every dimension but the first:
 
 ```c
 void clear(int rows, int cols, int grid[rows][cols]);   // C99 variably-modified type
@@ -1226,8 +1279,73 @@ Two habits in that snippet are worth adopting. `sizeof *samples` rather than `si
 
 The failure modes to know by name: **use-after-free** (dereferencing a freed pointer), **double free** (freeing twice), **memory leak** (never freeing), and **buffer overrun** (writing past the end). None are diagnosed by the language, all are undefined behavior, and all are what tools like AddressSanitizer and Valgrind exist to catch. Run them.
 
+#### How the Allocator Works
+::: {.subheading}
+What is actually happening behind `malloc`
+:::
+
+`malloc` is not a system call and not a language feature. It is an ordinary library function managing a pool of memory it obtained from the operating system, and knowing roughly how it does that explains several things that otherwise look arbitrary.
+
+**Every allocation carries hidden bookkeeping.** The allocator stores metadata, at minimum the block's size, immediately *before* the address it hands you:
+
+```
+    [ header: size, flags ][ your bytes ................. ]
+                           ^
+                           the pointer malloc returns
+```
+
+This is how `free(ptr)` knows how many bytes to reclaim when you never told it: it steps backward from your pointer to read the header. Two consequences follow directly. A small allocation costs more than you asked for, typically 8 to 16 bytes of overhead plus rounding up for alignment, so a million 4-byte allocations may consume 24 MB rather than 4 MB. And writing before the start of your block, or freeing a pointer the allocator did not return, corrupts that header. This is why `free`ing a pointer you have advanced is undefined behavior rather than merely wasteful: the bytes preceding it are not a header, and the allocator reads them as one anyway.
+
+**Free blocks are tracked in free lists.** When you `free` a block, the allocator does not return it to the operating system; it records it in a list (or several lists, **binned** by size) of blocks available for reuse. A subsequent `malloc` searches those lists for something suitable.
+
+That search is where allocator design lives. Common strategies are *first fit* (take the first block large enough), *best fit* (take the smallest block that fits, minimizing waste but scanning more), and *segregated fits* (keep separate lists per size class, so common sizes are found in constant time). Real allocators such as glibc's use size-binned lists plus a small cache of recently freed blocks, which makes the frequent case, allocate and free the same size repeatedly, very fast.
+
+**Splitting and coalescing keep the pool usable.** If the block found is larger than requested, the allocator **splits** it, using the front and returning the remainder to the free list. When a block is freed, the allocator checks whether the blocks physically adjacent to it are also free, and if so **coalesces** them into one larger block. Without coalescing, a heap would degrade into a pile of unusably small fragments after enough churn.
+
+#### Fragmentation
+Coalescing helps, but it cannot fix everything, because it only merges blocks that happen to be *neighbors*.
+
+**External fragmentation** is free memory that exists but is not contiguous. After allocating and freeing in a scattered pattern, the heap may hold 10 MB free across dozens of gaps and still fail a 1 MB request because no single gap is large enough:
+
+```
+[ used ][ free 400K ][ used ][ free 300K ][ used ][ free 350K ]
+         a 1 MB request fails, despite 1,050K free
+```
+
+**Internal fragmentation** is the waste inside a block you were given: the header, the alignment padding, and the rounding up to a size class. Ask for 33 bytes and you may occupy 48.
+
+::: {.callout-warning title="C cannot defragment"}
+This is the important structural point, and it follows from the language rather than from any allocator's cleverness. Defragmenting means *moving* live allocations to close the gaps, and an allocator cannot move a block it has handed you, because you hold its address and it has no way to find and update your copies of that pointer. Addresses in C are ordinary values; they can be stored in structs, copied into other variables, cast to integers, and written to files.
+
+Garbage-collected runtimes with *compacting* collectors, and languages where the runtime tracks every reference, can and do relocate objects to defragment the heap. C trades that ability away for the guarantee that a pointer, once obtained, stays valid and stable until you free it. You cannot have both.
+
+The practical mitigations are all about avoiding the situation: allocate long-lived objects up front so they are not interleaved with short-lived ones, use fixed-size pools when allocation patterns are regular, or use an arena that allocates cheaply and frees everything at once.
+:::
+
+#### When `malloc` Fails
+When the free lists cannot satisfy a request, the allocator asks the operating system for more memory (traditionally `brk`/`sbrk` to extend the heap; modern allocators typically use `mmap`, especially for large blocks, which is also why very large allocations are often returned to the OS on `free` while small ones are not). If the OS refuses, `malloc` returns `NULL`.
+
+Handling that return is the entire contract, and it is one line:
+
+```c
+int16_t *samples = malloc(count * sizeof *samples);
+if (samples == NULL) {
+    /* recover, or fail cleanly: do NOT proceed */
+}
+```
+
+Skipping the check does not produce a crash at the point of failure. It produces a null dereference at some later, unrelated point, and on a system without memory protection it produces silent corruption instead.
+
+::: {.callout-note title="On Linux, `malloc` succeeding does not mean the memory exists"}
+Linux **overcommits** by default: it grants address space without reserving physical pages, on the reasonable bet that most programs do not touch everything they allocate. Pages are backed by real memory only when first written. The consequence is that `malloc` can return a perfectly valid non-`NULL` pointer for memory the system cannot actually provide, and the shortfall surfaces later as a fault when you write to it. If the system runs out at that moment, the kernel's **OOM killer** selects a process and terminates it outright, so your program may die without `malloc` ever having returned `NULL`.
+
+This surprises people who assume checking `malloc` is sufficient for robustness. On a desktop Linux system it largely is not; the check still matters (it catches size-overflow bugs and genuine refusals, and other platforms do not overcommit) but it is not a guarantee that the memory is yours. Overcommit behavior is tunable via `/proc/sys/vm/overcommit_memory`.
+:::
+
+Two related failure modes are worth naming. A request whose size calculation overflows, such as `malloc(count * sizeof *p)` where `count` is attacker-controlled, may wrap to a small value and succeed, handing back a buffer far smaller than the code believes it has. Check the multiplication, or use `calloc`, which is required to detect overflow in `n * size`. And **stack** exhaustion is a separate matter entirely: deep recursion or a large local array overflows the stack, which `malloc` has nothing to do with and which typically faults immediately.
+
 ::: {.callout-note title="Dynamic allocation is often banned outright"}
-In hard-real-time and safety-critical systems, `malloc` is frequently forbidden: allocation time is unbounded, and fragmentation can cause a failure hours into a run that testing never reproduced. Such systems allocate everything statically up front. The Applied DSP notes cover the pools-and-fixed-buffers approach in context.
+In hard-real-time and safety-critical systems, `malloc` is frequently forbidden, and everything above is why: the search through free lists makes allocation time unbounded, fragmentation can cause a failure hours into a run that testing never reproduced, and the failure mode is difficult to recover from at the point it occurs. Such systems allocate everything statically up front, or use fixed-block pools with deterministic timing. The Applied DSP notes cover the pools-and-fixed-buffers approach in context.
 :::
 
 ## The Preprocessor {#preprocessing}

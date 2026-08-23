@@ -667,19 +667,29 @@ C++ and Rust solve this at the root rather than patching it. C++ [variadic templ
 Pointers are the feature that defines C. They are what let a 1972 language address hardware directly, and they are the reason so much of the language's danger is concentrated in one place.
 
 ### Pointers {#pointers}
-A **pointer** is a variable that stores the memory address of another object. Two operators connect a value to its address: `&` takes the address of an object, and `*` dereferences an address to reach the object. Declaring a pointer also uses `*`, which is the "declaration mirrors use" principle at work: `int *ptr` declares `ptr` such that the expression `*ptr` is an `int`.
+A **pointer** is a variable that stores the memory address of another object. Two operators connect a value to its address: `&` (address-of operator) takes the address of an object, and `*` (dereference operator) **dereferences** an address to reach the object. Declaring a pointer also uses `*`, which is the "declaration mirrors use" principle at work: `int *ptr` declares `ptr` such that the expression `*ptr` is an `int`.
+
+::: {.definition}
+**Dereference** is using the asterisk `*` operator to access or modify the actual value stored at the memory address that the pointer holds. For a pointer to a pointer one uses `**` to dereference the value.
+:::
+
+![](./images/c-01.png){width=48% style="float: right; padding-left: 12px"}
 
 ```c
 int var = 10;
-int *ptr = &var;    // ptr holds the address of var
+int *ptr = &var;        // ptr holds the address of var
 
-*ptr = 20;          // writes through the pointer; var is now 20
-printf("%d\n", var);   // 20
+*ptr = 20;              // writes through the pointer; var is now 20
+printf("%d\n", var);    // 20
 ```
 
 That last pair of lines is the whole idea. `ptr` is a separate object with its own address and its own storage, holding a number that happens to be where `var` lives. Dereferencing follows the number.
 
 A pointer's *type* is not decoration. Every pointer holds an address of the same width, but the type determines how many bytes a dereference reads, how those bytes are interpreted, and how arithmetic on the pointer scales. `char *` and `double *` on the same address see one byte and eight bytes respectively.
+
+::: {style="clear: both;"}
+
+:::
 
 A **pointer to a pointer** stores the address of another pointer:
 

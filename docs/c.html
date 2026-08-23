@@ -512,14 +512,24 @@ window.Quarto = {
   <li><a href="#preprocessing" id="toc-preprocessing" class="nav-link" data-scroll-target="#preprocessing">The Preprocessor</a>
   <ul>
   <li><a href="#stages-of-compilation" id="toc-stages-of-compilation" class="nav-link" data-scroll-target="#stages-of-compilation">Stages of Compilation</a></li>
+  <li><a href="#include" id="toc-include" class="nav-link" data-scroll-target="#include"><code>#include</code></a></li>
   <li><a href="#macros" id="toc-macros" class="nav-link" data-scroll-target="#macros">Macros</a>
   <ul class="collapse">
+  <li><a href="#the-empty-macro" id="toc-the-empty-macro" class="nav-link" data-scroll-target="#the-empty-macro">The Empty Macro</a></li>
   <li><a href="#macro-side-effects" id="toc-macro-side-effects" class="nav-link" data-scroll-target="#macro-side-effects">Macro Side Effects</a></li>
+  <li><a href="#generic" id="toc-generic" class="nav-link" data-scroll-target="#generic"><code>_Generic</code></a></li>
   </ul></li>
-  <li><a href="#conditional-compilation" id="toc-conditional-compilation" class="nav-link" data-scroll-target="#conditional-compilation">Conditional Compilation</a></li>
-  <li><a href="#stringification-and-token-pasting" id="toc-stringification-and-token-pasting" class="nav-link" data-scroll-target="#stringification-and-token-pasting">Stringification and Token Pasting</a></li>
+  <li><a href="#how-expansion-actually-works" id="toc-how-expansion-actually-works" class="nav-link" data-scroll-target="#how-expansion-actually-works">How Expansion Actually Works</a></li>
+  <li><a href="#conditional-compilation" id="toc-conditional-compilation" class="nav-link" data-scroll-target="#conditional-compilation">Conditional Compilation</a>
+  <ul class="collapse">
+  <li><a href="#defined" id="toc-defined" class="nav-link" data-scroll-target="#defined"><code>defined</code></a></li>
+  </ul></li>
+  <li><a href="#stringification-and-token-pasting" id="toc-stringification-and-token-pasting" class="nav-link" data-scroll-target="#stringification-and-token-pasting">Stringification and Token Pasting</a>
+  <ul class="collapse">
+  <li><a href="#x-macros" id="toc-x-macros" class="nav-link" data-scroll-target="#x-macros">X Macros</a></li>
+  </ul></li>
   <li><a href="#variadic-macros" id="toc-variadic-macros" class="nav-link" data-scroll-target="#variadic-macros">Variadic Macros</a></li>
-  <li><a href="#include-guards-vs.-pragma-once" id="toc-include-guards-vs.-pragma-once" class="nav-link" data-scroll-target="#include-guards-vs.-pragma-once">Include Guards vs.&nbsp;<code>#pragma once</code></a></li>
+  <li><a href="#include-guards" id="toc-include-guards" class="nav-link" data-scroll-target="#include-guards">Include Guards vs.&nbsp;<code>#pragma once</code></a></li>
   <li><a href="#predefined-macros-and-compile-time-constants" id="toc-predefined-macros-and-compile-time-constants" class="nav-link" data-scroll-target="#predefined-macros-and-compile-time-constants">Predefined Macros and Compile-Time Constants</a>
   <ul class="collapse">
   <li><a href="#standard-predefined-macros" id="toc-standard-predefined-macros" class="nav-link" data-scroll-target="#standard-predefined-macros">Standard Predefined Macros</a></li>
@@ -528,6 +538,8 @@ window.Quarto = {
   <li><a href="#implementation-limits" id="toc-implementation-limits" class="nav-link" data-scroll-target="#implementation-limits">Implementation Limits</a></li>
   </ul></li>
   <li><a href="#static-assertions" id="toc-static-assertions" class="nav-link" data-scroll-target="#static-assertions">Static Assertions</a></li>
+  <li><a href="#other-directives" id="toc-other-directives" class="nav-link" data-scroll-target="#other-directives">Other Directives</a></li>
+  <li><a href="#seeing-what-the-preprocessor-did" id="toc-seeing-what-the-preprocessor-did" class="nav-link" data-scroll-target="#seeing-what-the-preprocessor-did">Seeing What the Preprocessor Did</a></li>
   </ul></li>
   <li><a href="#the-standard-library" id="toc-the-standard-library" class="nav-link" data-scroll-target="#the-standard-library">The Standard Library</a>
   <ul>
@@ -2352,20 +2364,60 @@ the comparison illuminates.
 <p>The build proceeds in four distinct stages:</p>
 <ol type="1">
 <li><strong>Preprocessing</strong>: directives beginning with <code>#</code> are executed. Headers are pasted in, macros expanded, conditional regions resolved. The output is a single expanded translation unit.</li>
-<li><strong>Compilation</strong>: the translation unit is parsed, type-checked, optimized, and lowered to assembly for the target architecture.</li>
+<li><strong>Compilation</strong>: the translation unit is parsed, type-checked, optimized, and lowered to <a href="./assembly.html">assembly</a> for the target architecture.</li>
 <li><strong>Assembly</strong>: assembly becomes machine code in an <strong>object file</strong> (<code>.o</code>), with a symbol table and unresolved references.</li>
 <li><strong>Linking</strong>: object files and libraries are combined, symbols resolved, and a final executable produced.</li>
 </ol>
 <p>Stages 2 and 3 are often collapsed and called “compilation,” which is why some references describe three stages rather than four.</p>
 </section>
+<section id="include" class="level3">
+<h3 class="anchored" data-anchor-id="include"><code>#include</code></h3>
+<p><code>#include</code> replaces the directive with the entire contents of the named file, then keeps going: whatever that file includes is pasted in too, recursively, until nothing is left to expand. There is no import, no module, no symbol table, no notion that a file has already been read. A forty-line <code>.c</code> file that includes <code>&lt;stdio.h&gt;</code> routinely hands the compiler tens of thousands of lines.</p>
+<p>Two forms exist, differing only in where the search begins.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb79"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span><span class="pp">      </span><span class="co">// the implementation's own directories</span></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">"audio.h"</span><span class="pp">      </span><span class="co">// this file's directory first, then the above</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The angle-bracket form searches an implementation-defined list of places: the standard library’s directories, plus anything added with <code>-I</code>. The quoted form is specified only as searching “in an implementation-defined manner,” and every real compiler implements that as <em>the directory containing the file doing the including</em>, then falls back to the angle-bracket search. The fallback is convention rather than a guarantee, but it is universal. The convention that follows is simple: angle brackets for headers you did not write, quotes for headers that ship with your project.</p>
+<p><code>-I</code> prepends a directory to the search path, and multiple <code>-I</code> flags are searched left to right:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb80"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> <span class="at">-Iinclude</span> <span class="at">-Ivendor</span>/dsp/include <span class="at">-c</span> audio.c</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Note what the quoted form’s first rule really means. It resolves relative to the <em>including file</em>, not to the compiler’s working directory, so <code>#include "../dsp/filter.h"</code> inside <code>src/audio/mixer.c</code> looks in <code>src/dsp/</code>. This is why a header can be moved and break only the files that include it by relative path.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Computed includes">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Computed includes
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The operand may itself be a macro, expanded before the file is looked up:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb81"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define TARGET_HEADER </span><span class="st">"board/nucleo_f411.h"</span></span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include TARGET_HEADER</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is how a build system selects a board or platform header without a chain of <code>#ifdef</code>s. It is rare, entirely legal, and worth recognizing when you meet it.</p>
+</div>
+</div>
+<p>Because inclusion is literal and recursive, including the same header twice in one translation unit pastes its contents twice, which is an error for anything that cannot be declared twice. Every header therefore needs protection against it, which is what <a href="#include-guards">include guards</a> are for.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Why C builds are slow">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Why C builds are slow
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The compiler has no memory between translation units. If two hundred <code>.c</code> files each include the same eight-thousand-line header, that header is read, tokenized, and parsed two hundred times. Nothing is cached, because the preceding text can change the meaning of what follows: a macro defined before an <code>#include</code> alters the header’s expansion, so the same header genuinely may mean different things in different files. That is the price of textual inclusion, and it is the specific problem C++20 <a href="./cpp.html#modules">modules</a> exist to solve.</p>
+</div>
+</div>
+</section>
 <section id="macros" class="level3">
 <h3 class="anchored" data-anchor-id="macros">Macros</h3>
-<!-- Please include the unadorned #define X. I know what results to expect but don't know what it is when declared as #define X -->
 <p><code>#define</code> introduces a macro, a name that the preprocessor replaces with a token sequence wherever it appears.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb79"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define BUFFER_SIZE </span><span class="dv">256</span><span class="pp">                     </span><span class="co">// object-like</span></span>
-<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#define SQUARE</span><span class="op">(</span><span class="pp">x</span><span class="op">)</span><span class="pp"> </span><span class="op">((</span><span class="pp">x</span><span class="op">)</span><span class="pp"> </span><span class="op">*</span><span class="pp"> </span><span class="op">(</span><span class="pp">x</span><span class="op">))</span><span class="pp">               </span><span class="co">// function-like</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb82"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define BUFFER_SIZE </span><span class="dv">256</span><span class="pp">                     </span><span class="co">// object-like</span></span>
+<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#define SQUARE</span><span class="op">(</span><span class="pp">x</span><span class="op">)</span><span class="pp"> </span><span class="op">((</span><span class="pp">x</span><span class="op">)</span><span class="pp"> </span><span class="op">*</span><span class="pp"> </span><span class="op">(</span><span class="pp">x</span><span class="op">))</span><span class="pp">               </span><span class="co">// function-like</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The parentheses in <code>SQUARE</code> are not optional decoration. Because expansion is textual, <code>#define SQUARE(x) x * x</code> turns <code>SQUARE(a + b)</code> into <code>a + b * a + b</code>, which is not what anyone meant. Wrap every parameter, and wrap the whole body.</p>
-<p>Other directives round out the set: <code>#undef</code> removes a definition, <code>#error</code> aborts the build with a message (useful for catching an unsupported configuration), and <code>#pragma</code> issues implementation-specific instructions to the compiler.</p>
+<p>Other directives round out the set: <code>#undef</code> removes a definition, <code>#error</code> aborts the build with a message (useful for catching an unsupported configuration), and <code>#pragma</code> issues implementation-specific instructions to the compiler. <a href="#other-directives">Other Directives</a> collects the full list.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Prefer the language to the preprocessor">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -2379,61 +2431,312 @@ the comparison illuminates.
 <p>Most historical uses of macros now have typed, scoped alternatives: <code>enum</code> or <code>const</code> for constants, <code>static inline</code> functions for small operations, and (as of C23) <code>constexpr</code>. A macro has no type, obeys no scope, ignores namespaces, and is invisible to the debugger, which sees only the expansion. Reach for a macro when you need something the language genuinely cannot express: conditional compilation, stringification, token pasting, or capturing <code>__FILE__</code> and <code>__LINE__</code> at the call site.</p>
 </div>
 </div>
+<section id="the-empty-macro" class="level4">
+<h4 class="anchored" data-anchor-id="the-empty-macro">The Empty Macro</h4>
+<p>A third form is easy to miss because it looks unfinished:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb83"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define USE_FIXED_POINT</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>There is no replacement list at all, and that is legal. The macro is defined, and its replacement is the <strong>empty token sequence</strong>. This is not the same as being undefined, and it is not the same as being zero: the name exists in the preprocessor’s table, it simply has nothing on the other side of it.</p>
+<p>Before going further, one distinction has to be nailed down, because everything about empty macros depends on it. A macro name meets one of two fates, decided entirely by <em>where it appears</em>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 44%">
+<col style="width: 46%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Fate</th>
+<th style="text-align: left;">Where</th>
+<th style="text-align: left;">What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Expanded</strong></td>
+<td style="text-align: left;">Ordinary program text, and the controlling expression of a bare <code>#if</code></td>
+<td style="text-align: left;">The name is replaced by its replacement list. For an empty macro, that means it is deleted.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Tested</strong></td>
+<td style="text-align: left;">The operand of <code>#ifdef</code>, <code>#ifndef</code>, <code>defined()</code>, and <code>#undef</code></td>
+<td style="text-align: left;">The name is looked up. The preprocessor asks only whether a definition exists; the replacement list is never consulted, and no expansion occurs.</td>
+</tr>
+</tbody>
+</table>
+<p>An empty macro’s two uses line up exactly with those two fates.</p>
+<p>The first, and by far the more common, is as a <strong>flag</strong>, which lives entirely in the “tested” column. The definition carries no value, only the fact of its own existence:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb84"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define USE_FIXED_POINT</span></span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifdef USE_FIXED_POINT</span></span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">typedef</span> <span class="dt">int16_t</span> Sample_t<span class="op">;</span></span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#else</span></span>
+<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">typedef</span> <span class="dt">float</span> Sample_t<span class="op">;</span></span>
+<span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Nothing here is expanded. <code>#ifdef USE_FIXED_POINT</code> is a lookup that answers <em>yes</em>, and the conditional then keeps exactly one of its two branches and discards the other, so the compiler is handed a single <code>typedef</code> and never sees the word <code>USE_FIXED_POINT</code> at all:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb85"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="dt">int16_t</span> Sample_t<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Comment out the <code>#define</code> and you get the <code>float</code> line instead. You cannot get both; a conditional always yields one branch or the other. The macro’s emptiness is irrelevant to any of this, which is the point: a flag exists to be tested, never to be expanded, so it needs no value.</p>
+<p>The second use is <strong>annotation erasure</strong>, and it is the mirror image: it lives entirely in the “expanded” column, and the emptiness is the whole mechanism. Define a name to nothing and every use of it vanishes from the compiler’s view. This is how portable headers neutralize a keyword or attribute the target compiler does not have.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb86"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#if defined(__GNUC__)</span></span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define PACKED __attribute__</span><span class="op">((</span><span class="pp">packed</span><span class="op">))</span></span>
+<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#else</span></span>
+<span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define PACKED              </span><span class="co">// expands to nothing; the code still compiles</span></span>
+<span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span>
+<span id="cb86-6"><a href="#cb86-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-7"><a href="#cb86-7" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Header <span class="op">{</span> <span class="dt">uint8_t</span> tag<span class="op">;</span> <span class="dt">uint32_t</span> length<span class="op">;</span> <span class="op">}</span> PACKED<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>On GCC the struct declaration comes out carrying the attribute. On a compiler that has never heard of <code>__attribute__</code>, <code>PACKED</code> is expanded to nothing and the declaration is handed over clean:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb87"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Header <span class="op">{</span> <span class="dt">uint8_t</span> tag<span class="op">;</span> <span class="dt">uint32_t</span> length<span class="op">;</span> <span class="op">};</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The single source line works on both, with no <code>#ifdef</code> at the point of use. That is the trick worth remembering: push the conditional up into the definition of a name, then use the name unconditionally.</p>
+<p>The trap is what happens when you test an empty macro with <code>#if</code> instead of <code>#ifdef</code>, and the table above predicts it. A bare <code>#if</code> puts its operand in the <em>expanded</em> column, so the macro is replaced by nothing and the directive becomes <code>#if</code> followed by no expression at all. That is a syntax error, not a false condition:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb88"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define USE_FIXED_POINT</span></span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#if USE_FIXED_POINT     </span><span class="co">// error: #if with no expression</span></span>
+<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>An empty macro must be tested with <code>#ifdef</code> or <code>defined()</code>, never with a bare <code>#if</code>.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="Two ways to be surprised by an empty macro">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Two ways to be surprised by an empty macro
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong><code>-D</code> does not produce one.</strong> Defining a flag on the command line as <code>-DUSE_FIXED_POINT</code> defines it to <code>1</code>, not to empty, because that is what the standard specifies for a <code>-D</code> with no <code>=</code>. So <code>#if USE_FIXED_POINT</code> compiles when the flag came from the build system and fails when someone moves the same flag into a header as <code>#define USE_FIXED_POINT</code>. Use <code>#ifdef</code> and both spellings work. To get a genuinely empty definition from the command line, write <code>-DUSE_FIXED_POINT=</code>.</p>
+<p><strong>Defined-as-zero is still defined.</strong> <code>#define USE_FIXED_POINT 0</code> makes <code>#ifdef USE_FIXED_POINT</code> <em>true</em>, because <code>#ifdef</code> asks only whether the name has a definition and never looks at its value. If a macro is meant to be switched off, <code>#undef</code> it or do not define it; do not set it to <code>0</code> and expect <code>#ifdef</code> to notice. If a macro is meant to carry a value, test it with <code>#if</code> and be consistent about always defining it.</p>
+</div>
+</div>
+</section>
 <section id="macro-side-effects" class="level4">
 <h4 class="anchored" data-anchor-id="macro-side-effects">Macro Side Effects</h4>
 <p>Because a macro expands its arguments textually, an argument that appears twice in the body is <em>evaluated</em> twice:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb80"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define MAX</span><span class="op">(</span><span class="pp">a</span><span class="op">,</span><span class="pp"> b</span><span class="op">)</span><span class="pp"> </span><span class="op">((</span><span class="pp">a</span><span class="op">)</span><span class="pp"> </span><span class="op">&gt;</span><span class="pp"> </span><span class="op">(</span><span class="pp">b</span><span class="op">)</span><span class="pp"> </span><span class="op">?</span><span class="pp"> </span><span class="op">(</span><span class="pp">a</span><span class="op">)</span><span class="pp"> </span><span class="op">:</span><span class="pp"> </span><span class="op">(</span><span class="pp">b</span><span class="op">))</span></span>
-<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> x <span class="op">=</span> <span class="dv">5</span><span class="op">;</span></span>
-<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> result <span class="op">=</span> MAX<span class="op">(</span>x<span class="op">++,</span> <span class="dv">10</span><span class="op">);</span>   <span class="co">// x may be incremented twice</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb89"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define MAX</span><span class="op">(</span><span class="pp">a</span><span class="op">,</span><span class="pp"> b</span><span class="op">)</span><span class="pp"> </span><span class="op">((</span><span class="pp">a</span><span class="op">)</span><span class="pp"> </span><span class="op">&gt;</span><span class="pp"> </span><span class="op">(</span><span class="pp">b</span><span class="op">)</span><span class="pp"> </span><span class="op">?</span><span class="pp"> </span><span class="op">(</span><span class="pp">a</span><span class="op">)</span><span class="pp"> </span><span class="op">:</span><span class="pp"> </span><span class="op">(</span><span class="pp">b</span><span class="op">))</span></span>
+<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> x <span class="op">=</span> <span class="dv">5</span><span class="op">;</span></span>
+<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> result <span class="op">=</span> MAX<span class="op">(</span>x<span class="op">++,</span> <span class="dv">10</span><span class="op">);</span>   <span class="co">// x may be incremented twice</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The comparison evaluates <code>x++</code>, then the selected branch evaluates it again. A function does not have this problem, because arguments are evaluated exactly once at the call:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb81"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="kw">inline</span> <span class="dt">int</span> max_int<span class="op">(</span><span class="dt">int</span> a<span class="op">,</span> <span class="dt">int</span> b<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">(</span>a <span class="op">&gt;</span> b<span class="op">)</span> <span class="op">?</span> a <span class="op">:</span> b<span class="op">;</span></span>
-<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb90"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="kw">inline</span> <span class="dt">int</span> max_int<span class="op">(</span><span class="dt">int</span> a<span class="op">,</span> <span class="dt">int</span> b<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">(</span>a <span class="op">&gt;</span> b<span class="op">)</span> <span class="op">?</span> a <span class="op">:</span> b<span class="op">;</span></span>
+<span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>static inline</code> gives the same performance as the macro with none of the hazards. Use it whenever the operation is monomorphic; this is precisely the gap that C++ <a href="./cpp.html#templates">templates</a> and Rust generics close properly.</p>
 </section>
+<section id="generic" class="level4">
+<h4 class="anchored" data-anchor-id="generic"><code>_Generic</code></h4>
+<p>“Whenever the operation is monomorphic” is doing a lot of work in that last sentence, because the reason to write <code>MAX</code> as a macro in the first place is that it works on any type. C11 offers a partial escape. <code>_Generic</code> is a <strong>type-generic selection</strong>: an expression that chooses among several alternatives based on the type of a controlling expression, resolved entirely at compile time.</p>
+<p>It is a language feature rather than a preprocessor one, but it appears here because it is essentially never used on its own. Its only practical form is inside a <code>#define</code>, wrapping the dispatch so callers see a single name.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb91"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;math.h&gt;</span></span>
+<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
+<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb91-4"><a href="#cb91-4" aria-hidden="true" tabindex="-1"></a><span class="pp">#define ABS</span><span class="op">(</span><span class="pp">x</span><span class="op">)</span><span class="pp"> </span><span class="dt">_Generic</span><span class="op">((</span><span class="pp">x</span><span class="op">),</span><span class="pp">    </span><span class="op">\</span></span>
+<span id="cb91-5"><a href="#cb91-5" aria-hidden="true" tabindex="-1"></a><span class="pp">        </span><span class="dt">long</span><span class="pp"> </span><span class="dt">double</span><span class="op">:</span><span class="pp"> fabsl</span><span class="op">,</span><span class="pp">     </span><span class="op">\</span></span>
+<span id="cb91-6"><a href="#cb91-6" aria-hidden="true" tabindex="-1"></a><span class="pp">        </span><span class="dt">double</span><span class="op">:</span><span class="pp">      fabs</span><span class="op">,</span><span class="pp">      </span><span class="op">\</span></span>
+<span id="cb91-7"><a href="#cb91-7" aria-hidden="true" tabindex="-1"></a><span class="pp">        </span><span class="dt">float</span><span class="op">:</span><span class="pp">       fabsf</span><span class="op">,</span><span class="pp">     </span><span class="op">\</span></span>
+<span id="cb91-8"><a href="#cb91-8" aria-hidden="true" tabindex="-1"></a><span class="pp">        </span><span class="dt">long</span><span class="op">:</span><span class="pp">        labs</span><span class="op">,</span><span class="pp">      </span><span class="op">\</span></span>
+<span id="cb91-9"><a href="#cb91-9" aria-hidden="true" tabindex="-1"></a><span class="pp">        </span><span class="dt">int</span><span class="op">:</span><span class="pp">         abs        </span><span class="op">\</span></span>
+<span id="cb91-10"><a href="#cb91-10" aria-hidden="true" tabindex="-1"></a><span class="pp">    </span><span class="op">)(</span><span class="pp">x</span><span class="op">)</span></span>
+<span id="cb91-11"><a href="#cb91-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb91-12"><a href="#cb91-12" aria-hidden="true" tabindex="-1"></a><span class="dt">double</span> d <span class="op">=</span> ABS<span class="op">(-</span><span class="fl">2.5</span><span class="op">);</span>    <span class="co">// selects fabs,  calls fabs(-2.5)</span></span>
+<span id="cb91-13"><a href="#cb91-13" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span>    n <span class="op">=</span> ABS<span class="op">(-</span><span class="dv">7</span><span class="op">);</span>      <span class="co">// selects abs,   calls abs(-7)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The whole <code>_Generic(...)</code> expression is replaced by the selected alternative, here a function name, and the trailing <code>(x)</code> then calls it. Nothing is decided at run time and no branch is emitted; the compiler resolves the selection and generates a single direct call.</p>
+<p>Returning a value rather than a function works the same way:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb92"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define TYPE_NAME</span><span class="op">(</span><span class="pp">x</span><span class="op">)</span><span class="pp"> </span><span class="dt">_Generic</span><span class="op">((</span><span class="pp">x</span><span class="op">),</span><span class="pp">   </span><span class="op">\</span></span>
+<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a><span class="pp">        </span><span class="dt">int</span><span class="op">:</span><span class="pp">      </span><span class="st">"int"</span><span class="op">,</span><span class="pp">             </span><span class="op">\</span></span>
+<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a><span class="pp">        </span><span class="dt">float</span><span class="op">:</span><span class="pp">    </span><span class="st">"float"</span><span class="op">,</span><span class="pp">           </span><span class="op">\</span></span>
+<span id="cb92-4"><a href="#cb92-4" aria-hidden="true" tabindex="-1"></a><span class="pp">        </span><span class="dt">double</span><span class="op">:</span><span class="pp">   </span><span class="st">"double"</span><span class="op">,</span><span class="pp">          </span><span class="op">\</span></span>
+<span id="cb92-5"><a href="#cb92-5" aria-hidden="true" tabindex="-1"></a><span class="pp">        </span><span class="dt">char</span><span class="pp"> </span><span class="op">*:</span><span class="pp">   </span><span class="st">"char *"</span><span class="op">,</span><span class="pp">          </span><span class="op">\</span></span>
+<span id="cb92-6"><a href="#cb92-6" aria-hidden="true" tabindex="-1"></a><span class="pp">        </span><span class="cf">default</span><span class="op">:</span><span class="pp">  </span><span class="st">"something else"</span><span class="op">)</span></span>
+<span id="cb92-7"><a href="#cb92-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb92-8"><a href="#cb92-8" aria-hidden="true" tabindex="-1"></a>printf<span class="op">(</span><span class="st">"</span><span class="sc">%s\n</span><span class="st">"</span><span class="op">,</span> TYPE_NAME<span class="op">(</span><span class="fl">3.0</span><span class="bu">f</span><span class="op">));</span>   <span class="co">// float</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Four rules govern it, and each surprises somebody:</p>
+<ul>
+<li><strong>The controlling expression is not evaluated.</strong> Only its type is inspected. <code>ABS(i++)</code> increments <code>i</code> exactly once, in the call, not twice, which is a rare case of a macro not doubling its argument. It also means <code>_Generic((int *)0, ...)</code> is a legitimate way to select on a type you name directly rather than on a value you have.</li>
+<li><strong>Selection uses the type after lvalue conversion.</strong> Top-level qualifiers are dropped, so a <code>const int</code> matches the <code>int</code> association, and arrays and functions decay to pointers, so a <code>char[16]</code> matches <code>char *</code> rather than any array type. (C11 as published was ambiguous here; the committee resolved it this way afterward, so ancient compilers may disagree.)</li>
+<li><strong>Every branch must type-check, including the ones not selected.</strong> The unselected alternatives are discarded, but they are still parsed and checked first. This is the practical limit on <code>_Generic</code>: you cannot dispatch to operations that are merely <em>invalid</em> for the other types, only to ones that happen not to be chosen. It is not <code>if constexpr</code>.</li>
+<li><strong>The match must be unambiguous.</strong> Exactly one association may be compatible with the type. No match and no <code>default</code> is a compile error, which is often what you want: it turns an unsupported type into a build failure instead of a silent promotion.</li>
+</ul>
+<p>This is how <code>&lt;tgmath.h&gt;</code> works, and <code>_Generic</code> exists largely so that header could be written in portable C rather than by compiler magic.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Dispatch, not polymorphism">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Dispatch, not polymorphism
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Be clear about what this buys. <code>_Generic</code> selects from a list you wrote out by hand; it cannot generate code for a type you did not enumerate, cannot be extended by a caller, and produces error messages about the expansion rather than about your call. C++ <a href="./cpp.html#templates">templates</a> and Rust <a href="./rust-ho.html#generics-and-trait-bounds">generics</a> instantiate new code per type and are open to types their author never saw. <code>_Generic</code> closes the narrow gap where a fixed, known set of types needs one name; it does not make C a generic language.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="how-expansion-actually-works" class="level3">
+<h3 class="anchored" data-anchor-id="how-expansion-actually-works">How Expansion Actually Works</h3>
+<p>Everything so far has treated expansion as obvious: the macro’s name is replaced by its body, arguments substituted in. That is true, but the order of operations has consequences that account for most of the genuinely baffling macro behavior, and the rules are short enough to learn once.</p>
+<p>When the preprocessor decides to expand a function-like macro, it does three things in this order:</p>
+<ol type="1">
+<li><strong>Prescan.</strong> Each argument is <em>completely macro-expanded on its own</em>, before it is substituted into the body. The exception is an argument used as an operand of <code>#</code> or <code>##</code>, which is substituted raw.</li>
+<li><strong>Substitute.</strong> The expanded arguments are put into the replacement list.</li>
+<li><strong>Rescan.</strong> The result is scanned again for macro names, and any found are expanded too.</li>
+</ol>
+<p>Step 3 is what lets macros build on other macros. It is also what keeps the following from recursing forever:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb93"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a><span class="co">// A debug build that logs every deallocation, still calling the real free().</span></span>
+<span id="cb93-2"><a href="#cb93-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#define free</span><span class="op">(</span><span class="pp">p</span><span class="op">)</span><span class="pp"> </span><span class="cf">do</span><span class="pp"> </span><span class="op">{</span><span class="pp"> log_free</span><span class="op">(</span><span class="pp">__FILE__</span><span class="op">,</span><span class="pp"> __LINE__</span><span class="op">,</span><span class="pp"> </span><span class="op">(</span><span class="pp">p</span><span class="op">));</span><span class="pp"> free</span><span class="op">(</span><span class="pp">p</span><span class="op">);</span><span class="pp"> </span><span class="op">}</span><span class="pp"> </span><span class="cf">while</span><span class="pp"> </span><span class="op">(</span><span class="dv">0</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>During the rescan of a macro’s own expansion, that macro is marked and will not be expanded again. Compiler writers call this <strong>painting it blue</strong>: the name survives into the output, but it has been colored so that no further expansion touches it. So the <code>free(p)</code> in the body becomes a genuine call to the library function, not an infinite regress. Self-referential macros are safe by construction, which is what makes wrapping a function in a macro of the same name a workable technique rather than a trap.</p>
+<p>The exception in step 1 is the one that bites. Because <code>#</code> and <code>##</code> receive their operand unexpanded, stringifying a macro gives you its <em>name</em>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb94"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define VERSION </span><span class="dv">3</span></span>
+<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#define STRINGIFY</span><span class="op">(</span><span class="pp">x</span><span class="op">)</span><span class="pp">  </span><span class="op">#</span><span class="pp">x</span></span>
+<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#define XSTRINGIFY</span><span class="op">(</span><span class="pp">x</span><span class="op">)</span><span class="pp"> STRINGIFY</span><span class="op">(</span><span class="pp">x</span><span class="op">)</span></span>
+<span id="cb94-4"><a href="#cb94-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb94-5"><a href="#cb94-5" aria-hidden="true" tabindex="-1"></a>STRINGIFY<span class="op">(</span>VERSION<span class="op">)</span>    <span class="co">// "VERSION"</span></span>
+<span id="cb94-6"><a href="#cb94-6" aria-hidden="true" tabindex="-1"></a>XSTRINGIFY<span class="op">(</span>VERSION<span class="op">)</span>   <span class="co">// "3"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>XSTRINGIFY</code> works because its own argument is not an operand of <code>#</code>, so prescan expands <code>VERSION</code> to <code>3</code> before passing it along; the inner <code>STRINGIFY</code> then stringifies <code>3</code>. This two-layer dance is standard practice and the same trick applies to <code>##</code> when you need to paste an expanded macro rather than its name. If you find yourself writing a macro whose name begins with <code>X</code> or ends in <code>_</code>, this is almost always why.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="Errors point at the expansion, not the source">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Errors point at the expansion, not the source
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The compiler sees the post-expansion text, so a mistake inside a macro is reported at the line where the macro was <em>used</em>, described in terms of tokens the user never typed. GCC and Clang mitigate this by printing an expansion trace (“in expansion of macro …”), which is worth reading from the bottom up. When the trace is not enough, stop reasoning about the rules and read the actual output with <a href="#seeing-what-the-preprocessor-did"><code>-E</code></a>.</p>
+</div>
+</div>
 </section>
 <section id="conditional-compilation" class="level3">
 <h3 class="anchored" data-anchor-id="conditional-compilation">Conditional Compilation</h3>
 <p><code>#if</code>, <code>#ifdef</code>, <code>#elif</code>, <code>#else</code>, and <code>#endif</code> include or discard regions of source before compilation. Discarded regions need not even be valid C, which is what makes this the tool for portability.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb82"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define DEBUG_LEVEL </span><span class="dv">2</span></span>
-<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#if DEBUG_LEVEL &gt;= 2</span></span>
-<span id="cb82-4"><a href="#cb82-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define DEBUG_PRINT</span><span class="op">(</span><span class="pp">fmt</span><span class="op">,</span><span class="pp"> </span><span class="op">...)</span><span class="pp"> printf</span><span class="op">(</span><span class="pp">fmt</span><span class="op">,</span><span class="pp"> </span><span class="op">##</span><span class="pp">__VA_ARGS__</span><span class="op">)</span></span>
-<span id="cb82-5"><a href="#cb82-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#elif DEBUG_LEVEL == 1</span></span>
-<span id="cb82-6"><a href="#cb82-6" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define DEBUG_PRINT</span><span class="op">(</span><span class="pp">fmt</span><span class="op">,</span><span class="pp"> </span><span class="op">...)</span><span class="pp"> printf</span><span class="op">(</span><span class="pp">fmt </span><span class="st">"</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span><span class="pp"> </span><span class="op">##</span><span class="pp">__VA_ARGS__</span><span class="op">)</span></span>
-<span id="cb82-7"><a href="#cb82-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#else</span></span>
-<span id="cb82-8"><a href="#cb82-8" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define DEBUG_PRINT</span><span class="op">(</span><span class="pp">fmt</span><span class="op">,</span><span class="pp"> </span><span class="op">...)</span><span class="pp"> </span><span class="op">((</span><span class="dt">void</span><span class="op">)</span><span class="dv">0</span><span class="op">)</span><span class="pp">   </span><span class="co">// compiles to nothing</span></span>
-<span id="cb82-9"><a href="#cb82-9" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb95"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define DEBUG_LEVEL </span><span class="dv">2</span></span>
+<span id="cb95-2"><a href="#cb95-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb95-3"><a href="#cb95-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#if DEBUG_LEVEL &gt;= 2</span></span>
+<span id="cb95-4"><a href="#cb95-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define DEBUG_PRINT</span><span class="op">(</span><span class="pp">fmt</span><span class="op">,</span><span class="pp"> </span><span class="op">...)</span><span class="pp"> printf</span><span class="op">(</span><span class="pp">fmt</span><span class="op">,</span><span class="pp"> </span><span class="op">##</span><span class="pp">__VA_ARGS__</span><span class="op">)</span></span>
+<span id="cb95-5"><a href="#cb95-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#elif DEBUG_LEVEL == 1</span></span>
+<span id="cb95-6"><a href="#cb95-6" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define DEBUG_PRINT</span><span class="op">(</span><span class="pp">fmt</span><span class="op">,</span><span class="pp"> </span><span class="op">...)</span><span class="pp"> printf</span><span class="op">(</span><span class="pp">fmt </span><span class="st">"</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span><span class="pp"> </span><span class="op">##</span><span class="pp">__VA_ARGS__</span><span class="op">)</span></span>
+<span id="cb95-7"><a href="#cb95-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#else</span></span>
+<span id="cb95-8"><a href="#cb95-8" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define DEBUG_PRINT</span><span class="op">(</span><span class="pp">fmt</span><span class="op">,</span><span class="pp"> </span><span class="op">...)</span><span class="pp"> </span><span class="op">((</span><span class="dt">void</span><span class="op">)</span><span class="dv">0</span><span class="op">)</span><span class="pp">   </span><span class="co">// compiles to nothing</span></span>
+<span id="cb95-9"><a href="#cb95-9" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>With <code>DEBUG_LEVEL</code> at 0, every call site vanishes: zero code size, zero run-time cost. This is the standard mechanism for debug instrumentation, feature flags, and platform variation.</p>
+<section id="defined" class="level4">
+<h4 class="anchored" data-anchor-id="defined"><code>defined</code></h4>
+<p><code>#ifdef X</code> and <code>#ifndef X</code> are shorthand, and deliberately limited: each takes exactly one macro name and nothing else. The moment a condition involves two flags, or a flag combined with a value, you need the <code>defined</code> operator, which is available only inside <code>#if</code> and <code>#elif</code> and evaluates to <code>1</code> or <code>0</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb96"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#if defined(USE_FIXED_POINT) &amp;&amp; !defined(HAVE_FPU)</span></span>
+<span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb96-3"><a href="#cb96-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#elif defined(HAVE_FPU) &amp;&amp; SAMPLE_RATE &gt; 48000</span></span>
+<span id="cb96-4"><a href="#cb96-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb96-5"><a href="#cb96-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>#ifdef X</code> and <code>#if defined(X)</code> are exactly equivalent; the parentheses are optional (<code>#if defined X</code>) but conventionally written. Prefer <code>defined</code> for anything compound, and prefer it uniformly in a header that already needs it once, since mixing the two spellings for no reason makes a long conditional chain harder to read.</p>
+<p>The arithmetic in <code>#if</code> deserves one caution of its own: it is performed in the widest integer type the implementation supports (<code>intmax_t</code>/<code>uintmax_t</code>), regardless of the types the program uses, and <code>sizeof</code> is not available because the preprocessor has no idea what a type is. <code>#if sizeof(int) == 4</code> does not work. That is what <a href="#static-assertions">static assertions</a> are for.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="An unknown name in `#if` is silently zero">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>An unknown name in <code>#if</code> is silently zero
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>After macro expansion, any identifier still remaining in an <code>#if</code> expression is replaced by <code>0</code>. Not an error, not a warning by default: just false.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb97"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#if CONFG_DEBUG        </span><span class="co">// typo for CONFIG_DEBUG</span></span>
+<span id="cb97-2"><a href="#cb97-2" aria-hidden="true" tabindex="-1"></a>    enable_tracing<span class="op">();</span>  <span class="co">// silently never compiled</span></span>
+<span id="cb97-3"><a href="#cb97-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The block simply never appears, the build succeeds, and the feature quietly does not exist. This is one of the most durable bugs in C, because nothing anywhere reports it. <code>-Wundef</code> promotes the substitution to a warning and is worth turning on in any project that uses configuration macros at all. Note also that this is <em>only</em> how identifiers behave; <code>defined(CONFG_DEBUG)</code> on a misspelled name is legitimately <code>0</code> and no warning is possible, which is an argument for defining every configuration flag to an explicit <code>0</code> or <code>1</code> and testing it with <code>#if</code>.</p>
+</div>
+</div>
+</section>
 </section>
 <section id="stringification-and-token-pasting" class="level3">
 <h3 class="anchored" data-anchor-id="stringification-and-token-pasting">Stringification and Token Pasting</h3>
 <p>Two operators exist only inside macro bodies. <strong>Stringification</strong> (<code>#</code>) converts an argument into a string literal:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb83"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define STRINGIFY</span><span class="op">(</span><span class="pp">x</span><span class="op">)</span><span class="pp"> </span><span class="op">#</span><span class="pp">x</span></span>
-<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#define SHOW</span><span class="op">(</span><span class="pp">expr</span><span class="op">)</span><span class="pp"> printf</span><span class="op">(#</span><span class="pp">expr </span><span class="st">" = </span><span class="sc">%d\n</span><span class="st">"</span><span class="op">,</span><span class="pp"> expr</span><span class="op">)</span></span>
-<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a>SHOW<span class="op">(</span>count <span class="op">*</span> <span class="dv">2</span><span class="op">);</span>   <span class="co">// printf("count * 2" " = %d\n", count * 2);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb98"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define STRINGIFY</span><span class="op">(</span><span class="pp">x</span><span class="op">)</span><span class="pp"> </span><span class="op">#</span><span class="pp">x</span></span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#define SHOW</span><span class="op">(</span><span class="pp">expr</span><span class="op">)</span><span class="pp"> printf</span><span class="op">(#</span><span class="pp">expr </span><span class="st">" = </span><span class="sc">%d\n</span><span class="st">"</span><span class="op">,</span><span class="pp"> expr</span><span class="op">)</span></span>
+<span id="cb98-3"><a href="#cb98-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-4"><a href="#cb98-4" aria-hidden="true" tabindex="-1"></a>SHOW<span class="op">(</span>count <span class="op">*</span> <span class="dv">2</span><span class="op">);</span>   <span class="co">// printf("count * 2" " = %d\n", count * 2);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Both operators take their operand <em>unexpanded</em>, which is the rule from <a href="#how-expansion-actually-works">How Expansion Actually Works</a> that costs people the most time. If the argument is itself a macro and you want its value rather than its name, route it through an extra layer, as <code>XSTRINGIFY</code> does above.</p>
 <p><strong>Token pasting</strong> (<code>##</code>) joins two tokens into one, which is how you generate families of related identifiers:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb84"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define DEFINE_ACCESSORS</span><span class="op">(</span><span class="pp">type</span><span class="op">,</span><span class="pp"> name</span><span class="op">)</span><span class="pp">                  </span><span class="op">\</span></span>
-<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a><span class="pp">    </span><span class="dt">static</span><span class="pp"> type get_</span><span class="op">##</span><span class="pp">name</span><span class="op">(</span><span class="dt">void</span><span class="op">)</span><span class="pp">      </span><span class="op">{</span><span class="pp"> </span><span class="cf">return</span><span class="pp"> name</span><span class="op">;</span><span class="pp"> </span><span class="op">}</span><span class="pp"> </span><span class="op">\</span></span>
-<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a><span class="pp">    </span><span class="dt">static</span><span class="pp"> </span><span class="dt">void</span><span class="pp"> set_</span><span class="op">##</span><span class="pp">name</span><span class="op">(</span><span class="pp">type v</span><span class="op">)</span><span class="pp">    </span><span class="op">{</span><span class="pp"> name </span><span class="op">=</span><span class="pp"> v</span><span class="op">;</span><span class="pp"> </span><span class="op">}</span></span>
-<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>DEFINE_ACCESSORS<span class="op">(</span><span class="dt">int</span><span class="op">,</span> sample_rate<span class="op">)</span>   <span class="co">// defines get_sample_rate / set_sample_rate</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb99"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define DEFINE_ACCESSORS</span><span class="op">(</span><span class="pp">type</span><span class="op">,</span><span class="pp"> name</span><span class="op">)</span><span class="pp">                  </span><span class="op">\</span></span>
+<span id="cb99-2"><a href="#cb99-2" aria-hidden="true" tabindex="-1"></a><span class="pp">    </span><span class="dt">static</span><span class="pp"> type get_</span><span class="op">##</span><span class="pp">name</span><span class="op">(</span><span class="dt">void</span><span class="op">)</span><span class="pp">      </span><span class="op">{</span><span class="pp"> </span><span class="cf">return</span><span class="pp"> name</span><span class="op">;</span><span class="pp"> </span><span class="op">}</span><span class="pp"> </span><span class="op">\</span></span>
+<span id="cb99-3"><a href="#cb99-3" aria-hidden="true" tabindex="-1"></a><span class="pp">    </span><span class="dt">static</span><span class="pp"> </span><span class="dt">void</span><span class="pp"> set_</span><span class="op">##</span><span class="pp">name</span><span class="op">(</span><span class="pp">type v</span><span class="op">)</span><span class="pp">    </span><span class="op">{</span><span class="pp"> name </span><span class="op">=</span><span class="pp"> v</span><span class="op">;</span><span class="pp"> </span><span class="op">}</span></span>
+<span id="cb99-4"><a href="#cb99-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb99-5"><a href="#cb99-5" aria-hidden="true" tabindex="-1"></a>DEFINE_ACCESSORS<span class="op">(</span><span class="dt">int</span><span class="op">,</span> sample_rate<span class="op">)</span>   <span class="co">// defines get_sample_rate / set_sample_rate</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Token pasting is the closest thing C has to code generation, and it is how many container and registration macros work. It is also nearly unreadable in bulk, and errors surface as messages about the <em>expanded</em> text.</p>
+<section id="x-macros" class="level4">
+<h4 class="anchored" data-anchor-id="x-macros">X Macros</h4>
+<p>Sooner or later a C program acquires two lists that must agree. An <code>enum</code> of error codes and an array of strings to print them. A set of commands and the <code>switch</code> that dispatches them. A register map and the table that dumps it. They are edited at different times by different people, they drift, and the symptom is an off-by-one in a lookup table that nobody notices until a log line names the wrong error.</p>
+<p>The <strong>X macro</strong> is C’s answer, and it has been in use since the 1960s. The trick is to write the data exactly once as a list of invocations of an undefined macro named <code>X</code>, then replay that list, redefining <code>X</code> each time to render the data a different way.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb100"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="co">// commands.def: the single source of truth</span></span>
+<span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>X<span class="op">(</span>CMD_START<span class="op">,</span>  <span class="st">"start"</span><span class="op">,</span>  handle_start<span class="op">)</span></span>
+<span id="cb100-3"><a href="#cb100-3" aria-hidden="true" tabindex="-1"></a>X<span class="op">(</span>CMD_STOP<span class="op">,</span>   <span class="st">"stop"</span><span class="op">,</span>   handle_stop<span class="op">)</span></span>
+<span id="cb100-4"><a href="#cb100-4" aria-hidden="true" tabindex="-1"></a>X<span class="op">(</span>CMD_STATUS<span class="op">,</span> <span class="st">"status"</span><span class="op">,</span> handle_status<span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Each replay defines <code>X</code>, includes the list, and undefines <code>X</code> again:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb101"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">enum</span> <span class="op">{</span></span>
+<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define X</span><span class="op">(</span><span class="pp">id</span><span class="op">,</span><span class="pp"> name</span><span class="op">,</span><span class="pp"> handler</span><span class="op">)</span><span class="pp">   id</span><span class="op">,</span></span>
+<span id="cb101-3"><a href="#cb101-3" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#include </span><span class="im">"commands.def"</span></span>
+<span id="cb101-4"><a href="#cb101-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#undef X</span></span>
+<span id="cb101-5"><a href="#cb101-5" aria-hidden="true" tabindex="-1"></a>    CMD_COUNT</span>
+<span id="cb101-6"><a href="#cb101-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> Command_t<span class="op">;</span></span>
+<span id="cb101-7"><a href="#cb101-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb101-8"><a href="#cb101-8" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span><span class="dt">const</span> command_names<span class="op">[]</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb101-9"><a href="#cb101-9" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define X</span><span class="op">(</span><span class="pp">id</span><span class="op">,</span><span class="pp"> name</span><span class="op">,</span><span class="pp"> handler</span><span class="op">)</span><span class="pp">   </span><span class="op">[</span><span class="pp">id</span><span class="op">]</span><span class="pp"> </span><span class="op">=</span><span class="pp"> name</span><span class="op">,</span></span>
+<span id="cb101-10"><a href="#cb101-10" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#include </span><span class="im">"commands.def"</span></span>
+<span id="cb101-11"><a href="#cb101-11" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#undef X</span></span>
+<span id="cb101-12"><a href="#cb101-12" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb101-13"><a href="#cb101-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb101-14"><a href="#cb101-14" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> dispatch<span class="op">(</span>Command_t cmd<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>arg<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb101-15"><a href="#cb101-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">switch</span> <span class="op">(</span>cmd<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb101-16"><a href="#cb101-16" aria-hidden="true" tabindex="-1"></a>        <span class="pp">#define X</span><span class="op">(</span><span class="pp">id</span><span class="op">,</span><span class="pp"> name</span><span class="op">,</span><span class="pp"> handler</span><span class="op">)</span><span class="pp">   </span><span class="cf">case</span><span class="pp"> id</span><span class="op">:</span><span class="pp"> </span><span class="cf">return</span><span class="pp"> handler</span><span class="op">(</span><span class="pp">arg</span><span class="op">);</span></span>
+<span id="cb101-17"><a href="#cb101-17" aria-hidden="true" tabindex="-1"></a>        <span class="pp">#include </span><span class="im">"commands.def"</span></span>
+<span id="cb101-18"><a href="#cb101-18" aria-hidden="true" tabindex="-1"></a>        <span class="pp">#undef X</span></span>
+<span id="cb101-19"><a href="#cb101-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">default</span><span class="op">:</span> <span class="cf">return</span> <span class="op">-</span><span class="dv">1</span><span class="op">;</span></span>
+<span id="cb101-20"><a href="#cb101-20" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb101-21"><a href="#cb101-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Adding a command is now a one-line edit to <code>commands.def</code>, and the enum, the name table, and the dispatch switch all update together. They cannot drift, because there is only one list. <code>CMD_COUNT</code> lands correctly for free, and the designated initializer <code>[id] = name</code> means the table stays right even if the list is reordered.</p>
+<p>The list does not have to live in its own file. The same technique works with the list as a macro, which keeps everything in one place at the cost of a continuation on every line:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb102"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define COMMAND_LIST            </span><span class="op">\</span></span>
+<span id="cb102-2"><a href="#cb102-2" aria-hidden="true" tabindex="-1"></a><span class="pp">    X</span><span class="op">(</span><span class="pp">CMD_START</span><span class="op">,</span><span class="pp">  </span><span class="st">"start"</span><span class="op">)</span><span class="pp">      </span><span class="op">\</span></span>
+<span id="cb102-3"><a href="#cb102-3" aria-hidden="true" tabindex="-1"></a><span class="pp">    X</span><span class="op">(</span><span class="pp">CMD_STOP</span><span class="op">,</span><span class="pp">   </span><span class="st">"stop"</span><span class="op">)</span><span class="pp">       </span><span class="op">\</span></span>
+<span id="cb102-4"><a href="#cb102-4" aria-hidden="true" tabindex="-1"></a><span class="pp">    X</span><span class="op">(</span><span class="pp">CMD_STATUS</span><span class="op">,</span><span class="pp"> </span><span class="st">"status"</span><span class="op">)</span></span>
+<span id="cb102-5"><a href="#cb102-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb102-6"><a href="#cb102-6" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">enum</span> <span class="op">{</span></span>
+<span id="cb102-7"><a href="#cb102-7" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define X</span><span class="op">(</span><span class="pp">id</span><span class="op">,</span><span class="pp"> name</span><span class="op">)</span><span class="pp"> id</span><span class="op">,</span></span>
+<span id="cb102-8"><a href="#cb102-8" aria-hidden="true" tabindex="-1"></a>    COMMAND_LIST</span>
+<span id="cb102-9"><a href="#cb102-9" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#undef X</span></span>
+<span id="cb102-10"><a href="#cb102-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> Command_t<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-warning callout-titled" title="Powerful, and genuinely hostile to read">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Powerful, and genuinely hostile to read
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Everything the earlier warnings said applies here at full strength. A newcomer meeting an X macro for the first time will not know what they are looking at, “go to definition” lands on a <code>.def</code> file full of a macro that has no definition, and the debugger has never heard of any of it. Errors are reported against the expansion, so a missing comma in the list produces a syntax error on the <code>#include</code> line.</p>
+<p>It is still worth knowing, for two reasons. A great deal of long-lived C, including parts of the Linux kernel and most vendor peripheral headers, is built this way, so you will read it whether or not you write it. And the alternative it replaces, hand-maintained parallel lists, fails silently, whereas this fails loudly at build time. When you do use it, keep the list dead simple and leave one comment at the top of the file naming the technique, so the next reader has something to search for.</p>
+</div>
+</div>
+<p>C23 does not retire the idiom. <code>__VA_OPT__</code> and <code>#embed</code> solve adjacent problems, but nothing in standard C generates an enum and a matching table from one declaration. That capability arrives only with C++ templates and <code>constexpr</code>, or with Rust’s derive macros, both of which are the real reply to this entire section.</p>
+</section>
 </section>
 <section id="variadic-macros" class="level3">
 <h3 class="anchored" data-anchor-id="variadic-macros">Variadic Macros</h3>
 <p>A macro can accept a variable number of arguments with <code>...</code>, expanded via <code>__VA_ARGS__</code> (C99):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb85"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define LOG_ERROR</span><span class="op">(</span><span class="pp">fmt</span><span class="op">,</span><span class="pp"> </span><span class="op">...)</span><span class="pp"> </span><span class="op">\</span></span>
-<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a><span class="pp">    </span><span class="cf">do</span><span class="pp"> </span><span class="op">{</span><span class="pp"> </span><span class="op">\</span></span>
-<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a><span class="pp">        fprintf</span><span class="op">(</span><span class="pp">stderr</span><span class="op">,</span><span class="pp"> </span><span class="st">"[ERROR] </span><span class="sc">%s</span><span class="st">:</span><span class="sc">%d</span><span class="st">: "</span><span class="pp"> fmt </span><span class="st">"</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span><span class="pp"> __FILE__</span><span class="op">,</span><span class="pp"> __LINE__</span><span class="op">,</span><span class="pp"> </span><span class="op">##</span><span class="pp">__VA_ARGS__</span><span class="op">);</span><span class="pp"> </span><span class="op">\</span></span>
-<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a><span class="pp">    </span><span class="op">}</span><span class="pp"> </span><span class="cf">while</span><span class="pp"> </span><span class="op">(</span><span class="dv">0</span><span class="op">)</span></span>
-<span id="cb85-5"><a href="#cb85-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb85-6"><a href="#cb85-6" aria-hidden="true" tabindex="-1"></a>LOG_ERROR<span class="op">(</span><span class="st">"Buffer overflow: size=</span><span class="sc">%d</span><span class="st">, max=</span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> size<span class="op">,</span> max<span class="op">);</span></span>
-<span id="cb85-7"><a href="#cb85-7" aria-hidden="true" tabindex="-1"></a><span class="co">// [ERROR] audio.c:123: Buffer overflow: size=1024, max=512</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb103"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define LOG_ERROR</span><span class="op">(</span><span class="pp">fmt</span><span class="op">,</span><span class="pp"> </span><span class="op">...)</span><span class="pp"> </span><span class="op">\</span></span>
+<span id="cb103-2"><a href="#cb103-2" aria-hidden="true" tabindex="-1"></a><span class="pp">    </span><span class="cf">do</span><span class="pp"> </span><span class="op">{</span><span class="pp"> </span><span class="op">\</span></span>
+<span id="cb103-3"><a href="#cb103-3" aria-hidden="true" tabindex="-1"></a><span class="pp">        fprintf</span><span class="op">(</span><span class="pp">stderr</span><span class="op">,</span><span class="pp"> </span><span class="st">"[ERROR] </span><span class="sc">%s</span><span class="st">:</span><span class="sc">%d</span><span class="st">: "</span><span class="pp"> fmt </span><span class="st">"</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span><span class="pp"> __FILE__</span><span class="op">,</span><span class="pp"> __LINE__</span><span class="op">,</span><span class="pp"> </span><span class="op">##</span><span class="pp">__VA_ARGS__</span><span class="op">);</span><span class="pp"> </span><span class="op">\</span></span>
+<span id="cb103-4"><a href="#cb103-4" aria-hidden="true" tabindex="-1"></a><span class="pp">    </span><span class="op">}</span><span class="pp"> </span><span class="cf">while</span><span class="pp"> </span><span class="op">(</span><span class="dv">0</span><span class="op">)</span></span>
+<span id="cb103-5"><a href="#cb103-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb103-6"><a href="#cb103-6" aria-hidden="true" tabindex="-1"></a>LOG_ERROR<span class="op">(</span><span class="st">"Buffer overflow: size=</span><span class="sc">%d</span><span class="st">, max=</span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> size<span class="op">,</span> max<span class="op">);</span></span>
+<span id="cb103-7"><a href="#cb103-7" aria-hidden="true" tabindex="-1"></a><span class="co">// [ERROR] audio.c:123: Buffer overflow: size=1024, max=512</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This is the canonical example of a macro earning its place: a function cannot capture the caller’s file and line, because by the time it runs, that information is gone.</p>
-<p>The <code>##__VA_ARGS__</code> is a GCC extension that swallows the preceding comma when the variable arguments are empty, so <code>LOG_ERROR("failed")</code> still compiles. C23 standardizes this properly as <code>__VA_OPT__</code>.</p>
+<p>The <code>##__VA_ARGS__</code> needs explaining, because strict C99 requires at least one argument for the <code>...</code>, and <code>LOG_ERROR("failed")</code> supplies none. Written plainly, the expansion would end in <code>__FILE__, __LINE__, )</code>, a dangling comma before the closing parenthesis. The <code>##</code> prefix on <code>__VA_ARGS__</code> is a GCC extension (adopted by Clang and most vendor compilers) that deletes the preceding comma when the variable arguments are empty.</p>
+<p>C23 replaces the extension with <code>__VA_OPT__(x)</code>, which expands to its own argument when <code>__VA_ARGS__</code> is non-empty and to nothing when it is empty. The intent is now visible in the source rather than hidden in a punctuation trick:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb104"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#define LOG_ERROR</span><span class="op">(</span><span class="pp">fmt</span><span class="op">,</span><span class="pp"> </span><span class="op">...)</span><span class="pp"> </span><span class="op">\</span></span>
+<span id="cb104-2"><a href="#cb104-2" aria-hidden="true" tabindex="-1"></a><span class="pp">    fprintf</span><span class="op">(</span><span class="pp">stderr</span><span class="op">,</span><span class="pp"> </span><span class="st">"[ERROR] </span><span class="sc">%s</span><span class="st">:</span><span class="sc">%d</span><span class="st">: "</span><span class="pp"> fmt </span><span class="st">"</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span><span class="pp"> __FILE__</span><span class="op">,</span><span class="pp"> __LINE__ __VA_OPT__</span><span class="op">(,)</span><span class="pp"> __VA_ARGS__</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Read the tail as “a comma, but only if there is something after it.” Use <code>__VA_OPT__</code> if you can rely on C23, and <code>##__VA_ARGS__</code> otherwise; the two are equivalent in this, the case that actually comes up.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="The `do { ... } while (0)` wrapper">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -2448,20 +2751,21 @@ the comparison illuminates.
 </div>
 </div>
 </section>
-<section id="include-guards-vs.-pragma-once" class="level3">
-<h3 class="anchored" data-anchor-id="include-guards-vs.-pragma-once">Include Guards vs.&nbsp;<code>#pragma once</code></h3>
+<section id="include-guards" class="level3">
+<h3 class="anchored" data-anchor-id="include-guards">Include Guards vs.&nbsp;<code>#pragma once</code></h3>
 <p>Because <code>#include</code> is literal text insertion, a header included twice in one translation unit defines everything twice, which is an error. Both solutions make the second inclusion a no-op.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb86"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="co">// myheader.h  (traditional: guaranteed by the standard, portable everywhere)</span></span>
-<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifndef MYHEADER_H</span></span>
-<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#define MYHEADER_H</span></span>
-<span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a><span class="co">/* contents */</span></span>
-<span id="cb86-6"><a href="#cb86-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb86-7"><a href="#cb86-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif  </span><span class="co">// MYHEADER_H</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb87"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="co">// myheader.h  (modern: non-standard, but supported by every major compiler)</span></span>
-<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#pragma once</span></span>
-<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a><span class="co">/* contents */</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb105"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb105-1"><a href="#cb105-1" aria-hidden="true" tabindex="-1"></a><span class="co">// myheader.h  (traditional: guaranteed by the standard, portable everywhere)</span></span>
+<span id="cb105-2"><a href="#cb105-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifndef MYHEADER_H</span></span>
+<span id="cb105-3"><a href="#cb105-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#define MYHEADER_H</span></span>
+<span id="cb105-4"><a href="#cb105-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb105-5"><a href="#cb105-5" aria-hidden="true" tabindex="-1"></a><span class="co">/* contents */</span></span>
+<span id="cb105-6"><a href="#cb105-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb105-7"><a href="#cb105-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif  </span><span class="co">// MYHEADER_H</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>MYHEADER_H</code> is <a href="#the-empty-macro">an empty macro</a>, and the guard is the purest illustration of what one is for. It has no value and is never expanded; it exists only so that the <code>#ifndef</code> on the line above has something to find. On the first inclusion the lookup fails, the guard is defined, and the contents are compiled. On every inclusion after that the lookup succeeds, the <code>#ifndef</code> is false, and the entire file between it and the <code>#endif</code> is discarded before the compiler ever sees it.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb106"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a><span class="co">// myheader.h  (modern: non-standard, but supported by every major compiler)</span></span>
+<span id="cb106-2"><a href="#cb106-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#pragma once</span></span>
+<span id="cb106-3"><a href="#cb106-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb106-4"><a href="#cb106-4" aria-hidden="true" tabindex="-1"></a><span class="co">/* contents */</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>#pragma once</code> is shorter and immune to the guard-name collisions that bite in large projects, but it relies on the compiler correctly identifying “the same file,” which symlinks and network mounts can occasionally confuse. Include guards are guaranteed by the standard. Either is defensible; be consistent within a project.</p>
 </section>
 <section id="predefined-macros-and-compile-time-constants" class="level3">
@@ -2530,11 +2834,11 @@ the comparison illuminates.
 </tbody>
 </table>
 <p><code>__STDC_VERSION__</code> is the one you will actually branch on. Its values are <code>199901L</code> for C99, <code>201112L</code> for C11, <code>201710L</code> for C17, and <code>202311L</code> for C23:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb88"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#if defined(__STDC_VERSION__) &amp;&amp; __STDC_VERSION__ &gt;= 201112L</span></span>
-<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define ASSERT_STATIC</span><span class="op">(</span><span class="pp">cond</span><span class="op">,</span><span class="pp"> msg</span><span class="op">)</span><span class="pp"> </span><span class="kw">_Static_assert</span><span class="op">(</span><span class="pp">cond</span><span class="op">,</span><span class="pp"> msg</span><span class="op">)</span></span>
-<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#else</span></span>
-<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define ASSERT_STATIC</span><span class="op">(</span><span class="pp">cond</span><span class="op">,</span><span class="pp"> msg</span><span class="op">)</span><span class="pp"> </span><span class="co">/* unavailable before C11 */</span></span>
-<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb107"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb107-1"><a href="#cb107-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#if defined(__STDC_VERSION__) &amp;&amp; __STDC_VERSION__ &gt;= 201112L</span></span>
+<span id="cb107-2"><a href="#cb107-2" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define ASSERT_STATIC</span><span class="op">(</span><span class="pp">cond</span><span class="op">,</span><span class="pp"> msg</span><span class="op">)</span><span class="pp"> </span><span class="kw">_Static_assert</span><span class="op">(</span><span class="pp">cond</span><span class="op">,</span><span class="pp"> msg</span><span class="op">)</span></span>
+<span id="cb107-3"><a href="#cb107-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#else</span></span>
+<span id="cb107-4"><a href="#cb107-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define ASSERT_STATIC</span><span class="op">(</span><span class="pp">cond</span><span class="op">,</span><span class="pp"> msg</span><span class="op">)</span><span class="pp"> </span><span class="co">/* unavailable before C11 */</span></span>
+<span id="cb107-5"><a href="#cb107-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="callout callout-style-default callout-warning callout-titled" title="`__func__` is not a macro">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -2587,26 +2891,26 @@ the comparison illuminates.
 </tbody>
 </table>
 <p>These matter most in freestanding environments, where a vendor legitimately omits large parts of the library:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb89"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifdef __STDC_NO_THREADS__</span></span>
-<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#include </span><span class="im">"portable_threads.h"</span><span class="pp">   </span><span class="co">// fall back to a platform API</span></span>
-<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#else</span></span>
-<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#include </span><span class="im">&lt;threads.h&gt;</span></span>
-<span id="cb89-5"><a href="#cb89-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb108"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifdef __STDC_NO_THREADS__</span></span>
+<span id="cb108-2"><a href="#cb108-2" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#include </span><span class="im">"portable_threads.h"</span><span class="pp">   </span><span class="co">// fall back to a platform API</span></span>
+<span id="cb108-3"><a href="#cb108-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#else</span></span>
+<span id="cb108-4"><a href="#cb108-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#include </span><span class="im">&lt;threads.h&gt;</span></span>
+<span id="cb108-5"><a href="#cb108-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="compiler-and-target-identification" class="level4">
 <h4 class="anchored" data-anchor-id="compiler-and-target-identification">Compiler and Target Identification</h4>
 <p>Not standardized, but universal in practice, and how real portable headers are written:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb90"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#if defined(__clang__)</span></span>
-<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define COMPILER_NAME </span><span class="st">"clang"</span></span>
-<span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#elif defined(__GNUC__)                     </span><span class="co">// also defined by clang and icc</span></span>
-<span id="cb90-4"><a href="#cb90-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define COMPILER_NAME </span><span class="st">"gcc"</span></span>
-<span id="cb90-5"><a href="#cb90-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#elif defined(_MSC_VER)</span></span>
-<span id="cb90-6"><a href="#cb90-6" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define COMPILER_NAME </span><span class="st">"msvc"</span></span>
-<span id="cb90-7"><a href="#cb90-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span>
-<span id="cb90-8"><a href="#cb90-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb90-9"><a href="#cb90-9" aria-hidden="true" tabindex="-1"></a><span class="pp">#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__</span></span>
-<span id="cb90-10"><a href="#cb90-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* little-endian path */</span></span>
-<span id="cb90-11"><a href="#cb90-11" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb109"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb109-1"><a href="#cb109-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#if defined(__clang__)</span></span>
+<span id="cb109-2"><a href="#cb109-2" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define COMPILER_NAME </span><span class="st">"clang"</span></span>
+<span id="cb109-3"><a href="#cb109-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#elif defined(__GNUC__)                     </span><span class="co">// also defined by clang and icc</span></span>
+<span id="cb109-4"><a href="#cb109-4" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define COMPILER_NAME </span><span class="st">"gcc"</span></span>
+<span id="cb109-5"><a href="#cb109-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#elif defined(_MSC_VER)</span></span>
+<span id="cb109-6"><a href="#cb109-6" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#define COMPILER_NAME </span><span class="st">"msvc"</span></span>
+<span id="cb109-7"><a href="#cb109-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span>
+<span id="cb109-8"><a href="#cb109-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb109-9"><a href="#cb109-9" aria-hidden="true" tabindex="-1"></a><span class="pp">#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__</span></span>
+<span id="cb109-10"><a href="#cb109-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* little-endian path */</span></span>
+<span id="cb109-11"><a href="#cb109-11" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Order matters here: Clang defines <code>__GNUC__</code> for compatibility, so a <code>__GNUC__</code> test placed first will match Clang too. Check for the most specific compiler before the most general. Architecture and OS macros (<code>__x86_64__</code>, <code>__aarch64__</code>, <code>__linux__</code>, <code>_WIN32</code>) follow the same pattern, and the authoritative catalogue is the compiler’s own documentation.</p>
 </section>
 <section id="implementation-limits" class="level4">
@@ -2644,14 +2948,132 @@ the comparison illuminates.
 <section id="static-assertions" class="level3">
 <h3 class="anchored" data-anchor-id="static-assertions">Static Assertions</h3>
 <p><code>_Static_assert</code> (C11; spelled <code>static_assert</code> in C23 and via <code>&lt;assert.h&gt;</code>) checks a constant expression at compile time and fails the build with your message if it does not hold. Paired with the macros above, it turns silent portability assumptions into loud build errors:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb91"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;assert.h&gt;</span></span>
-<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;limits.h&gt;</span></span>
-<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdint.h&gt;</span></span>
-<span id="cb91-4"><a href="#cb91-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb91-5"><a href="#cb91-5" aria-hidden="true" tabindex="-1"></a><span class="kw">_Static_assert</span><span class="op">(</span>CHAR_BIT <span class="op">==</span> <span class="dv">8</span><span class="op">,</span> <span class="st">"this code assumes 8-bit bytes"</span><span class="op">);</span></span>
-<span id="cb91-6"><a href="#cb91-6" aria-hidden="true" tabindex="-1"></a><span class="kw">_Static_assert</span><span class="op">(</span><span class="kw">sizeof</span><span class="op">(</span><span class="dt">int</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="dv">4</span><span class="op">,</span> <span class="st">"16-bit int is not supported here"</span><span class="op">);</span></span>
-<span id="cb91-7"><a href="#cb91-7" aria-hidden="true" tabindex="-1"></a><span class="kw">_Static_assert</span><span class="op">(</span><span class="kw">sizeof</span><span class="op">(</span>Packet_t<span class="op">)</span> <span class="op">==</span> <span class="dv">32</span><span class="op">,</span> <span class="st">"Packet_t must match the wire format"</span><span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb110"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb110-1"><a href="#cb110-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;assert.h&gt;</span></span>
+<span id="cb110-2"><a href="#cb110-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;limits.h&gt;</span></span>
+<span id="cb110-3"><a href="#cb110-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdint.h&gt;</span></span>
+<span id="cb110-4"><a href="#cb110-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb110-5"><a href="#cb110-5" aria-hidden="true" tabindex="-1"></a><span class="kw">_Static_assert</span><span class="op">(</span>CHAR_BIT <span class="op">==</span> <span class="dv">8</span><span class="op">,</span> <span class="st">"this code assumes 8-bit bytes"</span><span class="op">);</span></span>
+<span id="cb110-6"><a href="#cb110-6" aria-hidden="true" tabindex="-1"></a><span class="kw">_Static_assert</span><span class="op">(</span><span class="kw">sizeof</span><span class="op">(</span><span class="dt">int</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="dv">4</span><span class="op">,</span> <span class="st">"16-bit int is not supported here"</span><span class="op">);</span></span>
+<span id="cb110-7"><a href="#cb110-7" aria-hidden="true" tabindex="-1"></a><span class="kw">_Static_assert</span><span class="op">(</span><span class="kw">sizeof</span><span class="op">(</span>Packet_t<span class="op">)</span> <span class="op">==</span> <span class="dv">32</span><span class="op">,</span> <span class="st">"Packet_t must match the wire format"</span><span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>That third assertion is the valuable one. Struct layout depends on padding rules you do not control, so a header describing a wire format or a hardware layout should assert its own size rather than trust that it came out right. The check costs nothing at run time and fails at the moment the mistake is introduced rather than in the field.</p>
+<p>Note that <code>_Static_assert</code> succeeds precisely where <code>#if</code> cannot: it is a language construct, evaluated by the compiler, so it can see <code>sizeof</code> and real types. Its run-time counterpart, the <code>assert()</code> macro and the <code>NDEBUG</code> switch that disables it, is a library facility and is covered with <a href="#other-headers-worth-knowing">the other headers</a>.</p>
+</section>
+<section id="other-directives" class="level3">
+<h3 class="anchored" data-anchor-id="other-directives">Other Directives</h3>
+<p>The complete directive set is short. Most of it has now appeared:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Directive</th>
+<th style="text-align: left;">Purpose</th>
+<th style="text-align: left;">Covered in</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>#include</code></td>
+<td style="text-align: left;">Paste in another file, recursively</td>
+<td style="text-align: left;"><a href="#include"><code>#include</code></a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>#define</code> / <code>#undef</code></td>
+<td style="text-align: left;">Create or remove a macro</td>
+<td style="text-align: left;"><a href="#macros">Macros</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>#if</code> / <code>#ifdef</code> / <code>#ifndef</code> / <code>#elif</code> / <code>#else</code> / <code>#endif</code></td>
+<td style="text-align: left;">Include or discard a region</td>
+<td style="text-align: left;"><a href="#conditional-compilation">Conditional Compilation</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>#error</code></td>
+<td style="text-align: left;">Fail the build with a message</td>
+<td style="text-align: left;">below</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>#warning</code></td>
+<td style="text-align: left;">Warn without failing (universal extension; C23 standard)</td>
+<td style="text-align: left;">below</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>#pragma</code></td>
+<td style="text-align: left;">Implementation-specific instruction to the compiler</td>
+<td style="text-align: left;">below</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>#line</code></td>
+<td style="text-align: left;">Override <code>__FILE__</code> and <code>__LINE__</code></td>
+<td style="text-align: left;">below</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>#embed</code></td>
+<td style="text-align: left;">Paste a binary file’s bytes as an initializer (C23)</td>
+<td style="text-align: left;">below</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>#</code> (alone)</td>
+<td style="text-align: left;">The null directive; does nothing</td>
+<td style="text-align: left;">(nothing to cover)</td>
+</tr>
+</tbody>
+</table>
+<p><code>#error</code> is the one you should reach for more than you do. A header that cannot work on a given configuration should say so at the top rather than emit forty lines of confusing type errors further down:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb111"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb111-1"><a href="#cb111-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#if !defined(__STDC_VERSION__) || __STDC_VERSION__ &lt; 201112L</span></span>
+<span id="cb111-2"><a href="#cb111-2" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#error "this library requires C11 or later"</span></span>
+<span id="cb111-3"><a href="#cb111-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>#pragma</code> is a deliberate escape hatch: the standard reserves the directive and says nothing about what any particular pragma means, leaving each implementation free to define its own. <code>#pragma once</code> is the near-universal one; <code>#pragma pack</code>, <code>#pragma GCC diagnostic</code>, and vendor pragmas for placing objects in specific memory regions are the others you meet. An unrecognized pragma must be ignored, so a stray one is harmless (though <code>-Wunknown-pragmas</code> will point it out). C99 added <code>_Pragma("...")</code>, which does the same thing as an operator, so a pragma can be produced by a macro; a directive never can.</p>
+<p><code>#line</code> rewrites the values of <code>__FILE__</code> and <code>__LINE__</code> for the text that follows:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb112"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb112-1"><a href="#cb112-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#line 42 "grammar.y"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Nobody writes this by hand. It exists for code generators, which is why the output of <code>lex</code>, <code>yacc</code>, and Bison is full of it: the generated <code>.c</code> file is what the compiler reads, but the error message should point at the <code>.y</code> file the human actually wrote.</p>
+<p><code>#embed</code> is C23’s newest addition and closes an old gap. Embedding a resource (a lookup table, a font, a firmware blob) previously meant running <code>xxd -i</code> in the build and committing or generating a large C array. Now the preprocessor does it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb113"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb113-1"><a href="#cb113-1" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">const</span> <span class="dt">unsigned</span> <span class="dt">char</span> window_table<span class="op">[]</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb113-2"><a href="#cb113-2" aria-hidden="true" tabindex="-1"></a>    <span class="pp">#embed "hann_1024.bin"</span></span>
+<span id="cb113-3"><a href="#cb113-3" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The directive expands to a comma-separated list of byte values, so it works anywhere an initializer list does. The compiler can read the file directly rather than parsing a megabyte of decimal literals, which is dramatically faster than the tool it replaces. Support is arriving as C23 adoption proceeds; GCC 15 and Clang 19 have it.</p>
+</section>
+<section id="seeing-what-the-preprocessor-did" class="level3">
+<h3 class="anchored" data-anchor-id="seeing-what-the-preprocessor-did">Seeing What the Preprocessor Did</h3>
+<p>Every rule in this section is a rule about text, which means none of it has to be reasoned about in the abstract. When a macro does something unexpected, stop reading it and go look at what it produced.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 32%">
+<col style="width: 67%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Shows</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>cc -E audio.c</code></td>
+<td style="text-align: left;">The fully expanded translation unit on stdout</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>cc -E -P audio.c</code></td>
+<td style="text-align: left;">The same, without the line-marker noise</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>cc -dM -E - &lt; /dev/null</code></td>
+<td style="text-align: left;">Every macro predefined for the current target</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>cc -dM -E audio.c</code></td>
+<td style="text-align: left;">Every macro defined at the end of that file, yours included</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>cc -save-temps -c audio.c</code></td>
+<td style="text-align: left;">A normal build that also leaves <code>audio.i</code> (preprocessed) behind</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>cc -H -c audio.c</code></td>
+<td style="text-align: left;">The include tree, one line per header, indented by depth</td>
+</tr>
+</tbody>
+</table>
+<p>Three of these earn their keep regularly. <code>-E -P</code> piped through your pager answers “what did this macro actually become,” and it is the fastest way to settle any argument about expansion order. <code>-dM -E - &lt; /dev/null</code> prints the several hundred macros your compiler defines before it reads a single line of your code, which is how you discover the right spelling of a target or feature macro instead of guessing. And <code>-H</code> answers “where on earth is this header coming from,” which after a <code>-I</code> ordering mistake is not a rhetorical question.</p>
+<p>The output of <code>-E</code> is large and mostly headers. Search it rather than reading it, and remember that what you are looking at is exactly what the compiler was handed.</p>
 </section>
 </section>
 <section id="the-standard-library" class="level2">
@@ -2729,7 +3151,7 @@ the comparison illuminates.
 <p>…you can use function attributes to specify certain function properties that may help the compiler optimize calls or check code more carefully for correctness. For example, you can use attributes to specify that a function never returns (noreturn), returns a value depending only on the values of its arguments (const), or has printf-style arguments (format).</p>
 </blockquote>
 <p>The doubled parentheses are part of the syntax, distinguishing an attribute from a function call:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb92"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>attribute<span class="op">-</span>list<span class="op">))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb114"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb114-1"><a href="#cb114-1" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>attribute<span class="op">-</span>list<span class="op">))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A few that earn their keep in ordinary hosted code:</p>
 <table class="caption-top table">
 <colgroup>
@@ -2770,8 +3192,8 @@ the comparison illuminates.
 </tbody>
 </table>
 <p>The <code>format</code> attribute is the underrated one: it makes a <code>printf</code> wrapper as type-safe as <code>printf</code> itself.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb93"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>format<span class="op">(</span>printf<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">)))</span></span>
-<span id="cb93-2"><a href="#cb93-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> log_message<span class="op">(</span>LogLevel_t level<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>fmt<span class="op">,</span> <span class="op">...);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb115"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb115-1"><a href="#cb115-1" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>format<span class="op">(</span>printf<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">)))</span></span>
+<span id="cb115-2"><a href="#cb115-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> log_message<span class="op">(</span>LogLevel_t level<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>fmt<span class="op">,</span> <span class="op">...);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>C23 finally standardizes an attribute syntax of its own, <code>[[noreturn]]</code> and <code>[[deprecated]]</code>, borrowed from C++.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Mnemonic: no hash, not preprocessor">
 <div class="callout-header d-flex align-content-center">
@@ -2815,10 +3237,10 @@ the comparison illuminates.
 <h4 class="anchored" data-anchor-id="the-volatile-keyword">The <code>volatile</code> Keyword</h4>
 <p>Optimization is also the context in which the third <a href="#type-qualifiers">type qualifier</a> finally makes sense. Every transformation above rests on an assumption: that the compiler can see every way a value might change. When that assumption is false, the optimizer will happily produce a program that is faster and wrong.</p>
 <p><code>volatile</code> withdraws the assumption. It tells the compiler that an object may change outside the control of the program’s visible flow, so every read and write appearing in the source must actually occur in the object code, in the order written. The optimizer may no longer cache the value in a register, hoist a load out of a loop, or delete a store it believes no one observes.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb94"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Without volatile, the compiler may load *status once, hoist it out of the</span></span>
-<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a><span class="co">// loop, and generate an infinite loop that never re-reads the address.</span></span>
-<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a><span class="dt">volatile</span> <span class="dt">uint16_t</span> <span class="op">*</span>status <span class="op">=</span> <span class="op">(</span><span class="dt">volatile</span> <span class="dt">uint16_t</span> <span class="op">*)</span><span class="bn">0xFF00</span><span class="op">;</span></span>
-<span id="cb94-4"><a href="#cb94-4" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(*</span>status <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span> <span class="co">/* wait for the hardware to set the flag */</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb116"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb116-1"><a href="#cb116-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Without volatile, the compiler may load *status once, hoist it out of the</span></span>
+<span id="cb116-2"><a href="#cb116-2" aria-hidden="true" tabindex="-1"></a><span class="co">// loop, and generate an infinite loop that never re-reads the address.</span></span>
+<span id="cb116-3"><a href="#cb116-3" aria-hidden="true" tabindex="-1"></a><span class="dt">volatile</span> <span class="dt">uint16_t</span> <span class="op">*</span>status <span class="op">=</span> <span class="op">(</span><span class="dt">volatile</span> <span class="dt">uint16_t</span> <span class="op">*)</span><span class="bn">0xFF00</span><span class="op">;</span></span>
+<span id="cb116-4"><a href="#cb116-4" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(*</span>status <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span> <span class="co">/* wait for the hardware to set the flag */</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The cast is required: assigning a bare integer to a pointer is a constraint violation that modern compilers reject outright. Note also the fixed-width <code>uint16_t</code> rather than <code>int</code>, since a hardware register has an exact width.</p>
 <p>Three situations genuinely need <code>volatile</code>: memory-mapped hardware registers, variables shared between an interrupt handler and the main flow, and local variables that must survive a <code>longjmp</code>. Note also that <code>const</code> and <code>volatile</code> are not opposites and can coexist. <code>const volatile</code> describes a read-only hardware register: your code must not write it, yet the hardware may change it underneath you.</p>
 <div class="callout callout-style-default callout-warning callout-titled" title="`volatile` is not an atomicity or threading primitive">
@@ -2884,43 +3306,43 @@ the comparison illuminates.
 <section id="integer-promotion-and-implicit-conversions" class="level3">
 <h3 class="anchored" data-anchor-id="integer-promotion-and-implicit-conversions">Integer Promotion and Implicit Conversions</h3>
 <p>Before arithmetic, any integer type narrower than <code>int</code> is promoted to <code>int</code> (the <em>integer promotions</em>). The arithmetic therefore happens at <code>int</code> width, not at the operands’ declared width, and whether that saves you or burns you depends entirely on how wide <code>int</code> is on the target.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb95"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> a <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
-<span id="cb95-2"><a href="#cb95-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> b <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
-<span id="cb95-3"><a href="#cb95-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb95-4"><a href="#cb95-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int32_t</span> result <span class="op">=</span> a <span class="op">+</span> b<span class="op">;</span></span>
-<span id="cb95-5"><a href="#cb95-5" aria-hidden="true" tabindex="-1"></a><span class="co">// 32-bit int: a and b promote to int, sum is 60000, correct.</span></span>
-<span id="cb95-6"><a href="#cb95-6" aria-hidden="true" tabindex="-1"></a><span class="co">// 16-bit int: promotion buys no headroom, so the sum overflows before assignment.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb117"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> a <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
+<span id="cb117-2"><a href="#cb117-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> b <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
+<span id="cb117-3"><a href="#cb117-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb117-4"><a href="#cb117-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int32_t</span> result <span class="op">=</span> a <span class="op">+</span> b<span class="op">;</span></span>
+<span id="cb117-5"><a href="#cb117-5" aria-hidden="true" tabindex="-1"></a><span class="co">// 32-bit int: a and b promote to int, sum is 60000, correct.</span></span>
+<span id="cb117-6"><a href="#cb117-6" aria-hidden="true" tabindex="-1"></a><span class="co">// 16-bit int: promotion buys no headroom, so the sum overflows before assignment.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Casting one operand to a type at least as wide as the result forces the arithmetic to happen at that width:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb96"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int32_t</span> result <span class="op">=</span> <span class="op">(</span><span class="dt">int32_t</span><span class="op">)</span>a <span class="op">+</span> b<span class="op">;</span>   <span class="co">// b converts too; the addition is 32-bit everywhere</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb118"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int32_t</span> result <span class="op">=</span> <span class="op">(</span><span class="dt">int32_t</span><span class="op">)</span>a <span class="op">+</span> b<span class="op">;</span>   <span class="co">// b converts too; the addition is 32-bit everywhere</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The related trap is <strong>signed/unsigned comparison</strong>. When one operand is signed and the other unsigned of the same rank, the signed value converts to unsigned, so <code>-1 &lt; 1u</code> is <em>false</em>. This is why <code>for (size_t i = n - 1; i &gt;= 0; i--)</code> never terminates: an unsigned value is always <code>&gt;= 0</code>. Enable <code>-Wsign-compare</code> (included in <code>-Wextra</code>).</p>
 </section>
 <section id="operator-precedence-surprises" class="level3">
 <h3 class="anchored" data-anchor-id="operator-precedence-surprises">Operator Precedence Surprises</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb97"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>flags <span class="op">&amp;</span> MASK <span class="op">==</span> ENABLED<span class="op">)</span>     <span class="co">// parsed as: flags &amp; (MASK == ENABLED)</span></span>
-<span id="cb97-2"><a href="#cb97-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">((</span>flags <span class="op">&amp;</span> MASK<span class="op">)</span> <span class="op">==</span> ENABLED<span class="op">)</span>   <span class="co">// what you meant</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb119"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>flags <span class="op">&amp;</span> MASK <span class="op">==</span> ENABLED<span class="op">)</span>     <span class="co">// parsed as: flags &amp; (MASK == ENABLED)</span></span>
+<span id="cb119-2"><a href="#cb119-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">((</span>flags <span class="op">&amp;</span> MASK<span class="op">)</span> <span class="op">==</span> ENABLED<span class="op">)</span>   <span class="co">// what you meant</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Bitwise operators bind more loosely than comparison operators</strong>, a decision Ritchie later called a mistake, retained because code already depended on it. The same ordering catches shifts: <code>1 &lt;&lt; n + 1</code> shifts by <code>n + 1</code>.</p>
 <p>Neither case produces a warning by default, because both are perfectly legal expressions that simply mean something other than what you wrote. Parenthesize any expression mixing bitwise operators with comparison or arithmetic, and consult the <a href="#operators-and-precedence">precedence table</a> when in doubt.</p>
 </section>
 <section id="assignment-vs.-comparison" class="level3">
 <h3 class="anchored" data-anchor-id="assignment-vs.-comparison">Assignment vs.&nbsp;Comparison</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb98"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">=</span> <span class="dv">5</span><span class="op">)</span>   <span class="co">// assignment, not comparison; always true</span></span>
-<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">==</span> <span class="dv">5</span><span class="op">)</span>  <span class="co">// comparison</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb120"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">=</span> <span class="dv">5</span><span class="op">)</span>   <span class="co">// assignment, not comparison; always true</span></span>
+<span id="cb120-2"><a href="#cb120-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">==</span> <span class="dv">5</span><span class="op">)</span>  <span class="co">// comparison</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Modern compilers warn about this when the assignment is not parenthesized, so <code>-Wall</code> catches most instances. Where an assignment in a condition is genuinely intended, wrap it in extra parentheses to say so: <code>while ((c = getchar()) != EOF)</code>.</p>
 </section>
 <section id="buffer-overruns" class="level3">
 <h3 class="anchored" data-anchor-id="buffer-overruns">Buffer Overruns</h3>
 <p>The classic C vulnerability:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb99"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> buffer<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
-<span id="cb99-2"><a href="#cb99-2" aria-hidden="true" tabindex="-1"></a>strcpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">);</span>   <span class="co">// overruns the buffer</span></span>
-<span id="cb99-3"><a href="#cb99-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb99-4"><a href="#cb99-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Bounded, but silently truncates, and may not terminate</span></span>
-<span id="cb99-5"><a href="#cb99-5" aria-hidden="true" tabindex="-1"></a>strncpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">);</span></span>
-<span id="cb99-6"><a href="#cb99-6" aria-hidden="true" tabindex="-1"></a>buffer<span class="op">[</span><span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb121"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> buffer<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
+<span id="cb121-2"><a href="#cb121-2" aria-hidden="true" tabindex="-1"></a>strcpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">);</span>   <span class="co">// overruns the buffer</span></span>
+<span id="cb121-3"><a href="#cb121-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb121-4"><a href="#cb121-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Bounded, but silently truncates, and may not terminate</span></span>
+<span id="cb121-5"><a href="#cb121-5" aria-hidden="true" tabindex="-1"></a>strncpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb121-6"><a href="#cb121-6" aria-hidden="true" tabindex="-1"></a>buffer<span class="op">[</span><span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>snprintf</code> is usually the better tool:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb100"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> n <span class="op">=</span> snprintf<span class="op">(</span>buffer<span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">),</span> <span class="st">"Value: </span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> x<span class="op">);</span></span>
-<span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>n <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">||</span> <span class="op">(</span><span class="dt">size_t</span><span class="op">)</span>n <span class="op">&gt;=</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">))</span> <span class="op">{</span></span>
-<span id="cb100-3"><a href="#cb100-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* output was truncated */</span></span>
-<span id="cb100-4"><a href="#cb100-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb122"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb122-1"><a href="#cb122-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> n <span class="op">=</span> snprintf<span class="op">(</span>buffer<span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">),</span> <span class="st">"Value: </span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> x<span class="op">);</span></span>
+<span id="cb122-2"><a href="#cb122-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>n <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">||</span> <span class="op">(</span><span class="dt">size_t</span><span class="op">)</span>n <span class="op">&gt;=</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb122-3"><a href="#cb122-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* output was truncated */</span></span>
+<span id="cb122-4"><a href="#cb122-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="callout callout-style-default callout-warning callout-titled" title="Truncation is a bug too">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -2937,45 +3359,45 @@ the comparison illuminates.
 </section>
 <section id="off-by-one-errors" class="level3">
 <h3 class="anchored" data-anchor-id="off-by-one-errors">Off-by-One Errors</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb101"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> array<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
-<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;=</span> <span class="dv">10</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span>   <span class="co">// writes array[10]: out of bounds</span></span>
-<span id="cb101-3"><a href="#cb101-3" aria-hidden="true" tabindex="-1"></a>    array<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
-<span id="cb101-4"><a href="#cb101-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb123"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> array<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
+<span id="cb123-2"><a href="#cb123-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;=</span> <span class="dv">10</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span>   <span class="co">// writes array[10]: out of bounds</span></span>
+<span id="cb123-3"><a href="#cb123-3" aria-hidden="true" tabindex="-1"></a>    array<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb123-4"><a href="#cb123-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A loop over <code>n</code> elements runs while the index is <code>&lt; n</code>, never <code>&lt;= n</code>. Counting down, start at <code>n - 1</code> and run while the index is <code>&gt;= 0</code>, and keep the index <em>signed</em> so the termination test can actually fail.</p>
 </section>
 <section id="pointer-arithmetic-and-free" class="level3">
 <h3 class="anchored" data-anchor-id="pointer-arithmetic-and-free">Pointer Arithmetic and <code>free</code></h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb102"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> <span class="op">*</span>p <span class="op">=</span> malloc<span class="op">(</span><span class="dv">10</span> <span class="op">*</span> <span class="kw">sizeof</span> <span class="op">*</span>p<span class="op">);</span></span>
-<span id="cb102-2"><a href="#cb102-2" aria-hidden="true" tabindex="-1"></a>p<span class="op">++;</span>              <span class="co">// now points at the second element</span></span>
-<span id="cb102-3"><a href="#cb102-3" aria-hidden="true" tabindex="-1"></a>free<span class="op">(</span>p<span class="op">);</span>          <span class="co">// undefined behavior: not the pointer malloc returned</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb124"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> <span class="op">*</span>p <span class="op">=</span> malloc<span class="op">(</span><span class="dv">10</span> <span class="op">*</span> <span class="kw">sizeof</span> <span class="op">*</span>p<span class="op">);</span></span>
+<span id="cb124-2"><a href="#cb124-2" aria-hidden="true" tabindex="-1"></a>p<span class="op">++;</span>              <span class="co">// now points at the second element</span></span>
+<span id="cb124-3"><a href="#cb124-3" aria-hidden="true" tabindex="-1"></a>free<span class="op">(</span>p<span class="op">);</span>          <span class="co">// undefined behavior: not the pointer malloc returned</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>free</code> must receive exactly the pointer the allocator returned. Keep the original and iterate with a separate cursor.</p>
 </section>
 <section id="modifying-string-literals" class="level3">
 <h3 class="anchored" data-anchor-id="modifying-string-literals">Modifying String Literals</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb103"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>str <span class="op">=</span> <span class="st">"Hello"</span><span class="op">;</span>   <span class="co">// points into read-only storage</span></span>
-<span id="cb103-2"><a href="#cb103-2" aria-hidden="true" tabindex="-1"></a>str<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'h'</span><span class="op">;</span>          <span class="co">// undefined behavior; typically a segfault</span></span>
-<span id="cb103-3"><a href="#cb103-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb103-4"><a href="#cb103-4" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> arr<span class="op">[]</span> <span class="op">=</span> <span class="st">"Hello"</span><span class="op">;</span>  <span class="co">// a modifiable copy on the stack</span></span>
-<span id="cb103-5"><a href="#cb103-5" aria-hidden="true" tabindex="-1"></a>arr<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'h'</span><span class="op">;</span>          <span class="co">// fine</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb125"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>str <span class="op">=</span> <span class="st">"Hello"</span><span class="op">;</span>   <span class="co">// points into read-only storage</span></span>
+<span id="cb125-2"><a href="#cb125-2" aria-hidden="true" tabindex="-1"></a>str<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'h'</span><span class="op">;</span>          <span class="co">// undefined behavior; typically a segfault</span></span>
+<span id="cb125-3"><a href="#cb125-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb125-4"><a href="#cb125-4" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> arr<span class="op">[]</span> <span class="op">=</span> <span class="st">"Hello"</span><span class="op">;</span>  <span class="co">// a modifiable copy on the stack</span></span>
+<span id="cb125-5"><a href="#cb125-5" aria-hidden="true" tabindex="-1"></a>arr<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'h'</span><span class="op">;</span>          <span class="co">// fine</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Declare pointers to literals as <code>const char *</code> and let the compiler catch the write.</p>
 </section>
 <section id="forgetting-break-in-switch" class="level3">
 <h3 class="anchored" data-anchor-id="forgetting-break-in-switch">Forgetting <code>break</code> in <code>switch</code></h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb104"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a><span class="cf">switch</span> <span class="op">(</span>state<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb104-2"><a href="#cb104-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> STATE_IDLE<span class="op">:</span></span>
-<span id="cb104-3"><a href="#cb104-3" aria-hidden="true" tabindex="-1"></a>        init_processing<span class="op">();</span></span>
-<span id="cb104-4"><a href="#cb104-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">// falls through to STATE_ACTIVE, almost certainly by accident</span></span>
-<span id="cb104-5"><a href="#cb104-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> STATE_ACTIVE<span class="op">:</span></span>
-<span id="cb104-6"><a href="#cb104-6" aria-hidden="true" tabindex="-1"></a>        process_data<span class="op">();</span></span>
-<span id="cb104-7"><a href="#cb104-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span><span class="op">;</span></span>
-<span id="cb104-8"><a href="#cb104-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb126"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a><span class="cf">switch</span> <span class="op">(</span>state<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb126-2"><a href="#cb126-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> STATE_IDLE<span class="op">:</span></span>
+<span id="cb126-3"><a href="#cb126-3" aria-hidden="true" tabindex="-1"></a>        init_processing<span class="op">();</span></span>
+<span id="cb126-4"><a href="#cb126-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">// falls through to STATE_ACTIVE, almost certainly by accident</span></span>
+<span id="cb126-5"><a href="#cb126-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> STATE_ACTIVE<span class="op">:</span></span>
+<span id="cb126-6"><a href="#cb126-6" aria-hidden="true" tabindex="-1"></a>        process_data<span class="op">();</span></span>
+<span id="cb126-7"><a href="#cb126-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb126-8"><a href="#cb126-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Deliberate fall-through should be announced, both for readers and for <code>-Wimplicit-fallthrough</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb105"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb105-1"><a href="#cb105-1" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> STATE_WARNING<span class="op">:</span></span>
-<span id="cb105-2"><a href="#cb105-2" aria-hidden="true" tabindex="-1"></a>    flash_led<span class="op">();</span></span>
-<span id="cb105-3"><a href="#cb105-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* fallthrough */</span></span>
-<span id="cb105-4"><a href="#cb105-4" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> STATE_ERROR<span class="op">:</span></span>
-<span id="cb105-5"><a href="#cb105-5" aria-hidden="true" tabindex="-1"></a>    halt_system<span class="op">();</span></span>
-<span id="cb105-6"><a href="#cb105-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">break</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb127"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> STATE_WARNING<span class="op">:</span></span>
+<span id="cb127-2"><a href="#cb127-2" aria-hidden="true" tabindex="-1"></a>    flash_led<span class="op">();</span></span>
+<span id="cb127-3"><a href="#cb127-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* fallthrough */</span></span>
+<span id="cb127-4"><a href="#cb127-4" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> STATE_ERROR<span class="op">:</span></span>
+<span id="cb127-5"><a href="#cb127-5" aria-hidden="true" tabindex="-1"></a>    halt_system<span class="op">();</span></span>
+<span id="cb127-6"><a href="#cb127-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">break</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="uninitialized-variables" class="level3">
 <h3 class="anchored" data-anchor-id="uninitialized-variables">Uninitialized Variables</h3>

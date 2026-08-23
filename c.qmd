@@ -1355,14 +1355,50 @@ Before the compiler proper sees your code, the **preprocessor** performs a purel
 The build proceeds in four distinct stages:
 
 1. **Preprocessing**: directives beginning with `#` are executed. Headers are pasted in, macros expanded, conditional regions resolved. The output is a single expanded translation unit.
-2. **Compilation**: the translation unit is parsed, type-checked, optimized, and lowered to assembly for the target architecture.
+2. **Compilation**: the translation unit is parsed, type-checked, optimized, and lowered to [assembly](assembly.qmd) for the target architecture.
 3. **Assembly**: assembly becomes machine code in an **object file** (`.o`), with a symbol table and unresolved references.
 4. **Linking**: object files and libraries are combined, symbols resolved, and a final executable produced.
 
 Stages 2 and 3 are often collapsed and called "compilation," which is why some references describe three stages rather than four.
 
+### `#include` {#include}
+`#include` replaces the directive with the entire contents of the named file, then keeps going: whatever that file includes is pasted in too, recursively, until nothing is left to expand. There is no import, no module, no symbol table, no notion that a file has already been read. A forty-line `.c` file that includes `<stdio.h>` routinely hands the compiler tens of thousands of lines.
+
+Two forms exist, differing only in where the search begins.
+
+```c
+#include <stdio.h>      // the implementation's own directories
+#include "audio.h"      // this file's directory first, then the above
+```
+
+The angle-bracket form searches an implementation-defined list of places: the standard library's directories, plus anything added with `-I`. The quoted form is specified only as searching "in an implementation-defined manner," and every real compiler implements that as *the directory containing the file doing the including*, then falls back to the angle-bracket search. The fallback is convention rather than a guarantee, but it is universal. The convention that follows is simple: angle brackets for headers you did not write, quotes for headers that ship with your project.
+
+`-I` prepends a directory to the search path, and multiple `-I` flags are searched left to right:
+
+```sh
+cc -Iinclude -Ivendor/dsp/include -c audio.c
+```
+
+Note what the quoted form's first rule really means. It resolves relative to the *including file*, not to the compiler's working directory, so `#include "../dsp/filter.h"` inside `src/audio/mixer.c` looks in `src/dsp/`. This is why a header can be moved and break only the files that include it by relative path.
+
+::: {.callout-note title="Computed includes"}
+The operand may itself be a macro, expanded before the file is looked up:
+
+```c
+#define TARGET_HEADER "board/nucleo_f411.h"
+#include TARGET_HEADER
+```
+
+This is how a build system selects a board or platform header without a chain of `#ifdef`s. It is rare, entirely legal, and worth recognizing when you meet it.
+:::
+
+Because inclusion is literal and recursive, including the same header twice in one translation unit pastes its contents twice, which is an error for anything that cannot be declared twice. Every header therefore needs protection against it, which is what [include guards](#include-guards) are for.
+
+::: {.callout-note title="Why C builds are slow"}
+The compiler has no memory between translation units. If two hundred `.c` files each include the same eight-thousand-line header, that header is read, tokenized, and parsed two hundred times. Nothing is cached, because the preceding text can change the meaning of what follows: a macro defined before an `#include` alters the header's expansion, so the same header genuinely may mean different things in different files. That is the price of textual inclusion, and it is the specific problem C++20 [modules](cpp.qmd#modules) exist to solve.
+:::
+
 ### Macros
-<!-- Please include the unadorned #define X. I know what results to expect but don't know what it is when declared as #define X -->
 `#define` introduces a macro, a name that the preprocessor replaces with a token sequence wherever it appears.
 
 ```c
@@ -1372,10 +1408,85 @@ Stages 2 and 3 are often collapsed and called "compilation," which is why some r
 
 The parentheses in `SQUARE` are not optional decoration. Because expansion is textual, `#define SQUARE(x) x * x` turns `SQUARE(a + b)` into `a + b * a + b`, which is not what anyone meant. Wrap every parameter, and wrap the whole body.
 
-Other directives round out the set: `#undef` removes a definition, `#error` aborts the build with a message (useful for catching an unsupported configuration), and `#pragma` issues implementation-specific instructions to the compiler.
+Other directives round out the set: `#undef` removes a definition, `#error` aborts the build with a message (useful for catching an unsupported configuration), and `#pragma` issues implementation-specific instructions to the compiler. [Other Directives](#other-directives) collects the full list.
 
 ::: {.callout-note title="Prefer the language to the preprocessor"}
 Most historical uses of macros now have typed, scoped alternatives: `enum` or `const` for constants, `static inline` functions for small operations, and (as of C23) `constexpr`. A macro has no type, obeys no scope, ignores namespaces, and is invisible to the debugger, which sees only the expansion. Reach for a macro when you need something the language genuinely cannot express: conditional compilation, stringification, token pasting, or capturing `__FILE__` and `__LINE__` at the call site.
+:::
+
+#### The Empty Macro
+A third form is easy to miss because it looks unfinished:
+
+```c
+#define USE_FIXED_POINT
+```
+
+There is no replacement list at all, and that is legal. The macro is defined, and its replacement is the **empty token sequence**. This is not the same as being undefined, and it is not the same as being zero: the name exists in the preprocessor's table, it simply has nothing on the other side of it.
+
+Before going further, one distinction has to be nailed down, because everything about empty macros depends on it. A macro name meets one of two fates, decided entirely by *where it appears*:
+
+| Fate | Where | What happens |
+|:---------|:-----------------------------------------------|:--------------------------------------------------|
+| **Expanded** | Ordinary program text, and the controlling expression of a bare `#if` | The name is replaced by its replacement list. For an empty macro, that means it is deleted. |
+| **Tested** | The operand of `#ifdef`, `#ifndef`, `defined()`, and `#undef` | The name is looked up. The preprocessor asks only whether a definition exists; the replacement list is never consulted, and no expansion occurs. |
+
+An empty macro's two uses line up exactly with those two fates.
+
+The first, and by far the more common, is as a **flag**, which lives entirely in the "tested" column. The definition carries no value, only the fact of its own existence:
+
+```c
+#define USE_FIXED_POINT
+
+#ifdef USE_FIXED_POINT
+    typedef int16_t Sample_t;
+#else
+    typedef float Sample_t;
+#endif
+```
+
+Nothing here is expanded. `#ifdef USE_FIXED_POINT` is a lookup that answers *yes*, and the conditional then keeps exactly one of its two branches and discards the other, so the compiler is handed a single `typedef` and never sees the word `USE_FIXED_POINT` at all:
+
+```c
+typedef int16_t Sample_t;
+```
+
+Comment out the `#define` and you get the `float` line instead. You cannot get both; a conditional always yields one branch or the other. The macro's emptiness is irrelevant to any of this, which is the point: a flag exists to be tested, never to be expanded, so it needs no value.
+
+The second use is **annotation erasure**, and it is the mirror image: it lives entirely in the "expanded" column, and the emptiness is the whole mechanism. Define a name to nothing and every use of it vanishes from the compiler's view. This is how portable headers neutralize a keyword or attribute the target compiler does not have.
+
+```c
+#if defined(__GNUC__)
+    #define PACKED __attribute__((packed))
+#else
+    #define PACKED              // expands to nothing; the code still compiles
+#endif
+
+struct Header { uint8_t tag; uint32_t length; } PACKED;
+```
+
+On GCC the struct declaration comes out carrying the attribute. On a compiler that has never heard of `__attribute__`, `PACKED` is expanded to nothing and the declaration is handed over clean:
+
+```c
+struct Header { uint8_t tag; uint32_t length; };
+```
+
+The single source line works on both, with no `#ifdef` at the point of use. That is the trick worth remembering: push the conditional up into the definition of a name, then use the name unconditionally.
+
+The trap is what happens when you test an empty macro with `#if` instead of `#ifdef`, and the table above predicts it. A bare `#if` puts its operand in the *expanded* column, so the macro is replaced by nothing and the directive becomes `#if` followed by no expression at all. That is a syntax error, not a false condition:
+
+```c
+#define USE_FIXED_POINT
+
+#if USE_FIXED_POINT     // error: #if with no expression
+#endif
+```
+
+An empty macro must be tested with `#ifdef` or `defined()`, never with a bare `#if`.
+
+::: {.callout-warning title="Two ways to be surprised by an empty macro"}
+**`-D` does not produce one.** Defining a flag on the command line as `-DUSE_FIXED_POINT` defines it to `1`, not to empty, because that is what the standard specifies for a `-D` with no `=`. So `#if USE_FIXED_POINT` compiles when the flag came from the build system and fails when someone moves the same flag into a header as `#define USE_FIXED_POINT`. Use `#ifdef` and both spellings work. To get a genuinely empty definition from the command line, write `-DUSE_FIXED_POINT=`.
+
+**Defined-as-zero is still defined.** `#define USE_FIXED_POINT 0` makes `#ifdef USE_FIXED_POINT` *true*, because `#ifdef` asks only whether the name has a definition and never looks at its value. If a macro is meant to be switched off, `#undef` it or do not define it; do not set it to `0` and expect `#ifdef` to notice. If a macro is meant to carry a value, test it with `#if` and be consistent about always defining it.
 :::
 
 #### Macro Side Effects {#macro-side-effects}
@@ -1398,6 +1509,90 @@ static inline int max_int(int a, int b) {
 
 `static inline` gives the same performance as the macro with none of the hazards. Use it whenever the operation is monomorphic; this is precisely the gap that C++ [templates](cpp.qmd#templates) and Rust generics close properly.
 
+#### `_Generic` {#generic}
+"Whenever the operation is monomorphic" is doing a lot of work in that last sentence, because the reason to write `MAX` as a macro in the first place is that it works on any type. C11 offers a partial escape. `_Generic` is a **type-generic selection**: an expression that chooses among several alternatives based on the type of a controlling expression, resolved entirely at compile time.
+
+It is a language feature rather than a preprocessor one, but it appears here because it is essentially never used on its own. Its only practical form is inside a `#define`, wrapping the dispatch so callers see a single name.
+
+```c
+#include <math.h>
+#include <stdlib.h>
+
+#define ABS(x) _Generic((x),    \
+        long double: fabsl,     \
+        double:      fabs,      \
+        float:       fabsf,     \
+        long:        labs,      \
+        int:         abs        \
+    )(x)
+
+double d = ABS(-2.5);    // selects fabs,  calls fabs(-2.5)
+int    n = ABS(-7);      // selects abs,   calls abs(-7)
+```
+
+The whole `_Generic(...)` expression is replaced by the selected alternative, here a function name, and the trailing `(x)` then calls it. Nothing is decided at run time and no branch is emitted; the compiler resolves the selection and generates a single direct call.
+
+Returning a value rather than a function works the same way:
+
+```c
+#define TYPE_NAME(x) _Generic((x),   \
+        int:      "int",             \
+        float:    "float",           \
+        double:   "double",          \
+        char *:   "char *",          \
+        default:  "something else")
+
+printf("%s\n", TYPE_NAME(3.0f));   // float
+```
+
+Four rules govern it, and each surprises somebody:
+
+- **The controlling expression is not evaluated.** Only its type is inspected. `ABS(i++)` increments `i` exactly once, in the call, not twice, which is a rare case of a macro not doubling its argument. It also means `_Generic((int *)0, ...)` is a legitimate way to select on a type you name directly rather than on a value you have.
+- **Selection uses the type after lvalue conversion.** Top-level qualifiers are dropped, so a `const int` matches the `int` association, and arrays and functions decay to pointers, so a `char[16]` matches `char *` rather than any array type. (C11 as published was ambiguous here; the committee resolved it this way afterward, so ancient compilers may disagree.)
+- **Every branch must type-check, including the ones not selected.** The unselected alternatives are discarded, but they are still parsed and checked first. This is the practical limit on `_Generic`: you cannot dispatch to operations that are merely *invalid* for the other types, only to ones that happen not to be chosen. It is not `if constexpr`.
+- **The match must be unambiguous.** Exactly one association may be compatible with the type. No match and no `default` is a compile error, which is often what you want: it turns an unsupported type into a build failure instead of a silent promotion.
+
+This is how `<tgmath.h>` works, and `_Generic` exists largely so that header could be written in portable C rather than by compiler magic.
+
+::: {.callout-note title="Dispatch, not polymorphism"}
+Be clear about what this buys. `_Generic` selects from a list you wrote out by hand; it cannot generate code for a type you did not enumerate, cannot be extended by a caller, and produces error messages about the expansion rather than about your call. C++ [templates](cpp.qmd#templates) and Rust [generics](rust-ho.qmd#generics-and-trait-bounds) instantiate new code per type and are open to types their author never saw. `_Generic` closes the narrow gap where a fixed, known set of types needs one name; it does not make C a generic language.
+:::
+
+### How Expansion Actually Works
+Everything so far has treated expansion as obvious: the macro's name is replaced by its body, arguments substituted in. That is true, but the order of operations has consequences that account for most of the genuinely baffling macro behavior, and the rules are short enough to learn once.
+
+When the preprocessor decides to expand a function-like macro, it does three things in this order:
+
+1. **Prescan.** Each argument is *completely macro-expanded on its own*, before it is substituted into the body. The exception is an argument used as an operand of `#` or `##`, which is substituted raw.
+2. **Substitute.** The expanded arguments are put into the replacement list.
+3. **Rescan.** The result is scanned again for macro names, and any found are expanded too.
+
+Step 3 is what lets macros build on other macros. It is also what keeps the following from recursing forever:
+
+```c
+// A debug build that logs every deallocation, still calling the real free().
+#define free(p) do { log_free(__FILE__, __LINE__, (p)); free(p); } while (0)
+```
+
+During the rescan of a macro's own expansion, that macro is marked and will not be expanded again. Compiler writers call this **painting it blue**: the name survives into the output, but it has been colored so that no further expansion touches it. So the `free(p)` in the body becomes a genuine call to the library function, not an infinite regress. Self-referential macros are safe by construction, which is what makes wrapping a function in a macro of the same name a workable technique rather than a trap.
+
+The exception in step 1 is the one that bites. Because `#` and `##` receive their operand unexpanded, stringifying a macro gives you its *name*:
+
+```c
+#define VERSION 3
+#define STRINGIFY(x)  #x
+#define XSTRINGIFY(x) STRINGIFY(x)
+
+STRINGIFY(VERSION)    // "VERSION"
+XSTRINGIFY(VERSION)   // "3"
+```
+
+`XSTRINGIFY` works because its own argument is not an operand of `#`, so prescan expands `VERSION` to `3` before passing it along; the inner `STRINGIFY` then stringifies `3`. This two-layer dance is standard practice and the same trick applies to `##` when you need to paste an expanded macro rather than its name. If you find yourself writing a macro whose name begins with `X` or ends in `_`, this is almost always why.
+
+::: {.callout-warning title="Errors point at the expansion, not the source"}
+The compiler sees the post-expansion text, so a mistake inside a macro is reported at the line where the macro was *used*, described in terms of tokens the user never typed. GCC and Clang mitigate this by printing an expansion trace ("in expansion of macro ..."), which is worth reading from the bottom up. When the trace is not enough, stop reasoning about the rules and read the actual output with [`-E`](#seeing-what-the-preprocessor-did).
+:::
+
 ### Conditional Compilation
 `#if`, `#ifdef`, `#elif`, `#else`, and `#endif` include or discard regions of source before compilation. Discarded regions need not even be valid C, which is what makes this the tool for portability.
 
@@ -1415,6 +1610,33 @@ static inline int max_int(int a, int b) {
 
 With `DEBUG_LEVEL` at 0, every call site vanishes: zero code size, zero run-time cost. This is the standard mechanism for debug instrumentation, feature flags, and platform variation.
 
+#### `defined` {#defined}
+`#ifdef X` and `#ifndef X` are shorthand, and deliberately limited: each takes exactly one macro name and nothing else. The moment a condition involves two flags, or a flag combined with a value, you need the `defined` operator, which is available only inside `#if` and `#elif` and evaluates to `1` or `0`:
+
+```c
+#if defined(USE_FIXED_POINT) && !defined(HAVE_FPU)
+    /* ... */
+#elif defined(HAVE_FPU) && SAMPLE_RATE > 48000
+    /* ... */
+#endif
+```
+
+`#ifdef X` and `#if defined(X)` are exactly equivalent; the parentheses are optional (`#if defined X`) but conventionally written. Prefer `defined` for anything compound, and prefer it uniformly in a header that already needs it once, since mixing the two spellings for no reason makes a long conditional chain harder to read.
+
+The arithmetic in `#if` deserves one caution of its own: it is performed in the widest integer type the implementation supports (`intmax_t`/`uintmax_t`), regardless of the types the program uses, and `sizeof` is not available because the preprocessor has no idea what a type is. `#if sizeof(int) == 4` does not work. That is what [static assertions](#static-assertions) are for.
+
+::: {.callout-warning title="An unknown name in `#if` is silently zero"}
+After macro expansion, any identifier still remaining in an `#if` expression is replaced by `0`. Not an error, not a warning by default: just false.
+
+```c
+#if CONFG_DEBUG        // typo for CONFIG_DEBUG
+    enable_tracing();  // silently never compiled
+#endif
+```
+
+The block simply never appears, the build succeeds, and the feature quietly does not exist. This is one of the most durable bugs in C, because nothing anywhere reports it. `-Wundef` promotes the substitution to a warning and is worth turning on in any project that uses configuration macros at all. Note also that this is *only* how identifiers behave; `defined(CONFG_DEBUG)` on a misspelled name is legitimately `0` and no warning is possible, which is an argument for defining every configuration flag to an explicit `0` or `1` and testing it with `#if`.
+:::
+
 ### Stringification and Token Pasting
 Two operators exist only inside macro bodies. **Stringification** (`#`) converts an argument into a string literal:
 
@@ -1424,6 +1646,8 @@ Two operators exist only inside macro bodies. **Stringification** (`#`) converts
 
 SHOW(count * 2);   // printf("count * 2" " = %d\n", count * 2);
 ```
+
+Both operators take their operand *unexpanded*, which is the rule from [How Expansion Actually Works](#how-expansion-actually-works) that costs people the most time. If the argument is itself a macro and you want its value rather than its name, route it through an extra layer, as `XSTRINGIFY` does above.
 
 **Token pasting** (`##`) joins two tokens into one, which is how you generate families of related identifiers:
 
@@ -1436,6 +1660,69 @@ DEFINE_ACCESSORS(int, sample_rate)   // defines get_sample_rate / set_sample_rat
 ```
 
 Token pasting is the closest thing C has to code generation, and it is how many container and registration macros work. It is also nearly unreadable in bulk, and errors surface as messages about the *expanded* text.
+
+#### X Macros {#x-macros}
+Sooner or later a C program acquires two lists that must agree. An `enum` of error codes and an array of strings to print them. A set of commands and the `switch` that dispatches them. A register map and the table that dumps it. They are edited at different times by different people, they drift, and the symptom is an off-by-one in a lookup table that nobody notices until a log line names the wrong error.
+
+The **X macro** is C's answer, and it has been in use since the 1960s. The trick is to write the data exactly once as a list of invocations of an undefined macro named `X`, then replay that list, redefining `X` each time to render the data a different way.
+
+```c
+// commands.def: the single source of truth
+X(CMD_START,  "start",  handle_start)
+X(CMD_STOP,   "stop",   handle_stop)
+X(CMD_STATUS, "status", handle_status)
+```
+
+Each replay defines `X`, includes the list, and undefines `X` again:
+
+```c
+typedef enum {
+    #define X(id, name, handler)   id,
+    #include "commands.def"
+    #undef X
+    CMD_COUNT
+} Command_t;
+
+static const char *const command_names[] = {
+    #define X(id, name, handler)   [id] = name,
+    #include "commands.def"
+    #undef X
+};
+
+int dispatch(Command_t cmd, const char *arg) {
+    switch (cmd) {
+        #define X(id, name, handler)   case id: return handler(arg);
+        #include "commands.def"
+        #undef X
+        default: return -1;
+    }
+}
+```
+
+Adding a command is now a one-line edit to `commands.def`, and the enum, the name table, and the dispatch switch all update together. They cannot drift, because there is only one list. `CMD_COUNT` lands correctly for free, and the designated initializer `[id] = name` means the table stays right even if the list is reordered.
+
+The list does not have to live in its own file. The same technique works with the list as a macro, which keeps everything in one place at the cost of a continuation on every line:
+
+```c
+#define COMMAND_LIST            \
+    X(CMD_START,  "start")      \
+    X(CMD_STOP,   "stop")       \
+    X(CMD_STATUS, "status")
+
+typedef enum {
+    #define X(id, name) id,
+    COMMAND_LIST
+    #undef X
+} Command_t;
+```
+
+::: {.callout-warning title="Powerful, and genuinely hostile to read"}
+Everything the earlier warnings said applies here at full strength. A newcomer meeting an X macro for the first time will not know what they are looking at, "go to definition" lands on a `.def` file full of a macro that has no definition, and the debugger has never heard of any of it. Errors are reported against the expansion, so a missing comma in the list produces a syntax error on the `#include` line.
+
+It is still worth knowing, for two reasons. A great deal of long-lived C, including parts of the Linux kernel and most vendor peripheral headers, is built this way, so you will read it whether or not you write it. And the alternative it replaces, hand-maintained parallel lists, fails silently, whereas this fails loudly at build time. When you do use it, keep the list dead simple and leave one comment at the top of the file naming the technique, so the next reader has something to search for.
+:::
+
+C23 does not retire the idiom. `__VA_OPT__` and `#embed` solve adjacent problems, but nothing in standard C generates an enum and a matching table from one declaration. That capability arrives only with C++ templates and `constexpr`, or with Rust's derive macros, both of which are the real reply to this entire section.
 
 ### Variadic Macros
 A macro can accept a variable number of arguments with `...`, expanded via `__VA_ARGS__` (C99):
@@ -1452,13 +1739,22 @@ LOG_ERROR("Buffer overflow: size=%d, max=%d", size, max);
 
 This is the canonical example of a macro earning its place: a function cannot capture the caller's file and line, because by the time it runs, that information is gone.
 
-The `##__VA_ARGS__` is a GCC extension that swallows the preceding comma when the variable arguments are empty, so `LOG_ERROR("failed")` still compiles. C23 standardizes this properly as `__VA_OPT__`.
+The `##__VA_ARGS__` needs explaining, because strict C99 requires at least one argument for the `...`, and `LOG_ERROR("failed")` supplies none. Written plainly, the expansion would end in `__FILE__, __LINE__, )`, a dangling comma before the closing parenthesis. The `##` prefix on `__VA_ARGS__` is a GCC extension (adopted by Clang and most vendor compilers) that deletes the preceding comma when the variable arguments are empty.
+
+C23 replaces the extension with `__VA_OPT__(x)`, which expands to its own argument when `__VA_ARGS__` is non-empty and to nothing when it is empty. The intent is now visible in the source rather than hidden in a punctuation trick:
+
+```c
+#define LOG_ERROR(fmt, ...) \
+    fprintf(stderr, "[ERROR] %s:%d: " fmt "\n", __FILE__, __LINE__ __VA_OPT__(,) __VA_ARGS__)
+```
+
+Read the tail as "a comma, but only if there is something after it." Use `__VA_OPT__` if you can rely on C23, and `##__VA_ARGS__` otherwise; the two are equivalent in this, the case that actually comes up.
 
 ::: {.callout-note title="The `do { ... } while (0)` wrapper"}
 Wrapping a multi-statement macro body in `do { ... } while (0)` makes it a single statement that consumes a trailing semicolon correctly. Without it, an unbraced `if (x) LOG_ERROR("...") ; else ...` breaks, because the macro's second statement terminates the `if` and orphans the `else`. The wrapper costs nothing (every compiler removes it) and is the standard idiom.
 :::
 
-### Include Guards vs. `#pragma once`
+### Include Guards vs. `#pragma once` {#include-guards}
 Because `#include` is literal text insertion, a header included twice in one translation unit defines everything twice, which is an error. Both solutions make the second inclusion a no-op.
 
 ```c
@@ -1470,6 +1766,8 @@ Because `#include` is literal text insertion, a header included twice in one tra
 
 #endif  // MYHEADER_H
 ```
+
+`MYHEADER_H` is [an empty macro](#the-empty-macro), and the guard is the purest illustration of what one is for. It has no value and is never expanded; it exists only so that the `#ifndef` on the line above has something to find. On the first inclusion the lookup fails, the guard is defined, and the contents are compiled. On every inclusion after that the lookup succeeds, the `#ifndef` is false, and the entire file between it and the `#endif` is discarded before the compiler ever sees it.
 
 ```c
 // myheader.h  (modern: non-standard, but supported by every major compiler)
@@ -1580,6 +1878,67 @@ _Static_assert(sizeof(Packet_t) == 32, "Packet_t must match the wire format");
 ```
 
 That third assertion is the valuable one. Struct layout depends on padding rules you do not control, so a header describing a wire format or a hardware layout should assert its own size rather than trust that it came out right. The check costs nothing at run time and fails at the moment the mistake is introduced rather than in the field.
+
+Note that `_Static_assert` succeeds precisely where `#if` cannot: it is a language construct, evaluated by the compiler, so it can see `sizeof` and real types. Its run-time counterpart, the `assert()` macro and the `NDEBUG` switch that disables it, is a library facility and is covered with [the other headers](#other-headers-worth-knowing).
+
+### Other Directives {#other-directives}
+The complete directive set is short. Most of it has now appeared:
+
+| Directive           | Purpose                                                | Covered in                                  |
+|:--------------------|:-------------------------------------------------------|:--------------------------------------------|
+| `#include`          | Paste in another file, recursively                     | [`#include`](#include)                      |
+| `#define` / `#undef`| Create or remove a macro                               | [Macros](#macros)                           |
+| `#if` / `#ifdef` / `#ifndef` / `#elif` / `#else` / `#endif` | Include or discard a region | [Conditional Compilation](#conditional-compilation) |
+| `#error`            | Fail the build with a message                          | below                                       |
+| `#warning`          | Warn without failing (universal extension; C23 standard) | below                                     |
+| `#pragma`           | Implementation-specific instruction to the compiler    | below                                       |
+| `#line`             | Override `__FILE__` and `__LINE__`                     | below                                       |
+| `#embed`            | Paste a binary file's bytes as an initializer (C23)    | below                                       |
+| `#` (alone)         | The null directive; does nothing                       | (nothing to cover)                          |
+
+`#error` is the one you should reach for more than you do. A header that cannot work on a given configuration should say so at the top rather than emit forty lines of confusing type errors further down:
+
+```c
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 201112L
+    #error "this library requires C11 or later"
+#endif
+```
+
+`#pragma` is a deliberate escape hatch: the standard reserves the directive and says nothing about what any particular pragma means, leaving each implementation free to define its own. `#pragma once` is the near-universal one; `#pragma pack`, `#pragma GCC diagnostic`, and vendor pragmas for placing objects in specific memory regions are the others you meet. An unrecognized pragma must be ignored, so a stray one is harmless (though `-Wunknown-pragmas` will point it out). C99 added `_Pragma("...")`, which does the same thing as an operator, so a pragma can be produced by a macro; a directive never can.
+
+`#line` rewrites the values of `__FILE__` and `__LINE__` for the text that follows:
+
+```c
+#line 42 "grammar.y"
+```
+
+Nobody writes this by hand. It exists for code generators, which is why the output of `lex`, `yacc`, and Bison is full of it: the generated `.c` file is what the compiler reads, but the error message should point at the `.y` file the human actually wrote.
+
+`#embed` is C23's newest addition and closes an old gap. Embedding a resource (a lookup table, a font, a firmware blob) previously meant running `xxd -i` in the build and committing or generating a large C array. Now the preprocessor does it:
+
+```c
+static const unsigned char window_table[] = {
+    #embed "hann_1024.bin"
+};
+```
+
+The directive expands to a comma-separated list of byte values, so it works anywhere an initializer list does. The compiler can read the file directly rather than parsing a megabyte of decimal literals, which is dramatically faster than the tool it replaces. Support is arriving as C23 adoption proceeds; GCC 15 and Clang 19 have it.
+
+### Seeing What the Preprocessor Did
+Every rule in this section is a rule about text, which means none of it has to be reasoned about in the abstract. When a macro does something unexpected, stop reading it and go look at what it produced.
+
+| Command                        | Shows                                                            |
+|:-------------------------------|:------------------------------------------------------------------|
+| `cc -E audio.c`                | The fully expanded translation unit on stdout                     |
+| `cc -E -P audio.c`             | The same, without the line-marker noise                           |
+| `cc -dM -E - < /dev/null`      | Every macro predefined for the current target                     |
+| `cc -dM -E audio.c`            | Every macro defined at the end of that file, yours included       |
+| `cc -save-temps -c audio.c`    | A normal build that also leaves `audio.i` (preprocessed) behind   |
+| `cc -H -c audio.c`             | The include tree, one line per header, indented by depth          |
+
+Three of these earn their keep regularly. `-E -P` piped through your pager answers "what did this macro actually become," and it is the fastest way to settle any argument about expansion order. `-dM -E - < /dev/null` prints the several hundred macros your compiler defines before it reads a single line of your code, which is how you discover the right spelling of a target or feature macro instead of guessing. And `-H` answers "where on earth is this header coming from," which after a `-I` ordering mistake is not a rhetorical question.
+
+The output of `-E` is large and mostly headers. Search it rather than reading it, and remember that what you are looking at is exactly what the compiler was handed.
 
 ## The Standard Library
 The [**C standard library**](https://cppreference.com/c/header){target="_blank" rel="noopener noreferrer"} (`libc`) is not one library but a loose federation of headers, each covering a self-contained domain: string handling, memory, math, time, I/O, and more. A C program includes only the headers it needs, and a conforming compiler need not provide all of them. Two corners of it have already appeared in context: [The Standard String Functions](#the-standard-string-functions) (`<string.h>`) and the allocation functions under [Memory Management](#memory-management).

@@ -289,6 +289,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Shell Scripting</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./latex.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Latex Reference</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -504,7 +510,7 @@ recognize in old projects and replace.
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
 <p><strong>CMake</strong> occupies an odd position. It is the de facto build system for C and C++, it is what nearly every vendor SDK ships, and it is widely disliked by the people who use it every day. All three of those are true at once, and the reason is worth understanding before you write a line of it.</p>
-<p><span class="hl-default">CMake solves a real problem that <a href="./make.html">Make</a> does not. A makefile describes how to build a project <em>on the machine that wrote it</em>.</span> Move it to a different compiler, a different operating system, or a different build tool and it needs editing. <span class="hl-default">CMake describes a project’s structure abstractly and then generates the actual build files for whatever toolchain is present</span>: Makefiles on Unix, Ninja anywhere, Visual Studio solutions on Windows, Xcode projects on macOS. One description, many builds.</p>
+<p><span class="hl-default-l">CMake solves a real problem that <a href="./make.html">Make</a> does not. A makefile describes how to build a project <em>on the machine that wrote it</em>.</span> Move it to a different compiler, a different operating system, or a different build tool and it needs editing. <span class="hl-default-l">CMake describes a project’s structure abstractly and then generates the actual build files for whatever toolchain is present</span>: Makefiles on Unix, Ninja anywhere, Visual Studio solutions on Windows, Xcode projects on macOS. One description, many builds.</p>
 <p>The dislike is mostly about the language. CMake’s syntax accumulated over twenty-five years, everything in it is a string, and the ecosystem is layered with a decade of superseded advice that still turns up first in search results. This chapter tries to teach the current style directly, so you can skip the archaeology.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Read the Make chapter first, if you have not">
 <div class="callout-header d-flex align-content-center">
@@ -522,7 +528,7 @@ recognize in old projects and replace.
 <section id="cmake-is-not-a-build-tool" class="level3">
 <h3 class="anchored" data-anchor-id="cmake-is-not-a-build-tool">CMake Is Not a Build Tool</h3>
 <p>This is the correction that has to come first, because almost every early confusion traces to it.</p>
-<p><span class="hl-default">CMake does not compile anything. It is a <strong>generator</strong>: it reads your project description and writes build files for some other tool to execute</span>. Running <code>cmake</code> produces makefiles; running <code>make</code> (or <code>ninja</code>) builds your code. Two programs, two phases, two distinct moments at which things can go wrong.</p>
+<p><span class="hl-default-l">CMake does not compile anything. It is a <strong>generator</strong>: it reads your project description and writes build files for some other tool to execute</span>. Running <code>cmake</code> produces makefiles; running <code>make</code> (or <code>ninja</code>) builds your code. Two programs, two phases, two distinct moments at which things can go wrong.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build      <span class="co"># CONFIGURE: read CMakeLists.txt, write build files into build/</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> build      <span class="co"># BUILD: invoke the generated makefiles (or ninja, or msbuild)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The second command is a portable wrapper. On a Makefiles generator it runs <code>make -C build</code>; you can run that yourself and it is identical. The wrapper exists so a script works unchanged when someone configures with a different generator.</p>
@@ -582,7 +588,7 @@ recognize in old projects and replace.
 </tr>
 </tbody>
 </table>
-<p>The crucial consequence is the same one Make has: <span class="hl-default">CMake variables do not exist at build time</span>. By the time your compiler runs, every <code>${VAR}</code> has already been resolved to text and baked into the generated files. A variable you set cannot depend on something a compile step produced, for exactly the reason a Make <code>$(shell)</code> cannot.</p>
+<p>The crucial consequence is the same one Make has: <span class="hl-default-l">CMake variables do not exist at build time</span>. By the time your compiler runs, every <code>${VAR}</code> has already been resolved to text and baked into the generated files. A variable you set cannot depend on something a compile step produced, for exactly the reason a Make <code>$(shell)</code> cannot.</p>
 <p>CMake’s escape hatch for genuinely build-time values is the <strong>generator expression</strong>, written <code>$&lt;...&gt;</code>, which is left unresolved through configure and evaluated when the build files are written per-configuration. They look cryptic and are covered in <a href="#generator-expressions">Generator Expressions</a>.</p>
 </section>
 <section id="a-short-history" class="level3">
@@ -652,7 +658,7 @@ recognize in old projects and replace.
 <div class="definition" data-label="Tcl">
 <p><a href="https://en.wikipedia.org/wiki/Tcl_(programming_language)" target="_blank" rel="noopener noreferrer">Tcl</a> (Tool Command Language) is a high-level, general-purpose, interpreted, <a href="https://en.wikipedia.org/wiki/Dynamic_programming_language" target="_blank" rel="noopener noreferrer">dynamic programming</a> language. It was designed with the goal of being very simple and powerful. Tcl casts everything into the mold of a command, even programming constructs like variable assignment and procedure definition. Tcl supports multiple programming paradigms, including <a href="https://en.wikipedia.org/wiki/Tcl_(programming_language)#Object-oriented" target="_blank" rel="noopener noreferrer">object-oriented</a>, imperative, functional, and procedural styles.</p>
 </div>
-<p>Tcl was the obvious choice. It was <em>the</em> embeddable scripting language of the late 1990s, Kitware knew it well (VTK was scriptable in Tcl), and adopting it would have spared everyone the language you are about to learn. They declined, for a reason that sounds mundane and is not: <span class="hl-default">a build system is the most basic dependency a package has, and it cannot itself be hard to install</span>.</p>
+<p>Tcl was the obvious choice. It was <em>the</em> embeddable scripting language of the late 1990s, Kitware knew it well (VTK was scriptable in Tcl), and adopting it would have spared everyone the language you are about to learn. They declined, for a reason that sounds mundane and is not: <span class="hl-default-l">a build system is the most basic dependency a package has, and it cannot itself be hard to install</span>.</p>
 <p>If CMake required Tcl, then building any CMake project would first require building Tcl, which in 1999 was genuinely painful on Windows and on several commercial Unixes. That is a circular dependency at exactly the worst point in the chain. So CMake depends on a C++ compiler and nothing else, which is a safe assumption when the thing it is building is C++.</p>
 <p>Hoffman has been candid that the cost was real. Writing in <em>The Architecture of Open Source Applications</em>, he notes that the decision “did limit CMake to creating its own simple language, a choice that still causes some people to dislike CMake,” and adds the counterfactual that matters: had CMake been Tcl-based, “it is unlikely it would have gained the popularity it enjoys today.”</p>
 <p>That is the trade in one sentence. The language is worse than Tcl. The tool spread because it asked nothing of you but a compiler, and Tcl-based competitors did not spread at all. Every complaint about CMake’s syntax is a bill for a decision that is the reason you have heard of CMake.</p>
@@ -805,7 +811,7 @@ recognize in old projects and replace.
 <section id="private-or-public" class="level3">
 <h3 class="anchored" data-anchor-id="private-or-public"><code>PRIVATE</code> or <code>PUBLIC</code>?</h3>
 <p>The one decision in routine list management that is not mechanical. The question to ask is always the same:</p>
-<p><span class="hl-default"><strong>Does anything that links this target also need this setting?</strong></span></p>
+<p><span class="hl-default-l"><strong>Does anything that links this target also need this setting?</strong></span></p>
 <ul>
 <li><strong>No</strong> → <code>PRIVATE</code>. It is an implementation detail.</li>
 <li><strong>Yes</strong> → <code>PUBLIC</code>. It travels to consumers.</li>
@@ -857,7 +863,7 @@ recognize in old projects and replace.
 <p><code>set()</code> defines a variable, <code>${NAME}</code> expands it:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(PROJECT_AUTHOR <span class="st">"Curtis"</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"author is </span><span class="dv">${PROJECT_AUTHOR}</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Now the fact that governs everything else: <span class="hl-default">CMake has exactly one data type, the string. A list is a string with semicolons in it</span>.</p>
+<p>Now the fact that governs everything else: <span class="hl-default-l">CMake has exactly one data type, the string. A list is a string with semicolons in it</span>.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(SOURCES a.c b.c c.c)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">"</span><span class="dv">${SOURCES}</span><span class="st">"</span>)     <span class="co"># prints: a.c;b.c;c.c</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Those semicolons are not display formatting. They are literally the value. <code>set()</code> with multiple arguments joins them with semicolons, and every command that “takes a list” is really receiving one string and splitting it again.</p>
@@ -969,7 +975,7 @@ recognize in old projects and replace.
 <p>The single idea that separates modern CMake from the bad old style</p>
 </div>
 <p>Everything above is syntax. This section is the actual model, and internalizing it is most of what it takes to write CMake that does not hurt.</p>
-<p>In Make, a target is a filename in a dependency graph, and build settings are global strings (<code>CFLAGS</code>, <code>LDFLAGS</code>) that every rule shares. In CMake, <span class="hl-default">a target is an <strong>object with properties</strong>, and those properties propagate along the dependency graph</span>. That difference is the whole reason large projects migrated.</p>
+<p>In Make, a target is a filename in a dependency graph, and build settings are global strings (<code>CFLAGS</code>, <code>LDFLAGS</code>) that every rule shares. In CMake, <span class="hl-default-l">a target is an <strong>object with properties</strong>, and those properties propagate along the dependency graph</span>. That difference is the whole reason large projects migrated.</p>
 <section id="declaring-targets" class="level3">
 <h3 class="anchored" data-anchor-id="declaring-targets">Declaring Targets</h3>
 <p>Three commands create targets:</p>
@@ -1209,7 +1215,7 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 <div class="subheading">
 <p>The <code>$&lt;...&gt;</code> syntax, and when you actually need it</p>
 </div>
-<p>Generator expressions are the feature most likely to make CMake look unreadable, and they exist for a precise reason: <span class="hl-default">some values are not known at configure time because they depend on which build configuration is being generated</span>.</p>
+<p>Generator expressions are the feature most likely to make CMake look unreadable, and they exist for a precise reason: <span class="hl-default-l">some values are not known at configure time because they depend on which build configuration is being generated</span>.</p>
 <p>A single configure can produce build files for Debug and Release simultaneously (Visual Studio and Xcode do this by default). A <code>if(CMAKE_BUILD_TYPE STREQUAL "Debug")</code> cannot work there, because configure runs once for all configurations. <code>$&lt;...&gt;</code> defers the decision:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode cmake code-with-copy"><code class="sourceCode cmake"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_options</span>(<span class="bn">app</span> <span class="ot">PRIVATE</span></span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">$&lt;$&lt;</span><span class="kw">CONFIG</span><span class="ot">:Debug&gt;:-O0 -g&gt;</span></span>
@@ -1297,7 +1303,7 @@ main.c     ['-DUTIL_PUBLIC=1', '-I/tmp/demo/lib']</code></pre>
 </tbody>
 </table>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build <span class="at">-DCMAKE_BUILD_TYPE</span><span class="op">=</span>Release</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The trap: <span class="hl-default">if you do not set it, it is empty, and you get <strong>no optimization flags at all</strong></span>. Not <code>-O0</code>, but nothing, which is usually <code>-O0</code> by compiler default. A great many “CMake builds are slow” complaints are an unset build type. Since separate build directories are cheap, keeping <code>build-debug/</code> and <code>build-release/</code> side by side is the common practice, and it neatly avoids the <a href="./make.html#target-specific-and-pattern-specific-variables">stale-object problem</a> that variant builds cause in Make.</p>
+<p>The trap: <span class="hl-default-l">if you do not set it, it is empty, and you get <strong>no optimization flags at all</strong></span>. Not <code>-O0</code>, but nothing, which is usually <code>-O0</code> by compiler default. A great many “CMake builds are slow” complaints are an unset build type. Since separate build directories are cheap, keeping <code>build-debug/</code> and <code>build-release/</code> side by side is the common practice, and it neatly avoids the <a href="./make.html#target-specific-and-pattern-specific-variables">stale-object problem</a> that variant builds cause in Make.</p>
 </section>
 <section id="cross-compilation" class="level3">
 <h3 class="anchored" data-anchor-id="cross-compilation">Cross-Compilation</h3>

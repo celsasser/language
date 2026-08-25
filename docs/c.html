@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-08-23">
+<meta name="dcterms.date" content="2026-08-25">
 
 <title>The C Language – Computer Language Notebook</title>
 <style>
@@ -496,7 +496,7 @@ window.Quarto = {
   <li><a href="#the-standard-string-functions" id="toc-the-standard-string-functions" class="nav-link" data-scroll-target="#the-standard-string-functions">The Standard String Functions</a></li>
   <li><a href="#building-strings-safely" id="toc-building-strings-safely" class="nav-link" data-scroll-target="#building-strings-safely">Building Strings Safely</a></li>
   <li><a href="#copying-and-splitting" id="toc-copying-and-splitting" class="nav-link" data-scroll-target="#copying-and-splitting">Copying and Splitting</a></li>
-  <li><a href="#char-vs.-int-from-input" id="toc-char-vs.-int-from-input" class="nav-link" data-scroll-target="#char-vs.-int-from-input"><code>char</code> vs.&nbsp;<code>int</code> from Input</a></li>
+  <li><a href="#char-vs-int" id="toc-char-vs-int" class="nav-link" data-scroll-target="#char-vs-int"><code>char</code> vs.&nbsp;<code>int</code> from Input</a></li>
   </ul></li>
   <li><a href="#structures" id="toc-structures" class="nav-link" data-scroll-target="#structures">Structures</a>
   <ul class="collapse">
@@ -549,13 +549,36 @@ window.Quarto = {
   </ul></li>
   <li><a href="#the-standard-library" id="toc-the-standard-library" class="nav-link" data-scroll-target="#the-standard-library">The Standard Library</a>
   <ul>
-  <li><a href="#stdlib.h" id="toc-stdlib.h" class="nav-link" data-scroll-target="#stdlib.h"><code>stdlib.h</code></a></li>
-  <li><a href="#io" id="toc-io" class="nav-link" data-scroll-target="#io"><code>stdio.h</code></a></li>
-  <li><a href="#string.h" id="toc-string.h" class="nav-link" data-scroll-target="#string.h"><code>string.h</code></a></li>
-  <li><a href="#other-headers-worth-knowing" id="toc-other-headers-worth-knowing" class="nav-link" data-scroll-target="#other-headers-worth-knowing">Other Headers Worth Knowing</a></li>
+  <li><a href="#stdlib.h" id="toc-stdlib.h" class="nav-link" data-scroll-target="#stdlib.h"><code>stdlib.h</code></a>
+  <ul class="collapse">
+  <li><a href="#converting-strings-to-numbers" id="toc-converting-strings-to-numbers" class="nav-link" data-scroll-target="#converting-strings-to-numbers">Converting Strings to Numbers</a></li>
+  <li><a href="#sorting-and-searching" id="toc-sorting-and-searching" class="nav-link" data-scroll-target="#sorting-and-searching">Sorting and Searching</a></li>
+  <li><a href="#pseudo-random-numbers" id="toc-pseudo-random-numbers" class="nav-link" data-scroll-target="#pseudo-random-numbers">Pseudo-Random Numbers</a></li>
+  <li><a href="#ending-the-program" id="toc-ending-the-program" class="nav-link" data-scroll-target="#ending-the-program">Ending the Program</a></li>
+  <li><a href="#odds-and-ends" id="toc-odds-and-ends" class="nav-link" data-scroll-target="#odds-and-ends">Odds and Ends</a></li>
   </ul></li>
-  <li><a href="#the-build" id="toc-the-build" class="nav-link" data-scroll-target="#the-build">Compilation and the Build</a>
-  <ul>
+  <li><a href="#io" id="toc-io" class="nav-link" data-scroll-target="#io"><code>stdio.h</code></a>
+  <ul class="collapse">
+  <li><a href="#streams-and-file" id="toc-streams-and-file" class="nav-link" data-scroll-target="#streams-and-file">Streams and <code>FILE</code></a></li>
+  <li><a href="#buffering" id="toc-buffering" class="nav-link" data-scroll-target="#buffering">Buffering</a></li>
+  <li><a href="#formatted-output" id="toc-formatted-output" class="nav-link" data-scroll-target="#formatted-output">Formatted Output</a></li>
+  <li><a href="#formatted-input-and-why-scanf-is-a-trap" id="toc-formatted-input-and-why-scanf-is-a-trap" class="nav-link" data-scroll-target="#formatted-input-and-why-scanf-is-a-trap">Formatted Input, and Why <code>scanf</code> Is a Trap</a></li>
+  <li><a href="#character-and-line-io" id="toc-character-and-line-io" class="nav-link" data-scroll-target="#character-and-line-io">Character and Line I/O</a></li>
+  <li><a href="#files" id="toc-files" class="nav-link" data-scroll-target="#files">Files</a></li>
+  <li><a href="#errors-feof-and-errno" id="toc-errors-feof-and-errno" class="nav-link" data-scroll-target="#errors-feof-and-errno">Errors, <code>feof</code>, and <code>errno</code></a></li>
+  </ul></li>
+  <li><a href="#string.h" id="toc-string.h" class="nav-link" data-scroll-target="#string.h"><code>string.h</code></a>
+  <ul class="collapse">
+  <li><a href="#memcpy-vs.-memmove" id="toc-memcpy-vs.-memmove" class="nav-link" data-scroll-target="#memcpy-vs.-memmove"><code>memcpy</code> vs.&nbsp;<code>memmove</code></a></li>
+  <li><a href="#memset" id="toc-memset" class="nav-link" data-scroll-target="#memset"><code>memset</code></a></li>
+  <li><a href="#the-rest-of-the-family" id="toc-the-rest-of-the-family" class="nav-link" data-scroll-target="#the-rest-of-the-family">The Rest of the Family</a></li>
+  </ul></li>
+  <li><a href="#other-headers-worth-knowing" id="toc-other-headers-worth-knowing" class="nav-link" data-scroll-target="#other-headers-worth-knowing">Other Headers Worth Knowing</a>
+  <ul class="collapse">
+  <li><a href="#ctype.h-and-the-signed-char-trap" id="toc-ctype.h-and-the-signed-char-trap" class="nav-link" data-scroll-target="#ctype.h-and-the-signed-char-trap"><code>&lt;ctype.h&gt;</code> and the Signed <code>char</code> Trap</a></li>
+  <li><a href="#assert.h-and-ndebug" id="toc-assert.h-and-ndebug" class="nav-link" data-scroll-target="#assert.h-and-ndebug"><code>&lt;assert.h&gt;</code> and <code>NDEBUG</code></a></li>
+  <li><a href="#math.h-and-the-missing-library" id="toc-math.h-and-the-missing-library" class="nav-link" data-scroll-target="#math.h-and-the-missing-library"><code>&lt;math.h&gt;</code> and the Missing Library</a></li>
+  </ul></li>
   <li><a href="#the-translation-unit" id="toc-the-translation-unit" class="nav-link" data-scroll-target="#the-translation-unit">The Translation Unit</a></li>
   <li><a href="#declarations-vs.-definitions-across-files" id="toc-declarations-vs.-definitions-across-files" class="nav-link" data-scroll-target="#declarations-vs.-definitions-across-files">Declarations vs.&nbsp;Definitions Across Files</a></li>
   <li><a href="#compiler-attributes" id="toc-compiler-attributes" class="nav-link" data-scroll-target="#compiler-attributes">Compiler Attributes</a></li>
@@ -602,7 +625,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 23, 2026</p>
+      <p class="date">August 25, 2026</p>
     </div>
   </div>
   
@@ -1998,8 +2021,8 @@ the comparison illuminates.
 <span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Passing <code>NULL</code> on subsequent calls is how it resumes. Because of the hidden state, two interleaved <code>strtok</code> loops will corrupt each other; use <code>strtok_r</code> (POSIX) or <code>strtok_s</code> (C11 Annex K) where that is a risk. This is the <a href="#static">reentrancy hazard</a> that <code>static</code> locals introduce, in its most widely encountered form.</p>
 </section>
-<section id="char-vs.-int-from-input" class="level4">
-<h4 class="anchored" data-anchor-id="char-vs.-int-from-input"><code>char</code> vs.&nbsp;<code>int</code> from Input</h4>
+<section id="char-vs-int" class="level4">
+<h4 class="anchored" data-anchor-id="char-vs-int"><code>char</code> vs.&nbsp;<code>int</code> from Input</h4>
 <p>A subtle but important convention: functions like <code>getchar</code> return an <code>int</code>, not a <code>char</code>. This is because they must return every possible byte value <em>and</em> a distinct end-of-input marker, <code>EOF</code> (typically -1). A <code>char</code> cannot hold that extra value, so storing the result in a <code>char</code> before testing for <code>EOF</code> is a genuine bug.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> c<span class="op">;</span>                          <span class="co">// int, not char!</span></span>
 <span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">((</span>c <span class="op">=</span> getchar<span class="op">())</span> <span class="op">!=</span> EOF<span class="op">)</span> <span class="op">{</span></span>
@@ -3101,38 +3124,848 @@ the comparison illuminates.
 </div>
 <section id="stdlib.h" class="level3">
 <h3 class="anchored" data-anchor-id="stdlib.h"><code>stdlib.h</code></h3>
-<!-- STUB: General utilities beyond allocation: atoi/strtol and why strtol is the
-     correct choice (error reporting via endptr and errno), qsort and bsearch as
-     the canonical function-pointer APIs, rand/srand and their weaknesses,
-     abs/div, exit/atexit/abort, getenv. -->
+<div class="subheading">
+<p>General utilities</p>
+</div>
+<p><code>&lt;stdlib.h&gt;</code> is the junk drawer of the standard library: allocation, conversion, sorting, randomness, and process control, related to each other only by having nowhere better to live. The allocation functions are covered under <a href="#memory-management">Memory Management</a>; this section is everything else.</p>
+<section id="converting-strings-to-numbers" class="level4">
+<h4 class="anchored" data-anchor-id="converting-strings-to-numbers">Converting Strings to Numbers</h4>
+<p>Text arrives as bytes and has to become numbers, and C offers two families for the job. Only one of them is usable.</p>
+<p>The <code>ato*</code> family (<code>atoi</code>, <code>atol</code>, <code>atof</code>) is the obvious-looking choice and the wrong one. <code>atoi("abc")</code> returns 0. So does <code>atoi("0")</code>. The function has no way to report failure, because its return type is already fully occupied by legitimate values, so a parse error and a valid zero are indistinguishable. Worse, its behavior on a value too large for the target type is <em>undefined</em>, not merely wrong. For a string literal you wrote yourself this hardly matters; for anything read from a file, a socket, or a command line, it means the program cannot tell good input from bad.</p>
+<p>The <code>strto*</code> family solves both problems, at the cost of a calling convention nobody enjoys:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb114"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb114-1"><a href="#cb114-1" aria-hidden="true" tabindex="-1"></a><span class="dt">long</span> strtol<span class="op">(</span><span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span><span class="dt">restrict</span> s<span class="op">,</span> <span class="dt">char</span> <span class="op">**</span><span class="dt">restrict</span> endptr<span class="op">,</span> <span class="dt">int</span> base<span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The second parameter is the mechanism. <code>strtol</code> sets <code>*endptr</code> to the first character it did <em>not</em> consume, which tells you exactly how far the parse got. Combined with <code>errno</code> for range errors, that is enough to distinguish every outcome:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb115"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb115-1"><a href="#cb115-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;errno.h&gt;</span></span>
+<span id="cb115-2"><a href="#cb115-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;limits.h&gt;</span></span>
+<span id="cb115-3"><a href="#cb115-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span></span>
+<span id="cb115-4"><a href="#cb115-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb115-5"><a href="#cb115-5" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> parse_long<span class="op">(</span><span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>text<span class="op">,</span> <span class="dt">long</span> <span class="op">*</span>out<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb115-6"><a href="#cb115-6" aria-hidden="true" tabindex="-1"></a>    errno <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb115-7"><a href="#cb115-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> <span class="op">*</span>end<span class="op">;</span></span>
+<span id="cb115-8"><a href="#cb115-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">long</span> value <span class="op">=</span> strtol<span class="op">(</span>text<span class="op">,</span> <span class="op">&amp;</span>end<span class="op">,</span> <span class="dv">10</span><span class="op">);</span></span>
+<span id="cb115-9"><a href="#cb115-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb115-10"><a href="#cb115-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>end <span class="op">==</span> text<span class="op">)</span>            <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span>   <span class="co">// no digits at all</span></span>
+<span id="cb115-11"><a href="#cb115-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(*</span>end <span class="op">!=</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">)</span>           <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span>   <span class="co">// trailing garbage: "12abc"</span></span>
+<span id="cb115-12"><a href="#cb115-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>errno <span class="op">==</span> ERANGE<span class="op">)</span>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span>   <span class="co">// outside long's range</span></span>
+<span id="cb115-13"><a href="#cb115-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>out <span class="op">=</span> value<span class="op">;</span></span>
+<span id="cb115-14"><a href="#cb115-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb115-15"><a href="#cb115-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Four checks, and all four are load-bearing. <code>end == text</code> catches an empty or entirely non-numeric string. <code>*end != '\0'</code> catches a partial parse, which is the check most code omits and the reason <code>"12abc"</code> is so often silently accepted as 12. <code>ERANGE</code> catches overflow, and it is why <code>errno</code> must be zeroed <em>first</em>: the library only ever sets <code>errno</code>, it never clears it, so a stale value from an unrelated earlier failure would otherwise be read as this call’s result.</p>
+<p>That this is the <em>correct</em> way to parse an integer, and that it takes ten lines, is a fair summary of C’s ergonomics. Essentially every C codebase of any size contains a wrapper very much like the one above, written independently, because the standard library provides the primitive and not the operation.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 21%">
+<col style="width: 67%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Function</th>
+<th style="text-align: left;">Returns</th>
+<th style="text-align: left;">Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>strtol</code></td>
+<td style="text-align: left;"><code>long</code></td>
+<td style="text-align: left;">The workhorse. <code>base</code> may be 0 to auto-detect <code>0x</code>/<code>0</code> prefixes.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>strtoul</code></td>
+<td style="text-align: left;"><code>unsigned long</code></td>
+<td style="text-align: left;">Accepts a leading <code>-</code> and silently negates. Check for it yourself.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>strtoll</code></td>
+<td style="text-align: left;"><code>long long</code></td>
+<td style="text-align: left;">C99.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>strtoull</code></td>
+<td style="text-align: left;"><code>unsigned long long</code></td>
+<td style="text-align: left;">C99.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>strtod</code></td>
+<td style="text-align: left;"><code>double</code></td>
+<td style="text-align: left;">Also parses <code>inf</code> and <code>nan</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>strtof</code></td>
+<td style="text-align: left;"><code>float</code></td>
+<td style="text-align: left;">C99.</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>base</code> parameter deserves a note: passing 0 asks <code>strtol</code> to infer the base from the prefix, so <code>"0x1f"</code> reads as 31 and <code>"017"</code> reads as 15. That is occasionally what you want and frequently a surprise, particularly for zero-padded decimal input such as a timestamp field, where <code>"08"</code> becomes a parse error because 8 is not an octal digit. Pass 10 explicitly unless you mean otherwise.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="`strtoul` and negative numbers">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>strtoul</code> and negative numbers
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>strtoul("-1", NULL, 10)</code> does not fail. It parses the minus sign, converts, and negates the result under unsigned arithmetic, returning <code>ULONG_MAX</code>. If negative input is invalid in your context, scan for the <code>-</code> yourself before converting; the library will not do it for you.</p>
+</div>
+</div>
+</section>
+<section id="sorting-and-searching" class="level4">
+<h4 class="anchored" data-anchor-id="sorting-and-searching">Sorting and Searching</h4>
+<p><code>qsort</code> and <code>bsearch</code> are the standard library’s two generic algorithms, and they are generic in the only way C knows how to be: through <code>void *</code> and an explicit element size, dispatching to a comparison function you supply. The mechanics of that were covered under <a href="#void"><code>void *</code></a> and <a href="#function-pointers">Function Pointers</a>; what follows is the contract.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb116"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb116-1"><a href="#cb116-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> qsort<span class="op">(</span><span class="dt">void</span> <span class="op">*</span>base<span class="op">,</span> <span class="dt">size_t</span> count<span class="op">,</span> <span class="dt">size_t</span> size<span class="op">,</span></span>
+<span id="cb116-2"><a href="#cb116-2" aria-hidden="true" tabindex="-1"></a>           <span class="dt">int</span> <span class="op">(*</span>compare<span class="op">)(</span><span class="dt">const</span> <span class="dt">void</span> <span class="op">*,</span> <span class="dt">const</span> <span class="dt">void</span> <span class="op">*));</span></span>
+<span id="cb116-3"><a href="#cb116-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">*</span>bsearch<span class="op">(</span><span class="dt">const</span> <span class="dt">void</span> <span class="op">*</span>key<span class="op">,</span> <span class="dt">void</span> <span class="op">*</span>base<span class="op">,</span> <span class="dt">size_t</span> count<span class="op">,</span> <span class="dt">size_t</span> size<span class="op">,</span></span>
+<span id="cb116-4"><a href="#cb116-4" aria-hidden="true" tabindex="-1"></a>              <span class="dt">int</span> <span class="op">(*</span>compare<span class="op">)(</span><span class="dt">const</span> <span class="dt">void</span> <span class="op">*,</span> <span class="dt">const</span> <span class="dt">void</span> <span class="op">*));</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The comparator returns a negative value if the first argument sorts before the second, zero if they are equivalent, and positive if it sorts after. Note that it is a <em>sign</em> that matters, not a magnitude, which invites the classic bug:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb117"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> compare_ints<span class="op">(</span><span class="dt">const</span> <span class="dt">void</span> <span class="op">*</span>a<span class="op">,</span> <span class="dt">const</span> <span class="dt">void</span> <span class="op">*</span>b<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb117-2"><a href="#cb117-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">*(</span><span class="dt">const</span> <span class="dt">int</span> <span class="op">*)</span>a <span class="op">-</span> <span class="op">*(</span><span class="dt">const</span> <span class="dt">int</span> <span class="op">*)</span>b<span class="op">;</span>      <span class="co">// WRONG</span></span>
+<span id="cb117-3"><a href="#cb117-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Subtraction produces the right sign only when it does not overflow. Comparing <code>INT_MIN</code> against a positive value overflows signed arithmetic, which is undefined behavior, and in practice yields a wrapped value whose sign is backwards. The array comes back subtly misordered, on inputs your tests probably do not contain. Compare instead:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb118"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> compare_ints<span class="op">(</span><span class="dt">const</span> <span class="dt">void</span> <span class="op">*</span>a<span class="op">,</span> <span class="dt">const</span> <span class="dt">void</span> <span class="op">*</span>b<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb118-2"><a href="#cb118-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> left <span class="op">=</span> <span class="op">*(</span><span class="dt">const</span> <span class="dt">int</span> <span class="op">*)</span>a<span class="op">,</span> right <span class="op">=</span> <span class="op">*(</span><span class="dt">const</span> <span class="dt">int</span> <span class="op">*)</span>b<span class="op">;</span></span>
+<span id="cb118-3"><a href="#cb118-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">(</span>left <span class="op">&gt;</span> right<span class="op">)</span> <span class="op">-</span> <span class="op">(</span>left <span class="op">&lt;</span> right<span class="op">);</span>        <span class="co">// -1, 0, or 1</span></span>
+<span id="cb118-4"><a href="#cb118-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Two further properties are worth knowing. <code>qsort</code> is <strong>not required to be stable</strong>: equal elements may be reordered, and glibc’s implementation is a merge sort that usually is stable while musl’s smoothsort is not, so relying on it is a portability trap. And <code>bsearch</code> requires the array to be <em>already sorted by the same comparator</em>; give it a different ordering and it will not complain, it will simply fail to find elements that are present.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="The cost of type erasure">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The cost of type erasure
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>qsort</code> cannot inline your comparator. Every comparison is an indirect call through a function pointer, and every element swap is a byte-by-byte copy driven by a runtime <code>size</code>. C++’s <code>std::sort</code> takes the comparator as a template parameter, so it inlines, and typically runs two to three times faster on the same data for exactly that reason. This is the concrete price of C’s “generic means <code>void *</code>” answer, and it is the gap <a href="./cpp.html#templates">templates</a> were invented to close.</p>
+</div>
+</div>
+</section>
+<section id="pseudo-random-numbers" class="level4">
+<h4 class="anchored" data-anchor-id="pseudo-random-numbers">Pseudo-Random Numbers</h4>
+<p><code>rand()</code> returns a pseudo-random <code>int</code> between 0 and <code>RAND_MAX</code> inclusive, and <code>srand(seed)</code> sets the starting point. Without a call to <code>srand</code>, the sequence behaves as though seeded with 1, which is to say every run produces identical output. That is occasionally useful for reproducibility and usually a surprise.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb119"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a>srand<span class="op">((</span><span class="dt">unsigned</span><span class="op">)</span>time<span class="op">(</span>NULL<span class="op">));</span>    <span class="co">// conventional, and weak: predictable seed</span></span>
+<span id="cb119-2"><a href="#cb119-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> roll <span class="op">=</span> rand<span class="op">()</span> <span class="op">%</span> <span class="dv">6</span> <span class="op">+</span> <span class="dv">1</span><span class="op">;</span>      <span class="co">// also biased; see below</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Both lines of that snippet have problems, and they are worth naming because the idiom is everywhere.</p>
+<p><strong><code>rand() % n</code> is biased.</strong> The range <code>0..RAND_MAX</code> divides evenly into <code>n</code> buckets only when <code>n</code> divides <code>RAND_MAX + 1</code>. Otherwise the low-numbered outcomes get one extra representative each. With <code>RAND_MAX</code> at 32767 and <code>n</code> at 6 the skew is negligible, but as <code>n</code> approaches <code>RAND_MAX</code> it becomes severe: at <code>n = 20000</code>, values below 12768 are twice as likely as the rest. The fix is rejection sampling, discarding draws from the uneven tail rather than folding them in.</p>
+<p><strong>The low bits may be poor.</strong> Historic implementations used a linear congruential generator whose low-order bits have short periods; the notorious case is a version of <code>rand()</code> whose lowest bit simply alternated. <code>rand() % 2</code> on such a system produces 0, 1, 0, 1. Modern libraries are better, but the standard guarantees nothing about quality, only about range.</p>
+<p>The honest summary is that <code>rand</code> is adequate for a shuffled demo and nothing else. It is unsuitable for cryptography (use a platform CSPRNG: <code>getrandom</code>, <code>arc4random</code>, or <code>BCryptGenRandom</code>), and unsuitable for simulation work where the quality of the distribution is the whole point (use a Mersenne Twister or PCG implementation). C’s standard library simply does not offer a good generator, which is why serious numerical code always brings its own.</p>
+</section>
+<section id="ending-the-program" class="level4">
+<h4 class="anchored" data-anchor-id="ending-the-program">Ending the Program</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 84%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Function</th>
+<th style="text-align: left;">Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>exit(status)</code></td>
+<td style="text-align: left;">Runs <code>atexit</code> handlers, flushes and closes streams, then terminates.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>_Exit(status)</code></td>
+<td style="text-align: left;">Terminates immediately. No handlers, no flushing. (C99.)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>abort()</code></td>
+<td style="text-align: left;">Raises <code>SIGABRT</code>; terminates abnormally, typically with a core dump.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>atexit(fn)</code></td>
+<td style="text-align: left;">Registers <code>fn</code> to run at normal termination. At least 32 may be registered.</td>
+</tr>
+</tbody>
+</table>
+<p>Returning from <code>main</code> is defined to be equivalent to calling <code>exit</code> with the returned value, so cleanup registered with <code>atexit</code> runs either way. Use <code>EXIT_SUCCESS</code> and <code>EXIT_FAILURE</code> rather than 0 and 1: they are the portable spellings, and on the handful of platforms where success is not 0 they are the only correct ones.</p>
+<p>The distinction between <code>exit</code> and <code>abort</code> is about whether the program’s state is trustworthy. <code>exit</code> is an orderly shutdown, and it runs your handlers and flushes your buffers because it assumes those actions are safe. <code>abort</code> is for the case where an invariant has already been violated and the program cannot be trusted to clean up after itself; flushing a buffer that may be corrupt could write bad data over good. That is precisely why <code>assert</code> calls <code>abort</code> rather than <code>exit</code>, and why a crash dump from an aborted process is more useful than a tidy exit that hid the evidence.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="`atexit` handlers and the buffering trap">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>atexit</code> handlers and the buffering trap
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Because <code>_Exit</code> skips stream flushing, output already written with <code>printf</code> but still sitting in a buffer is simply lost. This is the mechanism behind “my program printed nothing when it died,” and it applies equally to <code>abort</code> and to a crash. See <a href="#buffering">Buffering</a> below.</p>
+</div>
+</div>
+</section>
+<section id="odds-and-ends" class="level4">
+<h4 class="anchored" data-anchor-id="odds-and-ends">Odds and Ends</h4>
+<p><code>abs</code>, <code>labs</code>, and <code>llabs</code> compute integer absolute value; <code>&lt;math.h&gt;</code> supplies <code>fabs</code> for floating point. That there are four spellings of one operation is <a href="#the-c-philosophy">the “no overloading” commitment</a> made visible, and <code>&lt;tgmath.h&gt;</code> is the later attempt to paper over it.</p>
+<p><code>div</code> and <code>ldiv</code> return a struct containing both quotient and remainder in one call. They exist for a historical reason worth knowing: before C99, the rounding direction of integer division with negative operands was <em>implementation-defined</em>, but <code>div</code> was always specified to truncate toward zero. C99 standardized <code>/</code> and <code>%</code> to truncate as well, which removed the original justification (see <a href="#integer-division-and-modulo">Integer Division and Modulo</a>). What remains is the minor efficiency of getting both results from one division instruction, which compilers achieve on their own anyway.</p>
+<p><code>getenv(name)</code> returns a pointer to the value of an environment variable, or <code>NULL</code> if it is unset. The returned string belongs to the environment and must not be modified or freed, and a subsequent <code>setenv</code> or <code>putenv</code> may invalidate it, so copy it if you intend to keep it.</p>
+</section>
 </section>
 <section id="io" class="level3">
 <h3 class="anchored" data-anchor-id="io"><code>stdio.h</code></h3>
 <div class="subheading">
 <p>Input and Output</p>
 </div>
-<!-- STUB: Streams and the FILE type. Buffered vs. unbuffered. The three standard
-     streams. printf/scanf format specifiers as a reference table, and why scanf
-     is hard to use safely. fopen/fclose/fread/fwrite/fseek. Error handling with
-     ferror/feof/perror/errno. Keep the retargeting note as a brief callout only. -->
+<p>C has no I/O statements. Where Pascal has <code>writeln</code> and Python has <code>print</code>, C has a library function, and the entire mechanism is ordinary C that you could have written yourself. This is the “keep the language small” commitment paying off in an unexpected place: because I/O is not privileged, retargeting it for a platform the standard never imagined is a matter of supplying different functions, not a different compiler.</p>
+<section id="streams-and-file" class="level4">
+<h4 class="anchored" data-anchor-id="streams-and-file">Streams and <code>FILE</code></h4>
+<p>The abstraction is the <strong>stream</strong>: a sequence of bytes with a current position, which you read from or write to sequentially. A stream may be a file, a terminal, a pipe, or a socket, and the point of the abstraction is that the same functions work on all of them. That uniformity is the reason shell pipelines compose, and it is why the <a href="./shell.html">shell chapter</a> can treat text as a universal interface.</p>
+<p>A stream is represented by a <code>FILE</code>, and you never handle one directly. You hold a <code>FILE *</code>, obtained from <code>fopen</code> or one of the predefined streams, and pass it around; the structure behind it is opaque and its contents are the implementation’s business. Copying a <code>FILE</code> by value is meaningless and, on most implementations, actively harmful.</p>
+<p>Three streams exist before <code>main</code> runs:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 32%">
+<col style="width: 26%">
+<col style="width: 27%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Stream</th>
+<th style="text-align: left;">Purpose</th>
+<th style="text-align: left;">Default destination</th>
+<th style="text-align: left;">Buffering</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>stdin</code></td>
+<td style="text-align: left;">Ordinary input</td>
+<td style="text-align: left;">Keyboard</td>
+<td style="text-align: left;">Line, if a terminal</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>stdout</code></td>
+<td style="text-align: left;">Ordinary output</td>
+<td style="text-align: left;">Screen</td>
+<td style="text-align: left;">Line if a terminal, otherwise full</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>stderr</code></td>
+<td style="text-align: left;">Diagnostics and errors</td>
+<td style="text-align: left;">Screen</td>
+<td style="text-align: left;">Unbuffered</td>
+</tr>
+</tbody>
+</table>
+<p>The separation of <code>stdout</code> from <code>stderr</code> is a design decision, not an accident of history. Because they are distinct streams, a user can redirect one without the other: <code>./program &gt; results.txt</code> captures the data while error messages still reach the terminal. That only works if the program cooperates, which is the rule it implies. <strong>Diagnostics go to <code>stderr</code>, results go to <code>stdout</code>.</strong> A warning printed to <code>stdout</code> ends up interleaved into the data file, where it corrupts exactly the output someone was trying to collect.</p>
+</section>
+<section id="buffering" class="level4">
+<h4 class="anchored" data-anchor-id="buffering">Buffering</h4>
+<p>I/O is expensive, in the specific sense that reaching the operating system costs a system call and reaching a disk costs far more. So <code>stdio</code> accumulates bytes in a buffer and transfers them in batches. Three modes exist:</p>
+<ul>
+<li><strong>Fully buffered.</strong> Bytes accumulate until the buffer fills, then go out in one write. The default when a stream is not a terminal, which is to say whenever output is redirected to a file or a pipe.</li>
+<li><strong>Line buffered.</strong> The buffer is also flushed at each newline. The default for <code>stdout</code> when it is a terminal, because a human waiting for a prompt should not have to wait for 4096 bytes to accumulate.</li>
+<li><strong>Unbuffered.</strong> Every byte goes out immediately. The default for <code>stderr</code>, because an error message that is still sitting in a buffer when the program dies is an error message nobody reads.</li>
+</ul>
+<p>Those defaults explain two symptoms that otherwise look like nonsense.</p>
+<p><strong>“My output vanished when the program crashed.”</strong> The <code>printf</code> calls succeeded; they wrote into a buffer. The crash bypassed the normal shutdown that would have flushed it, so the bytes died in memory. This is also why <code>abort</code> and <code>_Exit</code> lose pending output, and why a debugging <code>printf</code> placed just before a segfault so often fails to appear, sending you hunting in the wrong place. Adding <code>fflush(stdout)</code> after it, or using <code>fprintf(stderr, ...)</code> which is unbuffered anyway, restores your ability to trust what you see.</p>
+<p><strong>“My output is fine on screen but interleaved wrong in a file.”</strong> Run a program that writes to both streams and the terminal shows them in the order you expect. Redirect <code>stdout</code> to a file and its buffering silently switches from line to full, so its output now emerges in large batches while <code>stderr</code> continues to trickle out immediately. Nothing is ordered wrongly; the two streams simply have different latencies, and the relative order was never guaranteed.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb120"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a>fflush<span class="op">(</span>stdout<span class="op">);</span>                              <span class="co">// force this stream out now</span></span>
+<span id="cb120-2"><a href="#cb120-2" aria-hidden="true" tabindex="-1"></a>fflush<span class="op">(</span>NULL<span class="op">);</span>                                <span class="co">// force out every output stream</span></span>
+<span id="cb120-3"><a href="#cb120-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb120-4"><a href="#cb120-4" aria-hidden="true" tabindex="-1"></a>setvbuf<span class="op">(</span>stream<span class="op">,</span> NULL<span class="op">,</span> _IONBF<span class="op">,</span> <span class="dv">0</span><span class="op">);</span>            <span class="co">// unbuffered</span></span>
+<span id="cb120-5"><a href="#cb120-5" aria-hidden="true" tabindex="-1"></a>setvbuf<span class="op">(</span>stream<span class="op">,</span> NULL<span class="op">,</span> _IOLBF<span class="op">,</span> BUFSIZ<span class="op">);</span>       <span class="co">// line buffered</span></span>
+<span id="cb120-6"><a href="#cb120-6" aria-hidden="true" tabindex="-1"></a>setvbuf<span class="op">(</span>stream<span class="op">,</span> buf<span class="op">,</span>  _IOFBF<span class="op">,</span> <span class="kw">sizeof</span> buf<span class="op">);</span>   <span class="co">// fully buffered, your buffer</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>setvbuf</code> must be called after opening the stream and before any other operation on it. Note that flushing an <em>input</em> stream is undefined behavior in ISO C, despite <code>fflush(stdin)</code> appearing in a great deal of tutorial code as a way to discard unread input; it happens to work on some implementations and does nothing or misbehaves on others.</p>
+</section>
+<section id="formatted-output" class="level4">
+<h4 class="anchored" data-anchor-id="formatted-output">Formatted Output</h4>
+<p><code>printf</code> and its relatives interpret a format string, substituting arguments at each conversion specifier. Why the format string exists at all, and why a mismatch between it and the arguments is undefined behavior rather than a type error, is explained under <a href="#why-printf-takes-a-format-string">Why <code>printf</code> Takes a Format String</a>. This is the catalogue.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 45%">
+<col style="width: 54%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Function</th>
+<th style="text-align: left;">Writes to</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>printf(fmt, ...)</code></td>
+<td style="text-align: left;"><code>stdout</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>fprintf(stream, fmt, ...)</code></td>
+<td style="text-align: left;">Any stream</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>sprintf(buf, fmt, ...)</code></td>
+<td style="text-align: left;">A buffer. Unbounded: avoid.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>snprintf(buf, size, fmt, ...)</code></td>
+<td style="text-align: left;">A buffer, bounded. The one to use.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>vfprintf(stream, fmt, va_list)</code></td>
+<td style="text-align: left;">Any stream, from an existing <code>va_list</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><code>sprintf</code> has no size parameter and therefore no way to stop, which puts it in the same category as <code>strcpy</code> and <code>gets</code>. Use <code>snprintf</code>, and check its return value; the technique for detecting truncation is under <a href="#building-strings-safely">Building Strings Safely</a>.</p>
+<p>The conversion specifiers:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 22%">
+<col style="width: 63%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Specifier</th>
+<th style="text-align: left;">Argument type</th>
+<th style="text-align: left;">Output</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>%d</code>, <code>%i</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">Signed decimal</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>%u</code></td>
+<td style="text-align: left;"><code>unsigned int</code></td>
+<td style="text-align: left;">Unsigned decimal</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>%x</code>, <code>%X</code></td>
+<td style="text-align: left;"><code>unsigned int</code></td>
+<td style="text-align: left;">Hexadecimal, lower or upper case</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>%o</code></td>
+<td style="text-align: left;"><code>unsigned int</code></td>
+<td style="text-align: left;">Octal</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>%f</code></td>
+<td style="text-align: left;"><code>double</code></td>
+<td style="text-align: left;">Decimal notation, 6 places by default</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>%e</code>, <code>%E</code></td>
+<td style="text-align: left;"><code>double</code></td>
+<td style="text-align: left;">Scientific notation</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>%g</code>, <code>%G</code></td>
+<td style="text-align: left;"><code>double</code></td>
+<td style="text-align: left;">Whichever of <code>%f</code>/<code>%e</code> is shorter; trims zeros</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>%a</code></td>
+<td style="text-align: left;"><code>double</code></td>
+<td style="text-align: left;">Hexadecimal float, exact and round-trippable (C99)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>%c</code></td>
+<td style="text-align: left;"><code>int</code></td>
+<td style="text-align: left;">A single character</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>%s</code></td>
+<td style="text-align: left;"><code>char *</code></td>
+<td style="text-align: left;">Characters up to the null terminator</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>%p</code></td>
+<td style="text-align: left;"><code>void *</code></td>
+<td style="text-align: left;">An implementation-defined pointer representation</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>%%</code></td>
+<td style="text-align: left;">(none)</td>
+<td style="text-align: left;">A literal <code>%</code></td>
+</tr>
+</tbody>
+</table>
+<p>Length modifiers adjust the expected argument width, and getting them wrong is undefined behavior rather than a rounding error, because <code>va_arg</code> reads the number of bytes the specifier claims:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Modifier</th>
+<th style="text-align: left;">With <code>%d</code></th>
+<th style="text-align: left;">With <code>%u</code>/<code>%x</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>hh</code></td>
+<td style="text-align: left;"><code>signed char</code></td>
+<td style="text-align: left;"><code>unsigned char</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>h</code></td>
+<td style="text-align: left;"><code>short</code></td>
+<td style="text-align: left;"><code>unsigned short</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>l</code></td>
+<td style="text-align: left;"><code>long</code></td>
+<td style="text-align: left;"><code>unsigned long</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ll</code></td>
+<td style="text-align: left;"><code>long long</code></td>
+<td style="text-align: left;"><code>unsigned long long</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>z</code></td>
+<td style="text-align: left;">(<code>ssize_t</code>)</td>
+<td style="text-align: left;"><code>size_t</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>t</code></td>
+<td style="text-align: left;"><code>ptrdiff_t</code></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>j</code></td>
+<td style="text-align: left;"><code>intmax_t</code></td>
+<td style="text-align: left;"><code>uintmax_t</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>%zu</code> for a <code>size_t</code> is the one to commit to memory, because <code>sizeof</code> yields <code>size_t</code> and printing it with <code>%d</code> is both extremely common and wrong on any platform where the two differ in width, which is every 64-bit platform.</p>
+<p>Between the <code>%</code> and the specifier go flags, a width, and a precision:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb121"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a>printf<span class="op">(</span><span class="st">"</span><span class="sc">%-10s</span><span class="st">|"</span><span class="op">,</span> name<span class="op">);</span>     <span class="co">// left-justified in 10 columns</span></span>
+<span id="cb121-2"><a href="#cb121-2" aria-hidden="true" tabindex="-1"></a>printf<span class="op">(</span><span class="st">"</span><span class="sc">%08.3f</span><span class="st">"</span><span class="op">,</span> value<span class="op">);</span>    <span class="co">// zero-padded, width 8, 3 decimal places</span></span>
+<span id="cb121-3"><a href="#cb121-3" aria-hidden="true" tabindex="-1"></a>printf<span class="op">(</span><span class="st">"</span><span class="sc">%+d</span><span class="st">"</span><span class="op">,</span> delta<span class="op">);</span>       <span class="co">// always show a sign</span></span>
+<span id="cb121-4"><a href="#cb121-4" aria-hidden="true" tabindex="-1"></a>printf<span class="op">(</span><span class="st">"</span><span class="sc">%.*s</span><span class="st">"</span><span class="op">,</span> len<span class="op">,</span> text<span class="op">);</span>  <span class="co">// precision taken from an argument: print len chars</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>That last form is genuinely useful and little known. <code>%.*s</code> bounds how much of a string is printed, which is the only safe way to print a character array that may not be null-terminated.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Printing fixed-width types">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Printing fixed-width types
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>int32_t</code> is <code>int</code> on one platform and <code>long</code> on another, so no single specifier is portable. <code>&lt;inttypes.h&gt;</code> provides macros that expand to the right one, concatenated into the format string by <a href="#stringification-and-token-pasting">adjacent string literal pasting</a>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb122"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb122-1"><a href="#cb122-1" aria-hidden="true" tabindex="-1"></a>printf<span class="op">(</span><span class="st">"count = %"</span> PRId32 <span class="st">", size = %"</span> PRIu64 <span class="st">"</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span> count<span class="op">,</span> size<span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>It is ugly, and it is the only correct answer. This awkwardness is a direct consequence of formatting being a runtime protocol rather than a compile-time one; <a href="./cpp.html#variadic-templates">C++ variadic templates</a> and Rust’s <code>format!</code> need no such macros because both know each argument’s type statically.</p>
+</div>
+</div>
+</section>
+<section id="formatted-input-and-why-scanf-is-a-trap" class="level4">
+<h4 class="anchored" data-anchor-id="formatted-input-and-why-scanf-is-a-trap">Formatted Input, and Why <code>scanf</code> Is a Trap</h4>
+<p><code>scanf</code> is the mirror image of <code>printf</code>, and it is far more dangerous than its symmetry suggests. It appears in every introductory text and is nearly absent from production code, for reasons worth enumerating.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="Four ways `scanf` will hurt you">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Four ways <code>scanf</code> will hurt you
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong><code>%s</code> has no bound.</strong> <code>scanf("%s", buf)</code> reads until whitespace with no regard for the size of <code>buf</code>. It is <code>gets</code> wearing a disguise, and it is the same buffer overflow. A width is mandatory: <code>scanf("%9s", buf)</code> for a 10-byte buffer, with the off-by-one (the width excludes the terminator) left as an exercise you will get wrong at least once.</p>
+<p><strong>Failure leaves the input in place.</strong> On a conversion mismatch, <code>scanf</code> stops at the offending character and does <em>not</em> consume it. The classic consequence is an input-validation loop that spins forever: the read fails, nothing is consumed, the loop retries, and the same character fails again at full speed.</p>
+<p><strong>The return value is a count, not a status.</strong> It reports how many conversions succeeded, so a three-specifier format returning 2 means partial success with one variable left untouched, still holding whatever garbage it held before. Code that ignores the return value, which is most code, cannot distinguish this from success.</p>
+<p><strong>Whitespace handling is not what it looks like.</strong> Most specifiers skip leading whitespace; <code>%c</code> and <code>%[</code> do not. A literal space in the format matches <em>any amount</em> of whitespace including none, and a <code>\n</code> in a format string does not mean “expect a newline,” it means the same as a space. Mixing <code>scanf</code> and <code>getchar</code> reliably leaves a stray newline behind to ambush the next read.</p>
+</div>
+</div>
+<p>The robust alternative is to separate reading from parsing: pull a whole line with <code>fgets</code>, then convert it with <code>strtol</code> or <code>sscanf</code>, where a failure costs you nothing because the input is already safely in your buffer.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb123"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> line<span class="op">[</span><span class="dv">128</span><span class="op">];</span></span>
+<span id="cb123-2"><a href="#cb123-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>fgets<span class="op">(</span>line<span class="op">,</span> <span class="kw">sizeof</span> line<span class="op">,</span> stdin<span class="op">)</span> <span class="op">!=</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb123-3"><a href="#cb123-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">long</span> value<span class="op">;</span></span>
+<span id="cb123-4"><a href="#cb123-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>parse_long_trimmed<span class="op">(</span>line<span class="op">,</span> <span class="op">&amp;</span>value<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb123-5"><a href="#cb123-5" aria-hidden="true" tabindex="-1"></a>        <span class="co">/* ... */</span></span>
+<span id="cb123-6"><a href="#cb123-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb123-7"><a href="#cb123-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>sscanf</code> on a string you already hold is genuinely useful and carries none of the stream-state hazards, since a failed parse leaves your buffer untouched and re-readable. It is <code>scanf</code> reading directly from a stream that causes the trouble.</p>
+</section>
+<section id="character-and-line-io" class="level4">
+<h4 class="anchored" data-anchor-id="character-and-line-io">Character and Line I/O</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 32%">
+<col style="width: 67%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Function</th>
+<th style="text-align: left;">Does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>getchar()</code> / <code>fgetc(stream)</code></td>
+<td style="text-align: left;">Read one character, or <code>EOF</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>putchar(c)</code> / <code>fputc(c, s)</code></td>
+<td style="text-align: left;">Write one character</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>fgets(buf, size, stream)</code></td>
+<td style="text-align: left;">Read a line, bounded, keeping the newline</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>fputs(s, stream)</code></td>
+<td style="text-align: left;">Write a string, adding no newline</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>puts(s)</code></td>
+<td style="text-align: left;">Write a string to <code>stdout</code>, adding a newline</td>
+</tr>
+</tbody>
+</table>
+<p>The character functions return <code>int</code> rather than <code>char</code> so that <code>EOF</code> remains distinguishable from a legitimate byte; the reasoning, and the bug that follows from ignoring it, are under <a href="#char-vs-int"><code>char</code> vs.&nbsp;<code>int</code> from Input</a>.</p>
+<p><code>fgets</code> has an awkward contract worth stating plainly. It stops at a newline, at <code>size - 1</code> characters, or at end of input, whichever comes first, and it <strong>keeps the newline</strong> when one was read. So the presence of a trailing <code>\n</code> is how you tell a complete line from a truncated one, and stripping it is a step every caller performs:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb124"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a>line<span class="op">[</span>strcspn<span class="op">(</span>line<span class="op">,</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span><span class="op">)]</span> <span class="op">=</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">;</span>   <span class="co">// truncate at the newline if present</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>gets</code> deserves its own note, as an artifact. It read a line into a buffer with no size parameter at all, making overflow not a risk but a certainty for any input longer than the buffer. It was the vector for the 1988 Morris worm, was formally deprecated in C99, and was <strong>removed outright in C11</strong>. It is the only function ever deleted from the C standard library, and the reason is instructive: the interface could not be fixed, because there is no way to bound a write when the caller never says how much room exists. <code>fgets</code> is the replacement.</p>
+</section>
+<section id="files" class="level4">
+<h4 class="anchored" data-anchor-id="files">Files</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb125"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a><span class="dt">FILE</span> <span class="op">*</span>fopen<span class="op">(</span><span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>path<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>mode<span class="op">);</span></span>
+<span id="cb125-2"><a href="#cb125-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span>   fclose<span class="op">(</span><span class="dt">FILE</span> <span class="op">*</span>stream<span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 33%">
+<col style="width: 26%">
+<col style="width: 26%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Mode</th>
+<th style="text-align: left;">Opens for</th>
+<th style="text-align: left;">If it exists</th>
+<th style="text-align: left;">If it does not</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>"r"</code></td>
+<td style="text-align: left;">Reading</td>
+<td style="text-align: left;">Opens at start</td>
+<td style="text-align: left;">Fails</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>"w"</code></td>
+<td style="text-align: left;">Writing</td>
+<td style="text-align: left;"><strong>Truncates</strong></td>
+<td style="text-align: left;">Creates</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>"a"</code></td>
+<td style="text-align: left;">Appending</td>
+<td style="text-align: left;">Opens at end</td>
+<td style="text-align: left;">Creates</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>"r+"</code></td>
+<td style="text-align: left;">Reading + writing</td>
+<td style="text-align: left;">Opens at start</td>
+<td style="text-align: left;">Fails</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>"w+"</code></td>
+<td style="text-align: left;">Reading + writing</td>
+<td style="text-align: left;"><strong>Truncates</strong></td>
+<td style="text-align: left;">Creates</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>"a+"</code></td>
+<td style="text-align: left;">Reading + appending</td>
+<td style="text-align: left;">Reads anywhere, writes at end</td>
+<td style="text-align: left;">Creates</td>
+</tr>
+</tbody>
+</table>
+<p>Appending <code>b</code> (<code>"rb"</code>, <code>"wb"</code>) selects binary mode. On POSIX systems it does nothing whatsoever; on Windows it suppresses the translation of <code>\n</code> to <code>\r\n</code> on output and back on input. Omit it when writing binary data on Windows and your file is silently corrupted wherever a byte happens to equal 0x0A, which is a bug that reproduces only on one platform and only for some data. Use <code>b</code> for anything that is not text.</p>
+<p><code>fopen</code> returns <code>NULL</code> on failure, and <code>errno</code> says why. Reading and writing blocks of data is <code>fread</code> and <code>fwrite</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb126"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a><span class="dt">size_t</span> fread<span class="op">(</span><span class="dt">void</span> <span class="op">*</span>ptr<span class="op">,</span> <span class="dt">size_t</span> size<span class="op">,</span> <span class="dt">size_t</span> count<span class="op">,</span> <span class="dt">FILE</span> <span class="op">*</span>stream<span class="op">);</span></span>
+<span id="cb126-2"><a href="#cb126-2" aria-hidden="true" tabindex="-1"></a><span class="dt">size_t</span> fwrite<span class="op">(</span><span class="dt">const</span> <span class="dt">void</span> <span class="op">*</span>ptr<span class="op">,</span> <span class="dt">size_t</span> size<span class="op">,</span> <span class="dt">size_t</span> count<span class="op">,</span> <span class="dt">FILE</span> <span class="op">*</span>stream<span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Both return the number of <strong>elements</strong> transferred, not bytes, so a short read is <code>&lt; count</code> and the reason (end of input or a genuine error) has to be established separately. A complete read of a file, with every failure handled:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb127"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>read_file<span class="op">(</span><span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>path<span class="op">,</span> <span class="dt">size_t</span> <span class="op">*</span>out_size<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb127-2"><a href="#cb127-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">FILE</span> <span class="op">*</span>file <span class="op">=</span> fopen<span class="op">(</span>path<span class="op">,</span> <span class="st">"rb"</span><span class="op">);</span></span>
+<span id="cb127-3"><a href="#cb127-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>file <span class="op">==</span> NULL<span class="op">)</span> <span class="cf">return</span> NULL<span class="op">;</span></span>
+<span id="cb127-4"><a href="#cb127-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb127-5"><a href="#cb127-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>fseek<span class="op">(</span>file<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> SEEK_END<span class="op">)</span> <span class="op">!=</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span> fclose<span class="op">(</span>file<span class="op">);</span> <span class="cf">return</span> NULL<span class="op">;</span> <span class="op">}</span></span>
+<span id="cb127-6"><a href="#cb127-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">long</span> length <span class="op">=</span> ftell<span class="op">(</span>file<span class="op">);</span></span>
+<span id="cb127-7"><a href="#cb127-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>length <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span>                    <span class="op">{</span> fclose<span class="op">(</span>file<span class="op">);</span> <span class="cf">return</span> NULL<span class="op">;</span> <span class="op">}</span></span>
+<span id="cb127-8"><a href="#cb127-8" aria-hidden="true" tabindex="-1"></a>    rewind<span class="op">(</span>file<span class="op">);</span></span>
+<span id="cb127-9"><a href="#cb127-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb127-10"><a href="#cb127-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> <span class="op">*</span>buffer <span class="op">=</span> malloc<span class="op">((</span><span class="dt">size_t</span><span class="op">)</span>length <span class="op">+</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb127-11"><a href="#cb127-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>buffer <span class="op">==</span> NULL<span class="op">)</span>                <span class="op">{</span> fclose<span class="op">(</span>file<span class="op">);</span> <span class="cf">return</span> NULL<span class="op">;</span> <span class="op">}</span></span>
+<span id="cb127-12"><a href="#cb127-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb127-13"><a href="#cb127-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> got <span class="op">=</span> fread<span class="op">(</span>buffer<span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="op">(</span><span class="dt">size_t</span><span class="op">)</span>length<span class="op">,</span> file<span class="op">);</span></span>
+<span id="cb127-14"><a href="#cb127-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>got <span class="op">!=</span> <span class="op">(</span><span class="dt">size_t</span><span class="op">)</span>length <span class="op">&amp;&amp;</span> ferror<span class="op">(</span>file<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb127-15"><a href="#cb127-15" aria-hidden="true" tabindex="-1"></a>        free<span class="op">(</span>buffer<span class="op">);</span></span>
+<span id="cb127-16"><a href="#cb127-16" aria-hidden="true" tabindex="-1"></a>        fclose<span class="op">(</span>file<span class="op">);</span></span>
+<span id="cb127-17"><a href="#cb127-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> NULL<span class="op">;</span></span>
+<span id="cb127-18"><a href="#cb127-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb127-19"><a href="#cb127-19" aria-hidden="true" tabindex="-1"></a>    buffer<span class="op">[</span>got<span class="op">]</span> <span class="op">=</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">;</span></span>
+<span id="cb127-20"><a href="#cb127-20" aria-hidden="true" tabindex="-1"></a>    fclose<span class="op">(</span>file<span class="op">);</span></span>
+<span id="cb127-21"><a href="#cb127-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>out_size <span class="op">=</span> got<span class="op">;</span></span>
+<span id="cb127-22"><a href="#cb127-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> buffer<span class="op">;</span></span>
+<span id="cb127-23"><a href="#cb127-23" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The cleanup on every branch is what C error handling looks like without destructors or <code>defer</code>, and the repetition is why <a href="#goto"><code>goto</code> for cleanup</a> is a genuinely idiomatic pattern once a function acquires more than one resource.</p>
+<p>Note that <code>fread</code> returning less than requested is not treated as an error by itself: the seek-to-end technique gives a length that may not match what a text-mode read actually produces, so the check is <code>ferror</code>, not the count. Positioning within a file:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 34%">
+<col style="width: 65%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Function</th>
+<th style="text-align: left;">Does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>fseek(stream, offset, whence)</code></td>
+<td style="text-align: left;">Move the position. <code>whence</code> is <code>SEEK_SET</code>, <code>SEEK_CUR</code>, or <code>SEEK_END</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ftell(stream)</code></td>
+<td style="text-align: left;">Report the current position, or -1 on failure.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>rewind(stream)</code></td>
+<td style="text-align: left;">Move to the start and clear the error flag.</td>
+</tr>
+</tbody>
+</table>
+<p><code>fseek</code> and <code>ftell</code> use <code>long</code>, which caps them at 2 GB on platforms where <code>long</code> is 32 bits. Large files need the POSIX <code>fseeko</code>/<code>ftello</code> with <code>off_t</code>, or the platform equivalent.</p>
+</section>
+<section id="errors-feof-and-errno" class="level4">
+<h4 class="anchored" data-anchor-id="errors-feof-and-errno">Errors, <code>feof</code>, and <code>errno</code></h4>
+<p>Stream functions signal failure by return value, and the stream itself carries two sticky flags reporting what happened.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 76%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Function</th>
+<th style="text-align: left;">Reports</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>feof(stream)</code></td>
+<td style="text-align: left;">The end-of-file flag is set: a previous read hit the end.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ferror(stream)</code></td>
+<td style="text-align: left;">The error flag is set: a previous operation failed.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>clearerr(stream)</code></td>
+<td style="text-align: left;">Clears both flags.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>perror(msg)</code></td>
+<td style="text-align: left;">Prints <code>msg</code>, a colon, and the text for the current <code>errno</code>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>strerror(errnum)</code></td>
+<td style="text-align: left;">Returns the message string for an error number.</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-warning callout-titled" title="`while (!feof(file))` is always wrong">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>while (!feof(file))</code> is always wrong
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>feof</code> does not predict that the next read will hit the end; it reports that a previous read <em>already did</em>. The flag is set by the failing read, not before it.</p>
+<p>So the loop runs one extra time. The final <code>fgets</code> or <code>fread</code> fails, sets the flag, and leaves the buffer untouched, but the body has already been entered and proceeds to process whatever the buffer held from the previous iteration. The symptom is a duplicated last line, which looks like an off-by-one somewhere else entirely.</p>
+<p>Test the read instead, which reports success and end-of-input in one value:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb128"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb128-1"><a href="#cb128-1" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(</span>fgets<span class="op">(</span>line<span class="op">,</span> <span class="kw">sizeof</span> line<span class="op">,</span> file<span class="op">)</span> <span class="op">!=</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb128-2"><a href="#cb128-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* ... */</span></span>
+<span id="cb128-3"><a href="#cb128-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb128-4"><a href="#cb128-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>ferror<span class="op">(</span>file<span class="op">))</span> <span class="op">{</span> <span class="co">/* a real error, not merely end of input */</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>feof</code> and <code>ferror</code> earn their keep <em>after</em> the loop, distinguishing an orderly end from a failure, which is exactly the question the loop condition could not answer.</p>
+</div>
+</div>
+<p><code>errno</code> is a global (strictly, a thread-local <code>int</code> lvalue) set by library functions when they fail. Its contract has two halves that are easy to get wrong: functions may set it on failure but are <strong>never required to clear it on success</strong>, and a successful call is permitted to modify it as a side effect. So <code>errno</code> is meaningful only immediately after a call you have already determined failed. If you must test it without a failure indication, as with <code>strtol</code> above, set it to 0 first.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb129"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb129-1"><a href="#cb129-1" aria-hidden="true" tabindex="-1"></a><span class="dt">FILE</span> <span class="op">*</span>file <span class="op">=</span> fopen<span class="op">(</span>path<span class="op">,</span> <span class="st">"r"</span><span class="op">);</span></span>
+<span id="cb129-2"><a href="#cb129-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>file <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb129-3"><a href="#cb129-3" aria-hidden="true" tabindex="-1"></a>    perror<span class="op">(</span>path<span class="op">);</span>                                   <span class="co">// "config.txt: No such file or directory"</span></span>
+<span id="cb129-4"><a href="#cb129-4" aria-hidden="true" tabindex="-1"></a>    fprintf<span class="op">(</span>stderr<span class="op">,</span> <span class="st">"detail: </span><span class="sc">%s\n</span><span class="st">"</span><span class="op">,</span> strerror<span class="op">(</span>errno<span class="op">));</span></span>
+<span id="cb129-5"><a href="#cb129-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-note callout-titled" title="`stdio` on bare metal">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span><code>stdio</code> on bare metal
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>On an embedded target there is no operating system to accept a write, so <code>printf</code> cannot work as shipped. Toolchains resolve this by leaving a small set of low-level hooks (commonly <code>_write</code>, <code>_read</code>, and friends) for you to implement, typically routing output to a UART. The <code>printf</code> machinery above it, format parsing and all, is ordinary C and works unchanged, which is often more code than a small microcontroller wants; hence the reduced-functionality variants (<code>iprintf</code>, <code>tinyprintf</code>) that omit floating-point support. The Applied DSP notes cover retargeting in context.</p>
+</div>
+</div>
+</section>
 </section>
 <section id="string.h" class="level3">
 <h3 class="anchored" data-anchor-id="string.h"><code>string.h</code></h3>
-<!-- STUB: Cross-reference the string function table above rather than repeating
-     it. Cover the mem* family properly: memcpy vs. memmove and why the
-     distinction is about restrict, memset's byte-fill semantics and the common
-     mistake of using it to set a non-zero int value. -->
+<p><code>&lt;string.h&gt;</code> holds two families that look similar and mean different things. The <code>str*</code> functions operate on null-terminated strings and are catalogued under <a href="#the-standard-string-functions">The Standard String Functions</a>; the <code>mem*</code> functions operate on raw bytes, take an explicit length, and attach no meaning to a zero byte. Use <code>str*</code> for text and <code>mem*</code> for everything else, including text whose length you already know.</p>
+<section id="memcpy-vs.-memmove" class="level4">
+<h4 class="anchored" data-anchor-id="memcpy-vs.-memmove"><code>memcpy</code> vs.&nbsp;<code>memmove</code></h4>
+<p>Both copy <code>n</code> bytes from a source to a destination. The difference is a single qualifier in the prototype, and it is the entire story:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb130"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb130-1"><a href="#cb130-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">*</span>memcpy<span class="op">(</span><span class="dt">void</span> <span class="op">*</span><span class="dt">restrict</span> dest<span class="op">,</span> <span class="dt">const</span> <span class="dt">void</span> <span class="op">*</span><span class="dt">restrict</span> src<span class="op">,</span> <span class="dt">size_t</span> n<span class="op">);</span></span>
+<span id="cb130-2"><a href="#cb130-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">*</span>memmove<span class="op">(</span><span class="dt">void</span> <span class="op">*</span>dest<span class="op">,</span> <span class="dt">const</span> <span class="dt">void</span> <span class="op">*</span>src<span class="op">,</span> <span class="dt">size_t</span> n<span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>memcpy</code>’s parameters are <code>restrict</code>-qualified, which is a promise <em>the caller makes</em>: these regions do not overlap. Having been given that promise, the implementation is free to copy in whatever order and width the hardware prefers, backwards, in 32-byte vector chunks, or as several interleaved streams, because with disjoint regions no order is observable. That freedom is the whole reason <code>memcpy</code> is fast. <code>memmove</code> makes no such demand and behaves as if the source were first copied to a temporary buffer, which costs it either a direction check or a genuine intermediate copy.</p>
+<p>Passing overlapping regions to <code>memcpy</code> is undefined behavior, not “probably fine.” It is worth being precise about why this matters in practice: overlapping copies frequently <em>do</em> work, for years, because a given implementation happened to copy forward and the overlap happened to run in the forgiving direction. Then a compiler upgrade selects a wider vector instruction, or the buffer’s alignment shifts by one, and the copy begins overwriting source bytes before reading them. The bug is in code that has not been touched in a decade. When regions may overlap, as when shifting elements within one array, <code>memmove</code> is not the cautious choice; it is the only correct one. See <a href="#restrict"><code>restrict</code></a> for the general mechanism.</p>
+</section>
+<section id="memset" class="level4">
+<h4 class="anchored" data-anchor-id="memset"><code>memset</code></h4>
+<p><code>memset(ptr, value, n)</code> fills <code>n</code> bytes with <code>value</code>, and the operative word is <strong>bytes</strong>. <code>value</code> is an <code>int</code> for historical reasons, but it is converted to <code>unsigned char</code>, so only its low 8 bits survive.</p>
+<p>This is the source of a persistent misunderstanding:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb131"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> values<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
+<span id="cb131-2"><a href="#cb131-2" aria-hidden="true" tabindex="-1"></a>memset<span class="op">(</span>values<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="kw">sizeof</span> values<span class="op">);</span>    <span class="co">// fine: all zeros</span></span>
+<span id="cb131-3"><a href="#cb131-3" aria-hidden="true" tabindex="-1"></a>memset<span class="op">(</span>values<span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="kw">sizeof</span> values<span class="op">);</span>    <span class="co">// NOT ten 1s</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The second call writes <code>0x01</code> into all 40 bytes, so each <code>int</code> becomes <code>0x01010101</code>, or 16843009. Zero is the only value for which the byte-wise and element-wise interpretations agree, which is why <code>memset(p, 0, n)</code> is idiomatic and why <code>memset</code> with any other value should make you look twice. To fill an array with a repeated non-zero value, write a loop; the compiler will vectorize it.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Zeroing is not always erasing">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Zeroing is not always erasing
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Two further caveats. Zeroing a pointer with <code>memset</code> produces a null pointer on every real implementation, but the standard only guarantees that for assignment from <code>NULL</code>, not for all-bits-zero; the same applies to floating-point zero, which is all-bits-zero in IEEE 754 but not by language rule.</p>
+<p>More practically, <code>memset</code> is a poor way to scrub a secret. If nothing reads the buffer afterward, the write is dead and the optimizer is entitled to delete it, which it does. <code>memset_s</code> (C11 Annex K, optional) and <code>explicit_bzero</code> (BSD, glibc) exist precisely because the obvious code does not survive optimization.</p>
+</div>
+</div>
+</section>
+<section id="the-rest-of-the-family" class="level4">
+<h4 class="anchored" data-anchor-id="the-rest-of-the-family">The Rest of the Family</h4>
+<p><code>memcmp(a, b, n)</code> compares byte sequences and returns an ordering, negative, zero, or positive, like <code>strcmp</code>. Its one trap is comparing structs:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb132"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>memcmp<span class="op">(&amp;</span>left<span class="op">,</span> <span class="op">&amp;</span>right<span class="op">,</span> <span class="kw">sizeof</span> left<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">)</span>   <span class="co">// unreliable</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Structs contain <a href="#padding-alignment-and-offsetof">padding</a>, and padding bytes hold whatever they held. Two structs with identical members can differ in their padding and compare unequal; conversely, this is why <code>memcmp</code> on structs is undefined-ish in practice even when it appears to work. Compare member by member. <code>memcmp</code> is also unsuitable for comparing secrets, since it stops at the first difference and its timing therefore leaks how many bytes matched.</p>
+<p><code>memchr(ptr, value, n)</code> finds the first occurrence of a byte within a bounded region, returning a pointer to it or <code>NULL</code>. It is the tool for scanning a buffer that may not be null-terminated, where <code>strchr</code> would run off the end.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="These are not ordinary functions">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>These are not ordinary functions
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <code>str*</code> and <code>mem*</code> families are the most heavily optimized code in any libc, typically hand-written in assembly per microarchitecture and selected at load time. Compilers go further and treat them as intrinsics: a <code>memcpy</code> of a known small size usually compiles to a couple of move instructions with no call at all, and a hand-written byte-copy loop is often <em>recognized</em> and turned back into a <code>memcpy</code> call. Writing your own to save the call overhead almost always makes things slower.</p>
+</div>
+</div>
+</section>
 </section>
 <section id="other-headers-worth-knowing" class="level3">
 <h3 class="anchored" data-anchor-id="other-headers-worth-knowing">Other Headers Worth Knowing</h3>
-<!-- STUB: Brief tour with one-line orientation each: <math.h>, <time.h>,
-     <ctype.h> (and the unsigned-char argument trap), <errno.h>, <assert.h>,
-     <stdarg.h>, <stddef.h>. A table is probably the right form here. -->
+<p>The remaining headers a working C programmer meets regularly, with the ones already covered elsewhere cross-referenced rather than repeated.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Header</th>
+<th style="text-align: left;">Provides</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>&lt;math.h&gt;</code></td>
+<td style="text-align: left;"><code>sqrt</code>, <code>pow</code>, <code>sin</code>, <code>fabs</code>, <code>floor</code>, <code>ceil</code>, <code>round</code>, <code>INFINITY</code>, <code>NAN</code>, <code>isnan</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&lt;time.h&gt;</code></td>
+<td style="text-align: left;"><code>time_t</code>, <code>time</code>, <code>clock</code>, <code>difftime</code>, <code>mktime</code>, <code>strftime</code>, <code>struct tm</code>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&lt;ctype.h&gt;</code></td>
+<td style="text-align: left;"><code>isalpha</code>, <code>isdigit</code>, <code>isspace</code>, <code>isupper</code>, <code>tolower</code>, <code>toupper</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&lt;errno.h&gt;</code></td>
+<td style="text-align: left;"><code>errno</code> and the <code>E*</code> constants (<code>ERANGE</code>, <code>EINVAL</code>, <code>ENOENT</code>).</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&lt;assert.h&gt;</code></td>
+<td style="text-align: left;"><code>assert</code>, and <code>static_assert</code> in C23.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&lt;stdarg.h&gt;</code></td>
+<td style="text-align: left;"><code>va_list</code>, <code>va_start</code>, <code>va_arg</code>, <code>va_end</code>. See <a href="#variadic-functions">Variadic Functions</a>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&lt;stddef.h&gt;</code></td>
+<td style="text-align: left;"><code>size_t</code>, <code>ptrdiff_t</code>, <code>NULL</code>, <code>offsetof</code>. Freestanding.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&lt;stdint.h&gt;</code></td>
+<td style="text-align: left;"><code>int32_t</code> and friends. See <a href="#fixed-width-types">Fixed-Width Types</a>. Freestanding.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&lt;inttypes.h&gt;</code></td>
+<td style="text-align: left;"><code>PRId32</code>-style format macros, plus <code>&lt;stdint.h&gt;</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>&lt;limits.h&gt;</code>, <code>&lt;float.h&gt;</code></td>
+<td style="text-align: left;">Type ranges. See <a href="#implementation-limits">Implementation Limits</a>. Freestanding.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>&lt;stdbool.h&gt;</code></td>
+<td style="text-align: left;"><code>bool</code>, <code>true</code>, <code>false</code> before C23. See <a href="#bool"><code>bool</code></a>. Freestanding.</td>
+</tr>
+</tbody>
+</table>
+<p>Three of these carry traps or subtleties worth spelling out.</p>
+<section id="ctype.h-and-the-signed-char-trap" class="level4">
+<h4 class="anchored" data-anchor-id="ctype.h-and-the-signed-char-trap"><code>&lt;ctype.h&gt;</code> and the Signed <code>char</code> Trap</h4>
+<p>The classification functions take an <code>int</code>, and the standard defines their behavior only for values representable as <code>unsigned char</code> and for <code>EOF</code>. Everything else is undefined.</p>
+<p>That is a problem, because plain <code>char</code> <a href="#the-arithmetic-types">may be signed</a>, and on a signed-<code>char</code> platform any byte above 127 is negative:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb133"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb133-1"><a href="#cb133-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> c <span class="op">=</span> text<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb133-2"><a href="#cb133-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>isalpha<span class="op">(</span>c<span class="op">))</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span>               <span class="co">// undefined for bytes &gt;= 0x80</span></span>
+<span id="cb133-3"><a href="#cb133-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>isalpha<span class="op">((</span><span class="dt">unsigned</span> <span class="dt">char</span><span class="op">)</span>c<span class="op">))</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span> <span class="co">// correct</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Typical implementations index a lookup table with the argument, so a negative value reads memory before the start of the table. Usually it returns a plausible-looking wrong answer; occasionally it faults. The cast is mandatory whenever the argument came from a <code>char</code>, and it is unnecessary only when it came from <code>getchar</code>, which already returns a properly widened value or <code>EOF</code>.</p>
+<p>These functions are also locale-dependent: <code>isalpha</code> may accept accented characters under one locale and reject them under the default <code>"C"</code> locale. For parsing anything with a fixed grammar, a wire format, a config file, an identifier, that variability is a hazard rather than a feature, which is why parsers often test ranges explicitly instead.</p>
+</section>
+<section id="assert.h-and-ndebug" class="level4">
+<h4 class="anchored" data-anchor-id="assert.h-and-ndebug"><code>&lt;assert.h&gt;</code> and <code>NDEBUG</code></h4>
+<p><code>assert(expression)</code> evaluates its argument and, if it is false, prints the expression, file, and line to <code>stderr</code> and calls <code>abort</code>. It is the runtime counterpart of <a href="#static-assertions"><code>_Static_assert</code></a>, and the division of labor is clean: <code>_Static_assert</code> checks what the compiler can know and fails the build; <code>assert</code> checks what only the running program can know and fails the run.</p>
+<p>The critical property is that <code>assert</code> is a macro that vanishes. If <code>NDEBUG</code> is defined when <code>&lt;assert.h&gt;</code> is included, <code>assert(x)</code> expands to nothing at all:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb134"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb134-1"><a href="#cb134-1" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>buffer_size <span class="op">&gt;</span> <span class="dv">0</span><span class="op">);</span>              <span class="co">// gone in release builds</span></span>
+<span id="cb134-2"><a href="#cb134-2" aria-hidden="true" tabindex="-1"></a>assert<span class="op">(</span>initialize_device<span class="op">()</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span>     <span class="co">// the call itself is gone too</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The second line is the bug this invites, and it is common enough to be worth stating flatly: <strong>never put an expression with side effects inside an <code>assert</code>.</strong> Under <code>NDEBUG</code> the device is never initialized, and the failure appears only in release builds, which is the worst possible place for a behavioral difference to hide. Assign the result to a variable and assert on that.</p>
+<p><code>NDEBUG</code> is also the reason assertions are not a substitute for error handling. An assertion documents a condition you believe to be impossible, a violated internal invariant, a contract the caller broke. Conditions that can genuinely occur at runtime, a missing file, a malformed packet, a failed allocation, must be handled with real code, because in the build that ships the assertion is not there.</p>
+</section>
+<section id="math.h-and-the-missing-library" class="level4">
+<h4 class="anchored" data-anchor-id="math.h-and-the-missing-library"><code>&lt;math.h&gt;</code> and the Missing Library</h4>
+<p>On most Unix systems the math functions live in a separate library from the rest of libc, so using them requires an explicit link flag:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb135"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb135-1"><a href="#cb135-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> program.c <span class="at">-o</span> program <span class="at">-lm</span>      <span class="co"># without -lm: "undefined reference to `sqrt'"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The split is historical, dating to when floating-point support was optional and expensive to carry. It persists as a small trap for anyone who assumes that including a standard header is sufficient, and it is a useful illustration of the difference between the <em>header</em> (which declares) and the <em>library</em> (which defines); see <a href="#the-translation-unit">The Translation Unit</a>. Note that glibc 2.34 and later fold libm into libc, so the flag is increasingly a no-op on Linux while remaining necessary elsewhere.</p>
+<p><code>&lt;math.h&gt;</code> also displays C’s lack of overloading more starkly than any other header. Absolute value is <code>abs</code>, <code>labs</code>, <code>llabs</code>, <code>fabs</code>, <code>fabsf</code>, and <code>fabsl</code> depending on the argument type, and the same fan-out applies to <code>sqrt</code>/<code>sqrtf</code>/<code>sqrtl</code> and the rest. Calling the <code>double</code> version on a <code>float</code> silently promotes, computes at double precision, and narrows back, which is correct but can be needlessly slow on hardware with a single-precision unit. <code>&lt;tgmath.h&gt;</code> layers type-generic macros over the whole set so that <code>sqrt(x)</code> dispatches on the type of <code>x</code>; it is built on <a href="#generic"><code>_Generic</code></a>, and it is the closest thing C has to overloading. ## Compilation and the Build {#the-build} The <strong>build</strong> converts a project’s source files into an artifact you can run or load. For a hosted program that is an executable; for an embedded target it is typically a HEX or ELF image flashed into non-volatile memory, accompanied by a <strong>map file</strong> showing exactly where every function and object landed.</p>
 </section>
 </section>
-<section id="the-build" class="level2">
-<h2 class="anchored" data-anchor-id="the-build">Compilation and the Build</h2>
-<p>The <strong>build</strong> converts a project’s source files into an artifact you can run or load. For a hosted program that is an executable; for an embedded target it is typically a HEX or ELF image flashed into non-volatile memory, accompanied by a <strong>map file</strong> showing exactly where every function and object landed.</p>
 <section id="the-translation-unit" class="level3">
 <h3 class="anchored" data-anchor-id="the-translation-unit">The Translation Unit</h3>
 <p>The unit of compilation in C is the <strong>translation unit</strong>: one <code>.c</code> file after the preprocessor has finished with it, headers and all. The compiler sees exactly one at a time and knows nothing of the others, which explains nearly everything about how C projects are organized.</p>
@@ -3157,7 +3990,7 @@ the comparison illuminates.
 <p>…you can use function attributes to specify certain function properties that may help the compiler optimize calls or check code more carefully for correctness. For example, you can use attributes to specify that a function never returns (noreturn), returns a value depending only on the values of its arguments (const), or has printf-style arguments (format).</p>
 </blockquote>
 <p>The doubled parentheses are part of the syntax, distinguishing an attribute from a function call:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb114"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb114-1"><a href="#cb114-1" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>attribute<span class="op">-</span>list<span class="op">))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb136"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb136-1"><a href="#cb136-1" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>attribute<span class="op">-</span>list<span class="op">))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A few that earn their keep in ordinary hosted code:</p>
 <table class="caption-top table">
 <colgroup>
@@ -3198,8 +4031,8 @@ the comparison illuminates.
 </tbody>
 </table>
 <p>The <code>format</code> attribute is the underrated one: it makes a <code>printf</code> wrapper as type-safe as <code>printf</code> itself.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb115"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb115-1"><a href="#cb115-1" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>format<span class="op">(</span>printf<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">)))</span></span>
-<span id="cb115-2"><a href="#cb115-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> log_message<span class="op">(</span>LogLevel_t level<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>fmt<span class="op">,</span> <span class="op">...);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb137"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb137-1"><a href="#cb137-1" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>format<span class="op">(</span>printf<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">)))</span></span>
+<span id="cb137-2"><a href="#cb137-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> log_message<span class="op">(</span>LogLevel_t level<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>fmt<span class="op">,</span> <span class="op">...);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>C23 finally standardizes an attribute syntax of its own, <code>[[noreturn]]</code> and <code>[[deprecated]]</code>, borrowed from C++.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Mnemonic: no hash, not preprocessor">
 <div class="callout-header d-flex align-content-center">
@@ -3243,10 +4076,10 @@ the comparison illuminates.
 <h4 class="anchored" data-anchor-id="the-volatile-keyword">The <code>volatile</code> Keyword</h4>
 <p>Optimization is also the context in which the third <a href="#type-qualifiers">type qualifier</a> finally makes sense. Every transformation above rests on an assumption: that the compiler can see every way a value might change. When that assumption is false, the optimizer will happily produce a program that is faster and wrong.</p>
 <p><code>volatile</code> withdraws the assumption. It tells the compiler that an object may change outside the control of the program’s visible flow, so every read and write appearing in the source must actually occur in the object code, in the order written. The optimizer may no longer cache the value in a register, hoist a load out of a loop, or delete a store it believes no one observes.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb116"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb116-1"><a href="#cb116-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Without volatile, the compiler may load *status once, hoist it out of the</span></span>
-<span id="cb116-2"><a href="#cb116-2" aria-hidden="true" tabindex="-1"></a><span class="co">// loop, and generate an infinite loop that never re-reads the address.</span></span>
-<span id="cb116-3"><a href="#cb116-3" aria-hidden="true" tabindex="-1"></a><span class="dt">volatile</span> <span class="dt">uint16_t</span> <span class="op">*</span>status <span class="op">=</span> <span class="op">(</span><span class="dt">volatile</span> <span class="dt">uint16_t</span> <span class="op">*)</span><span class="bn">0xFF00</span><span class="op">;</span></span>
-<span id="cb116-4"><a href="#cb116-4" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(*</span>status <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span> <span class="co">/* wait for the hardware to set the flag */</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb138"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb138-1"><a href="#cb138-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Without volatile, the compiler may load *status once, hoist it out of the</span></span>
+<span id="cb138-2"><a href="#cb138-2" aria-hidden="true" tabindex="-1"></a><span class="co">// loop, and generate an infinite loop that never re-reads the address.</span></span>
+<span id="cb138-3"><a href="#cb138-3" aria-hidden="true" tabindex="-1"></a><span class="dt">volatile</span> <span class="dt">uint16_t</span> <span class="op">*</span>status <span class="op">=</span> <span class="op">(</span><span class="dt">volatile</span> <span class="dt">uint16_t</span> <span class="op">*)</span><span class="bn">0xFF00</span><span class="op">;</span></span>
+<span id="cb138-4"><a href="#cb138-4" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(*</span>status <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span> <span class="co">/* wait for the hardware to set the flag */</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The cast is required: assigning a bare integer to a pointer is a constraint violation that modern compilers reject outright. Note also the fixed-width <code>uint16_t</code> rather than <code>int</code>, since a hardware register has an exact width.</p>
 <p>Three situations genuinely need <code>volatile</code>: memory-mapped hardware registers, variables shared between an interrupt handler and the main flow, and local variables that must survive a <code>longjmp</code>. Note also that <code>const</code> and <code>volatile</code> are not opposites and can coexist. <code>const volatile</code> describes a read-only hardware register: your code must not write it, yet the hardware may change it underneath you.</p>
 <div class="callout callout-style-default callout-warning callout-titled" title="`volatile` is not an atomicity or threading primitive">
@@ -3312,43 +4145,43 @@ the comparison illuminates.
 <section id="integer-promotion-and-implicit-conversions" class="level3">
 <h3 class="anchored" data-anchor-id="integer-promotion-and-implicit-conversions">Integer Promotion and Implicit Conversions</h3>
 <p>Before arithmetic, any integer type narrower than <code>int</code> is promoted to <code>int</code> (the <em>integer promotions</em>). The arithmetic therefore happens at <code>int</code> width, not at the operands’ declared width, and whether that saves you or burns you depends entirely on how wide <code>int</code> is on the target.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb117"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> a <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
-<span id="cb117-2"><a href="#cb117-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> b <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
-<span id="cb117-3"><a href="#cb117-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb117-4"><a href="#cb117-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int32_t</span> result <span class="op">=</span> a <span class="op">+</span> b<span class="op">;</span></span>
-<span id="cb117-5"><a href="#cb117-5" aria-hidden="true" tabindex="-1"></a><span class="co">// 32-bit int: a and b promote to int, sum is 60000, correct.</span></span>
-<span id="cb117-6"><a href="#cb117-6" aria-hidden="true" tabindex="-1"></a><span class="co">// 16-bit int: promotion buys no headroom, so the sum overflows before assignment.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb139"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb139-1"><a href="#cb139-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> a <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
+<span id="cb139-2"><a href="#cb139-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> b <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
+<span id="cb139-3"><a href="#cb139-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb139-4"><a href="#cb139-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int32_t</span> result <span class="op">=</span> a <span class="op">+</span> b<span class="op">;</span></span>
+<span id="cb139-5"><a href="#cb139-5" aria-hidden="true" tabindex="-1"></a><span class="co">// 32-bit int: a and b promote to int, sum is 60000, correct.</span></span>
+<span id="cb139-6"><a href="#cb139-6" aria-hidden="true" tabindex="-1"></a><span class="co">// 16-bit int: promotion buys no headroom, so the sum overflows before assignment.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Casting one operand to a type at least as wide as the result forces the arithmetic to happen at that width:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb118"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int32_t</span> result <span class="op">=</span> <span class="op">(</span><span class="dt">int32_t</span><span class="op">)</span>a <span class="op">+</span> b<span class="op">;</span>   <span class="co">// b converts too; the addition is 32-bit everywhere</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb140"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb140-1"><a href="#cb140-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int32_t</span> result <span class="op">=</span> <span class="op">(</span><span class="dt">int32_t</span><span class="op">)</span>a <span class="op">+</span> b<span class="op">;</span>   <span class="co">// b converts too; the addition is 32-bit everywhere</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The related trap is <strong>signed/unsigned comparison</strong>. When one operand is signed and the other unsigned of the same rank, the signed value converts to unsigned, so <code>-1 &lt; 1u</code> is <em>false</em>. This is why <code>for (size_t i = n - 1; i &gt;= 0; i--)</code> never terminates: an unsigned value is always <code>&gt;= 0</code>. Enable <code>-Wsign-compare</code> (included in <code>-Wextra</code>).</p>
 </section>
 <section id="operator-precedence-surprises" class="level3">
 <h3 class="anchored" data-anchor-id="operator-precedence-surprises">Operator Precedence Surprises</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb119"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>flags <span class="op">&amp;</span> MASK <span class="op">==</span> ENABLED<span class="op">)</span>     <span class="co">// parsed as: flags &amp; (MASK == ENABLED)</span></span>
-<span id="cb119-2"><a href="#cb119-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">((</span>flags <span class="op">&amp;</span> MASK<span class="op">)</span> <span class="op">==</span> ENABLED<span class="op">)</span>   <span class="co">// what you meant</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb141"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb141-1"><a href="#cb141-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>flags <span class="op">&amp;</span> MASK <span class="op">==</span> ENABLED<span class="op">)</span>     <span class="co">// parsed as: flags &amp; (MASK == ENABLED)</span></span>
+<span id="cb141-2"><a href="#cb141-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">((</span>flags <span class="op">&amp;</span> MASK<span class="op">)</span> <span class="op">==</span> ENABLED<span class="op">)</span>   <span class="co">// what you meant</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Bitwise operators bind more loosely than comparison operators</strong>, a decision Ritchie later called a mistake, retained because code already depended on it. The same ordering catches shifts: <code>1 &lt;&lt; n + 1</code> shifts by <code>n + 1</code>.</p>
 <p>Neither case produces a warning by default, because both are perfectly legal expressions that simply mean something other than what you wrote. Parenthesize any expression mixing bitwise operators with comparison or arithmetic, and consult the <a href="#operators-and-precedence">precedence table</a> when in doubt.</p>
 </section>
 <section id="assignment-vs.-comparison" class="level3">
 <h3 class="anchored" data-anchor-id="assignment-vs.-comparison">Assignment vs.&nbsp;Comparison</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb120"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">=</span> <span class="dv">5</span><span class="op">)</span>   <span class="co">// assignment, not comparison; always true</span></span>
-<span id="cb120-2"><a href="#cb120-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">==</span> <span class="dv">5</span><span class="op">)</span>  <span class="co">// comparison</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb142"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb142-1"><a href="#cb142-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">=</span> <span class="dv">5</span><span class="op">)</span>   <span class="co">// assignment, not comparison; always true</span></span>
+<span id="cb142-2"><a href="#cb142-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">==</span> <span class="dv">5</span><span class="op">)</span>  <span class="co">// comparison</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Modern compilers warn about this when the assignment is not parenthesized, so <code>-Wall</code> catches most instances. Where an assignment in a condition is genuinely intended, wrap it in extra parentheses to say so: <code>while ((c = getchar()) != EOF)</code>.</p>
 </section>
 <section id="buffer-overruns" class="level3">
 <h3 class="anchored" data-anchor-id="buffer-overruns">Buffer Overruns</h3>
 <p>The classic C vulnerability:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb121"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> buffer<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
-<span id="cb121-2"><a href="#cb121-2" aria-hidden="true" tabindex="-1"></a>strcpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">);</span>   <span class="co">// overruns the buffer</span></span>
-<span id="cb121-3"><a href="#cb121-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb121-4"><a href="#cb121-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Bounded, but silently truncates, and may not terminate</span></span>
-<span id="cb121-5"><a href="#cb121-5" aria-hidden="true" tabindex="-1"></a>strncpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">);</span></span>
-<span id="cb121-6"><a href="#cb121-6" aria-hidden="true" tabindex="-1"></a>buffer<span class="op">[</span><span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb143"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb143-1"><a href="#cb143-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> buffer<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
+<span id="cb143-2"><a href="#cb143-2" aria-hidden="true" tabindex="-1"></a>strcpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">);</span>   <span class="co">// overruns the buffer</span></span>
+<span id="cb143-3"><a href="#cb143-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb143-4"><a href="#cb143-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Bounded, but silently truncates, and may not terminate</span></span>
+<span id="cb143-5"><a href="#cb143-5" aria-hidden="true" tabindex="-1"></a>strncpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb143-6"><a href="#cb143-6" aria-hidden="true" tabindex="-1"></a>buffer<span class="op">[</span><span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>snprintf</code> is usually the better tool:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb122"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb122-1"><a href="#cb122-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> n <span class="op">=</span> snprintf<span class="op">(</span>buffer<span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">),</span> <span class="st">"Value: </span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> x<span class="op">);</span></span>
-<span id="cb122-2"><a href="#cb122-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>n <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">||</span> <span class="op">(</span><span class="dt">size_t</span><span class="op">)</span>n <span class="op">&gt;=</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">))</span> <span class="op">{</span></span>
-<span id="cb122-3"><a href="#cb122-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* output was truncated */</span></span>
-<span id="cb122-4"><a href="#cb122-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb144"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb144-1"><a href="#cb144-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> n <span class="op">=</span> snprintf<span class="op">(</span>buffer<span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">),</span> <span class="st">"Value: </span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> x<span class="op">);</span></span>
+<span id="cb144-2"><a href="#cb144-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>n <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">||</span> <span class="op">(</span><span class="dt">size_t</span><span class="op">)</span>n <span class="op">&gt;=</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb144-3"><a href="#cb144-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* output was truncated */</span></span>
+<span id="cb144-4"><a href="#cb144-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="callout callout-style-default callout-warning callout-titled" title="Truncation is a bug too">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -3365,45 +4198,45 @@ the comparison illuminates.
 </section>
 <section id="off-by-one-errors" class="level3">
 <h3 class="anchored" data-anchor-id="off-by-one-errors">Off-by-One Errors</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb123"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> array<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
-<span id="cb123-2"><a href="#cb123-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;=</span> <span class="dv">10</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span>   <span class="co">// writes array[10]: out of bounds</span></span>
-<span id="cb123-3"><a href="#cb123-3" aria-hidden="true" tabindex="-1"></a>    array<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
-<span id="cb123-4"><a href="#cb123-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb145"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb145-1"><a href="#cb145-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> array<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
+<span id="cb145-2"><a href="#cb145-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;=</span> <span class="dv">10</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span>   <span class="co">// writes array[10]: out of bounds</span></span>
+<span id="cb145-3"><a href="#cb145-3" aria-hidden="true" tabindex="-1"></a>    array<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb145-4"><a href="#cb145-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A loop over <code>n</code> elements runs while the index is <code>&lt; n</code>, never <code>&lt;= n</code>. Counting down, start at <code>n - 1</code> and run while the index is <code>&gt;= 0</code>, and keep the index <em>signed</em> so the termination test can actually fail.</p>
 </section>
 <section id="pointer-arithmetic-and-free" class="level3">
 <h3 class="anchored" data-anchor-id="pointer-arithmetic-and-free">Pointer Arithmetic and <code>free</code></h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb124"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> <span class="op">*</span>p <span class="op">=</span> malloc<span class="op">(</span><span class="dv">10</span> <span class="op">*</span> <span class="kw">sizeof</span> <span class="op">*</span>p<span class="op">);</span></span>
-<span id="cb124-2"><a href="#cb124-2" aria-hidden="true" tabindex="-1"></a>p<span class="op">++;</span>              <span class="co">// now points at the second element</span></span>
-<span id="cb124-3"><a href="#cb124-3" aria-hidden="true" tabindex="-1"></a>free<span class="op">(</span>p<span class="op">);</span>          <span class="co">// undefined behavior: not the pointer malloc returned</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb146"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb146-1"><a href="#cb146-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> <span class="op">*</span>p <span class="op">=</span> malloc<span class="op">(</span><span class="dv">10</span> <span class="op">*</span> <span class="kw">sizeof</span> <span class="op">*</span>p<span class="op">);</span></span>
+<span id="cb146-2"><a href="#cb146-2" aria-hidden="true" tabindex="-1"></a>p<span class="op">++;</span>              <span class="co">// now points at the second element</span></span>
+<span id="cb146-3"><a href="#cb146-3" aria-hidden="true" tabindex="-1"></a>free<span class="op">(</span>p<span class="op">);</span>          <span class="co">// undefined behavior: not the pointer malloc returned</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>free</code> must receive exactly the pointer the allocator returned. Keep the original and iterate with a separate cursor.</p>
 </section>
 <section id="modifying-string-literals" class="level3">
 <h3 class="anchored" data-anchor-id="modifying-string-literals">Modifying String Literals</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb125"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>str <span class="op">=</span> <span class="st">"Hello"</span><span class="op">;</span>   <span class="co">// points into read-only storage</span></span>
-<span id="cb125-2"><a href="#cb125-2" aria-hidden="true" tabindex="-1"></a>str<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'h'</span><span class="op">;</span>          <span class="co">// undefined behavior; typically a segfault</span></span>
-<span id="cb125-3"><a href="#cb125-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb125-4"><a href="#cb125-4" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> arr<span class="op">[]</span> <span class="op">=</span> <span class="st">"Hello"</span><span class="op">;</span>  <span class="co">// a modifiable copy on the stack</span></span>
-<span id="cb125-5"><a href="#cb125-5" aria-hidden="true" tabindex="-1"></a>arr<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'h'</span><span class="op">;</span>          <span class="co">// fine</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb147"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb147-1"><a href="#cb147-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>str <span class="op">=</span> <span class="st">"Hello"</span><span class="op">;</span>   <span class="co">// points into read-only storage</span></span>
+<span id="cb147-2"><a href="#cb147-2" aria-hidden="true" tabindex="-1"></a>str<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'h'</span><span class="op">;</span>          <span class="co">// undefined behavior; typically a segfault</span></span>
+<span id="cb147-3"><a href="#cb147-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb147-4"><a href="#cb147-4" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> arr<span class="op">[]</span> <span class="op">=</span> <span class="st">"Hello"</span><span class="op">;</span>  <span class="co">// a modifiable copy on the stack</span></span>
+<span id="cb147-5"><a href="#cb147-5" aria-hidden="true" tabindex="-1"></a>arr<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'h'</span><span class="op">;</span>          <span class="co">// fine</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Declare pointers to literals as <code>const char *</code> and let the compiler catch the write.</p>
 </section>
 <section id="forgetting-break-in-switch" class="level3">
 <h3 class="anchored" data-anchor-id="forgetting-break-in-switch">Forgetting <code>break</code> in <code>switch</code></h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb126"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a><span class="cf">switch</span> <span class="op">(</span>state<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb126-2"><a href="#cb126-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> STATE_IDLE<span class="op">:</span></span>
-<span id="cb126-3"><a href="#cb126-3" aria-hidden="true" tabindex="-1"></a>        init_processing<span class="op">();</span></span>
-<span id="cb126-4"><a href="#cb126-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">// falls through to STATE_ACTIVE, almost certainly by accident</span></span>
-<span id="cb126-5"><a href="#cb126-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> STATE_ACTIVE<span class="op">:</span></span>
-<span id="cb126-6"><a href="#cb126-6" aria-hidden="true" tabindex="-1"></a>        process_data<span class="op">();</span></span>
-<span id="cb126-7"><a href="#cb126-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span><span class="op">;</span></span>
-<span id="cb126-8"><a href="#cb126-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb148"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb148-1"><a href="#cb148-1" aria-hidden="true" tabindex="-1"></a><span class="cf">switch</span> <span class="op">(</span>state<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb148-2"><a href="#cb148-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> STATE_IDLE<span class="op">:</span></span>
+<span id="cb148-3"><a href="#cb148-3" aria-hidden="true" tabindex="-1"></a>        init_processing<span class="op">();</span></span>
+<span id="cb148-4"><a href="#cb148-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">// falls through to STATE_ACTIVE, almost certainly by accident</span></span>
+<span id="cb148-5"><a href="#cb148-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> STATE_ACTIVE<span class="op">:</span></span>
+<span id="cb148-6"><a href="#cb148-6" aria-hidden="true" tabindex="-1"></a>        process_data<span class="op">();</span></span>
+<span id="cb148-7"><a href="#cb148-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb148-8"><a href="#cb148-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Deliberate fall-through should be announced, both for readers and for <code>-Wimplicit-fallthrough</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb127"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> STATE_WARNING<span class="op">:</span></span>
-<span id="cb127-2"><a href="#cb127-2" aria-hidden="true" tabindex="-1"></a>    flash_led<span class="op">();</span></span>
-<span id="cb127-3"><a href="#cb127-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* fallthrough */</span></span>
-<span id="cb127-4"><a href="#cb127-4" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> STATE_ERROR<span class="op">:</span></span>
-<span id="cb127-5"><a href="#cb127-5" aria-hidden="true" tabindex="-1"></a>    halt_system<span class="op">();</span></span>
-<span id="cb127-6"><a href="#cb127-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">break</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb149"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb149-1"><a href="#cb149-1" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> STATE_WARNING<span class="op">:</span></span>
+<span id="cb149-2"><a href="#cb149-2" aria-hidden="true" tabindex="-1"></a>    flash_led<span class="op">();</span></span>
+<span id="cb149-3"><a href="#cb149-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* fallthrough */</span></span>
+<span id="cb149-4"><a href="#cb149-4" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> STATE_ERROR<span class="op">:</span></span>
+<span id="cb149-5"><a href="#cb149-5" aria-hidden="true" tabindex="-1"></a>    halt_system<span class="op">();</span></span>
+<span id="cb149-6"><a href="#cb149-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">break</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="uninitialized-variables" class="level3">
 <h3 class="anchored" data-anchor-id="uninitialized-variables">Uninitialized Variables</h3>

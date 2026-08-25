@@ -1068,7 +1068,7 @@ for (char *token = strtok(input, ","); token != NULL; token = strtok(NULL, ","))
 
 Passing `NULL` on subsequent calls is how it resumes. Because of the hidden state, two interleaved `strtok` loops will corrupt each other; use `strtok_r` (POSIX) or `strtok_s` (C11 Annex K) where that is a risk. This is the [reentrancy hazard](#static) that `static` locals introduce, in its most widely encountered form.
 
-#### `char` vs. `int` from Input
+#### `char` vs. `int` from Input {#char-vs-int}
 A subtle but important convention: functions like `getchar` return an `int`, not a `char`. This is because they must return every possible byte value *and* a distinct end-of-input marker, `EOF` (typically -1). A `char` cannot hold that extra value, so storing the result in a `char` before testing for `EOF` is a genuine bug.
 
 ```c
@@ -1950,28 +1950,504 @@ The C standard distinguishes two kinds of implementation. A **hosted** implement
 :::
 
 ### `stdlib.h`
-<!-- STUB: General utilities beyond allocation: atoi/strtol and why strtol is the
-     correct choice (error reporting via endptr and errno), qsort and bsearch as
-     the canonical function-pointer APIs, rand/srand and their weaknesses,
-     abs/div, exit/atexit/abort, getenv. -->
+::: {.subheading}
+General utilities
+:::
+
+`<stdlib.h>` is the junk drawer of the standard library: allocation, conversion, sorting, randomness, and process control, related to each other only by having nowhere better to live. The allocation functions are covered under [Memory Management](#memory-management); this section is everything else.
+
+#### Converting Strings to Numbers
+Text arrives as bytes and has to become numbers, and C offers two families for the job. Only one of them is usable.
+
+The `ato*` family (`atoi`, `atol`, `atof`) is the obvious-looking choice and the wrong one. `atoi("abc")` returns 0. So does `atoi("0")`. The function has no way to report failure, because its return type is already fully occupied by legitimate values, so a parse error and a valid zero are indistinguishable. Worse, its behavior on a value too large for the target type is *undefined*, not merely wrong. For a string literal you wrote yourself this hardly matters; for anything read from a file, a socket, or a command line, it means the program cannot tell good input from bad.
+
+The `strto*` family solves both problems, at the cost of a calling convention nobody enjoys:
+
+```c
+long strtol(const char *restrict s, char **restrict endptr, int base);
+```
+
+The second parameter is the mechanism. `strtol` sets `*endptr` to the first character it did *not* consume, which tells you exactly how far the parse got. Combined with `errno` for range errors, that is enough to distinguish every outcome:
+
+```c
+#include <errno.h>
+#include <limits.h>
+#include <stdlib.h>
+
+bool parse_long(const char *text, long *out) {
+    errno = 0;
+    char *end;
+    long value = strtol(text, &end, 10);
+
+    if (end == text)            return false;   // no digits at all
+    if (*end != '\0')           return false;   // trailing garbage: "12abc"
+    if (errno == ERANGE)        return false;   // outside long's range
+    *out = value;
+    return true;
+}
+```
+
+Four checks, and all four are load-bearing. `end == text` catches an empty or entirely non-numeric string. `*end != '\0'` catches a partial parse, which is the check most code omits and the reason `"12abc"` is so often silently accepted as 12. `ERANGE` catches overflow, and it is why `errno` must be zeroed *first*: the library only ever sets `errno`, it never clears it, so a stale value from an unrelated earlier failure would otherwise be read as this call's result.
+
+That this is the *correct* way to parse an integer, and that it takes ten lines, is a fair summary of C's ergonomics. Essentially every C codebase of any size contains a wrapper very much like the one above, written independently, because the standard library provides the primitive and not the operation.
+
+| Function  | Returns             | Notes                                                             |
+|:----------|:--------------------|:------------------------------------------------------------------|
+| `strtol`  | `long`              | The workhorse. `base` may be 0 to auto-detect `0x`/`0` prefixes.  |
+| `strtoul` | `unsigned long`     | Accepts a leading `-` and silently negates. Check for it yourself. |
+| `strtoll` | `long long`         | C99.                                                              |
+| `strtoull`| `unsigned long long`| C99.                                                              |
+| `strtod`  | `double`            | Also parses `inf` and `nan`.                                      |
+| `strtof`  | `float`             | C99.                                                              |
+
+The `base` parameter deserves a note: passing 0 asks `strtol` to infer the base from the prefix, so `"0x1f"` reads as 31 and `"017"` reads as 15. That is occasionally what you want and frequently a surprise, particularly for zero-padded decimal input such as a timestamp field, where `"08"` becomes a parse error because 8 is not an octal digit. Pass 10 explicitly unless you mean otherwise.
+
+::: {.callout-warning title="`strtoul` and negative numbers"}
+`strtoul("-1", NULL, 10)` does not fail. It parses the minus sign, converts, and negates the result under unsigned arithmetic, returning `ULONG_MAX`. If negative input is invalid in your context, scan for the `-` yourself before converting; the library will not do it for you.
+:::
+
+#### Sorting and Searching
+`qsort` and `bsearch` are the standard library's two generic algorithms, and they are generic in the only way C knows how to be: through `void *` and an explicit element size, dispatching to a comparison function you supply. The mechanics of that were covered under [`void *`](#void) and [Function Pointers](#function-pointers); what follows is the contract.
+
+```c
+void qsort(void *base, size_t count, size_t size,
+           int (*compare)(const void *, const void *));
+void *bsearch(const void *key, void *base, size_t count, size_t size,
+              int (*compare)(const void *, const void *));
+```
+
+The comparator returns a negative value if the first argument sorts before the second, zero if they are equivalent, and positive if it sorts after. Note that it is a *sign* that matters, not a magnitude, which invites the classic bug:
+
+```c
+int compare_ints(const void *a, const void *b) {
+    return *(const int *)a - *(const int *)b;      // WRONG
+}
+```
+
+Subtraction produces the right sign only when it does not overflow. Comparing `INT_MIN` against a positive value overflows signed arithmetic, which is undefined behavior, and in practice yields a wrapped value whose sign is backwards. The array comes back subtly misordered, on inputs your tests probably do not contain. Compare instead:
+
+```c
+int compare_ints(const void *a, const void *b) {
+    int left = *(const int *)a, right = *(const int *)b;
+    return (left > right) - (left < right);        // -1, 0, or 1
+}
+```
+
+Two further properties are worth knowing. `qsort` is **not required to be stable**: equal elements may be reordered, and glibc's implementation is a merge sort that usually is stable while musl's smoothsort is not, so relying on it is a portability trap. And `bsearch` requires the array to be *already sorted by the same comparator*; give it a different ordering and it will not complain, it will simply fail to find elements that are present.
+
+::: {.callout-note title="The cost of type erasure"}
+`qsort` cannot inline your comparator. Every comparison is an indirect call through a function pointer, and every element swap is a byte-by-byte copy driven by a runtime `size`. C++'s `std::sort` takes the comparator as a template parameter, so it inlines, and typically runs two to three times faster on the same data for exactly that reason. This is the concrete price of C's "generic means `void *`" answer, and it is the gap [templates](cpp.qmd#templates) were invented to close.
+:::
+
+#### Pseudo-Random Numbers
+`rand()` returns a pseudo-random `int` between 0 and `RAND_MAX` inclusive, and `srand(seed)` sets the starting point. Without a call to `srand`, the sequence behaves as though seeded with 1, which is to say every run produces identical output. That is occasionally useful for reproducibility and usually a surprise.
+
+```c
+srand((unsigned)time(NULL));    // conventional, and weak: predictable seed
+int roll = rand() % 6 + 1;      // also biased; see below
+```
+
+Both lines of that snippet have problems, and they are worth naming because the idiom is everywhere.
+
+**`rand() % n` is biased.** The range `0..RAND_MAX` divides evenly into `n` buckets only when `n` divides `RAND_MAX + 1`. Otherwise the low-numbered outcomes get one extra representative each. With `RAND_MAX` at 32767 and `n` at 6 the skew is negligible, but as `n` approaches `RAND_MAX` it becomes severe: at `n = 20000`, values below 12768 are twice as likely as the rest. The fix is rejection sampling, discarding draws from the uneven tail rather than folding them in.
+
+**The low bits may be poor.** Historic implementations used a linear congruential generator whose low-order bits have short periods; the notorious case is a version of `rand()` whose lowest bit simply alternated. `rand() % 2` on such a system produces 0, 1, 0, 1. Modern libraries are better, but the standard guarantees nothing about quality, only about range.
+
+The honest summary is that `rand` is adequate for a shuffled demo and nothing else. It is unsuitable for cryptography (use a platform CSPRNG: `getrandom`, `arc4random`, or `BCryptGenRandom`), and unsuitable for simulation work where the quality of the distribution is the whole point (use a Mersenne Twister or PCG implementation). C's standard library simply does not offer a good generator, which is why serious numerical code always brings its own.
+
+#### Ending the Program
+| Function      | Effect                                                                       |
+|:--------------|:------------------------------------------------------------------------------|
+| `exit(status)`| Runs `atexit` handlers, flushes and closes streams, then terminates.          |
+| `_Exit(status)`| Terminates immediately. No handlers, no flushing. (C99.)                     |
+| `abort()`     | Raises `SIGABRT`; terminates abnormally, typically with a core dump.          |
+| `atexit(fn)`  | Registers `fn` to run at normal termination. At least 32 may be registered.   |
+
+Returning from `main` is defined to be equivalent to calling `exit` with the returned value, so cleanup registered with `atexit` runs either way. Use `EXIT_SUCCESS` and `EXIT_FAILURE` rather than 0 and 1: they are the portable spellings, and on the handful of platforms where success is not 0 they are the only correct ones.
+
+The distinction between `exit` and `abort` is about whether the program's state is trustworthy. `exit` is an orderly shutdown, and it runs your handlers and flushes your buffers because it assumes those actions are safe. `abort` is for the case where an invariant has already been violated and the program cannot be trusted to clean up after itself; flushing a buffer that may be corrupt could write bad data over good. That is precisely why `assert` calls `abort` rather than `exit`, and why a crash dump from an aborted process is more useful than a tidy exit that hid the evidence.
+
+::: {.callout-warning title="`atexit` handlers and the buffering trap"}
+Because `_Exit` skips stream flushing, output already written with `printf` but still sitting in a buffer is simply lost. This is the mechanism behind "my program printed nothing when it died," and it applies equally to `abort` and to a crash. See [Buffering](#buffering) below.
+:::
+
+#### Odds and Ends
+`abs`, `labs`, and `llabs` compute integer absolute value; `<math.h>` supplies `fabs` for floating point. That there are four spellings of one operation is [the "no overloading" commitment](#the-c-philosophy) made visible, and `<tgmath.h>` is the later attempt to paper over it.
+
+`div` and `ldiv` return a struct containing both quotient and remainder in one call. They exist for a historical reason worth knowing: before C99, the rounding direction of integer division with negative operands was *implementation-defined*, but `div` was always specified to truncate toward zero. C99 standardized `/` and `%` to truncate as well, which removed the original justification (see [Integer Division and Modulo](#integer-division-and-modulo)). What remains is the minor efficiency of getting both results from one division instruction, which compilers achieve on their own anyway.
+
+`getenv(name)` returns a pointer to the value of an environment variable, or `NULL` if it is unset. The returned string belongs to the environment and must not be modified or freed, and a subsequent `setenv` or `putenv` may invalidate it, so copy it if you intend to keep it.
+
 ### `stdio.h` {#io}
 ::: {.subheading}
 Input and Output
 :::
 
-<!-- STUB: Streams and the FILE type. Buffered vs. unbuffered. The three standard
-     streams. printf/scanf format specifiers as a reference table, and why scanf
-     is hard to use safely. fopen/fclose/fread/fwrite/fseek. Error handling with
-     ferror/feof/perror/errno. Keep the retargeting note as a brief callout only. -->
+C has no I/O statements. Where Pascal has `writeln` and Python has `print`, C has a library function, and the entire mechanism is ordinary C that you could have written yourself. This is the "keep the language small" commitment paying off in an unexpected place: because I/O is not privileged, retargeting it for a platform the standard never imagined is a matter of supplying different functions, not a different compiler.
+
+#### Streams and `FILE`
+The abstraction is the **stream**: a sequence of bytes with a current position, which you read from or write to sequentially. A stream may be a file, a terminal, a pipe, or a socket, and the point of the abstraction is that the same functions work on all of them. That uniformity is the reason shell pipelines compose, and it is why the [shell chapter](shell.qmd) can treat text as a universal interface.
+
+A stream is represented by a `FILE`, and you never handle one directly. You hold a `FILE *`, obtained from `fopen` or one of the predefined streams, and pass it around; the structure behind it is opaque and its contents are the implementation's business. Copying a `FILE` by value is meaningless and, on most implementations, actively harmful.
+
+Three streams exist before `main` runs:
+
+| Stream   | Purpose                  | Default destination | Buffering            |
+|:---------|:-------------------------|:--------------------|:---------------------|
+| `stdin`  | Ordinary input           | Keyboard            | Line, if a terminal  |
+| `stdout` | Ordinary output          | Screen              | Line if a terminal, otherwise full |
+| `stderr` | Diagnostics and errors   | Screen              | Unbuffered           |
+
+The separation of `stdout` from `stderr` is a design decision, not an accident of history. Because they are distinct streams, a user can redirect one without the other: `./program > results.txt` captures the data while error messages still reach the terminal. That only works if the program cooperates, which is the rule it implies. **Diagnostics go to `stderr`, results go to `stdout`.** A warning printed to `stdout` ends up interleaved into the data file, where it corrupts exactly the output someone was trying to collect.
+
+#### Buffering
+I/O is expensive, in the specific sense that reaching the operating system costs a system call and reaching a disk costs far more. So `stdio` accumulates bytes in a buffer and transfers them in batches. Three modes exist:
+
+- **Fully buffered.** Bytes accumulate until the buffer fills, then go out in one write. The default when a stream is not a terminal, which is to say whenever output is redirected to a file or a pipe.
+- **Line buffered.** The buffer is also flushed at each newline. The default for `stdout` when it is a terminal, because a human waiting for a prompt should not have to wait for 4096 bytes to accumulate.
+- **Unbuffered.** Every byte goes out immediately. The default for `stderr`, because an error message that is still sitting in a buffer when the program dies is an error message nobody reads.
+
+Those defaults explain two symptoms that otherwise look like nonsense.
+
+**"My output vanished when the program crashed."** The `printf` calls succeeded; they wrote into a buffer. The crash bypassed the normal shutdown that would have flushed it, so the bytes died in memory. This is also why `abort` and `_Exit` lose pending output, and why a debugging `printf` placed just before a segfault so often fails to appear, sending you hunting in the wrong place. Adding `fflush(stdout)` after it, or using `fprintf(stderr, ...)` which is unbuffered anyway, restores your ability to trust what you see.
+
+**"My output is fine on screen but interleaved wrong in a file."** Run a program that writes to both streams and the terminal shows them in the order you expect. Redirect `stdout` to a file and its buffering silently switches from line to full, so its output now emerges in large batches while `stderr` continues to trickle out immediately. Nothing is ordered wrongly; the two streams simply have different latencies, and the relative order was never guaranteed.
+
+```c
+fflush(stdout);                              // force this stream out now
+fflush(NULL);                                // force out every output stream
+
+setvbuf(stream, NULL, _IONBF, 0);            // unbuffered
+setvbuf(stream, NULL, _IOLBF, BUFSIZ);       // line buffered
+setvbuf(stream, buf,  _IOFBF, sizeof buf);   // fully buffered, your buffer
+```
+
+`setvbuf` must be called after opening the stream and before any other operation on it. Note that flushing an *input* stream is undefined behavior in ISO C, despite `fflush(stdin)` appearing in a great deal of tutorial code as a way to discard unread input; it happens to work on some implementations and does nothing or misbehaves on others.
+
+#### Formatted Output
+`printf` and its relatives interpret a format string, substituting arguments at each conversion specifier. Why the format string exists at all, and why a mismatch between it and the arguments is undefined behavior rather than a type error, is explained under [Why `printf` Takes a Format String](#why-printf-takes-a-format-string). This is the catalogue.
+
+| Function                             | Writes to                                    |
+|:-------------------------------------|:---------------------------------------------|
+| `printf(fmt, ...)`                   | `stdout`                                     |
+| `fprintf(stream, fmt, ...)`          | Any stream                                   |
+| `sprintf(buf, fmt, ...)`             | A buffer. Unbounded: avoid.                  |
+| `snprintf(buf, size, fmt, ...)`      | A buffer, bounded. The one to use.           |
+| `vfprintf(stream, fmt, va_list)`     | Any stream, from an existing `va_list`.      |
+
+`sprintf` has no size parameter and therefore no way to stop, which puts it in the same category as `strcpy` and `gets`. Use `snprintf`, and check its return value; the technique for detecting truncation is under [Building Strings Safely](#building-strings-safely).
+
+The conversion specifiers:
+
+| Specifier | Argument type    | Output                                            |
+|:----------|:-----------------|:--------------------------------------------------|
+| `%d`, `%i`| `int`            | Signed decimal                                    |
+| `%u`      | `unsigned int`   | Unsigned decimal                                  |
+| `%x`, `%X`| `unsigned int`   | Hexadecimal, lower or upper case                  |
+| `%o`      | `unsigned int`   | Octal                                             |
+| `%f`      | `double`         | Decimal notation, 6 places by default             |
+| `%e`, `%E`| `double`         | Scientific notation                               |
+| `%g`, `%G`| `double`         | Whichever of `%f`/`%e` is shorter; trims zeros    |
+| `%a`      | `double`         | Hexadecimal float, exact and round-trippable (C99)|
+| `%c`      | `int`            | A single character                                |
+| `%s`      | `char *`         | Characters up to the null terminator              |
+| `%p`      | `void *`         | An implementation-defined pointer representation  |
+| `%%`      | (none)           | A literal `%`                                     |
+
+Length modifiers adjust the expected argument width, and getting them wrong is undefined behavior rather than a rounding error, because `va_arg` reads the number of bytes the specifier claims:
+
+| Modifier | With `%d`      | With `%u`/`%x`         |
+|:---------|:---------------|:-----------------------|
+| `hh`     | `signed char`  | `unsigned char`        |
+| `h`      | `short`        | `unsigned short`       |
+| `l`      | `long`         | `unsigned long`        |
+| `ll`     | `long long`    | `unsigned long long`   |
+| `z`      | (`ssize_t`)    | `size_t`               |
+| `t`      | `ptrdiff_t`    |                        |
+| `j`      | `intmax_t`     | `uintmax_t`            |
+
+`%zu` for a `size_t` is the one to commit to memory, because `sizeof` yields `size_t` and printing it with `%d` is both extremely common and wrong on any platform where the two differ in width, which is every 64-bit platform.
+
+Between the `%` and the specifier go flags, a width, and a precision:
+
+```c
+printf("%-10s|", name);     // left-justified in 10 columns
+printf("%08.3f", value);    // zero-padded, width 8, 3 decimal places
+printf("%+d", delta);       // always show a sign
+printf("%.*s", len, text);  // precision taken from an argument: print len chars
+```
+
+That last form is genuinely useful and little known. `%.*s` bounds how much of a string is printed, which is the only safe way to print a character array that may not be null-terminated.
+
+::: {.callout-note title="Printing fixed-width types"}
+`int32_t` is `int` on one platform and `long` on another, so no single specifier is portable. `<inttypes.h>` provides macros that expand to the right one, concatenated into the format string by [adjacent string literal pasting](#stringification-and-token-pasting):
+
+```c
+printf("count = %" PRId32 ", size = %" PRIu64 "\n", count, size);
+```
+
+It is ugly, and it is the only correct answer. This awkwardness is a direct consequence of formatting being a runtime protocol rather than a compile-time one; [C++ variadic templates](cpp.qmd#variadic-templates) and Rust's `format!` need no such macros because both know each argument's type statically.
+:::
+
+#### Formatted Input, and Why `scanf` Is a Trap
+`scanf` is the mirror image of `printf`, and it is far more dangerous than its symmetry suggests. It appears in every introductory text and is nearly absent from production code, for reasons worth enumerating.
+
+::: {.callout-warning title="Four ways `scanf` will hurt you"}
+**`%s` has no bound.** `scanf("%s", buf)` reads until whitespace with no regard for the size of `buf`. It is `gets` wearing a disguise, and it is the same buffer overflow. A width is mandatory: `scanf("%9s", buf)` for a 10-byte buffer, with the off-by-one (the width excludes the terminator) left as an exercise you will get wrong at least once.
+
+**Failure leaves the input in place.** On a conversion mismatch, `scanf` stops at the offending character and does *not* consume it. The classic consequence is an input-validation loop that spins forever: the read fails, nothing is consumed, the loop retries, and the same character fails again at full speed.
+
+**The return value is a count, not a status.** It reports how many conversions succeeded, so a three-specifier format returning 2 means partial success with one variable left untouched, still holding whatever garbage it held before. Code that ignores the return value, which is most code, cannot distinguish this from success.
+
+**Whitespace handling is not what it looks like.** Most specifiers skip leading whitespace; `%c` and `%[` do not. A literal space in the format matches *any amount* of whitespace including none, and a `\n` in a format string does not mean "expect a newline," it means the same as a space. Mixing `scanf` and `getchar` reliably leaves a stray newline behind to ambush the next read.
+:::
+
+The robust alternative is to separate reading from parsing: pull a whole line with `fgets`, then convert it with `strtol` or `sscanf`, where a failure costs you nothing because the input is already safely in your buffer.
+
+```c
+char line[128];
+if (fgets(line, sizeof line, stdin) != NULL) {
+    long value;
+    if (parse_long_trimmed(line, &value)) {
+        /* ... */
+    }
+}
+```
+
+`sscanf` on a string you already hold is genuinely useful and carries none of the stream-state hazards, since a failed parse leaves your buffer untouched and re-readable. It is `scanf` reading directly from a stream that causes the trouble.
+
+#### Character and Line I/O
+| Function                      | Does                                                          |
+|:------------------------------|:---------------------------------------------------------------|
+| `getchar()` / `fgetc(stream)` | Read one character, or `EOF`                                  |
+| `putchar(c)` / `fputc(c, s)`  | Write one character                                           |
+| `fgets(buf, size, stream)`    | Read a line, bounded, keeping the newline                     |
+| `fputs(s, stream)`            | Write a string, adding no newline                             |
+| `puts(s)`                     | Write a string to `stdout`, adding a newline                  |
+
+The character functions return `int` rather than `char` so that `EOF` remains distinguishable from a legitimate byte; the reasoning, and the bug that follows from ignoring it, are under [`char` vs. `int` from Input](#char-vs-int).
+
+`fgets` has an awkward contract worth stating plainly. It stops at a newline, at `size - 1` characters, or at end of input, whichever comes first, and it **keeps the newline** when one was read. So the presence of a trailing `\n` is how you tell a complete line from a truncated one, and stripping it is a step every caller performs:
+
+```c
+line[strcspn(line, "\n")] = '\0';   // truncate at the newline if present
+```
+
+`gets` deserves its own note, as an artifact. It read a line into a buffer with no size parameter at all, making overflow not a risk but a certainty for any input longer than the buffer. It was the vector for the 1988 Morris worm, was formally deprecated in C99, and was **removed outright in C11**. It is the only function ever deleted from the C standard library, and the reason is instructive: the interface could not be fixed, because there is no way to bound a write when the caller never says how much room exists. `fgets` is the replacement.
+
+#### Files
+```c
+FILE *fopen(const char *path, const char *mode);
+int   fclose(FILE *stream);
+```
+
+| Mode   | Opens for          | If it exists   | If it does not |
+|:-------|:-------------------|:---------------|:---------------|
+| `"r"`  | Reading            | Opens at start | Fails          |
+| `"w"`  | Writing            | **Truncates**  | Creates        |
+| `"a"`  | Appending          | Opens at end   | Creates        |
+| `"r+"` | Reading + writing  | Opens at start | Fails          |
+| `"w+"` | Reading + writing  | **Truncates**  | Creates        |
+| `"a+"` | Reading + appending| Reads anywhere, writes at end | Creates |
+
+Appending `b` (`"rb"`, `"wb"`) selects binary mode. On POSIX systems it does nothing whatsoever; on Windows it suppresses the translation of `\n` to `\r\n` on output and back on input. Omit it when writing binary data on Windows and your file is silently corrupted wherever a byte happens to equal 0x0A, which is a bug that reproduces only on one platform and only for some data. Use `b` for anything that is not text.
+
+`fopen` returns `NULL` on failure, and `errno` says why. Reading and writing blocks of data is `fread` and `fwrite`:
+
+```c
+size_t fread(void *ptr, size_t size, size_t count, FILE *stream);
+size_t fwrite(const void *ptr, size_t size, size_t count, FILE *stream);
+```
+
+Both return the number of **elements** transferred, not bytes, so a short read is `< count` and the reason (end of input or a genuine error) has to be established separately. A complete read of a file, with every failure handled:
+
+```c
+char *read_file(const char *path, size_t *out_size) {
+    FILE *file = fopen(path, "rb");
+    if (file == NULL) return NULL;
+
+    if (fseek(file, 0, SEEK_END) != 0) { fclose(file); return NULL; }
+    long length = ftell(file);
+    if (length < 0)                    { fclose(file); return NULL; }
+    rewind(file);
+
+    char *buffer = malloc((size_t)length + 1);
+    if (buffer == NULL)                { fclose(file); return NULL; }
+
+    size_t got = fread(buffer, 1, (size_t)length, file);
+    if (got != (size_t)length && ferror(file)) {
+        free(buffer);
+        fclose(file);
+        return NULL;
+    }
+    buffer[got] = '\0';
+    fclose(file);
+    *out_size = got;
+    return buffer;
+}
+```
+
+The cleanup on every branch is what C error handling looks like without destructors or `defer`, and the repetition is why [`goto` for cleanup](#goto) is a genuinely idiomatic pattern once a function acquires more than one resource.
+
+Note that `fread` returning less than requested is not treated as an error by itself: the seek-to-end technique gives a length that may not match what a text-mode read actually produces, so the check is `ferror`, not the count. Positioning within a file:
+
+| Function                     | Does                                                    |
+|:-----------------------------|:---------------------------------------------------------|
+| `fseek(stream, offset, whence)` | Move the position. `whence` is `SEEK_SET`, `SEEK_CUR`, or `SEEK_END`. |
+| `ftell(stream)`              | Report the current position, or -1 on failure.          |
+| `rewind(stream)`             | Move to the start and clear the error flag.             |
+
+`fseek` and `ftell` use `long`, which caps them at 2 GB on platforms where `long` is 32 bits. Large files need the POSIX `fseeko`/`ftello` with `off_t`, or the platform equivalent.
+
+#### Errors, `feof`, and `errno`
+Stream functions signal failure by return value, and the stream itself carries two sticky flags reporting what happened.
+
+| Function            | Reports                                                          |
+|:--------------------|:------------------------------------------------------------------|
+| `feof(stream)`      | The end-of-file flag is set: a previous read hit the end.        |
+| `ferror(stream)`    | The error flag is set: a previous operation failed.              |
+| `clearerr(stream)`  | Clears both flags.                                               |
+| `perror(msg)`       | Prints `msg`, a colon, and the text for the current `errno`.     |
+| `strerror(errnum)`  | Returns the message string for an error number.                  |
+
+::: {.callout-warning title="`while (!feof(file))` is always wrong"}
+`feof` does not predict that the next read will hit the end; it reports that a previous read *already did*. The flag is set by the failing read, not before it.
+
+So the loop runs one extra time. The final `fgets` or `fread` fails, sets the flag, and leaves the buffer untouched, but the body has already been entered and proceeds to process whatever the buffer held from the previous iteration. The symptom is a duplicated last line, which looks like an off-by-one somewhere else entirely.
+
+Test the read instead, which reports success and end-of-input in one value:
+
+```c
+while (fgets(line, sizeof line, file) != NULL) {
+    /* ... */
+}
+if (ferror(file)) { /* a real error, not merely end of input */ }
+```
+
+`feof` and `ferror` earn their keep *after* the loop, distinguishing an orderly end from a failure, which is exactly the question the loop condition could not answer.
+:::
+
+`errno` is a global (strictly, a thread-local `int` lvalue) set by library functions when they fail. Its contract has two halves that are easy to get wrong: functions may set it on failure but are **never required to clear it on success**, and a successful call is permitted to modify it as a side effect. So `errno` is meaningful only immediately after a call you have already determined failed. If you must test it without a failure indication, as with `strtol` above, set it to 0 first.
+
+```c
+FILE *file = fopen(path, "r");
+if (file == NULL) {
+    perror(path);                                   // "config.txt: No such file or directory"
+    fprintf(stderr, "detail: %s\n", strerror(errno));
+}
+```
+
+::: {.callout-note title="`stdio` on bare metal"}
+On an embedded target there is no operating system to accept a write, so `printf` cannot work as shipped. Toolchains resolve this by leaving a small set of low-level hooks (commonly `_write`, `_read`, and friends) for you to implement, typically routing output to a UART. The `printf` machinery above it, format parsing and all, is ordinary C and works unchanged, which is often more code than a small microcontroller wants; hence the reduced-functionality variants (`iprintf`, `tinyprintf`) that omit floating-point support. The Applied DSP notes cover retargeting in context.
+:::
+
 ### `string.h`
-<!-- STUB: Cross-reference the string function table above rather than repeating
-     it. Cover the mem* family properly: memcpy vs. memmove and why the
-     distinction is about restrict, memset's byte-fill semantics and the common
-     mistake of using it to set a non-zero int value. -->
+`<string.h>` holds two families that look similar and mean different things. The `str*` functions operate on null-terminated strings and are catalogued under [The Standard String Functions](#the-standard-string-functions); the `mem*` functions operate on raw bytes, take an explicit length, and attach no meaning to a zero byte. Use `str*` for text and `mem*` for everything else, including text whose length you already know.
+
+#### `memcpy` vs. `memmove`
+Both copy `n` bytes from a source to a destination. The difference is a single qualifier in the prototype, and it is the entire story:
+
+```c
+void *memcpy(void *restrict dest, const void *restrict src, size_t n);
+void *memmove(void *dest, const void *src, size_t n);
+```
+
+`memcpy`'s parameters are `restrict`-qualified, which is a promise *the caller makes*: these regions do not overlap. Having been given that promise, the implementation is free to copy in whatever order and width the hardware prefers, backwards, in 32-byte vector chunks, or as several interleaved streams, because with disjoint regions no order is observable. That freedom is the whole reason `memcpy` is fast. `memmove` makes no such demand and behaves as if the source were first copied to a temporary buffer, which costs it either a direction check or a genuine intermediate copy.
+
+Passing overlapping regions to `memcpy` is undefined behavior, not "probably fine." It is worth being precise about why this matters in practice: overlapping copies frequently *do* work, for years, because a given implementation happened to copy forward and the overlap happened to run in the forgiving direction. Then a compiler upgrade selects a wider vector instruction, or the buffer's alignment shifts by one, and the copy begins overwriting source bytes before reading them. The bug is in code that has not been touched in a decade. When regions may overlap, as when shifting elements within one array, `memmove` is not the cautious choice; it is the only correct one. See [`restrict`](#restrict) for the general mechanism.
+
+#### `memset`
+`memset(ptr, value, n)` fills `n` bytes with `value`, and the operative word is **bytes**. `value` is an `int` for historical reasons, but it is converted to `unsigned char`, so only its low 8 bits survive.
+
+This is the source of a persistent misunderstanding:
+
+```c
+int values[10];
+memset(values, 0, sizeof values);    // fine: all zeros
+memset(values, 1, sizeof values);    // NOT ten 1s
+```
+
+The second call writes `0x01` into all 40 bytes, so each `int` becomes `0x01010101`, or 16843009. Zero is the only value for which the byte-wise and element-wise interpretations agree, which is why `memset(p, 0, n)` is idiomatic and why `memset` with any other value should make you look twice. To fill an array with a repeated non-zero value, write a loop; the compiler will vectorize it.
+
+::: {.callout-note title="Zeroing is not always erasing"}
+Two further caveats. Zeroing a pointer with `memset` produces a null pointer on every real implementation, but the standard only guarantees that for assignment from `NULL`, not for all-bits-zero; the same applies to floating-point zero, which is all-bits-zero in IEEE 754 but not by language rule.
+
+More practically, `memset` is a poor way to scrub a secret. If nothing reads the buffer afterward, the write is dead and the optimizer is entitled to delete it, which it does. `memset_s` (C11 Annex K, optional) and `explicit_bzero` (BSD, glibc) exist precisely because the obvious code does not survive optimization.
+:::
+
+#### The Rest of the Family
+`memcmp(a, b, n)` compares byte sequences and returns an ordering, negative, zero, or positive, like `strcmp`. Its one trap is comparing structs:
+
+```c
+if (memcmp(&left, &right, sizeof left) == 0)   // unreliable
+```
+
+Structs contain [padding](#padding-alignment-and-offsetof), and padding bytes hold whatever they held. Two structs with identical members can differ in their padding and compare unequal; conversely, this is why `memcmp` on structs is undefined-ish in practice even when it appears to work. Compare member by member. `memcmp` is also unsuitable for comparing secrets, since it stops at the first difference and its timing therefore leaks how many bytes matched.
+
+`memchr(ptr, value, n)` finds the first occurrence of a byte within a bounded region, returning a pointer to it or `NULL`. It is the tool for scanning a buffer that may not be null-terminated, where `strchr` would run off the end.
+
+::: {.callout-note title="These are not ordinary functions"}
+The `str*` and `mem*` families are the most heavily optimized code in any libc, typically hand-written in assembly per microarchitecture and selected at load time. Compilers go further and treat them as intrinsics: a `memcpy` of a known small size usually compiles to a couple of move instructions with no call at all, and a hand-written byte-copy loop is often *recognized* and turned back into a `memcpy` call. Writing your own to save the call overhead almost always makes things slower.
+:::
+
 ### Other Headers Worth Knowing
-<!-- STUB: Brief tour with one-line orientation each: <math.h>, <time.h>,
-     <ctype.h> (and the unsigned-char argument trap), <errno.h>, <assert.h>,
-     <stdarg.h>, <stddef.h>. A table is probably the right form here. -->
+The remaining headers a working C programmer meets regularly, with the ones already covered elsewhere cross-referenced rather than repeated.
+
+| Header         | Provides                                                                        |
+|:---------------|:----------------------------------------------------------------------------------|
+| `<math.h>`     | `sqrt`, `pow`, `sin`, `fabs`, `floor`, `ceil`, `round`, `INFINITY`, `NAN`, `isnan`. |
+| `<time.h>`     | `time_t`, `time`, `clock`, `difftime`, `mktime`, `strftime`, `struct tm`.          |
+| `<ctype.h>`    | `isalpha`, `isdigit`, `isspace`, `isupper`, `tolower`, `toupper`.                  |
+| `<errno.h>`    | `errno` and the `E*` constants (`ERANGE`, `EINVAL`, `ENOENT`).                     |
+| `<assert.h>`   | `assert`, and `static_assert` in C23.                                              |
+| `<stdarg.h>`   | `va_list`, `va_start`, `va_arg`, `va_end`. See [Variadic Functions](#variadic-functions). |
+| `<stddef.h>`   | `size_t`, `ptrdiff_t`, `NULL`, `offsetof`. Freestanding.                           |
+| `<stdint.h>`   | `int32_t` and friends. See [Fixed-Width Types](#fixed-width-types). Freestanding.  |
+| `<inttypes.h>` | `PRId32`-style format macros, plus `<stdint.h>`.                                   |
+| `<limits.h>`, `<float.h>` | Type ranges. See [Implementation Limits](#implementation-limits). Freestanding. |
+| `<stdbool.h>`  | `bool`, `true`, `false` before C23. See [`bool`](#bool). Freestanding.             |
+
+Three of these carry traps or subtleties worth spelling out.
+
+#### `<ctype.h>` and the Signed `char` Trap
+The classification functions take an `int`, and the standard defines their behavior only for values representable as `unsigned char` and for `EOF`. Everything else is undefined.
+
+That is a problem, because plain `char` [may be signed](#the-arithmetic-types), and on a signed-`char` platform any byte above 127 is negative:
+
+```c
+char c = text[i];
+if (isalpha(c)) { ... }               // undefined for bytes >= 0x80
+if (isalpha((unsigned char)c)) { ... } // correct
+```
+
+Typical implementations index a lookup table with the argument, so a negative value reads memory before the start of the table. Usually it returns a plausible-looking wrong answer; occasionally it faults. The cast is mandatory whenever the argument came from a `char`, and it is unnecessary only when it came from `getchar`, which already returns a properly widened value or `EOF`.
+
+These functions are also locale-dependent: `isalpha` may accept accented characters under one locale and reject them under the default `"C"` locale. For parsing anything with a fixed grammar, a wire format, a config file, an identifier, that variability is a hazard rather than a feature, which is why parsers often test ranges explicitly instead.
+
+#### `<assert.h>` and `NDEBUG`
+`assert(expression)` evaluates its argument and, if it is false, prints the expression, file, and line to `stderr` and calls `abort`. It is the runtime counterpart of [`_Static_assert`](#static-assertions), and the division of labor is clean: `_Static_assert` checks what the compiler can know and fails the build; `assert` checks what only the running program can know and fails the run.
+
+The critical property is that `assert` is a macro that vanishes. If `NDEBUG` is defined when `<assert.h>` is included, `assert(x)` expands to nothing at all:
+
+```c
+assert(buffer_size > 0);              // gone in release builds
+assert(initialize_device() == 0);     // the call itself is gone too
+```
+
+The second line is the bug this invites, and it is common enough to be worth stating flatly: **never put an expression with side effects inside an `assert`.** Under `NDEBUG` the device is never initialized, and the failure appears only in release builds, which is the worst possible place for a behavioral difference to hide. Assign the result to a variable and assert on that.
+
+`NDEBUG` is also the reason assertions are not a substitute for error handling. An assertion documents a condition you believe to be impossible, a violated internal invariant, a contract the caller broke. Conditions that can genuinely occur at runtime, a missing file, a malformed packet, a failed allocation, must be handled with real code, because in the build that ships the assertion is not there.
+
+#### `<math.h>` and the Missing Library
+On most Unix systems the math functions live in a separate library from the rest of libc, so using them requires an explicit link flag:
+
+```bash
+cc program.c -o program -lm      # without -lm: "undefined reference to `sqrt'"
+```
+
+The split is historical, dating to when floating-point support was optional and expensive to carry. It persists as a small trap for anyone who assumes that including a standard header is sufficient, and it is a useful illustration of the difference between the *header* (which declares) and the *library* (which defines); see [The Translation Unit](#the-translation-unit). Note that glibc 2.34 and later fold libm into libc, so the flag is increasingly a no-op on Linux while remaining necessary elsewhere.
+
+`<math.h>` also displays C's lack of overloading more starkly than any other header. Absolute value is `abs`, `labs`, `llabs`, `fabs`, `fabsf`, and `fabsl` depending on the argument type, and the same fan-out applies to `sqrt`/`sqrtf`/`sqrtl` and the rest. Calling the `double` version on a `float` silently promotes, computes at double precision, and narrows back, which is correct but can be needlessly slow on hardware with a single-precision unit. `<tgmath.h>` layers type-generic macros over the whole set so that `sqrt(x)` dispatches on the type of `x`; it is built on [`_Generic`](#generic), and it is the closest thing C has to overloading.
 ## Compilation and the Build {#the-build}
 The **build** converts a project's source files into an artifact you can run or load. For a hosted program that is an executable; for an embedded target it is typically a HEX or ELF image flashed into non-volatile memory, accompanied by a **map file** showing exactly where every function and object landed.
 

@@ -492,7 +492,7 @@ $$
 \underbrace{01111111}_{127} + \underbrace{00000001}_{1} = \underbrace{10000000}_{-128}
 $$
 
-This is catastrophic in audio and control systems—a loud signal suddenly becomes maximally negative, causing audible clicks or system instability.
+This is catastrophic in audio and control systems: a loud signal suddenly becomes maximally negative, causing audible clicks or system instability.
 
 ##### Saturation Arithmetic
 ::: {.callout-note title="Who's the Boss of Saturation?"}
@@ -575,6 +575,63 @@ Modern high-speed serial interfaces often outperform parallel interfaces because
 2. **Differential Signaling**: Many serial protocols use differential pairs for superior noise immunity
 3. **Simpler Routing**: Fewer traces on PCBs reduce complexity and cost
 4. **Reduced EMI**: Fewer simultaneous transitions reduce electromagnetic interference
+
+### Sink
+::: {.subheading}
+Where data goes to stop
+:::
+
+A **sink** is an endpoint that *accepts* data without passing it back into the flow being described. Its counterpart is a **source**, an endpoint that *produces* data without having received it from anywhere in that same flow. Everything between the two is a transform: it both accepts and produces.
+
+That is the whole idea, and the useful part is what it does *not* say. A sink is not necessarily a final destination, and it need not store anything. It is defined entirely by the direction of flow across a boundary you have chosen to draw:
+
+- A sink **accepts** and does not emit. Data arrives and, as far as this pipeline is concerned, stops.
+- A source **emits** and does not accept. Data appears from outside.
+- Both are **relative to the boundary**. Widen it and today's sink becomes tomorrow's transform.
+
+This last point is where most confused definitions go wrong. Writing rows to a database is a sink for your program, but the database has its own pipeline in which that write is a *source* for replication and indexing. Nothing about the write changed; the boundary moved. So "sink" describes a role in a particular flow, not a permanent property of a component.
+
+::: {.callout-note title="Why 'sink'?"}
+The word is borrowed, through a long chain, from plumbing.
+
+It enters technical vocabulary in **fluid dynamics**, where a source is a point at which fluid is injected into a flow and a sink is a point at which it is drawn out, exactly the faucet and drain of a basin. The pairing is not decorative: it is what makes the continuity equation work. Fluid is conserved everywhere *except* at sources and sinks, so those two are precisely the points where the accounting is allowed to not balance.
+
+**Vector calculus** generalized it. The divergence of a field measures how much more flux leaves an infinitesimal region than enters it, so positive divergence marks a source and negative divergence marks a sink, for any field at all rather than only for moving fluid. From there the vocabulary spread to wherever something flows and is conserved: **electromagnetism** (charges as the sources and sinks of field lines), **thermodynamics** (a *heat sink* is a body that absorbs heat without appreciably warming, which is the same relationship applied to energy), and **electronics** (a circuit *sources* current when it supplies it and *sinks* current when it accepts it to ground).
+
+**Graph theory** then borrowed the flow model wholesale for **flow networks**, keeping the names: a source is a vertex with only outgoing edges, a sink a vertex with only incoming ones, and conservation holds at every other vertex. This is the direct graph-theoretic restatement of the fluid continuity equation.
+
+Computing inherits the term from that last step, since dataflow graphs, pipelines, and stream processors are flow networks. The metaphor survives intact: data is conserved as it moves through the system, appearing only at sources and disappearing only at sinks.
+:::
+
+#### In Practice
+The exact emphasis shifts by context, but the relationship above holds in every one of them.
+
+1. **Data Pipelines and Stream Processing**
+
+    A source produces records, transforms reshape them, and a sink writes them out to an external system: a file, a database table, a message topic. Frameworks name this explicitly (Kafka Connect has source and sink connectors, as do Flink and Logstash), and the sink is where the pipeline's effect on the outside world actually happens.
+
+2. **Asynchronous Programming and Reactive Streams**
+
+    Here a sink is a *type*, the write half of a stream. Rust's `futures::Sink` is the mirror of `Stream`: where `Stream` yields values over time, `Sink` accepts them over time, with backpressure so a slow consumer can make a fast producer wait. `Rx` and Akka Streams use the term the same way. The distinguishing feature is that acceptance is asynchronous and may be refused for now, which a plain function call cannot express.
+
+3. **Security and Static Analysis (Taint Analysis)**
+
+    This usage is worth reading carefully, because it inverts the intuition that a sink is a resting place. A source is any input an attacker may control (a request parameter, a filename, an environment variable), and a sink is a **sensitive operation** where untrusted data becomes dangerous: `eval`, `exec`, a raw SQL query, a shell invocation, an HTML template. The analyzer's job is to decide whether tainted data reaches a sink without passing through validation or escaping on the way.
+
+    So a taint sink is not where data is *stored*, it is where data is *acted upon*. It qualifies as a sink because the flow being modeled is the flow of untrusted influence, and that flow terminates the moment the data is interpreted rather than merely moved.
+
+4. **Graph Theory and Flow Networks**
+
+    The formal case, and the one the others are informally quoting. In a directed graph a **sink** is a vertex with in-degree $> 0$ and out-degree $= 0$; a **source** has in-degree $= 0$. Topological sorting, dead-code analysis, and max-flow algorithms all lean on the distinction. Note that a graph may have many sinks, or none at all: a cycle has no vertex of out-degree zero, which is exactly why a dependency graph with a cycle cannot be topologically sorted.
+
+::: {.callout-note title="Related uses of the same word"}
+Two nearby meanings are the same metaphor applied to something other than data, and are worth recognizing so they do not muddy the definition above.
+
+- A **heat sink** absorbs thermal energy rather than data. Same relationship, different quantity.
+- To **sink current** in electronics is to accept current into a pin rather than supply it. An LED wired to a microcontroller is switched by sinking or sourcing, and a datasheet's "sink current" rating is the maximum it can safely accept.
+- **Sinking a signal to `/dev/null`** is the degenerate case: a sink that discards. It illustrates that a sink is not obliged to store or do anything at all; accepting and not emitting is sufficient.
+:::
+
 
 ### UART
 ::: {.subheading}

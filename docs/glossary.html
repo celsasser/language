@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-07-31">
+<meta name="dcterms.date" content="2026-08-28">
 
 <title>Glossary – Computer Language Notebook</title>
 <style>
@@ -440,6 +440,10 @@ window.Quarto = {
   <li><a href="#types-of-serial-interfaces" id="toc-types-of-serial-interfaces" class="nav-link" data-scroll-target="#types-of-serial-interfaces">Types of Serial Interfaces</a></li>
   <li><a href="#advantages-over-parallel" id="toc-advantages-over-parallel" class="nav-link" data-scroll-target="#advantages-over-parallel">Advantages Over Parallel</a></li>
   </ul></li>
+  <li><a href="#sink" id="toc-sink" class="nav-link" data-scroll-target="#sink">Sink</a>
+  <ul class="collapse">
+  <li><a href="#in-practice" id="toc-in-practice" class="nav-link" data-scroll-target="#in-practice">In Practice</a></li>
+  </ul></li>
   <li><a href="#uart" id="toc-uart" class="nav-link" data-scroll-target="#uart">UART</a></li>
   </ul></li>
   </ul>
@@ -461,7 +465,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 31, 2026</p>
+      <p class="date">August 28, 2026</p>
     </div>
   </div>
   
@@ -1074,7 +1078,7 @@ Figure&nbsp;4: Time-Division Multiplexing of two signals. The ‘MUX Output’ s
 <p><span class="math display">\[
 \underbrace{01111111}_{127} + \underbrace{00000001}_{1} = \underbrace{10000000}_{-128}
 \]</span></p>
-<p>This is catastrophic in audio and control systems—a loud signal suddenly becomes maximally negative, causing audible clicks or system instability.</p>
+<p>This is catastrophic in audio and control systems: a loud signal suddenly becomes maximally negative, causing audible clicks or system instability.</p>
 </section>
 <section id="saturation-arithmetic" class="level5">
 <h5 class="anchored" data-anchor-id="saturation-arithmetic">Saturation Arithmetic</h5>
@@ -1185,6 +1189,70 @@ Figure&nbsp;4: Time-Division Multiplexing of two signals. The ‘MUX Output’ s
 <li><strong>Simpler Routing</strong>: Fewer traces on PCBs reduce complexity and cost</li>
 <li><strong>Reduced EMI</strong>: Fewer simultaneous transitions reduce electromagnetic interference</li>
 </ol>
+</section>
+</section>
+<section id="sink" class="level3">
+<h3 class="anchored" data-anchor-id="sink">Sink</h3>
+<div class="subheading">
+<p>Where data goes to stop</p>
+</div>
+<p>A <strong>sink</strong> is an endpoint that <em>accepts</em> data without passing it back into the flow being described. Its counterpart is a <strong>source</strong>, an endpoint that <em>produces</em> data without having received it from anywhere in that same flow. Everything between the two is a transform: it both accepts and produces.</p>
+<p>That is the whole idea, and the useful part is what it does <em>not</em> say. A sink is not necessarily a final destination, and it need not store anything. It is defined entirely by the direction of flow across a boundary you have chosen to draw:</p>
+<ul>
+<li>A sink <strong>accepts</strong> and does not emit. Data arrives and, as far as this pipeline is concerned, stops.</li>
+<li>A source <strong>emits</strong> and does not accept. Data appears from outside.</li>
+<li>Both are <strong>relative to the boundary</strong>. Widen it and today’s sink becomes tomorrow’s transform.</li>
+</ul>
+<p>This last point is where most confused definitions go wrong. Writing rows to a database is a sink for your program, but the database has its own pipeline in which that write is a <em>source</em> for replication and indexing. Nothing about the write changed; the boundary moved. So “sink” describes a role in a particular flow, not a permanent property of a component.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Why 'sink'?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Why ‘sink’?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The word is borrowed, through a long chain, from plumbing.</p>
+<p>It enters technical vocabulary in <strong>fluid dynamics</strong>, where a source is a point at which fluid is injected into a flow and a sink is a point at which it is drawn out, exactly the faucet and drain of a basin. The pairing is not decorative: it is what makes the continuity equation work. Fluid is conserved everywhere <em>except</em> at sources and sinks, so those two are precisely the points where the accounting is allowed to not balance.</p>
+<p><strong>Vector calculus</strong> generalized it. The divergence of a field measures how much more flux leaves an infinitesimal region than enters it, so positive divergence marks a source and negative divergence marks a sink, for any field at all rather than only for moving fluid. From there the vocabulary spread to wherever something flows and is conserved: <strong>electromagnetism</strong> (charges as the sources and sinks of field lines), <strong>thermodynamics</strong> (a <em>heat sink</em> is a body that absorbs heat without appreciably warming, which is the same relationship applied to energy), and <strong>electronics</strong> (a circuit <em>sources</em> current when it supplies it and <em>sinks</em> current when it accepts it to ground).</p>
+<p><strong>Graph theory</strong> then borrowed the flow model wholesale for <strong>flow networks</strong>, keeping the names: a source is a vertex with only outgoing edges, a sink a vertex with only incoming ones, and conservation holds at every other vertex. This is the direct graph-theoretic restatement of the fluid continuity equation.</p>
+<p>Computing inherits the term from that last step, since dataflow graphs, pipelines, and stream processors are flow networks. The metaphor survives intact: data is conserved as it moves through the system, appearing only at sources and disappearing only at sinks.</p>
+</div>
+</div>
+<section id="in-practice" class="level4">
+<h4 class="anchored" data-anchor-id="in-practice">In Practice</h4>
+<p>The exact emphasis shifts by context, but the relationship above holds in every one of them.</p>
+<ol type="1">
+<li><p><strong>Data Pipelines and Stream Processing</strong></p>
+<p>A source produces records, transforms reshape them, and a sink writes them out to an external system: a file, a database table, a message topic. Frameworks name this explicitly (Kafka Connect has source and sink connectors, as do Flink and Logstash), and the sink is where the pipeline’s effect on the outside world actually happens.</p></li>
+<li><p><strong>Asynchronous Programming and Reactive Streams</strong></p>
+<p>Here a sink is a <em>type</em>, the write half of a stream. Rust’s <code>futures::Sink</code> is the mirror of <code>Stream</code>: where <code>Stream</code> yields values over time, <code>Sink</code> accepts them over time, with backpressure so a slow consumer can make a fast producer wait. <code>Rx</code> and Akka Streams use the term the same way. The distinguishing feature is that acceptance is asynchronous and may be refused for now, which a plain function call cannot express.</p></li>
+<li><p><strong>Security and Static Analysis (Taint Analysis)</strong></p>
+<p>This usage is worth reading carefully, because it inverts the intuition that a sink is a resting place. A source is any input an attacker may control (a request parameter, a filename, an environment variable), and a sink is a <strong>sensitive operation</strong> where untrusted data becomes dangerous: <code>eval</code>, <code>exec</code>, a raw SQL query, a shell invocation, an HTML template. The analyzer’s job is to decide whether tainted data reaches a sink without passing through validation or escaping on the way.</p>
+<p>So a taint sink is not where data is <em>stored</em>, it is where data is <em>acted upon</em>. It qualifies as a sink because the flow being modeled is the flow of untrusted influence, and that flow terminates the moment the data is interpreted rather than merely moved.</p></li>
+<li><p><strong>Graph Theory and Flow Networks</strong></p>
+<p>The formal case, and the one the others are informally quoting. In a directed graph a <strong>sink</strong> is a vertex with in-degree <span class="math inline">\(&gt; 0\)</span> and out-degree <span class="math inline">\(= 0\)</span>; a <strong>source</strong> has in-degree <span class="math inline">\(= 0\)</span>. Topological sorting, dead-code analysis, and max-flow algorithms all lean on the distinction. Note that a graph may have many sinks, or none at all: a cycle has no vertex of out-degree zero, which is exactly why a dependency graph with a cycle cannot be topologically sorted.</p></li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Related uses of the same word">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Related uses of the same word
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Two nearby meanings are the same metaphor applied to something other than data, and are worth recognizing so they do not muddy the definition above.</p>
+<ul>
+<li>A <strong>heat sink</strong> absorbs thermal energy rather than data. Same relationship, different quantity.</li>
+<li>To <strong>sink current</strong> in electronics is to accept current into a pin rather than supply it. An LED wired to a microcontroller is switched by sinking or sourcing, and a datasheet’s “sink current” rating is the maximum it can safely accept.</li>
+<li><strong>Sinking a signal to <code>/dev/null</code></strong> is the degenerate case: a sink that discards. It illustrates that a sink is not obliged to store or do anything at all; accepting and not emitting is sufficient.</li>
+</ul>
+</div>
+</div>
 </section>
 </section>
 <section id="uart" class="level3">

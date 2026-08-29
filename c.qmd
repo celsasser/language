@@ -1425,10 +1425,10 @@ There is no replacement list at all, and that is legal. The macro is defined, an
 
 Before going further, one distinction has to be nailed down, because everything about empty macros depends on it. A macro name meets one of two fates, decided entirely by *where it appears*:
 
-| Fate | Where | What happens |
-|:---------|:-----------------------------------------------|:--------------------------------------------------|
-| **Expanded** | Ordinary program text, and the controlling expression of a bare `#if` | The name is replaced by its replacement list. For an empty macro, that means it is deleted. |
-| **Tested** | The operand of `#ifdef`, `#ifndef`, `defined()`, and `#undef` | The name is looked up. The preprocessor asks only whether a definition exists; the replacement list is never consulted, and no expansion occurs. |
+| Fate         | Where                                                                 | What happens                                                                                                                                     |
+|:-------------|:----------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Expanded** | Ordinary program text, and the controlling expression of a bare `#if` | The name is replaced by its replacement list. For an empty macro, that means it is deleted.                                                      |
+| **Tested**   | The operand of `#ifdef`, `#ifndef`, `defined()`, and `#undef`         | The name is looked up. The preprocessor asks only whether a definition exists; the replacement list is never consulted, and no expansion occurs. |
 
 An empty macro's two uses line up exactly with those two fates.
 
@@ -1884,17 +1884,17 @@ Note that `_Static_assert` succeeds precisely where `#if` cannot: it is a langua
 ### Other Directives {#other-directives}
 The complete directive set is short. Most of it has now appeared:
 
-| Directive           | Purpose                                                | Covered in                                  |
-|:--------------------|:-------------------------------------------------------|:--------------------------------------------|
-| `#include`          | Paste in another file, recursively                     | [`#include`](#include)                      |
-| `#define` / `#undef`| Create or remove a macro                               | [Macros](#macros)                           |
-| `#if` / `#ifdef` / `#ifndef` / `#elif` / `#else` / `#endif` | Include or discard a region | [Conditional Compilation](#conditional-compilation) |
-| `#error`            | Fail the build with a message                          | below                                       |
-| `#warning`          | Warn without failing (universal extension; C23 standard) | below                                     |
-| `#pragma`           | Implementation-specific instruction to the compiler    | below                                       |
-| `#line`             | Override `__FILE__` and `__LINE__`                     | below                                       |
-| `#embed`            | Paste a binary file's bytes as an initializer (C23)    | below                                       |
-| `#` (alone)         | The null directive; does nothing                       | (nothing to cover)                          |
+| Directive                                                   | Purpose                                                  | Covered in                                          |
+|:------------------------------------------------------------|:---------------------------------------------------------|:----------------------------------------------------|
+| `#include`                                                  | Paste in another file, recursively                       | [`#include`](#include)                              |
+| `#define` / `#undef`                                        | Create or remove a macro                                 | [Macros](#macros)                                   |
+| `#if` / `#ifdef` / `#ifndef` / `#elif` / `#else` / `#endif` | Include or discard a region                              | [Conditional Compilation](#conditional-compilation) |
+| `#error`                                                    | Fail the build with a message                            | below                                               |
+| `#warning`                                                  | Warn without failing (universal extension; C23 standard) | below                                               |
+| `#pragma`                                                   | Implementation-specific instruction to the compiler      | below                                               |
+| `#line`                                                     | Override `__FILE__` and `__LINE__`                       | below                                               |
+| `#embed`                                                    | Paste a binary file's bytes as an initializer (C23)      | below                                               |
+| `#` (alone)                                                 | The null directive; does nothing                         | (nothing to cover)                                  |
 
 `#error` is the one you should reach for more than you do. A header that cannot work on a given configuration should say so at the top rather than emit forty lines of confusing type errors further down:
 
@@ -1927,14 +1927,14 @@ The directive expands to a comma-separated list of byte values, so it works anyw
 ### Seeing What the Preprocessor Did
 Every rule in this section is a rule about text, which means none of it has to be reasoned about in the abstract. When a macro does something unexpected, stop reading it and go look at what it produced.
 
-| Command                        | Shows                                                            |
-|:-------------------------------|:------------------------------------------------------------------|
-| `cc -E audio.c`                | The fully expanded translation unit on stdout                     |
-| `cc -E -P audio.c`             | The same, without the line-marker noise                           |
-| `cc -dM -E - < /dev/null`      | Every macro predefined for the current target                     |
-| `cc -dM -E audio.c`            | Every macro defined at the end of that file, yours included       |
-| `cc -save-temps -c audio.c`    | A normal build that also leaves `audio.i` (preprocessed) behind   |
-| `cc -H -c audio.c`             | The include tree, one line per header, indented by depth          |
+| Command                     | Shows                                                           |
+|:----------------------------|:----------------------------------------------------------------|
+| `cc -E audio.c`             | The fully expanded translation unit on stdout                   |
+| `cc -E -P audio.c`          | The same, without the line-marker noise                         |
+| `cc -dM -E - < /dev/null`   | Every macro predefined for the current target                   |
+| `cc -dM -E audio.c`         | Every macro defined at the end of that file, yours included     |
+| `cc -save-temps -c audio.c` | A normal build that also leaves `audio.i` (preprocessed) behind |
+| `cc -H -c audio.c`          | The include tree, one line per header, indented by depth        |
 
 Three of these earn their keep regularly. `-E -P` piped through your pager answers "what did this macro actually become," and it is the fastest way to settle any argument about expansion order. `-dM -E - < /dev/null` prints the several hundred macros your compiler defines before it reads a single line of your code, which is how you discover the right spelling of a target or feature macro instead of guessing. And `-H` answers "where on earth is this header coming from," which after a `-I` ordering mistake is not a rhetorical question.
 
@@ -1991,14 +1991,14 @@ Four checks, and all four are load-bearing. `end == text` catches an empty or en
 
 That this is the *correct* way to parse an integer, and that it takes ten lines, is a fair summary of C's ergonomics. Essentially every C codebase of any size contains a wrapper very much like the one above, written independently, because the standard library provides the primitive and not the operation.
 
-| Function  | Returns             | Notes                                                             |
-|:----------|:--------------------|:------------------------------------------------------------------|
-| `strtol`  | `long`              | The workhorse. `base` may be 0 to auto-detect `0x`/`0` prefixes.  |
-| `strtoul` | `unsigned long`     | Accepts a leading `-` and silently negates. Check for it yourself. |
-| `strtoll` | `long long`         | C99.                                                              |
-| `strtoull`| `unsigned long long`| C99.                                                              |
-| `strtod`  | `double`            | Also parses `inf` and `nan`.                                      |
-| `strtof`  | `float`             | C99.                                                              |
+| Function   | Returns              | Notes                                                              |
+|:-----------|:---------------------|:-------------------------------------------------------------------|
+| `strtol`   | `long`               | The workhorse. `base` may be 0 to auto-detect `0x`/`0` prefixes.   |
+| `strtoul`  | `unsigned long`      | Accepts a leading `-` and silently negates. Check for it yourself. |
+| `strtoll`  | `long long`          | C99.                                                               |
+| `strtoull` | `unsigned long long` | C99.                                                               |
+| `strtod`   | `double`             | Also parses `inf` and `nan`.                                       |
+| `strtof`   | `float`              | C99.                                                               |
 
 The `base` parameter deserves a note: passing 0 asks `strtol` to infer the base from the prefix, so `"0x1f"` reads as 31 and `"017"` reads as 15. That is occasionally what you want and frequently a surprise, particularly for zero-padded decimal input such as a timestamp field, where `"08"` becomes a parse error because 8 is not an octal digit. Pass 10 explicitly unless you mean otherwise.
 
@@ -2056,12 +2056,12 @@ Both lines of that snippet have problems, and they are worth naming because the 
 The honest summary is that `rand` is adequate for a shuffled demo and nothing else. It is unsuitable for cryptography (use a platform CSPRNG: `getrandom`, `arc4random`, or `BCryptGenRandom`), and unsuitable for simulation work where the quality of the distribution is the whole point (use a Mersenne Twister or PCG implementation). C's standard library simply does not offer a good generator, which is why serious numerical code always brings its own.
 
 #### Ending the Program
-| Function      | Effect                                                                       |
-|:--------------|:------------------------------------------------------------------------------|
-| `exit(status)`| Runs `atexit` handlers, flushes and closes streams, then terminates.          |
-| `_Exit(status)`| Terminates immediately. No handlers, no flushing. (C99.)                     |
-| `abort()`     | Raises `SIGABRT`; terminates abnormally, typically with a core dump.          |
-| `atexit(fn)`  | Registers `fn` to run at normal termination. At least 32 may be registered.   |
+| Function        | Effect                                                                      |
+|:----------------|:----------------------------------------------------------------------------|
+| `exit(status)`  | Runs `atexit` handlers, flushes and closes streams, then terminates.        |
+| `_Exit(status)` | Terminates immediately. No handlers, no flushing. (C99.)                    |
+| `abort()`       | Raises `SIGABRT`; terminates abnormally, typically with a core dump.        |
+| `atexit(fn)`    | Registers `fn` to run at normal termination. At least 32 may be registered. |
 
 Returning from `main` is defined to be equivalent to calling `exit` with the returned value, so cleanup registered with `atexit` runs either way. Use `EXIT_SUCCESS` and `EXIT_FAILURE` rather than 0 and 1: they are the portable spellings, and on the handful of platforms where success is not 0 they are the only correct ones.
 
@@ -2092,11 +2092,11 @@ A stream is represented by a `FILE`, and you never handle one directly. You hold
 
 Three streams exist before `main` runs:
 
-| Stream   | Purpose                  | Default destination | Buffering            |
-|:---------|:-------------------------|:--------------------|:---------------------|
-| `stdin`  | Ordinary input           | Keyboard            | Line, if a terminal  |
-| `stdout` | Ordinary output          | Screen              | Line if a terminal, otherwise full |
-| `stderr` | Diagnostics and errors   | Screen              | Unbuffered           |
+| Stream   | Purpose                | Default destination | Buffering                          |
+|:---------|:-----------------------|:--------------------|:-----------------------------------|
+| `stdin`  | Ordinary input         | Keyboard            | Line, if a terminal                |
+| `stdout` | Ordinary output        | Screen              | Line if a terminal, otherwise full |
+| `stderr` | Diagnostics and errors | Screen              | Unbuffered                         |
 
 The separation of `stdout` from `stderr` is a design decision, not an accident of history. Because they are distinct streams, a user can redirect one without the other: `./program > results.txt` captures the data while error messages still reach the terminal. That only works if the program cooperates, which is the rule it implies. **Diagnostics go to `stderr`, results go to `stdout`.** A warning printed to `stdout` ends up interleaved into the data file, where it corrupts exactly the output someone was trying to collect.
 
@@ -2127,44 +2127,44 @@ setvbuf(stream, buf,  _IOFBF, sizeof buf);   // fully buffered, your buffer
 #### Formatted Output
 `printf` and its relatives interpret a format string, substituting arguments at each conversion specifier. Why the format string exists at all, and why a mismatch between it and the arguments is undefined behavior rather than a type error, is explained under [Why `printf` Takes a Format String](#why-printf-takes-a-format-string). This is the catalogue.
 
-| Function                             | Writes to                                    |
-|:-------------------------------------|:---------------------------------------------|
-| `printf(fmt, ...)`                   | `stdout`                                     |
-| `fprintf(stream, fmt, ...)`          | Any stream                                   |
-| `sprintf(buf, fmt, ...)`             | A buffer. Unbounded: avoid.                  |
-| `snprintf(buf, size, fmt, ...)`      | A buffer, bounded. The one to use.           |
-| `vfprintf(stream, fmt, va_list)`     | Any stream, from an existing `va_list`.      |
+| Function                         | Writes to                               |
+|:---------------------------------|:----------------------------------------|
+| `printf(fmt, ...)`               | `stdout`                                |
+| `fprintf(stream, fmt, ...)`      | Any stream                              |
+| `sprintf(buf, fmt, ...)`         | A buffer. Unbounded: avoid.             |
+| `snprintf(buf, size, fmt, ...)`  | A buffer, bounded. The one to use.      |
+| `vfprintf(stream, fmt, va_list)` | Any stream, from an existing `va_list`. |
 
 `sprintf` has no size parameter and therefore no way to stop, which puts it in the same category as `strcpy` and `gets`. Use `snprintf`, and check its return value; the technique for detecting truncation is under [Building Strings Safely](#building-strings-safely).
 
 The conversion specifiers:
 
-| Specifier | Argument type    | Output                                            |
-|:----------|:-----------------|:--------------------------------------------------|
-| `%d`, `%i`| `int`            | Signed decimal                                    |
-| `%u`      | `unsigned int`   | Unsigned decimal                                  |
-| `%x`, `%X`| `unsigned int`   | Hexadecimal, lower or upper case                  |
-| `%o`      | `unsigned int`   | Octal                                             |
-| `%f`      | `double`         | Decimal notation, 6 places by default             |
-| `%e`, `%E`| `double`         | Scientific notation                               |
-| `%g`, `%G`| `double`         | Whichever of `%f`/`%e` is shorter; trims zeros    |
-| `%a`      | `double`         | Hexadecimal float, exact and round-trippable (C99)|
-| `%c`      | `int`            | A single character                                |
-| `%s`      | `char *`         | Characters up to the null terminator              |
-| `%p`      | `void *`         | An implementation-defined pointer representation  |
-| `%%`      | (none)           | A literal `%`                                     |
+| Specifier  | Argument type  | Output                                             |
+|:-----------|:---------------|:---------------------------------------------------|
+| `%d`, `%i` | `int`          | Signed decimal                                     |
+| `%u`       | `unsigned int` | Unsigned decimal                                   |
+| `%x`, `%X` | `unsigned int` | Hexadecimal, lower or upper case                   |
+| `%o`       | `unsigned int` | Octal                                              |
+| `%f`       | `double`       | Decimal notation, 6 places by default              |
+| `%e`, `%E` | `double`       | Scientific notation                                |
+| `%g`, `%G` | `double`       | Whichever of `%f`/`%e` is shorter; trims zeros     |
+| `%a`       | `double`       | Hexadecimal float, exact and round-trippable (C99) |
+| `%c`       | `int`          | A single character                                 |
+| `%s`       | `char *`       | Characters up to the null terminator               |
+| `%p`       | `void *`       | An implementation-defined pointer representation   |
+| `%%`       | (none)         | A literal `%`                                      |
 
 Length modifiers adjust the expected argument width, and getting them wrong is undefined behavior rather than a rounding error, because `va_arg` reads the number of bytes the specifier claims:
 
-| Modifier | With `%d`      | With `%u`/`%x`         |
-|:---------|:---------------|:-----------------------|
-| `hh`     | `signed char`  | `unsigned char`        |
-| `h`      | `short`        | `unsigned short`       |
-| `l`      | `long`         | `unsigned long`        |
-| `ll`     | `long long`    | `unsigned long long`   |
-| `z`      | (`ssize_t`)    | `size_t`               |
-| `t`      | `ptrdiff_t`    |                        |
-| `j`      | `intmax_t`     | `uintmax_t`            |
+| Modifier | With `%d`     | With `%u`/`%x`       |
+|:---------|:--------------|:---------------------|
+| `hh`     | `signed char` | `unsigned char`      |
+| `h`      | `short`       | `unsigned short`     |
+| `l`      | `long`        | `unsigned long`      |
+| `ll`     | `long long`   | `unsigned long long` |
+| `z`      | (`ssize_t`)   | `size_t`             |
+| `t`      | `ptrdiff_t`   |                      |
+| `j`      | `intmax_t`    | `uintmax_t`          |
 
 `%zu` for a `size_t` is the one to commit to memory, because `sizeof` yields `size_t` and printing it with `%d` is both extremely common and wrong on any platform where the two differ in width, which is every 64-bit platform.
 
@@ -2217,13 +2217,13 @@ if (fgets(line, sizeof line, stdin) != NULL) {
 `sscanf` on a string you already hold is genuinely useful and carries none of the stream-state hazards, since a failed parse leaves your buffer untouched and re-readable. It is `scanf` reading directly from a stream that causes the trouble.
 
 #### Character and Line I/O
-| Function                      | Does                                                          |
-|:------------------------------|:---------------------------------------------------------------|
-| `getchar()` / `fgetc(stream)` | Read one character, or `EOF`                                  |
-| `putchar(c)` / `fputc(c, s)`  | Write one character                                           |
-| `fgets(buf, size, stream)`    | Read a line, bounded, keeping the newline                     |
-| `fputs(s, stream)`            | Write a string, adding no newline                             |
-| `puts(s)`                     | Write a string to `stdout`, adding a newline                  |
+| Function                      | Does                                         |
+|:------------------------------|:---------------------------------------------|
+| `getchar()` / `fgetc(stream)` | Read one character, or `EOF`                 |
+| `putchar(c)` / `fputc(c, s)`  | Write one character                          |
+| `fgets(buf, size, stream)`    | Read a line, bounded, keeping the newline    |
+| `fputs(s, stream)`            | Write a string, adding no newline            |
+| `puts(s)`                     | Write a string to `stdout`, adding a newline |
 
 The character functions return `int` rather than `char` so that `EOF` remains distinguishable from a legitimate byte; the reasoning, and the bug that follows from ignoring it, are under [`char` vs. `int` from Input](#char-vs-int).
 
@@ -2241,14 +2241,14 @@ FILE *fopen(const char *path, const char *mode);
 int   fclose(FILE *stream);
 ```
 
-| Mode   | Opens for          | If it exists   | If it does not |
-|:-------|:-------------------|:---------------|:---------------|
-| `"r"`  | Reading            | Opens at start | Fails          |
-| `"w"`  | Writing            | **Truncates**  | Creates        |
-| `"a"`  | Appending          | Opens at end   | Creates        |
-| `"r+"` | Reading + writing  | Opens at start | Fails          |
-| `"w+"` | Reading + writing  | **Truncates**  | Creates        |
-| `"a+"` | Reading + appending| Reads anywhere, writes at end | Creates |
+| Mode   | Opens for           | If it exists                  | If it does not |
+|:-------|:--------------------|:------------------------------|:---------------|
+| `"r"`  | Reading             | Opens at start                | Fails          |
+| `"w"`  | Writing             | **Truncates**                 | Creates        |
+| `"a"`  | Appending           | Opens at end                  | Creates        |
+| `"r+"` | Reading + writing   | Opens at start                | Fails          |
+| `"w+"` | Reading + writing   | **Truncates**                 | Creates        |
+| `"a+"` | Reading + appending | Reads anywhere, writes at end | Creates        |
 
 Appending `b` (`"rb"`, `"wb"`) selects binary mode. On POSIX systems it does nothing whatsoever; on Windows it suppresses the translation of `\n` to `\r\n` on output and back on input. Omit it when writing binary data on Windows and your file is silently corrupted wherever a byte happens to equal 0x0A, which is a bug that reproduces only on one platform and only for some data. Use `b` for anything that is not text.
 
@@ -2291,24 +2291,24 @@ The cleanup on every branch is what C error handling looks like without destruct
 
 Note that `fread` returning less than requested is not treated as an error by itself: the seek-to-end technique gives a length that may not match what a text-mode read actually produces, so the check is `ferror`, not the count. Positioning within a file:
 
-| Function                     | Does                                                    |
-|:-----------------------------|:---------------------------------------------------------|
+| Function                        | Does                                                                  |
+|:--------------------------------|:----------------------------------------------------------------------|
 | `fseek(stream, offset, whence)` | Move the position. `whence` is `SEEK_SET`, `SEEK_CUR`, or `SEEK_END`. |
-| `ftell(stream)`              | Report the current position, or -1 on failure.          |
-| `rewind(stream)`             | Move to the start and clear the error flag.             |
+| `ftell(stream)`                 | Report the current position, or -1 on failure.                        |
+| `rewind(stream)`                | Move to the start and clear the error flag.                           |
 
 `fseek` and `ftell` use `long`, which caps them at 2 GB on platforms where `long` is 32 bits. Large files need the POSIX `fseeko`/`ftello` with `off_t`, or the platform equivalent.
 
 #### Errors, `feof`, and `errno`
 Stream functions signal failure by return value, and the stream itself carries two sticky flags reporting what happened.
 
-| Function            | Reports                                                          |
-|:--------------------|:------------------------------------------------------------------|
-| `feof(stream)`      | The end-of-file flag is set: a previous read hit the end.        |
-| `ferror(stream)`    | The error flag is set: a previous operation failed.              |
-| `clearerr(stream)`  | Clears both flags.                                               |
-| `perror(msg)`       | Prints `msg`, a colon, and the text for the current `errno`.     |
-| `strerror(errnum)`  | Returns the message string for an error number.                  |
+| Function           | Reports                                                      |
+|:-------------------|:-------------------------------------------------------------|
+| `feof(stream)`     | The end-of-file flag is set: a previous read hit the end.    |
+| `ferror(stream)`   | The error flag is set: a previous operation failed.          |
+| `clearerr(stream)` | Clears both flags.                                           |
+| `perror(msg)`      | Prints `msg`, a colon, and the text for the current `errno`. |
+| `strerror(errnum)` | Returns the message string for an error number.              |
 
 ::: {.callout-warning title="`while (!feof(file))` is always wrong"}
 `feof` does not predict that the next read will hit the end; it reports that a previous read *already did*. The flag is set by the failing read, not before it.
@@ -2393,19 +2393,19 @@ The `str*` and `mem*` families are the most heavily optimized code in any libc, 
 ### Other Headers Worth Knowing
 The remaining headers a working C programmer meets regularly, with the ones already covered elsewhere cross-referenced rather than repeated.
 
-| Header         | Provides                                                                        |
-|:---------------|:----------------------------------------------------------------------------------|
-| `<math.h>`     | `sqrt`, `pow`, `sin`, `fabs`, `floor`, `ceil`, `round`, `INFINITY`, `NAN`, `isnan`. |
-| `<time.h>`     | `time_t`, `time`, `clock`, `difftime`, `mktime`, `strftime`, `struct tm`.          |
-| `<ctype.h>`    | `isalpha`, `isdigit`, `isspace`, `isupper`, `tolower`, `toupper`.                  |
-| `<errno.h>`    | `errno` and the `E*` constants (`ERANGE`, `EINVAL`, `ENOENT`).                     |
-| `<assert.h>`   | `assert`, and `static_assert` in C23.                                              |
-| `<stdarg.h>`   | `va_list`, `va_start`, `va_arg`, `va_end`. See [Variadic Functions](#variadic-functions). |
-| `<stddef.h>`   | `size_t`, `ptrdiff_t`, `NULL`, `offsetof`. Freestanding.                           |
-| `<stdint.h>`   | `int32_t` and friends. See [Fixed-Width Types](#fixed-width-types). Freestanding.  |
-| `<inttypes.h>` | `PRId32`-style format macros, plus `<stdint.h>`.                                   |
-| `<limits.h>`, `<float.h>` | Type ranges. See [Implementation Limits](#implementation-limits). Freestanding. |
-| `<stdbool.h>`  | `bool`, `true`, `false` before C23. See [`bool`](#bool). Freestanding.             |
+| Header                    | Provides                                                                                  |
+|:--------------------------|:------------------------------------------------------------------------------------------|
+| `<math.h>`                | `sqrt`, `pow`, `sin`, `fabs`, `floor`, `ceil`, `round`, `INFINITY`, `NAN`, `isnan`.       |
+| `<time.h>`                | `time_t`, `time`, `clock`, `difftime`, `mktime`, `strftime`, `struct tm`.                 |
+| `<ctype.h>`               | `isalpha`, `isdigit`, `isspace`, `isupper`, `tolower`, `toupper`.                         |
+| `<errno.h>`               | `errno` and the `E*` constants (`ERANGE`, `EINVAL`, `ENOENT`).                            |
+| `<assert.h>`              | `assert`, and `static_assert` in C23.                                                     |
+| `<stdarg.h>`              | `va_list`, `va_start`, `va_arg`, `va_end`. See [Variadic Functions](#variadic-functions). |
+| `<stddef.h>`              | `size_t`, `ptrdiff_t`, `NULL`, `offsetof`. Freestanding.                                  |
+| `<stdint.h>`              | `int32_t` and friends. See [Fixed-Width Types](#fixed-width-types). Freestanding.         |
+| `<inttypes.h>`            | `PRId32`-style format macros, plus `<stdint.h>`.                                          |
+| `<limits.h>`, `<float.h>` | Type ranges. See [Implementation Limits](#implementation-limits). Freestanding.           |
+| `<stdbool.h>`             | `bool`, `true`, `false` before C23. See [`bool`](#bool). Freestanding.                    |
 
 Three of these carry traps or subtleties worth spelling out.
 
@@ -2438,7 +2438,7 @@ The second line is the bug this invites, and it is common enough to be worth sta
 
 `NDEBUG` is also the reason assertions are not a substitute for error handling. An assertion documents a condition you believe to be impossible, a violated internal invariant, a contract the caller broke. Conditions that can genuinely occur at runtime, a missing file, a malformed packet, a failed allocation, must be handled with real code, because in the build that ships the assertion is not there.
 
-#### `<math.h>` and the Missing Library
+#### `<math.h>` and the Missing Library {#math-missing-library}
 On most Unix systems the math functions live in a separate library from the rest of libc, so using them requires an explicit link flag:
 
 ```bash
@@ -2448,6 +2448,7 @@ cc program.c -o program -lm      # without -lm: "undefined reference to `sqrt'"
 The split is historical, dating to when floating-point support was optional and expensive to carry. It persists as a small trap for anyone who assumes that including a standard header is sufficient, and it is a useful illustration of the difference between the *header* (which declares) and the *library* (which defines); see [The Translation Unit](#the-translation-unit). Note that glibc 2.34 and later fold libm into libc, so the flag is increasingly a no-op on Linux while remaining necessary elsewhere.
 
 `<math.h>` also displays C's lack of overloading more starkly than any other header. Absolute value is `abs`, `labs`, `llabs`, `fabs`, `fabsf`, and `fabsl` depending on the argument type, and the same fan-out applies to `sqrt`/`sqrtf`/`sqrtl` and the rest. Calling the `double` version on a `float` silently promotes, computes at double precision, and narrows back, which is correct but can be needlessly slow on hardware with a single-precision unit. `<tgmath.h>` layers type-generic macros over the whole set so that `sqrt(x)` dispatches on the type of `x`; it is built on [`_Generic`](#generic), and it is the closest thing C has to overloading.
+
 ## Compilation and the Build {#the-build}
 The **build** converts a project's source files into an artifact you can run or load. For a hosted program that is an executable; for an embedded target it is typically a HEX or ELF image flashed into non-volatile memory, accompanied by a **map file** showing exactly where every function and object landed.
 
@@ -2457,11 +2458,61 @@ The unit of compilation in C is the **translation unit**: one `.c` file after th
 Because of that isolation, a call to a function defined elsewhere is compiled as an unresolved reference, and it is the linker that eventually connects it. A declaration is how you promise the compiler that the definition exists somewhere; get the declaration wrong and the compiler cannot tell, because it has no access to the definition to compare against. This is precisely what headers exist to prevent: both the caller and the definition include the same declaration, so any mismatch becomes a compile error rather than a runtime mystery.
 
 ### Declarations vs. Definitions Across Files
-<!-- STUB: The header/source discipline in practice. What belongs in a header
-     (declarations, types, inline functions, macros) vs. a .c file (definitions).
-     Tentative definitions and the historical "common symbol" behavior, which
-     -fno-common now rejects by default. Link errors and how to read them:
-     "undefined reference" vs. "multiple definition", and what each tells you. -->
+The mechanics of `extern` and the one-definition rule were covered under [`extern` and the Definition/Declaration Split](#extern-and-the-definitiondeclaration-split). What follows is the discipline that falls out of them, and the link errors that appear when it is violated.
+
+#### What Goes Where
+A header may be included by any number of translation units, so anything it contains will exist in all of them. That single fact determines the entire split:
+
+| Belongs in a header (`.h`)                | Belongs in exactly one source file (`.c`)     |
+|:------------------------------------------|:----------------------------------------------|
+| Function *declarations* (prototypes)      | Function *definitions* (bodies)               |
+| `extern` declarations of globals          | Global variable definitions                   |
+| `struct`, `union`, and `enum` definitions | `static` (file-local) variables and functions |
+| `typedef`s                                | Anything holding mutable state                |
+| Macros                                    |                                               |
+| `static inline` function definitions      |                                               |
+
+The rule underneath the table: **a header must not allocate storage or define an external function.** Both would be duplicated in every including translation unit, and the linker would reject the copies.
+
+`static inline` is the exception that proves it. Marking a small function `static inline` in a header gives each translation unit its own private copy, which is legal precisely because `static` means the copies never collide at link time. That is how a header can offer a real function body without violating the rule, and it is the C idiom for what C++ would express with an `inline` member function.
+
+#### Tentative Definitions
+C has a third category between declaration and definition, and it is the reason some questionable code has linked successfully for decades.
+
+```c
+int counter;          // at file scope: a *tentative definition*
+int counter = 0;      // a definition
+extern int counter;   // a declaration
+```
+
+A file-scope declaration with no initializer and no `extern` is a **tentative definition**. If the translation unit never provides a real definition, the tentative one becomes a definition initialized to zero. That much is standard.
+
+What was never standard, but was universal, is what happened across *multiple* translation units. Traditional Unix linkers placed such symbols in a **common** block and merged all the tentative definitions of a name into one object, in the manner of Fortran's `COMMON`. So putting `int counter;` in a header, included by ten files, produced ten tentative definitions that the linker silently merged into a single variable. The code was ill-formed and worked anyway.
+
+::: {.callout-warning title="`-fno-common` broke a lot of old code"}
+GCC 10 (2020) changed the default from `-fcommon` to `-fno-common`, and Clang followed. Tentative definitions now go in the data section like ordinary definitions, so those ten copies collide and the link fails with `multiple definition of 'counter'`.
+
+This is the single most common failure when building an older codebase with a modern compiler, and the error is misleading: it points at code that has not changed and that genuinely used to be fine. The fix is the discipline above, `extern int counter;` in the header and one real definition in a `.c` file, not `-fcommon`, which merely defers the problem.
+:::
+
+#### Reading Link Errors
+Linker errors read differently from compiler errors, and knowing which one you are looking at is half the diagnosis. A compiler error cites a source file and line, because the compiler has the source in front of it. A **linker** error cites object files and symbol names, because by then the source is gone and all that remains is a table of names that were promised and names that were provided.
+
+There are essentially two failures, and they are opposites:
+
+| Error                          | Means                      | Usual causes                                                                                                                                                |
+|:-------------------------------|:---------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `undefined reference to 'foo'` | Nobody defined it          | The `.c` was not compiled or not passed to the link; a library is missing (`-lm`, `-lpthread`); the name is misspelled; C++ calling C without `extern "C"`. |
+| `multiple definition of 'foo'` | Too many things defined it | A definition (not a declaration) in a header; a missing `static` on something meant to be file-local; tentative definitions under `-fno-common`.            |
+
+The `-lm` case from [`<math.h>`](#math-missing-library) is the canonical undefined reference: the header supplied a declaration, so the compiler was satisfied, and no definition ever arrived because the library was not linked. That split is the whole point. **The header promises; the library delivers.** A missing header is a compile error, a missing library is a link error, and confusing the two sends you editing the wrong file.
+
+::: {.callout-note title="Why a wrong declaration links fine and then corrupts"}
+C symbols carry no type information. The linker matches `sample_rate` to `sample_rate` by name alone, with no record of whether either side thought it was an `int` or a `double`.
+
+So if one file declares `extern int sample_rate;` while another defines `double sample_rate = 48000.0;`, everything compiles, everything links, and the program reads the first four bytes of a double as an integer. C++ avoids this by [mangling type information into the symbol name](cpp.qmd#name-mangling), which turns the mismatch into a link error. In C the only defense is the discipline of putting the declaration in a header that the defining file also includes, so the compiler sees both and can object.
+:::
+
 ### Compiler Attributes
 ::: {.subheading}
 `__attribute__((...))`
@@ -2538,12 +2589,195 @@ Three situations genuinely need `volatile`: memory-mapped hardware registers, va
 :::
 
 ### The Toolchain
-<!-- STUB: The pieces and their names: cc/gcc/clang as drivers, cpp, as, ld,
-     ar for static libraries, plus the inspection tools (nm, objdump, readelf,
-     size, strings). Common flags worth knowing: -c, -o, -I, -L, -l, -D, -g,
-     -Wall -Wextra -Werror, -std=. Static vs. dynamic linking and where each
-     matters. Cross-reference make.qmd for orchestration and cpp.qmd's
-     cross-compilation section for the bare-metal variant. -->
+#### The Pieces
+`gcc` is not a compiler. It is a **driver**: a program that decides which real tools to run, in what order, with which arguments, based on the file extensions and flags you gave it. Understanding that removes most of the mystery from a build, because it explains how one command can preprocess, compile, assemble, and link, and why the same command does only some of those when you add `-c`.
+
+| Tool                 | Does                                                            |
+|:---------------------|:----------------------------------------------------------------|
+| `cc`, `gcc`, `clang` | The driver. Runs the tools below and passes files between them. |
+| `cpp`                | The preprocessor. Produces a translation unit.                  |
+| `cc1`                | The compiler proper. C to assembly. Rarely invoked by hand.     |
+| `as`                 | The assembler. Assembly to an object file (`.o`).               |
+| `ld`                 | The linker. Object files and libraries to an executable.        |
+| `ar`                 | The archiver. Bundles `.o` files into a static library (`.a`).  |
+
+The driver relationship has a practical consequence worth knowing: to pass an option to the linker rather than the compiler, you must route it through the driver with `-Wl,`. So `-Wl,-rpath,/opt/lib` hands `-rpath /opt/lib` to `ld`. The same applies to `-Wa,` for the assembler and `-Wp,` for the preprocessor. When a build fails with an unrecognized option, this is usually why: the flag was meant for a tool the driver never gave it to.
+
+#### Flags Worth Knowing
+| Flag             | Purpose                                                              |
+|:-----------------|:---------------------------------------------------------------------|
+| `-c`             | Compile and assemble, but do not link. Produces a `.o`.              |
+| `-o <file>`      | Name the output.                                                     |
+| `-I <dir>`       | Add a directory to the header search path.                           |
+| `-L <dir>`       | Add a directory to the *library* search path.                        |
+| `-l<name>`       | Link `lib<name>`. `-lm` finds `libm.so` or `libm.a`.                 |
+| `-D NAME=value`  | Define a macro, as if `#define` appeared at the top.                 |
+| `-g`             | Emit debug information.                                              |
+| `-std=c11`       | Select the language standard.                                        |
+| `-O0` … `-Os`    | Optimization level. See [Optimization Levels](#optimization-levels). |
+| `-Wall -Wextra`  | Enable the warnings that matter.                                     |
+| `-fsanitize=...` | Instrument the binary to catch errors at runtime.                    |
+
+`-Wall` is badly named: it does not enable all warnings, only an uncontroversial subset. `-Wextra` adds another useful tier, and even together they are not exhaustive. Treat `-Wall -Wextra` as the floor for any code you intend to keep, and read the output; in a language where so much is undefined rather than diagnosed, the warnings are a substantial fraction of the safety net that exists.
+
+::: {.callout-note title="`-Werror` belongs in CI, not on your desk"}
+`-Werror` turns every warning into an error. That is exactly right for a continuous integration job, where it prevents warnings from accumulating until nobody reads them.
+
+It is usually wrong for local development, where it stops a build over an unused variable in code you are still writing, and where a compiler upgrade that adds a new warning can block work that has nothing to do with the change you were making. Keep it in CI, out of the default local build.
+:::
+
+#### Inspecting the Output
+A build produces binaries, and binaries are inspectable. These tools answer questions that guessing does not.
+
+| Tool         | Answers                                                                                 |
+|:-------------|:----------------------------------------------------------------------------------------|
+| `nm`         | What symbols does this object define, and which does it still need?                     |
+| `objdump -d` | What instructions did the compiler actually generate?                                   |
+| `readelf -h` | What are this binary's headers, sections, and dependencies?                             |
+| `size`       | How large are the text, data, and [BSS](glossary.qmd#block-started-by-symbol) segments? |
+| `strings`    | What literal text is embedded in this file?                                             |
+| `ldd`        | Which shared libraries will this need at launch, and are they found?                    |
+
+`nm` is the one that turns an `undefined reference` from a mystery into a two-minute diagnosis. Symbols are printed with a type letter: `T` for a definition in the text segment, `D` for initialized data, `B` for BSS, and **`U` for undefined**, meaning this object needs the symbol but does not provide it.
+
+```bash
+$ nm main.o | grep filter
+                 U apply_filter          # main.o needs it
+$ nm filter.o | grep filter
+0000000000000000 T apply_filter          # filter.o provides it
+```
+
+If the second command comes back empty, the definition genuinely is not there and you have a source problem. If it shows `T` as above, the symbol exists and the link is simply not being told about `filter.o`, which is a build problem. Two commands, and you know which half of the system to go fix.
+
+#### Static and Dynamic Linking
+The last step has two modes, and the choice affects deployment more than it affects the code.
+
+|                      | Static (`.a`)                   | Dynamic (`.so`, `.dll`, `.dylib`) |
+|:---------------------|:--------------------------------|:----------------------------------|
+| Resolved at          | Link time                       | Load time                         |
+| Library code lives   | Inside your binary              | In a shared file on the system    |
+| Binary size          | Larger                          | Smaller                           |
+| Memory, many copies  | One copy per process            | One copy shared by all processes  |
+| Updating the library | Requires relinking your program | Takes effect on next launch       |
+| Missing at runtime   | Cannot happen                   | Fails at launch, not at build     |
+
+Static linking copies the object code you use into your executable, so the result is self-contained. Nothing can go missing, nothing can change underneath it, and it starts marginally faster because there is no symbol resolution at load. The costs are size and the fact that a security fix in a library requires rebuilding and redistributing every program that embedded it.
+
+Dynamic linking resolves references when the program launches. One copy of `libc` serves every process on the machine, a patched library benefits everything immediately, and your binary stays small. The cost is that the dependency is now an environmental assumption: the notorious failure is a program that built cleanly and dies at launch with `error while loading shared libraries`, because the `.so` is absent, is the wrong version, or is somewhere the loader does not search. `ldd ./program` shows exactly what will be looked for and what resolves.
+
+This tradeoff is why containers frequently ship statically linked binaries: the container is the deployment unit, and a self-contained executable removes an entire category of "works on my machine." It is also why system tools are usually dynamically linked: a `libc` fix should not require rebuilding the operating system.
+
+::: {.callout-note title="Cross-compilation"}
+When the machine building the code is not the machine running it, the entire toolchain above is replaced by a target-prefixed version: `arm-none-eabi-gcc`, `arm-none-eabi-ld`, and so on, paired with a sysroot supplying the target's headers and libraries. The concepts do not change, only the names. The [C++ chapter's treatment](cpp.qmd#cross-compilation-and-bare-metal) covers the bare-metal case in detail, and it applies to C unchanged.
+:::
+
+### Debugging and Diagnosis
+::: {.subheading}
+Four tools, in the order you should reach for them
+:::
+
+When a C program misbehaves, there are four tiers of tool available, and they are genuinely ordered: each catches things the previous one cannot, and costs more to use. Working down the list in order will find most bugs faster than starting at the bottom.
+
+1. **Compiler warnings.** Free, instant, and catch a surprising amount. `-Wall -Wextra`.
+2. **Static analysis.** Finds suspicious patterns without running the code.
+3. **Sanitizers.** Instrument the binary to catch memory and UB errors as they happen.
+4. **The debugger.** Inspect a running program, or a corpse.
+
+#### Building for Debuggability
+Two flags matter before any of this works.
+
+`-g` emits debug information: the mapping from machine addresses back to source lines, variable names, and types. Without it a debugger can show you registers and addresses and essentially nothing else. It does not slow the program down; it only makes the binary larger, and it can be stripped later.
+
+`-Og` is the optimization level designed to coexist with `-g`. This matters more than it sounds. At `-O2` the optimizer inlines functions, reorders statements, and keeps variables in registers that it reuses for other purposes, so the debugger reports `<optimized out>` for a variable you are staring at in the source, and single-stepping jumps backwards through lines in an order that looks deranged. Neither is a malfunction; the machine code genuinely no longer corresponds to the source in the way you assumed. This is the most common reason people conclude the debugger is broken and go back to `printf`.
+
+```bash
+cc -g -Og -Wall -Wextra -o program main.c
+```
+
+#### The Dozen Commands That Matter
+GDB and LLDB have hundreds of commands and you need roughly twelve. LLDB accepts most GDB spellings, so the differences below rarely bite.
+
+| Command            | Does                                                       |
+|:-------------------|:-----------------------------------------------------------|
+| `run` (`r`)        | Start the program.                                         |
+| `break f` (`b`)    | Break at function `f`, or `break file.c:42` at a line.     |
+| `continue` (`c`)   | Resume until the next breakpoint.                          |
+| `next` (`n`)       | Execute one line, stepping *over* calls.                   |
+| `step` (`s`)       | Execute one line, stepping *into* calls.                   |
+| `finish`           | Run until the current function returns.                    |
+| `backtrace` (`bt`) | The call stack. **The first thing to type after a crash.** |
+| `frame N` (`f`)    | Select a stack frame to inspect.                           |
+| `print expr` (`p`) | Evaluate and show an expression, including `p *ptr`.       |
+| `info locals`      | Every local in the current frame.                          |
+| `watch expr`       | Break when an expression's value changes.                  |
+| `x/16xb ptr`       | Examine raw memory: 16 hex bytes at `ptr`.                 |
+
+`watch` is the underused one. When a value is being corrupted and you have no idea by whom, a watchpoint stops the program at the instant of the write and `bt` tells you who did it. That question is nearly unanswerable by inspection and takes about thirty seconds this way.
+
+#### A Worked Session
+A program crashes. Here is the whole loop, start to finish:
+
+```c
+typedef struct Node { int value; struct Node *next; } Node;
+
+int sum_list(Node *head) {
+    int total = 0;
+    for (Node *n = head; n->next != NULL; n = n->next) {   // bug is here
+        total += n->value;
+    }
+    return total;
+}
+```
+
+```
+$ cc -g -Og -o list list.c && ./list
+Segmentation fault (core dumped)
+
+$ gdb ./list
+(gdb) run
+Program received signal SIGSEGV, Segmentation fault.
+0x0000555555555181 in sum_list (head=0x5555555592a0) at list.c:5
+5           for (Node *n = head; n->next != NULL; n = n->next) {
+
+(gdb) bt
+#0  sum_list (head=0x5555555592a0) at list.c:5
+#1  0x00005555555551d4 in main () at list.c:16
+
+(gdb) print n
+$1 = (Node *) 0x0
+
+(gdb) print n->next
+Cannot access memory at address 0x8
+```
+
+The diagnosis takes three commands. `bt` establishes that the crash is in `sum_list`, called from `main`, rather than somewhere unexpected. `print n` shows the loop variable is `NULL`. `print n->next` confirms it by failing at address `0x8`, which is the offset of `next` within the struct, added to a null base.
+
+The bug: the loop tests `n->next != NULL` but dereferences `n`, so on the final iteration it advances `n` to `NULL` and then tests `NULL->next`. The condition should be `n != NULL`. Note that the sum was also silently missing the last element before it crashed, which is the quieter half of the same mistake.
+
+#### When Not to Reach for the Debugger
+The debugger is superb at one thing: showing you the complete state of a program at a single instant. It follows that it is weak wherever the question is not about a single instant, and being honest about that is what makes it worth using when it does fit.
+
+**`printf` is better for patterns over time.** If a value drifts wrong over a thousand iterations, or two events race in an order you cannot predict, or a bug appears once in fifty runs, stepping is hopeless; you need a log you can scan, diff, or graph. This is not a lesser technique, it is the right tool for a different question. Two cautions: buffered output can be lost when the program crashes, so flush or use `stderr` (see [Buffering](#buffering)), and instrumentation changes timing, which can move or hide a race.
+
+**Sanitizers are better for memory bugs, and it is not close.** A use-after-free under a debugger gives you a crash at the point of *use*, and finding who freed it is manual archaeology. AddressSanitizer prints both, with stack traces:
+
+```bash
+cc -g -fsanitize=address,undefined -o program main.c
+```
+
+It reports the access, the allocation that owns the memory, and the `free` that released it. UndefinedBehaviorSanitizer catches signed overflow, misaligned access, and shifts past the width of a type, which a debugger structurally cannot show you, because by then the optimizer has already reasoned on the assumption they never happen. The runtime cost is roughly 2x for ASan, which is fine for a test suite and the reason you would not ship it.
+
+Valgrind answers a related question without recompiling, and finds leaks that ASan will not report unless asked. Reach for it when you cannot rebuild, or when you want a leak report from an existing binary.
+
+**Where the debugger genuinely wins.** Inspecting a core dump from a crash you cannot reproduce (`gdb ./program core`). Answering "what is the state right now" when a program is wedged. Stepping through unfamiliar code to learn what it does, which is a reading tool rather than a debugging one and is arguably its most underrated use. And catching the moment a value changes, via `watch`.
+
+The practical summary is that a memory bug should go to a sanitizer first, a timing or pattern bug to logging, and a "how did this get into this state" bug to the debugger. Not using the debugger much is a reasonable outcome of that ordering rather than a gap; it is worth knowing precisely so you recognize the third case when you hit it.
+
+#### Static Analysis
+Between compiler warnings and running the code sits static analysis: tools that examine source without executing it, applying checks too expensive or too opinionated for the compiler to run by default.
+
+`clang-tidy` covers bug-prone patterns, portability, and style, and is configurable per project. `cppcheck` is standalone, easy to run, and finds buffer overruns, null dereferences, and resource leaks by whole-program reasoning. Both produce false positives, which is the nature of the technique: they must be conservative where the compiler must be certain. Run them in CI, tune the check set once, and treat the output as a prompt to look rather than an accusation.
+
 Build orchestration itself belongs to a separate tool. Make tracks which outputs depend on which inputs and rebuilds only what changed, and it gets full treatment in [the Makefile chapter](make.qmd).
 
 ## Undefined Behavior and Common Pitfalls {#undefined-behavior}
@@ -2691,23 +2925,107 @@ case STATE_ERROR:
 Objects with static storage duration are zero-initialized before `main`. Locals are not; they hold whatever was on the stack, and reading one is undefined behavior. Initialize at the point of declaration, which C99's mixed declarations make easy.
 
 ## Key Differences from C++
-<!-- STUB: Table plus prose. The reader has cpp.qmd available, so this should be
-     oriented for someone moving C -> C++ and should not duplicate cpp.qmd's
-     "Key Differences from C" table verbatim. Candidates: no classes/RAII, no
-     overloading, no templates, no exceptions, no references, void* conversion,
-     const semantics (linkage and constant expressions), union punning legality,
-     designated initializers, struct tag namespace, VLAs. -->
+::: {.subheading}
+What C leaves to you
+:::
+
+The two languages share a syntax, a type system foundation, a pointer model, and a compilation model, which is exactly what makes the differences easy to underestimate. Nearly everything C++ adds is an answer to a problem C solves by convention, and the convention is the part that has to live in your head.
+
+The table reads in the direction you are travelling: here is what you do in C, and here is what C++ offers instead.
+
+| Concern                                           | C                                                   | C++                                                                               |
+|:--------------------------------------------------|:----------------------------------------------------|:----------------------------------------------------------------------------------|
+| Cleanup                                           | Manual `free`/`fclose`, often a `goto` ladder       | [RAII](cpp.qmd#raii): destructors run on every exit path                          |
+| Heap ownership                                    | Raw pointers; who frees is documented, not enforced | [`unique_ptr`](cpp.qmd#unique-ptr), [`shared_ptr`](cpp.qmd#shared-ptr)            |
+| Generic code                                      | `void *` plus an element size, or macros            | [Templates](cpp.qmd#templates), type-checked per instantiation                    |
+| [Dynamic dispatch](glossary.qmd#dynamic-dispatch) | A `struct` of function pointers, filled in by hand  | [`virtual` functions](cpp.qmd#virtual-functions) and the vtable                   |
+| Failure reporting                                 | Return code, sentinel value, or `errno`             | [Exceptions](cpp.qmd#exceptions) or [`optional`/`expected`](cpp.qmd#alternatives) |
+| Out-parameters                                    | `T *` the callee writes through; may be null        | [`T&`](cpp.qmd#references): cannot be null, cannot be reseated                    |
+| Name collisions                                   | Prefix every public symbol: `png_read_info`         | [Namespaces](cpp.qmd#namespaces)                                                  |
+| Encapsulation                                     | `static` in a `.c` file, plus convention            | [`private`](cpp.qmd#access-control), enforced by the compiler                     |
+| Data structures                                   | Write your own, once per project                    | [STL containers](cpp.qmd#containers) and algorithms                               |
+| Strings                                           | `char *`, a terminator, and `<string.h>`            | `std::string`, `std::string_view`                                                 |
+| Compile-time values                               | `#define`, or the enum hack                         | [`constexpr`](cpp.qmd#constexpr-and-if-constexpr): typed, scoped                  |
+| One name, many types                              | `abs`, `labs`, `fabs`                               | Overloading, and `<tgmath.h>` becomes unnecessary                                 |
+| Symbols                                           | One per name, untyped                               | [Mangled](cpp.qmd#name-mangling), so mismatches fail to link                      |
+
+The first row carries the rest. In C, a resource's lifetime lives in the programmer's memory and in comments; in C++ it lives in the type system, and the compiler emits the cleanup. Once destructors exist, smart pointers are just RAII pointed at the heap and containers are RAII pointed at collections. The `goto` cleanup ladder from the [file-reading example](#files) is the C answer to the same problem, and it works, but it is re-derived by hand in every function that acquires more than one thing.
+
+::: {.callout-warning title="Valid C is not automatically valid C++"}
+The overlap is large enough to be misleading. Several things compile in both and mean different things, and several ordinary C constructs are simply rejected by a C++ compiler:
+
+- **`void *` does not convert implicitly.** The idiomatic `int *p = malloc(n);` is an error in C++, which is why C++ code casts, and why it should be using `new` or a container instead.
+- **`sizeof('a')` differs.** A character constant is an `int` in C and a `char` in C++, so the answer is 4 in one language and 1 in the other.
+- **Union type punning is legal in C** (C99 onward) and undefined in C++, where the sanctioned tools are `std::bit_cast` or `memcpy`. See [Unions](#unions).
+- **`const` has internal linkage in C++** and external linkage in C, so a `const` at file scope in a header behaves differently in each.
+- **Designated initializers and VLAs** are C99 features that C++ never adopted wholesale; designated initializers arrived in a restricted form in C++20, and variable-length arrays never did.
+- **`struct` tags share the ordinary namespace in C++**, so the `typedef struct Foo Foo;` dance C requires is unnecessary.
+
+Compile C as C and C++ as C++, and mark the boundary with `extern "C"` so the C++ side does not mangle names the C side expects unmangled.
+:::
+
+The honest summary is that C++ is not "C with more features," it is a different set of habits built on the same machine model. A C++ program written in C's idioms, raw `new`, manual cleanup, hand-rolled containers, is worse than the C program it replaced: it pays C++'s compile times and complexity and collects none of the safety. If you move, move the idioms too.
+
 ## Key Differences from Rust
-<!-- STUB: Table plus prose. Ownership and borrowing vs. manual malloc/free,
-     Option<T> vs. NULL, Result vs. errno and sentinel returns, slices vs. the
-     pointer+length convention, traits vs. function pointers, no UB in safe Rust
-     and what unsafe actually opts into, cargo vs. make + headers. Link to
-     rust-ho.qmd for ownership and rust-in.qmd for the basics. -->
+::: {.subheading}
+The same job, fifty years apart
+:::
+
+Rust targets C's territory directly: systems work, no garbage collector, no runtime to speak of, performance in the same class. The difference is what each language does with the knowledge that programmers make mistakes. C's answer, stated plainly in its design principles, is to [trust the programmer](#the-c-philosophy). Rust's is to require proof.
+
+| Concern           | C                                                   | Rust                                                                  |
+|:------------------|:----------------------------------------------------|:----------------------------------------------------------------------|
+| Memory lifetime   | `malloc`/`free`, correctness by discipline          | [Ownership](rust-ho.qmd#ownership); freed automatically at scope end  |
+| Aliasing          | Unrestricted; `restrict` is a promise you can break | [Borrowing](rust-ho.qmd#borrowing): one `&mut` or many `&`            |
+| Dangling pointers | Compiles; undefined behavior at run time            | Compile error, via [lifetimes](rust-ho.qmd#lifetimes)                 |
+| Absence           | `NULL`, indistinguishable from a valid pointer      | [`Option<T>`](rust-ho.qmd#option-t); the compiler forces the check    |
+| Errors            | Return codes, sentinels, `errno`                    | [`Result<T, E>`](rust-ho.qmd#errors-as-values), and ignoring it warns |
+| Arrays            | Pointer plus a separate length, by convention       | Slices: pointer and length as one checked type                        |
+| Generic code      | `void *` and an element size                        | Generics with trait bounds, monomorphized                             |
+| Interfaces        | Structs of function pointers                        | [Traits](rust-ho.qmd#traits)                                          |
+| Initialization    | Reading an uninitialized local is UB                | Will not compile; every value is initialized                          |
+| Mutability        | Mutable by default; `const` opts out                | Immutable by default; `mut` opts in                                   |
+| Data races        | Yours to prevent                                    | Prevented at compile time by `Send`/`Sync`                            |
+| Build and deps    | Headers, a linker, and Make or CMake                | Modules and Cargo, one tool, in the box                               |
+| Unsafety          | The whole language                                  | `unsafe` blocks, and they are greppable                               |
+
+Every row is the same trade in a different costume. C moves a decision to run time or to the programmer; Rust moves it to compile time and refuses to build until it is settled. The [pointer-and-length convention](#arrays-and-pointers) is the clearest small example: C passes `(buffer, count)` and every function trusts that the caller got them consistent, while a Rust slice makes them a single value that cannot disagree with itself. Nothing about the generated code differs much. What differs is who is responsible for the invariant.
+
+`unsafe` is the row most often misread. It does not turn off the borrow checker or make Rust into C. It permits five specific operations, chiefly dereferencing a raw pointer and calling another `unsafe` function, and everything else stays checked. The practical difference from C is not that unsafety is absent but that it is *delimited*: the audit surface for a memory bug is what appears in `unsafe` blocks rather than the entire program.
+
+What C keeps is not sentimental. It is the substrate: every operating system's syscall interface, every language's FFI, every architecture that has ever had a compiler, and fifty years of libraries that are not going to be rewritten. Rust interoperates with C precisely because C is the boundary everything agrees on, and that role does not transfer. C is also genuinely smaller. You can hold the whole language in your head, which is a real virtue when the alternative is a borrow checker you are still arguing with in month two.
+
+The framing worth keeping: **C assumes you are careful; Rust verifies that you were.** Reading Rust makes C's implicit contracts visible, and going back to C afterward is a different experience, because you can see exactly which invariants you have quietly agreed to maintain by hand.
+
 ## Where to Go Next
-<!-- STUB: Annotated and subsectioned, following the rust-out.qmd / cpp.qmd
-     model: Documentation and Standards; Tooling Worth Adopting Early
-     (sanitizers, valgrind, clang-tidy, cppcheck, -Wall -Wextra -Werror);
-     Books; Practice. -->
+[cppreference's C section](https://en.cppreference.com/w/c){target="_blank" rel="noopener noreferrer"} is the reference to keep open. It marks which standard introduced each feature, which is what you need when a project is pinned to C99 and half the internet's examples assume C11.
+
+### Documentation and Standards
+- [cppreference: C](https://en.cppreference.com/w/c){target="_blank" rel="noopener noreferrer"} is the practical daily reference, indexed by both [header](https://en.cppreference.com/w/c/header){target="_blank" rel="noopener noreferrer"} and by language feature.
+- The standard itself is worth reading once, for the sections on undefined behavior. Final drafts are freely available ([N1570](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf){target="_blank" rel="noopener noreferrer"} for C11, [N3096](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3096.pdf){target="_blank" rel="noopener noreferrer"} for C23) and are nearly identical to the published versions.
+- [Compiler Explorer](https://godbolt.org/){target="_blank" rel="noopener noreferrer"} shows the assembly your code becomes, across compilers and optimization levels. It settles arguments about what the optimizer does in about ten seconds, and it makes the [optimization](#optimization-levels) and [`volatile`](#the-volatile-keyword) material concrete in a way prose cannot.
+- The [SEI CERT C Coding Standard](https://wiki.sei.cmu.edu/confluence/display/c){target="_blank" rel="noopener noreferrer"} catalogues the rules that matter in security-sensitive code, each with non-compliant and compliant examples.
+
+### Tooling Worth Adopting Early
+The full treatment is in [Debugging and Diagnosis](#debugging-and-diagnosis); this is the short list, in order of value per unit of effort.
+
+- **Sanitizers.** `-fsanitize=address,undefined` on every test run. This is the highest-value habit available to a C programmer, full stop: it converts the silent memory corruption that defines C's reputation into an immediate, located error message.
+- **`-Wall -Wextra`.** Free, and a meaningful fraction of the safety net a stricter language would give you.
+- **`valgrind`** for leak hunting and for binaries you cannot rebuild.
+- **`clang-tidy`** and **`cppcheck`** for the bugs that are visible without running anything.
+- **`clang-format`.** Commit the config and stop discussing braces.
+
+### Books
+- [The C Programming Language](https://en.wikipedia.org/wiki/The_C_Programming_Language){target="_blank" rel="noopener noreferrer"} (Kernighan and Ritchie, 2nd ed.) remains the best short book on the language, and it is short. It predates C99, so treat its examples as period-correct rather than current, but its explanations have not been improved on in forty years.
+- *Expert C Programming: Deep C Secrets* (van der Linden) is the book for the declaration syntax, the array/pointer confusion, and the war stories behind the language's odder corners. Funny, and unusually honest about C's mistakes.
+- *C Interfaces and Implementations* (Hanson) is the answer to "how do I structure a large C program," which K&R does not address. It builds real libraries with real APIs, and it is the best available argument that C can be written cleanly.
+- *Modern C* (Gustedt), [freely available](https://gustedt.gitlabpages.inria.fr/modern-c/){target="_blank" rel="noopener noreferrer"}, teaches C as it exists now rather than as it existed in 1988. The right corrective if your C is self-taught from older material.
+
+### Practice
+Read something real. C's great advantage as a language to learn from is that its most important programs are readable: [SQLite](https://www.sqlite.org/src/doc/trunk/README.md){target="_blank" rel="noopener noreferrer"} is famously well-commented, [redis](https://github.com/redis/redis){target="_blank" rel="noopener noreferrer"} is approachable, and the [Linux kernel](https://www.kernel.org/){target="_blank" rel="noopener noreferrer"} is the largest working demonstration of C's conventions at scale.
+
+Then write something that forces the issues this chapter raised. A dynamic array or hash table teaches ownership and `realloc` semantics. A line-oriented file parser teaches the string handling and the error paths. Anything with a `struct` of function pointers teaches why C++ has `virtual`. Build all of it with sanitizers on from the first commit, and the feedback loop will teach you more about undefined behavior than any amount of reading.
+
 ## Further Reading
 - Brian Kernighan and Dennis Ritchie, *The C Programming Language*, 2nd ed. (Prentice Hall, 1988).
 - Peter van der Linden, *Expert C Programming: Deep C Secrets* (Prentice Hall, 1994).

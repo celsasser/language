@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-08-25">
+<meta name="dcterms.date" content="2026-08-28">
 
 <title>The C Language – Computer Language Notebook</title>
 <style>
@@ -577,16 +577,38 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#ctype.h-and-the-signed-char-trap" id="toc-ctype.h-and-the-signed-char-trap" class="nav-link" data-scroll-target="#ctype.h-and-the-signed-char-trap"><code>&lt;ctype.h&gt;</code> and the Signed <code>char</code> Trap</a></li>
   <li><a href="#assert.h-and-ndebug" id="toc-assert.h-and-ndebug" class="nav-link" data-scroll-target="#assert.h-and-ndebug"><code>&lt;assert.h&gt;</code> and <code>NDEBUG</code></a></li>
-  <li><a href="#math.h-and-the-missing-library" id="toc-math.h-and-the-missing-library" class="nav-link" data-scroll-target="#math.h-and-the-missing-library"><code>&lt;math.h&gt;</code> and the Missing Library</a></li>
+  <li><a href="#math-missing-library" id="toc-math-missing-library" class="nav-link" data-scroll-target="#math-missing-library"><code>&lt;math.h&gt;</code> and the Missing Library</a></li>
   </ul></li>
+  </ul></li>
+  <li><a href="#the-build" id="toc-the-build" class="nav-link" data-scroll-target="#the-build">Compilation and the Build</a>
+  <ul>
   <li><a href="#the-translation-unit" id="toc-the-translation-unit" class="nav-link" data-scroll-target="#the-translation-unit">The Translation Unit</a></li>
-  <li><a href="#declarations-vs.-definitions-across-files" id="toc-declarations-vs.-definitions-across-files" class="nav-link" data-scroll-target="#declarations-vs.-definitions-across-files">Declarations vs.&nbsp;Definitions Across Files</a></li>
+  <li><a href="#declarations-vs.-definitions-across-files" id="toc-declarations-vs.-definitions-across-files" class="nav-link" data-scroll-target="#declarations-vs.-definitions-across-files">Declarations vs.&nbsp;Definitions Across Files</a>
+  <ul class="collapse">
+  <li><a href="#what-goes-where" id="toc-what-goes-where" class="nav-link" data-scroll-target="#what-goes-where">What Goes Where</a></li>
+  <li><a href="#tentative-definitions" id="toc-tentative-definitions" class="nav-link" data-scroll-target="#tentative-definitions">Tentative Definitions</a></li>
+  <li><a href="#reading-link-errors" id="toc-reading-link-errors" class="nav-link" data-scroll-target="#reading-link-errors">Reading Link Errors</a></li>
+  </ul></li>
   <li><a href="#compiler-attributes" id="toc-compiler-attributes" class="nav-link" data-scroll-target="#compiler-attributes">Compiler Attributes</a></li>
   <li><a href="#optimization-levels" id="toc-optimization-levels" class="nav-link" data-scroll-target="#optimization-levels">Optimization Levels</a>
   <ul class="collapse">
   <li><a href="#the-volatile-keyword" id="toc-the-volatile-keyword" class="nav-link" data-scroll-target="#the-volatile-keyword">The <code>volatile</code> Keyword</a></li>
   </ul></li>
-  <li><a href="#the-toolchain" id="toc-the-toolchain" class="nav-link" data-scroll-target="#the-toolchain">The Toolchain</a></li>
+  <li><a href="#the-toolchain" id="toc-the-toolchain" class="nav-link" data-scroll-target="#the-toolchain">The Toolchain</a>
+  <ul class="collapse">
+  <li><a href="#the-pieces" id="toc-the-pieces" class="nav-link" data-scroll-target="#the-pieces">The Pieces</a></li>
+  <li><a href="#flags-worth-knowing" id="toc-flags-worth-knowing" class="nav-link" data-scroll-target="#flags-worth-knowing">Flags Worth Knowing</a></li>
+  <li><a href="#inspecting-the-output" id="toc-inspecting-the-output" class="nav-link" data-scroll-target="#inspecting-the-output">Inspecting the Output</a></li>
+  <li><a href="#static-and-dynamic-linking" id="toc-static-and-dynamic-linking" class="nav-link" data-scroll-target="#static-and-dynamic-linking">Static and Dynamic Linking</a></li>
+  </ul></li>
+  <li><a href="#debugging-and-diagnosis" id="toc-debugging-and-diagnosis" class="nav-link" data-scroll-target="#debugging-and-diagnosis">Debugging and Diagnosis</a>
+  <ul class="collapse">
+  <li><a href="#building-for-debuggability" id="toc-building-for-debuggability" class="nav-link" data-scroll-target="#building-for-debuggability">Building for Debuggability</a></li>
+  <li><a href="#the-dozen-commands-that-matter" id="toc-the-dozen-commands-that-matter" class="nav-link" data-scroll-target="#the-dozen-commands-that-matter">The Dozen Commands That Matter</a></li>
+  <li><a href="#a-worked-session" id="toc-a-worked-session" class="nav-link" data-scroll-target="#a-worked-session">A Worked Session</a></li>
+  <li><a href="#when-not-to-reach-for-the-debugger" id="toc-when-not-to-reach-for-the-debugger" class="nav-link" data-scroll-target="#when-not-to-reach-for-the-debugger">When Not to Reach for the Debugger</a></li>
+  <li><a href="#static-analysis" id="toc-static-analysis" class="nav-link" data-scroll-target="#static-analysis">Static Analysis</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#undefined-behavior" id="toc-undefined-behavior" class="nav-link" data-scroll-target="#undefined-behavior">Undefined Behavior and Common Pitfalls</a>
   <ul>
@@ -603,7 +625,13 @@ window.Quarto = {
   </ul></li>
   <li><a href="#key-differences-from-c" id="toc-key-differences-from-c" class="nav-link" data-scroll-target="#key-differences-from-c">Key Differences from C++</a></li>
   <li><a href="#key-differences-from-rust" id="toc-key-differences-from-rust" class="nav-link" data-scroll-target="#key-differences-from-rust">Key Differences from Rust</a></li>
-  <li><a href="#where-to-go-next" id="toc-where-to-go-next" class="nav-link" data-scroll-target="#where-to-go-next">Where to Go Next</a></li>
+  <li><a href="#where-to-go-next" id="toc-where-to-go-next" class="nav-link" data-scroll-target="#where-to-go-next">Where to Go Next</a>
+  <ul>
+  <li><a href="#documentation-and-standards" id="toc-documentation-and-standards" class="nav-link" data-scroll-target="#documentation-and-standards">Documentation and Standards</a></li>
+  <li><a href="#tooling-worth-adopting-early" id="toc-tooling-worth-adopting-early" class="nav-link" data-scroll-target="#tooling-worth-adopting-early">Tooling Worth Adopting Early</a></li>
+  <li><a href="#books" id="toc-books" class="nav-link" data-scroll-target="#books">Books</a></li>
+  <li><a href="#practice" id="toc-practice" class="nav-link" data-scroll-target="#practice">Practice</a></li>
+  </ul></li>
   <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further Reading</a></li>
   </ul>
 </nav>
@@ -625,7 +653,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 25, 2026</p>
+      <p class="date">August 28, 2026</p>
     </div>
   </div>
   
@@ -2468,9 +2496,9 @@ the comparison illuminates.
 <p>Before going further, one distinction has to be nailed down, because everything about empty macros depends on it. A macro name meets one of two fates, decided entirely by <em>where it appears</em>:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 9%">
-<col style="width: 44%">
-<col style="width: 46%">
+<col style="width: 6%">
+<col style="width: 30%">
+<col style="width: 63%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -3065,8 +3093,8 @@ the comparison illuminates.
 <p>Every rule in this section is a rule about text, which means none of it has to be reasoned about in the abstract. When a macro does something unexpected, stop reading it and go look at what it produced.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 32%">
-<col style="width: 67%">
+<col style="width: 30%">
+<col style="width: 69%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -3156,7 +3184,7 @@ the comparison illuminates.
 <colgroup>
 <col style="width: 11%">
 <col style="width: 21%">
-<col style="width: 67%">
+<col style="width: 66%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -3258,8 +3286,8 @@ the comparison illuminates.
 <h4 class="anchored" data-anchor-id="ending-the-program">Ending the Program</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 15%">
-<col style="width: 84%">
+<col style="width: 18%">
+<col style="width: 81%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -3322,10 +3350,10 @@ the comparison illuminates.
 <p>Three streams exist before <code>main</code> runs:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 12%">
-<col style="width: 32%">
+<col style="width: 10%">
 <col style="width: 26%">
-<col style="width: 27%">
+<col style="width: 23%">
+<col style="width: 39%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -3418,9 +3446,9 @@ the comparison illuminates.
 <p>The conversion specifiers:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 13%">
-<col style="width: 22%">
-<col style="width: 63%">
+<col style="width: 15%">
+<col style="width: 20%">
+<col style="width: 65%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -3595,8 +3623,8 @@ the comparison illuminates.
 <h4 class="anchored" data-anchor-id="character-and-line-io">Character and Line I/O</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 32%">
-<col style="width: 67%">
+<col style="width: 40%">
+<col style="width: 59%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -3638,10 +3666,10 @@ the comparison illuminates.
 <span id="cb125-2"><a href="#cb125-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span>   fclose<span class="op">(</span><span class="dt">FILE</span> <span class="op">*</span>stream<span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 13%">
-<col style="width: 33%">
-<col style="width: 26%">
-<col style="width: 26%">
+<col style="width: 10%">
+<col style="width: 27%">
+<col style="width: 40%">
+<col style="width: 21%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -3722,8 +3750,8 @@ the comparison illuminates.
 <p>Note that <code>fread</code> returning less than requested is not treated as an error by itself: the seek-to-end technique gives a length that may not match what a text-mode read actually produces, so the check is <code>ferror</code>, not the count. Positioning within a file:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 34%">
-<col style="width: 65%">
+<col style="width: 31%">
+<col style="width: 68%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -3753,8 +3781,8 @@ the comparison illuminates.
 <p>Stream functions signal failure by return value, and the stream itself carries two sticky flags reporting what happened.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 23%">
-<col style="width: 76%">
+<col style="width: 24%">
+<col style="width: 75%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -3958,14 +3986,18 @@ the comparison illuminates.
 <p>The second line is the bug this invites, and it is common enough to be worth stating flatly: <strong>never put an expression with side effects inside an <code>assert</code>.</strong> Under <code>NDEBUG</code> the device is never initialized, and the failure appears only in release builds, which is the worst possible place for a behavioral difference to hide. Assign the result to a variable and assert on that.</p>
 <p><code>NDEBUG</code> is also the reason assertions are not a substitute for error handling. An assertion documents a condition you believe to be impossible, a violated internal invariant, a contract the caller broke. Conditions that can genuinely occur at runtime, a missing file, a malformed packet, a failed allocation, must be handled with real code, because in the build that ships the assertion is not there.</p>
 </section>
-<section id="math.h-and-the-missing-library" class="level4">
-<h4 class="anchored" data-anchor-id="math.h-and-the-missing-library"><code>&lt;math.h&gt;</code> and the Missing Library</h4>
+<section id="math-missing-library" class="level4">
+<h4 class="anchored" data-anchor-id="math-missing-library"><code>&lt;math.h&gt;</code> and the Missing Library</h4>
 <p>On most Unix systems the math functions live in a separate library from the rest of libc, so using them requires an explicit link flag:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb135"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb135-1"><a href="#cb135-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> program.c <span class="at">-o</span> program <span class="at">-lm</span>      <span class="co"># without -lm: "undefined reference to `sqrt'"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The split is historical, dating to when floating-point support was optional and expensive to carry. It persists as a small trap for anyone who assumes that including a standard header is sufficient, and it is a useful illustration of the difference between the <em>header</em> (which declares) and the <em>library</em> (which defines); see <a href="#the-translation-unit">The Translation Unit</a>. Note that glibc 2.34 and later fold libm into libc, so the flag is increasingly a no-op on Linux while remaining necessary elsewhere.</p>
-<p><code>&lt;math.h&gt;</code> also displays C’s lack of overloading more starkly than any other header. Absolute value is <code>abs</code>, <code>labs</code>, <code>llabs</code>, <code>fabs</code>, <code>fabsf</code>, and <code>fabsl</code> depending on the argument type, and the same fan-out applies to <code>sqrt</code>/<code>sqrtf</code>/<code>sqrtl</code> and the rest. Calling the <code>double</code> version on a <code>float</code> silently promotes, computes at double precision, and narrows back, which is correct but can be needlessly slow on hardware with a single-precision unit. <code>&lt;tgmath.h&gt;</code> layers type-generic macros over the whole set so that <code>sqrt(x)</code> dispatches on the type of <code>x</code>; it is built on <a href="#generic"><code>_Generic</code></a>, and it is the closest thing C has to overloading. ## Compilation and the Build {#the-build} The <strong>build</strong> converts a project’s source files into an artifact you can run or load. For a hosted program that is an executable; for an embedded target it is typically a HEX or ELF image flashed into non-volatile memory, accompanied by a <strong>map file</strong> showing exactly where every function and object landed.</p>
+<p><code>&lt;math.h&gt;</code> also displays C’s lack of overloading more starkly than any other header. Absolute value is <code>abs</code>, <code>labs</code>, <code>llabs</code>, <code>fabs</code>, <code>fabsf</code>, and <code>fabsl</code> depending on the argument type, and the same fan-out applies to <code>sqrt</code>/<code>sqrtf</code>/<code>sqrtl</code> and the rest. Calling the <code>double</code> version on a <code>float</code> silently promotes, computes at double precision, and narrows back, which is correct but can be needlessly slow on hardware with a single-precision unit. <code>&lt;tgmath.h&gt;</code> layers type-generic macros over the whole set so that <code>sqrt(x)</code> dispatches on the type of <code>x</code>; it is built on <a href="#generic"><code>_Generic</code></a>, and it is the closest thing C has to overloading.</p>
 </section>
 </section>
+</section>
+<section id="the-build" class="level2">
+<h2 class="anchored" data-anchor-id="the-build">Compilation and the Build</h2>
+<p>The <strong>build</strong> converts a project’s source files into an artifact you can run or load. For a hosted program that is an executable; for an embedded target it is typically a HEX or ELF image flashed into non-volatile memory, accompanied by a <strong>map file</strong> showing exactly where every function and object landed.</p>
 <section id="the-translation-unit" class="level3">
 <h3 class="anchored" data-anchor-id="the-translation-unit">The Translation Unit</h3>
 <p>The unit of compilation in C is the <strong>translation unit</strong>: one <code>.c</code> file after the preprocessor has finished with it, headers and all. The compiler sees exactly one at a time and knows nothing of the others, which explains nearly everything about how C projects are organized.</p>
@@ -3973,11 +4005,120 @@ the comparison illuminates.
 </section>
 <section id="declarations-vs.-definitions-across-files" class="level3">
 <h3 class="anchored" data-anchor-id="declarations-vs.-definitions-across-files">Declarations vs.&nbsp;Definitions Across Files</h3>
-<!-- STUB: The header/source discipline in practice. What belongs in a header
-     (declarations, types, inline functions, macros) vs. a .c file (definitions).
-     Tentative definitions and the historical "common symbol" behavior, which
-     -fno-common now rejects by default. Link errors and how to read them:
-     "undefined reference" vs. "multiple definition", and what each tells you. -->
+<p>The mechanics of <code>extern</code> and the one-definition rule were covered under <a href="#extern-and-the-definitiondeclaration-split"><code>extern</code> and the Definition/Declaration Split</a>. What follows is the discipline that falls out of them, and the link errors that appear when it is violated.</p>
+<section id="what-goes-where" class="level4">
+<h4 class="anchored" data-anchor-id="what-goes-where">What Goes Where</h4>
+<p>A header may be included by any number of translation units, so anything it contains will exist in all of them. That single fact determines the entire split:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 47%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Belongs in a header (<code>.h</code>)</th>
+<th style="text-align: left;">Belongs in exactly one source file (<code>.c</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Function <em>declarations</em> (prototypes)</td>
+<td style="text-align: left;">Function <em>definitions</em> (bodies)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>extern</code> declarations of globals</td>
+<td style="text-align: left;">Global variable definitions</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>struct</code>, <code>union</code>, and <code>enum</code> definitions</td>
+<td style="text-align: left;"><code>static</code> (file-local) variables and functions</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>typedef</code>s</td>
+<td style="text-align: left;">Anything holding mutable state</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Macros</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>static inline</code> function definitions</td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<p>The rule underneath the table: <strong>a header must not allocate storage or define an external function.</strong> Both would be duplicated in every including translation unit, and the linker would reject the copies.</p>
+<p><code>static inline</code> is the exception that proves it. Marking a small function <code>static inline</code> in a header gives each translation unit its own private copy, which is legal precisely because <code>static</code> means the copies never collide at link time. That is how a header can offer a real function body without violating the rule, and it is the C idiom for what C++ would express with an <code>inline</code> member function.</p>
+</section>
+<section id="tentative-definitions" class="level4">
+<h4 class="anchored" data-anchor-id="tentative-definitions">Tentative Definitions</h4>
+<p>C has a third category between declaration and definition, and it is the reason some questionable code has linked successfully for decades.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb136"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb136-1"><a href="#cb136-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> counter<span class="op">;</span>          <span class="co">// at file scope: a *tentative definition*</span></span>
+<span id="cb136-2"><a href="#cb136-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> counter <span class="op">=</span> <span class="dv">0</span><span class="op">;</span>      <span class="co">// a definition</span></span>
+<span id="cb136-3"><a href="#cb136-3" aria-hidden="true" tabindex="-1"></a><span class="kw">extern</span> <span class="dt">int</span> counter<span class="op">;</span>   <span class="co">// a declaration</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A file-scope declaration with no initializer and no <code>extern</code> is a <strong>tentative definition</strong>. If the translation unit never provides a real definition, the tentative one becomes a definition initialized to zero. That much is standard.</p>
+<p>What was never standard, but was universal, is what happened across <em>multiple</em> translation units. Traditional Unix linkers placed such symbols in a <strong>common</strong> block and merged all the tentative definitions of a name into one object, in the manner of Fortran’s <code>COMMON</code>. So putting <code>int counter;</code> in a header, included by ten files, produced ten tentative definitions that the linker silently merged into a single variable. The code was ill-formed and worked anyway.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="`-fno-common` broke a lot of old code">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>-fno-common</code> broke a lot of old code
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>GCC 10 (2020) changed the default from <code>-fcommon</code> to <code>-fno-common</code>, and Clang followed. Tentative definitions now go in the data section like ordinary definitions, so those ten copies collide and the link fails with <code>multiple definition of 'counter'</code>.</p>
+<p>This is the single most common failure when building an older codebase with a modern compiler, and the error is misleading: it points at code that has not changed and that genuinely used to be fine. The fix is the discipline above, <code>extern int counter;</code> in the header and one real definition in a <code>.c</code> file, not <code>-fcommon</code>, which merely defers the problem.</p>
+</div>
+</div>
+</section>
+<section id="reading-link-errors" class="level4">
+<h4 class="anchored" data-anchor-id="reading-link-errors">Reading Link Errors</h4>
+<p>Linker errors read differently from compiler errors, and knowing which one you are looking at is half the diagnosis. A compiler error cites a source file and line, because the compiler has the source in front of it. A <strong>linker</strong> error cites object files and symbol names, because by then the source is gone and all that remains is a table of names that were promised and names that were provided.</p>
+<p>There are essentially two failures, and they are opposites:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 12%">
+<col style="width: 72%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Error</th>
+<th style="text-align: left;">Means</th>
+<th style="text-align: left;">Usual causes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>undefined reference to 'foo'</code></td>
+<td style="text-align: left;">Nobody defined it</td>
+<td style="text-align: left;">The <code>.c</code> was not compiled or not passed to the link; a library is missing (<code>-lm</code>, <code>-lpthread</code>); the name is misspelled; C++ calling C without <code>extern "C"</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>multiple definition of 'foo'</code></td>
+<td style="text-align: left;">Too many things defined it</td>
+<td style="text-align: left;">A definition (not a declaration) in a header; a missing <code>static</code> on something meant to be file-local; tentative definitions under <code>-fno-common</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>-lm</code> case from <a href="#math-missing-library"><code>&lt;math.h&gt;</code></a> is the canonical undefined reference: the header supplied a declaration, so the compiler was satisfied, and no definition ever arrived because the library was not linked. That split is the whole point. <strong>The header promises; the library delivers.</strong> A missing header is a compile error, a missing library is a link error, and confusing the two sends you editing the wrong file.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Why a wrong declaration links fine and then corrupts">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Why a wrong declaration links fine and then corrupts
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>C symbols carry no type information. The linker matches <code>sample_rate</code> to <code>sample_rate</code> by name alone, with no record of whether either side thought it was an <code>int</code> or a <code>double</code>.</p>
+<p>So if one file declares <code>extern int sample_rate;</code> while another defines <code>double sample_rate = 48000.0;</code>, everything compiles, everything links, and the program reads the first four bytes of a double as an integer. C++ avoids this by <a href="./cpp.html#name-mangling">mangling type information into the symbol name</a>, which turns the mismatch into a link error. In C the only defense is the discipline of putting the declaration in a header that the defining file also includes, so the compiler sees both and can object.</p>
+</div>
+</div>
+</section>
 </section>
 <section id="compiler-attributes" class="level3">
 <h3 class="anchored" data-anchor-id="compiler-attributes">Compiler Attributes</h3>
@@ -3990,7 +4131,7 @@ the comparison illuminates.
 <p>…you can use function attributes to specify certain function properties that may help the compiler optimize calls or check code more carefully for correctness. For example, you can use attributes to specify that a function never returns (noreturn), returns a value depending only on the values of its arguments (const), or has printf-style arguments (format).</p>
 </blockquote>
 <p>The doubled parentheses are part of the syntax, distinguishing an attribute from a function call:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb136"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb136-1"><a href="#cb136-1" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>attribute<span class="op">-</span>list<span class="op">))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb137"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb137-1"><a href="#cb137-1" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>attribute<span class="op">-</span>list<span class="op">))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A few that earn their keep in ordinary hosted code:</p>
 <table class="caption-top table">
 <colgroup>
@@ -4031,8 +4172,8 @@ the comparison illuminates.
 </tbody>
 </table>
 <p>The <code>format</code> attribute is the underrated one: it makes a <code>printf</code> wrapper as type-safe as <code>printf</code> itself.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb137"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb137-1"><a href="#cb137-1" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>format<span class="op">(</span>printf<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">)))</span></span>
-<span id="cb137-2"><a href="#cb137-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> log_message<span class="op">(</span>LogLevel_t level<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>fmt<span class="op">,</span> <span class="op">...);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb138"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb138-1"><a href="#cb138-1" aria-hidden="true" tabindex="-1"></a>__attribute__<span class="op">((</span>format<span class="op">(</span>printf<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">)))</span></span>
+<span id="cb138-2"><a href="#cb138-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> log_message<span class="op">(</span>LogLevel_t level<span class="op">,</span> <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>fmt<span class="op">,</span> <span class="op">...);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>C23 finally standardizes an attribute syntax of its own, <code>[[noreturn]]</code> and <code>[[deprecated]]</code>, borrowed from C++.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Mnemonic: no hash, not preprocessor">
 <div class="callout-header d-flex align-content-center">
@@ -4076,10 +4217,10 @@ the comparison illuminates.
 <h4 class="anchored" data-anchor-id="the-volatile-keyword">The <code>volatile</code> Keyword</h4>
 <p>Optimization is also the context in which the third <a href="#type-qualifiers">type qualifier</a> finally makes sense. Every transformation above rests on an assumption: that the compiler can see every way a value might change. When that assumption is false, the optimizer will happily produce a program that is faster and wrong.</p>
 <p><code>volatile</code> withdraws the assumption. It tells the compiler that an object may change outside the control of the program’s visible flow, so every read and write appearing in the source must actually occur in the object code, in the order written. The optimizer may no longer cache the value in a register, hoist a load out of a loop, or delete a store it believes no one observes.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb138"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb138-1"><a href="#cb138-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Without volatile, the compiler may load *status once, hoist it out of the</span></span>
-<span id="cb138-2"><a href="#cb138-2" aria-hidden="true" tabindex="-1"></a><span class="co">// loop, and generate an infinite loop that never re-reads the address.</span></span>
-<span id="cb138-3"><a href="#cb138-3" aria-hidden="true" tabindex="-1"></a><span class="dt">volatile</span> <span class="dt">uint16_t</span> <span class="op">*</span>status <span class="op">=</span> <span class="op">(</span><span class="dt">volatile</span> <span class="dt">uint16_t</span> <span class="op">*)</span><span class="bn">0xFF00</span><span class="op">;</span></span>
-<span id="cb138-4"><a href="#cb138-4" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(*</span>status <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span> <span class="co">/* wait for the hardware to set the flag */</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb139"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb139-1"><a href="#cb139-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Without volatile, the compiler may load *status once, hoist it out of the</span></span>
+<span id="cb139-2"><a href="#cb139-2" aria-hidden="true" tabindex="-1"></a><span class="co">// loop, and generate an infinite loop that never re-reads the address.</span></span>
+<span id="cb139-3"><a href="#cb139-3" aria-hidden="true" tabindex="-1"></a><span class="dt">volatile</span> <span class="dt">uint16_t</span> <span class="op">*</span>status <span class="op">=</span> <span class="op">(</span><span class="dt">volatile</span> <span class="dt">uint16_t</span> <span class="op">*)</span><span class="bn">0xFF00</span><span class="op">;</span></span>
+<span id="cb139-4"><a href="#cb139-4" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(*</span>status <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span> <span class="co">/* wait for the hardware to set the flag */</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The cast is required: assigning a bare integer to a pointer is a constraint violation that modern compilers reject outright. Note also the fixed-width <code>uint16_t</code> rather than <code>int</code>, since a hardware register has an exact width.</p>
 <p>Three situations genuinely need <code>volatile</code>: memory-mapped hardware registers, variables shared between an interrupt handler and the main flow, and local variables that must survive a <code>longjmp</code>. Note also that <code>const</code> and <code>volatile</code> are not opposites and can coexist. <code>const volatile</code> describes a read-only hardware register: your code must not write it, yet the hardware may change it underneath you.</p>
 <div class="callout callout-style-default callout-warning callout-titled" title="`volatile` is not an atomicity or threading primitive">
@@ -4099,13 +4240,368 @@ the comparison illuminates.
 </section>
 <section id="the-toolchain" class="level3">
 <h3 class="anchored" data-anchor-id="the-toolchain">The Toolchain</h3>
-<!-- STUB: The pieces and their names: cc/gcc/clang as drivers, cpp, as, ld,
-     ar for static libraries, plus the inspection tools (nm, objdump, readelf,
-     size, strings). Common flags worth knowing: -c, -o, -I, -L, -l, -D, -g,
-     -Wall -Wextra -Werror, -std=. Static vs. dynamic linking and where each
-     matters. Cross-reference make.qmd for orchestration and cpp.qmd's
-     cross-compilation section for the bare-metal variant. -->
+<section id="the-pieces" class="level4">
+<h4 class="anchored" data-anchor-id="the-pieces">The Pieces</h4>
+<p><code>gcc</code> is not a compiler. It is a <strong>driver</strong>: a program that decides which real tools to run, in what order, with which arguments, based on the file extensions and flags you gave it. Understanding that removes most of the mystery from a build, because it explains how one command can preprocess, compile, assemble, and link, and why the same command does only some of those when you add <code>-c</code>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 74%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Tool</th>
+<th style="text-align: left;">Does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>cc</code>, <code>gcc</code>, <code>clang</code></td>
+<td style="text-align: left;">The driver. Runs the tools below and passes files between them.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>cpp</code></td>
+<td style="text-align: left;">The preprocessor. Produces a translation unit.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>cc1</code></td>
+<td style="text-align: left;">The compiler proper. C to assembly. Rarely invoked by hand.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>as</code></td>
+<td style="text-align: left;">The assembler. Assembly to an object file (<code>.o</code>).</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>ld</code></td>
+<td style="text-align: left;">The linker. Object files and libraries to an executable.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ar</code></td>
+<td style="text-align: left;">The archiver. Bundles <code>.o</code> files into a static library (<code>.a</code>).</td>
+</tr>
+</tbody>
+</table>
+<p>The driver relationship has a practical consequence worth knowing: to pass an option to the linker rather than the compiler, you must route it through the driver with <code>-Wl,</code>. So <code>-Wl,-rpath,/opt/lib</code> hands <code>-rpath /opt/lib</code> to <code>ld</code>. The same applies to <code>-Wa,</code> for the assembler and <code>-Wp,</code> for the preprocessor. When a build fails with an unrecognized option, this is usually why: the flag was meant for a tool the driver never gave it to.</p>
+</section>
+<section id="flags-worth-knowing" class="level4">
+<h4 class="anchored" data-anchor-id="flags-worth-knowing">Flags Worth Knowing</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Flag</th>
+<th style="text-align: left;">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>-c</code></td>
+<td style="text-align: left;">Compile and assemble, but do not link. Produces a <code>.o</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>-o &lt;file&gt;</code></td>
+<td style="text-align: left;">Name the output.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>-I &lt;dir&gt;</code></td>
+<td style="text-align: left;">Add a directory to the header search path.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>-L &lt;dir&gt;</code></td>
+<td style="text-align: left;">Add a directory to the <em>library</em> search path.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>-l&lt;name&gt;</code></td>
+<td style="text-align: left;">Link <code>lib&lt;name&gt;</code>. <code>-lm</code> finds <code>libm.so</code> or <code>libm.a</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>-D NAME=value</code></td>
+<td style="text-align: left;">Define a macro, as if <code>#define</code> appeared at the top.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>-g</code></td>
+<td style="text-align: left;">Emit debug information.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>-std=c11</code></td>
+<td style="text-align: left;">Select the language standard.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>-O0</code> … <code>-Os</code></td>
+<td style="text-align: left;">Optimization level. See <a href="#optimization-levels">Optimization Levels</a>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>-Wall -Wextra</code></td>
+<td style="text-align: left;">Enable the warnings that matter.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>-fsanitize=...</code></td>
+<td style="text-align: left;">Instrument the binary to catch errors at runtime.</td>
+</tr>
+</tbody>
+</table>
+<p><code>-Wall</code> is badly named: it does not enable all warnings, only an uncontroversial subset. <code>-Wextra</code> adds another useful tier, and even together they are not exhaustive. Treat <code>-Wall -Wextra</code> as the floor for any code you intend to keep, and read the output; in a language where so much is undefined rather than diagnosed, the warnings are a substantial fraction of the safety net that exists.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="`-Werror` belongs in CI, not on your desk">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span><code>-Werror</code> belongs in CI, not on your desk
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>-Werror</code> turns every warning into an error. That is exactly right for a continuous integration job, where it prevents warnings from accumulating until nobody reads them.</p>
+<p>It is usually wrong for local development, where it stops a build over an unused variable in code you are still writing, and where a compiler upgrade that adds a new warning can block work that has nothing to do with the change you were making. Keep it in CI, out of the default local build.</p>
+</div>
+</div>
+</section>
+<section id="inspecting-the-output" class="level4">
+<h4 class="anchored" data-anchor-id="inspecting-the-output">Inspecting the Output</h4>
+<p>A build produces binaries, and binaries are inspectable. These tools answer questions that guessing does not.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Tool</th>
+<th style="text-align: left;">Answers</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>nm</code></td>
+<td style="text-align: left;">What symbols does this object define, and which does it still need?</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>objdump -d</code></td>
+<td style="text-align: left;">What instructions did the compiler actually generate?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>readelf -h</code></td>
+<td style="text-align: left;">What are this binary’s headers, sections, and dependencies?</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>size</code></td>
+<td style="text-align: left;">How large are the text, data, and <a href="./glossary.html#block-started-by-symbol">BSS</a> segments?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>strings</code></td>
+<td style="text-align: left;">What literal text is embedded in this file?</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ldd</code></td>
+<td style="text-align: left;">Which shared libraries will this need at launch, and are they found?</td>
+</tr>
+</tbody>
+</table>
+<p><code>nm</code> is the one that turns an <code>undefined reference</code> from a mystery into a two-minute diagnosis. Symbols are printed with a type letter: <code>T</code> for a definition in the text segment, <code>D</code> for initialized data, <code>B</code> for BSS, and <strong><code>U</code> for undefined</strong>, meaning this object needs the symbol but does not provide it.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb140"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb140-1"><a href="#cb140-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> nm main.o <span class="kw">|</span> <span class="fu">grep</span> filter</span>
+<span id="cb140-2"><a href="#cb140-2" aria-hidden="true" tabindex="-1"></a>                 <span class="ex">U</span> apply_filter          <span class="co"># main.o needs it</span></span>
+<span id="cb140-3"><a href="#cb140-3" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> nm filter.o <span class="kw">|</span> <span class="fu">grep</span> filter</span>
+<span id="cb140-4"><a href="#cb140-4" aria-hidden="true" tabindex="-1"></a><span class="ex">0000000000000000</span> T apply_filter          <span class="co"># filter.o provides it</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>If the second command comes back empty, the definition genuinely is not there and you have a source problem. If it shows <code>T</code> as above, the symbol exists and the link is simply not being told about <code>filter.o</code>, which is a build problem. Two commands, and you know which half of the system to go fix.</p>
+</section>
+<section id="static-and-dynamic-linking" class="level4">
+<h4 class="anchored" data-anchor-id="static-and-dynamic-linking">Static and Dynamic Linking</h4>
+<p>The last step has two modes, and the choice affects deployment more than it affects the code.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 24%">
+<col style="width: 36%">
+<col style="width: 38%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Static (<code>.a</code>)</th>
+<th style="text-align: left;">Dynamic (<code>.so</code>, <code>.dll</code>, <code>.dylib</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Resolved at</td>
+<td style="text-align: left;">Link time</td>
+<td style="text-align: left;">Load time</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Library code lives</td>
+<td style="text-align: left;">Inside your binary</td>
+<td style="text-align: left;">In a shared file on the system</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Binary size</td>
+<td style="text-align: left;">Larger</td>
+<td style="text-align: left;">Smaller</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Memory, many copies</td>
+<td style="text-align: left;">One copy per process</td>
+<td style="text-align: left;">One copy shared by all processes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Updating the library</td>
+<td style="text-align: left;">Requires relinking your program</td>
+<td style="text-align: left;">Takes effect on next launch</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Missing at runtime</td>
+<td style="text-align: left;">Cannot happen</td>
+<td style="text-align: left;">Fails at launch, not at build</td>
+</tr>
+</tbody>
+</table>
+<p>Static linking copies the object code you use into your executable, so the result is self-contained. Nothing can go missing, nothing can change underneath it, and it starts marginally faster because there is no symbol resolution at load. The costs are size and the fact that a security fix in a library requires rebuilding and redistributing every program that embedded it.</p>
+<p>Dynamic linking resolves references when the program launches. One copy of <code>libc</code> serves every process on the machine, a patched library benefits everything immediately, and your binary stays small. The cost is that the dependency is now an environmental assumption: the notorious failure is a program that built cleanly and dies at launch with <code>error while loading shared libraries</code>, because the <code>.so</code> is absent, is the wrong version, or is somewhere the loader does not search. <code>ldd ./program</code> shows exactly what will be looked for and what resolves.</p>
+<p>This tradeoff is why containers frequently ship statically linked binaries: the container is the deployment unit, and a self-contained executable removes an entire category of “works on my machine.” It is also why system tools are usually dynamically linked: a <code>libc</code> fix should not require rebuilding the operating system.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Cross-compilation">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Cross-compilation
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>When the machine building the code is not the machine running it, the entire toolchain above is replaced by a target-prefixed version: <code>arm-none-eabi-gcc</code>, <code>arm-none-eabi-ld</code>, and so on, paired with a sysroot supplying the target’s headers and libraries. The concepts do not change, only the names. The <a href="./cpp.html#cross-compilation-and-bare-metal">C++ chapter’s treatment</a> covers the bare-metal case in detail, and it applies to C unchanged.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="debugging-and-diagnosis" class="level3">
+<h3 class="anchored" data-anchor-id="debugging-and-diagnosis">Debugging and Diagnosis</h3>
+<div class="subheading">
+<p>Four tools, in the order you should reach for them</p>
+</div>
+<p>When a C program misbehaves, there are four tiers of tool available, and they are genuinely ordered: each catches things the previous one cannot, and costs more to use. Working down the list in order will find most bugs faster than starting at the bottom.</p>
+<ol type="1">
+<li><strong>Compiler warnings.</strong> Free, instant, and catch a surprising amount. <code>-Wall -Wextra</code>.</li>
+<li><strong>Static analysis.</strong> Finds suspicious patterns without running the code.</li>
+<li><strong>Sanitizers.</strong> Instrument the binary to catch memory and UB errors as they happen.</li>
+<li><strong>The debugger.</strong> Inspect a running program, or a corpse.</li>
+</ol>
+<section id="building-for-debuggability" class="level4">
+<h4 class="anchored" data-anchor-id="building-for-debuggability">Building for Debuggability</h4>
+<p>Two flags matter before any of this works.</p>
+<p><code>-g</code> emits debug information: the mapping from machine addresses back to source lines, variable names, and types. Without it a debugger can show you registers and addresses and essentially nothing else. It does not slow the program down; it only makes the binary larger, and it can be stripped later.</p>
+<p><code>-Og</code> is the optimization level designed to coexist with <code>-g</code>. This matters more than it sounds. At <code>-O2</code> the optimizer inlines functions, reorders statements, and keeps variables in registers that it reuses for other purposes, so the debugger reports <code>&lt;optimized out&gt;</code> for a variable you are staring at in the source, and single-stepping jumps backwards through lines in an order that looks deranged. Neither is a malfunction; the machine code genuinely no longer corresponds to the source in the way you assumed. This is the most common reason people conclude the debugger is broken and go back to <code>printf</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb141"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb141-1"><a href="#cb141-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> <span class="at">-g</span> <span class="at">-Og</span> <span class="at">-Wall</span> <span class="at">-Wextra</span> <span class="at">-o</span> program main.c</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="the-dozen-commands-that-matter" class="level4">
+<h4 class="anchored" data-anchor-id="the-dozen-commands-that-matter">The Dozen Commands That Matter</h4>
+<p>GDB and LLDB have hundreds of commands and you need roughly twelve. LLDB accepts most GDB spellings, so the differences below rarely bite.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 75%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>run</code> (<code>r</code>)</td>
+<td style="text-align: left;">Start the program.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>break f</code> (<code>b</code>)</td>
+<td style="text-align: left;">Break at function <code>f</code>, or <code>break file.c:42</code> at a line.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>continue</code> (<code>c</code>)</td>
+<td style="text-align: left;">Resume until the next breakpoint.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>next</code> (<code>n</code>)</td>
+<td style="text-align: left;">Execute one line, stepping <em>over</em> calls.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>step</code> (<code>s</code>)</td>
+<td style="text-align: left;">Execute one line, stepping <em>into</em> calls.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>finish</code></td>
+<td style="text-align: left;">Run until the current function returns.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>backtrace</code> (<code>bt</code>)</td>
+<td style="text-align: left;">The call stack. <strong>The first thing to type after a crash.</strong></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>frame N</code> (<code>f</code>)</td>
+<td style="text-align: left;">Select a stack frame to inspect.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>print expr</code> (<code>p</code>)</td>
+<td style="text-align: left;">Evaluate and show an expression, including <code>p *ptr</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>info locals</code></td>
+<td style="text-align: left;">Every local in the current frame.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>watch expr</code></td>
+<td style="text-align: left;">Break when an expression’s value changes.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>x/16xb ptr</code></td>
+<td style="text-align: left;">Examine raw memory: 16 hex bytes at <code>ptr</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><code>watch</code> is the underused one. When a value is being corrupted and you have no idea by whom, a watchpoint stops the program at the instant of the write and <code>bt</code> tells you who did it. That question is nearly unanswerable by inspection and takes about thirty seconds this way.</p>
+</section>
+<section id="a-worked-session" class="level4">
+<h4 class="anchored" data-anchor-id="a-worked-session">A Worked Session</h4>
+<p>A program crashes. Here is the whole loop, start to finish:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb142"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb142-1"><a href="#cb142-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> Node <span class="op">{</span> <span class="dt">int</span> value<span class="op">;</span> <span class="kw">struct</span> Node <span class="op">*</span>next<span class="op">;</span> <span class="op">}</span> Node<span class="op">;</span></span>
+<span id="cb142-2"><a href="#cb142-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb142-3"><a href="#cb142-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> sum_list<span class="op">(</span>Node <span class="op">*</span>head<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb142-4"><a href="#cb142-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> total <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb142-5"><a href="#cb142-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span>Node <span class="op">*</span>n <span class="op">=</span> head<span class="op">;</span> n<span class="op">-&gt;</span>next <span class="op">!=</span> NULL<span class="op">;</span> n <span class="op">=</span> n<span class="op">-&gt;</span>next<span class="op">)</span> <span class="op">{</span>   <span class="co">// bug is here</span></span>
+<span id="cb142-6"><a href="#cb142-6" aria-hidden="true" tabindex="-1"></a>        total <span class="op">+=</span> n<span class="op">-&gt;</span>value<span class="op">;</span></span>
+<span id="cb142-7"><a href="#cb142-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb142-8"><a href="#cb142-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> total<span class="op">;</span></span>
+<span id="cb142-9"><a href="#cb142-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<pre><code>$ cc -g -Og -o list list.c &amp;&amp; ./list
+Segmentation fault (core dumped)
+
+$ gdb ./list
+(gdb) run
+Program received signal SIGSEGV, Segmentation fault.
+0x0000555555555181 in sum_list (head=0x5555555592a0) at list.c:5
+5           for (Node *n = head; n-&gt;next != NULL; n = n-&gt;next) {
+
+(gdb) bt
+#0  sum_list (head=0x5555555592a0) at list.c:5
+#1  0x00005555555551d4 in main () at list.c:16
+
+(gdb) print n
+$1 = (Node *) 0x0
+
+(gdb) print n-&gt;next
+Cannot access memory at address 0x8</code></pre>
+<p>The diagnosis takes three commands. <code>bt</code> establishes that the crash is in <code>sum_list</code>, called from <code>main</code>, rather than somewhere unexpected. <code>print n</code> shows the loop variable is <code>NULL</code>. <code>print n-&gt;next</code> confirms it by failing at address <code>0x8</code>, which is the offset of <code>next</code> within the struct, added to a null base.</p>
+<p>The bug: the loop tests <code>n-&gt;next != NULL</code> but dereferences <code>n</code>, so on the final iteration it advances <code>n</code> to <code>NULL</code> and then tests <code>NULL-&gt;next</code>. The condition should be <code>n != NULL</code>. Note that the sum was also silently missing the last element before it crashed, which is the quieter half of the same mistake.</p>
+</section>
+<section id="when-not-to-reach-for-the-debugger" class="level4">
+<h4 class="anchored" data-anchor-id="when-not-to-reach-for-the-debugger">When Not to Reach for the Debugger</h4>
+<p>The debugger is superb at one thing: showing you the complete state of a program at a single instant. It follows that it is weak wherever the question is not about a single instant, and being honest about that is what makes it worth using when it does fit.</p>
+<p><strong><code>printf</code> is better for patterns over time.</strong> If a value drifts wrong over a thousand iterations, or two events race in an order you cannot predict, or a bug appears once in fifty runs, stepping is hopeless; you need a log you can scan, diff, or graph. This is not a lesser technique, it is the right tool for a different question. Two cautions: buffered output can be lost when the program crashes, so flush or use <code>stderr</code> (see <a href="#buffering">Buffering</a>), and instrumentation changes timing, which can move or hide a race.</p>
+<p><strong>Sanitizers are better for memory bugs, and it is not close.</strong> A use-after-free under a debugger gives you a crash at the point of <em>use</em>, and finding who freed it is manual archaeology. AddressSanitizer prints both, with stack traces:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb144"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb144-1"><a href="#cb144-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cc</span> <span class="at">-g</span> <span class="at">-fsanitize</span><span class="op">=</span>address,undefined <span class="at">-o</span> program main.c</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>It reports the access, the allocation that owns the memory, and the <code>free</code> that released it. UndefinedBehaviorSanitizer catches signed overflow, misaligned access, and shifts past the width of a type, which a debugger structurally cannot show you, because by then the optimizer has already reasoned on the assumption they never happen. The runtime cost is roughly 2x for ASan, which is fine for a test suite and the reason you would not ship it.</p>
+<p>Valgrind answers a related question without recompiling, and finds leaks that ASan will not report unless asked. Reach for it when you cannot rebuild, or when you want a leak report from an existing binary.</p>
+<p><strong>Where the debugger genuinely wins.</strong> Inspecting a core dump from a crash you cannot reproduce (<code>gdb ./program core</code>). Answering “what is the state right now” when a program is wedged. Stepping through unfamiliar code to learn what it does, which is a reading tool rather than a debugging one and is arguably its most underrated use. And catching the moment a value changes, via <code>watch</code>.</p>
+<p>The practical summary is that a memory bug should go to a sanitizer first, a timing or pattern bug to logging, and a “how did this get into this state” bug to the debugger. Not using the debugger much is a reasonable outcome of that ordering rather than a gap; it is worth knowing precisely so you recognize the third case when you hit it.</p>
+</section>
+<section id="static-analysis" class="level4">
+<h4 class="anchored" data-anchor-id="static-analysis">Static Analysis</h4>
+<p>Between compiler warnings and running the code sits static analysis: tools that examine source without executing it, applying checks too expensive or too opinionated for the compiler to run by default.</p>
+<p><code>clang-tidy</code> covers bug-prone patterns, portability, and style, and is configurable per project. <code>cppcheck</code> is standalone, easy to run, and finds buffer overruns, null dereferences, and resource leaks by whole-program reasoning. Both produce false positives, which is the nature of the technique: they must be conservative where the compiler must be certain. Run them in CI, tune the check set once, and treat the output as a prompt to look rather than an accusation.</p>
 <p>Build orchestration itself belongs to a separate tool. Make tracks which outputs depend on which inputs and rebuilds only what changed, and it gets full treatment in <a href="./make.html">the Makefile chapter</a>.</p>
+</section>
 </section>
 </section>
 <section id="undefined-behavior" class="level2">
@@ -4145,43 +4641,43 @@ the comparison illuminates.
 <section id="integer-promotion-and-implicit-conversions" class="level3">
 <h3 class="anchored" data-anchor-id="integer-promotion-and-implicit-conversions">Integer Promotion and Implicit Conversions</h3>
 <p>Before arithmetic, any integer type narrower than <code>int</code> is promoted to <code>int</code> (the <em>integer promotions</em>). The arithmetic therefore happens at <code>int</code> width, not at the operands’ declared width, and whether that saves you or burns you depends entirely on how wide <code>int</code> is on the target.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb139"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb139-1"><a href="#cb139-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> a <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
-<span id="cb139-2"><a href="#cb139-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> b <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
-<span id="cb139-3"><a href="#cb139-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb139-4"><a href="#cb139-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int32_t</span> result <span class="op">=</span> a <span class="op">+</span> b<span class="op">;</span></span>
-<span id="cb139-5"><a href="#cb139-5" aria-hidden="true" tabindex="-1"></a><span class="co">// 32-bit int: a and b promote to int, sum is 60000, correct.</span></span>
-<span id="cb139-6"><a href="#cb139-6" aria-hidden="true" tabindex="-1"></a><span class="co">// 16-bit int: promotion buys no headroom, so the sum overflows before assignment.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb145"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb145-1"><a href="#cb145-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> a <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
+<span id="cb145-2"><a href="#cb145-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> b <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
+<span id="cb145-3"><a href="#cb145-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb145-4"><a href="#cb145-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int32_t</span> result <span class="op">=</span> a <span class="op">+</span> b<span class="op">;</span></span>
+<span id="cb145-5"><a href="#cb145-5" aria-hidden="true" tabindex="-1"></a><span class="co">// 32-bit int: a and b promote to int, sum is 60000, correct.</span></span>
+<span id="cb145-6"><a href="#cb145-6" aria-hidden="true" tabindex="-1"></a><span class="co">// 16-bit int: promotion buys no headroom, so the sum overflows before assignment.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Casting one operand to a type at least as wide as the result forces the arithmetic to happen at that width:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb140"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb140-1"><a href="#cb140-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int32_t</span> result <span class="op">=</span> <span class="op">(</span><span class="dt">int32_t</span><span class="op">)</span>a <span class="op">+</span> b<span class="op">;</span>   <span class="co">// b converts too; the addition is 32-bit everywhere</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb146"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb146-1"><a href="#cb146-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int32_t</span> result <span class="op">=</span> <span class="op">(</span><span class="dt">int32_t</span><span class="op">)</span>a <span class="op">+</span> b<span class="op">;</span>   <span class="co">// b converts too; the addition is 32-bit everywhere</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The related trap is <strong>signed/unsigned comparison</strong>. When one operand is signed and the other unsigned of the same rank, the signed value converts to unsigned, so <code>-1 &lt; 1u</code> is <em>false</em>. This is why <code>for (size_t i = n - 1; i &gt;= 0; i--)</code> never terminates: an unsigned value is always <code>&gt;= 0</code>. Enable <code>-Wsign-compare</code> (included in <code>-Wextra</code>).</p>
 </section>
 <section id="operator-precedence-surprises" class="level3">
 <h3 class="anchored" data-anchor-id="operator-precedence-surprises">Operator Precedence Surprises</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb141"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb141-1"><a href="#cb141-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>flags <span class="op">&amp;</span> MASK <span class="op">==</span> ENABLED<span class="op">)</span>     <span class="co">// parsed as: flags &amp; (MASK == ENABLED)</span></span>
-<span id="cb141-2"><a href="#cb141-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">((</span>flags <span class="op">&amp;</span> MASK<span class="op">)</span> <span class="op">==</span> ENABLED<span class="op">)</span>   <span class="co">// what you meant</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb147"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb147-1"><a href="#cb147-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>flags <span class="op">&amp;</span> MASK <span class="op">==</span> ENABLED<span class="op">)</span>     <span class="co">// parsed as: flags &amp; (MASK == ENABLED)</span></span>
+<span id="cb147-2"><a href="#cb147-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">((</span>flags <span class="op">&amp;</span> MASK<span class="op">)</span> <span class="op">==</span> ENABLED<span class="op">)</span>   <span class="co">// what you meant</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Bitwise operators bind more loosely than comparison operators</strong>, a decision Ritchie later called a mistake, retained because code already depended on it. The same ordering catches shifts: <code>1 &lt;&lt; n + 1</code> shifts by <code>n + 1</code>.</p>
 <p>Neither case produces a warning by default, because both are perfectly legal expressions that simply mean something other than what you wrote. Parenthesize any expression mixing bitwise operators with comparison or arithmetic, and consult the <a href="#operators-and-precedence">precedence table</a> when in doubt.</p>
 </section>
 <section id="assignment-vs.-comparison" class="level3">
 <h3 class="anchored" data-anchor-id="assignment-vs.-comparison">Assignment vs.&nbsp;Comparison</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb142"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb142-1"><a href="#cb142-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">=</span> <span class="dv">5</span><span class="op">)</span>   <span class="co">// assignment, not comparison; always true</span></span>
-<span id="cb142-2"><a href="#cb142-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">==</span> <span class="dv">5</span><span class="op">)</span>  <span class="co">// comparison</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb148"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb148-1"><a href="#cb148-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">=</span> <span class="dv">5</span><span class="op">)</span>   <span class="co">// assignment, not comparison; always true</span></span>
+<span id="cb148-2"><a href="#cb148-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">==</span> <span class="dv">5</span><span class="op">)</span>  <span class="co">// comparison</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Modern compilers warn about this when the assignment is not parenthesized, so <code>-Wall</code> catches most instances. Where an assignment in a condition is genuinely intended, wrap it in extra parentheses to say so: <code>while ((c = getchar()) != EOF)</code>.</p>
 </section>
 <section id="buffer-overruns" class="level3">
 <h3 class="anchored" data-anchor-id="buffer-overruns">Buffer Overruns</h3>
 <p>The classic C vulnerability:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb143"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb143-1"><a href="#cb143-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> buffer<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
-<span id="cb143-2"><a href="#cb143-2" aria-hidden="true" tabindex="-1"></a>strcpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">);</span>   <span class="co">// overruns the buffer</span></span>
-<span id="cb143-3"><a href="#cb143-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb143-4"><a href="#cb143-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Bounded, but silently truncates, and may not terminate</span></span>
-<span id="cb143-5"><a href="#cb143-5" aria-hidden="true" tabindex="-1"></a>strncpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">);</span></span>
-<span id="cb143-6"><a href="#cb143-6" aria-hidden="true" tabindex="-1"></a>buffer<span class="op">[</span><span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb149"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb149-1"><a href="#cb149-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> buffer<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
+<span id="cb149-2"><a href="#cb149-2" aria-hidden="true" tabindex="-1"></a>strcpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">);</span>   <span class="co">// overruns the buffer</span></span>
+<span id="cb149-3"><a href="#cb149-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb149-4"><a href="#cb149-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Bounded, but silently truncates, and may not terminate</span></span>
+<span id="cb149-5"><a href="#cb149-5" aria-hidden="true" tabindex="-1"></a>strncpy<span class="op">(</span>buffer<span class="op">,</span> <span class="st">"This string is way too long"</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb149-6"><a href="#cb149-6" aria-hidden="true" tabindex="-1"></a>buffer<span class="op">[</span><span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">)</span> <span class="op">-</span> <span class="dv">1</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>snprintf</code> is usually the better tool:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb144"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb144-1"><a href="#cb144-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> n <span class="op">=</span> snprintf<span class="op">(</span>buffer<span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">),</span> <span class="st">"Value: </span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> x<span class="op">);</span></span>
-<span id="cb144-2"><a href="#cb144-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>n <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">||</span> <span class="op">(</span><span class="dt">size_t</span><span class="op">)</span>n <span class="op">&gt;=</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">))</span> <span class="op">{</span></span>
-<span id="cb144-3"><a href="#cb144-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* output was truncated */</span></span>
-<span id="cb144-4"><a href="#cb144-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb150"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb150-1"><a href="#cb150-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> n <span class="op">=</span> snprintf<span class="op">(</span>buffer<span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">),</span> <span class="st">"Value: </span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> x<span class="op">);</span></span>
+<span id="cb150-2"><a href="#cb150-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>n <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">||</span> <span class="op">(</span><span class="dt">size_t</span><span class="op">)</span>n <span class="op">&gt;=</span> <span class="kw">sizeof</span><span class="op">(</span>buffer<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb150-3"><a href="#cb150-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* output was truncated */</span></span>
+<span id="cb150-4"><a href="#cb150-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="callout callout-style-default callout-warning callout-titled" title="Truncation is a bug too">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -4198,45 +4694,45 @@ the comparison illuminates.
 </section>
 <section id="off-by-one-errors" class="level3">
 <h3 class="anchored" data-anchor-id="off-by-one-errors">Off-by-One Errors</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb145"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb145-1"><a href="#cb145-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> array<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
-<span id="cb145-2"><a href="#cb145-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;=</span> <span class="dv">10</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span>   <span class="co">// writes array[10]: out of bounds</span></span>
-<span id="cb145-3"><a href="#cb145-3" aria-hidden="true" tabindex="-1"></a>    array<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
-<span id="cb145-4"><a href="#cb145-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb151"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb151-1"><a href="#cb151-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> array<span class="op">[</span><span class="dv">10</span><span class="op">];</span></span>
+<span id="cb151-2"><a href="#cb151-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;=</span> <span class="dv">10</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span>   <span class="co">// writes array[10]: out of bounds</span></span>
+<span id="cb151-3"><a href="#cb151-3" aria-hidden="true" tabindex="-1"></a>    array<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb151-4"><a href="#cb151-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A loop over <code>n</code> elements runs while the index is <code>&lt; n</code>, never <code>&lt;= n</code>. Counting down, start at <code>n - 1</code> and run while the index is <code>&gt;= 0</code>, and keep the index <em>signed</em> so the termination test can actually fail.</p>
 </section>
 <section id="pointer-arithmetic-and-free" class="level3">
 <h3 class="anchored" data-anchor-id="pointer-arithmetic-and-free">Pointer Arithmetic and <code>free</code></h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb146"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb146-1"><a href="#cb146-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> <span class="op">*</span>p <span class="op">=</span> malloc<span class="op">(</span><span class="dv">10</span> <span class="op">*</span> <span class="kw">sizeof</span> <span class="op">*</span>p<span class="op">);</span></span>
-<span id="cb146-2"><a href="#cb146-2" aria-hidden="true" tabindex="-1"></a>p<span class="op">++;</span>              <span class="co">// now points at the second element</span></span>
-<span id="cb146-3"><a href="#cb146-3" aria-hidden="true" tabindex="-1"></a>free<span class="op">(</span>p<span class="op">);</span>          <span class="co">// undefined behavior: not the pointer malloc returned</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb152"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb152-1"><a href="#cb152-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> <span class="op">*</span>p <span class="op">=</span> malloc<span class="op">(</span><span class="dv">10</span> <span class="op">*</span> <span class="kw">sizeof</span> <span class="op">*</span>p<span class="op">);</span></span>
+<span id="cb152-2"><a href="#cb152-2" aria-hidden="true" tabindex="-1"></a>p<span class="op">++;</span>              <span class="co">// now points at the second element</span></span>
+<span id="cb152-3"><a href="#cb152-3" aria-hidden="true" tabindex="-1"></a>free<span class="op">(</span>p<span class="op">);</span>          <span class="co">// undefined behavior: not the pointer malloc returned</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>free</code> must receive exactly the pointer the allocator returned. Keep the original and iterate with a separate cursor.</p>
 </section>
 <section id="modifying-string-literals" class="level3">
 <h3 class="anchored" data-anchor-id="modifying-string-literals">Modifying String Literals</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb147"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb147-1"><a href="#cb147-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>str <span class="op">=</span> <span class="st">"Hello"</span><span class="op">;</span>   <span class="co">// points into read-only storage</span></span>
-<span id="cb147-2"><a href="#cb147-2" aria-hidden="true" tabindex="-1"></a>str<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'h'</span><span class="op">;</span>          <span class="co">// undefined behavior; typically a segfault</span></span>
-<span id="cb147-3"><a href="#cb147-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb147-4"><a href="#cb147-4" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> arr<span class="op">[]</span> <span class="op">=</span> <span class="st">"Hello"</span><span class="op">;</span>  <span class="co">// a modifiable copy on the stack</span></span>
-<span id="cb147-5"><a href="#cb147-5" aria-hidden="true" tabindex="-1"></a>arr<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'h'</span><span class="op">;</span>          <span class="co">// fine</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb153"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb153-1"><a href="#cb153-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>str <span class="op">=</span> <span class="st">"Hello"</span><span class="op">;</span>   <span class="co">// points into read-only storage</span></span>
+<span id="cb153-2"><a href="#cb153-2" aria-hidden="true" tabindex="-1"></a>str<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'h'</span><span class="op">;</span>          <span class="co">// undefined behavior; typically a segfault</span></span>
+<span id="cb153-3"><a href="#cb153-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb153-4"><a href="#cb153-4" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> arr<span class="op">[]</span> <span class="op">=</span> <span class="st">"Hello"</span><span class="op">;</span>  <span class="co">// a modifiable copy on the stack</span></span>
+<span id="cb153-5"><a href="#cb153-5" aria-hidden="true" tabindex="-1"></a>arr<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> <span class="ch">'h'</span><span class="op">;</span>          <span class="co">// fine</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Declare pointers to literals as <code>const char *</code> and let the compiler catch the write.</p>
 </section>
 <section id="forgetting-break-in-switch" class="level3">
 <h3 class="anchored" data-anchor-id="forgetting-break-in-switch">Forgetting <code>break</code> in <code>switch</code></h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb148"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb148-1"><a href="#cb148-1" aria-hidden="true" tabindex="-1"></a><span class="cf">switch</span> <span class="op">(</span>state<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb148-2"><a href="#cb148-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> STATE_IDLE<span class="op">:</span></span>
-<span id="cb148-3"><a href="#cb148-3" aria-hidden="true" tabindex="-1"></a>        init_processing<span class="op">();</span></span>
-<span id="cb148-4"><a href="#cb148-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">// falls through to STATE_ACTIVE, almost certainly by accident</span></span>
-<span id="cb148-5"><a href="#cb148-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> STATE_ACTIVE<span class="op">:</span></span>
-<span id="cb148-6"><a href="#cb148-6" aria-hidden="true" tabindex="-1"></a>        process_data<span class="op">();</span></span>
-<span id="cb148-7"><a href="#cb148-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span><span class="op">;</span></span>
-<span id="cb148-8"><a href="#cb148-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb154"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb154-1"><a href="#cb154-1" aria-hidden="true" tabindex="-1"></a><span class="cf">switch</span> <span class="op">(</span>state<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb154-2"><a href="#cb154-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> STATE_IDLE<span class="op">:</span></span>
+<span id="cb154-3"><a href="#cb154-3" aria-hidden="true" tabindex="-1"></a>        init_processing<span class="op">();</span></span>
+<span id="cb154-4"><a href="#cb154-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">// falls through to STATE_ACTIVE, almost certainly by accident</span></span>
+<span id="cb154-5"><a href="#cb154-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> STATE_ACTIVE<span class="op">:</span></span>
+<span id="cb154-6"><a href="#cb154-6" aria-hidden="true" tabindex="-1"></a>        process_data<span class="op">();</span></span>
+<span id="cb154-7"><a href="#cb154-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb154-8"><a href="#cb154-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Deliberate fall-through should be announced, both for readers and for <code>-Wimplicit-fallthrough</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb149"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb149-1"><a href="#cb149-1" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> STATE_WARNING<span class="op">:</span></span>
-<span id="cb149-2"><a href="#cb149-2" aria-hidden="true" tabindex="-1"></a>    flash_led<span class="op">();</span></span>
-<span id="cb149-3"><a href="#cb149-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* fallthrough */</span></span>
-<span id="cb149-4"><a href="#cb149-4" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> STATE_ERROR<span class="op">:</span></span>
-<span id="cb149-5"><a href="#cb149-5" aria-hidden="true" tabindex="-1"></a>    halt_system<span class="op">();</span></span>
-<span id="cb149-6"><a href="#cb149-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">break</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb155"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb155-1"><a href="#cb155-1" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> STATE_WARNING<span class="op">:</span></span>
+<span id="cb155-2"><a href="#cb155-2" aria-hidden="true" tabindex="-1"></a>    flash_led<span class="op">();</span></span>
+<span id="cb155-3"><a href="#cb155-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">/* fallthrough */</span></span>
+<span id="cb155-4"><a href="#cb155-4" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> STATE_ERROR<span class="op">:</span></span>
+<span id="cb155-5"><a href="#cb155-5" aria-hidden="true" tabindex="-1"></a>    halt_system<span class="op">();</span></span>
+<span id="cb155-6"><a href="#cb155-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">break</span><span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="uninitialized-variables" class="level3">
 <h3 class="anchored" data-anchor-id="uninitialized-variables">Uninitialized Variables</h3>
@@ -4245,27 +4741,236 @@ the comparison illuminates.
 </section>
 <section id="key-differences-from-c" class="level2">
 <h2 class="anchored" data-anchor-id="key-differences-from-c">Key Differences from C++</h2>
-<!-- STUB: Table plus prose. The reader has cpp.qmd available, so this should be
-     oriented for someone moving C -> C++ and should not duplicate cpp.qmd's
-     "Key Differences from C" table verbatim. Candidates: no classes/RAII, no
-     overloading, no templates, no exceptions, no references, void* conversion,
-     const semantics (linkage and constant expressions), union punning legality,
-     designated initializers, struct tag namespace, VLAs. -->
+<div class="subheading">
+<p>What C leaves to you</p>
+</div>
+<p>The two languages share a syntax, a type system foundation, a pointer model, and a compilation model, which is exactly what makes the differences easy to underestimate. Nearly everything C++ adds is an answer to a problem C solves by convention, and the convention is the part that has to live in your head.</p>
+<p>The table reads in the direction you are travelling: here is what you do in C, and here is what C++ offers instead.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Concern</th>
+<th style="text-align: left;">C</th>
+<th style="text-align: left;">C++</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Cleanup</td>
+<td style="text-align: left;">Manual <code>free</code>/<code>fclose</code>, often a <code>goto</code> ladder</td>
+<td style="text-align: left;"><a href="./cpp.html#raii">RAII</a>: destructors run on every exit path</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Heap ownership</td>
+<td style="text-align: left;">Raw pointers; who frees is documented, not enforced</td>
+<td style="text-align: left;"><a href="./cpp.html#unique-ptr"><code>unique_ptr</code></a>, <a href="./cpp.html#shared-ptr"><code>shared_ptr</code></a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Generic code</td>
+<td style="text-align: left;"><code>void *</code> plus an element size, or macros</td>
+<td style="text-align: left;"><a href="./cpp.html#templates">Templates</a>, type-checked per instantiation</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="./glossary.html#dynamic-dispatch">Dynamic dispatch</a></td>
+<td style="text-align: left;">A <code>struct</code> of function pointers, filled in by hand</td>
+<td style="text-align: left;"><a href="./cpp.html#virtual-functions"><code>virtual</code> functions</a> and the vtable</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Failure reporting</td>
+<td style="text-align: left;">Return code, sentinel value, or <code>errno</code></td>
+<td style="text-align: left;"><a href="./cpp.html#exceptions">Exceptions</a> or <a href="./cpp.html#alternatives"><code>optional</code>/<code>expected</code></a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Out-parameters</td>
+<td style="text-align: left;"><code>T *</code> the callee writes through; may be null</td>
+<td style="text-align: left;"><a href="./cpp.html#references"><code>T&amp;</code></a>: cannot be null, cannot be reseated</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Name collisions</td>
+<td style="text-align: left;">Prefix every public symbol: <code>png_read_info</code></td>
+<td style="text-align: left;"><a href="./cpp.html#namespaces">Namespaces</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Encapsulation</td>
+<td style="text-align: left;"><code>static</code> in a <code>.c</code> file, plus convention</td>
+<td style="text-align: left;"><a href="./cpp.html#access-control"><code>private</code></a>, enforced by the compiler</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Data structures</td>
+<td style="text-align: left;">Write your own, once per project</td>
+<td style="text-align: left;"><a href="./cpp.html#containers">STL containers</a> and algorithms</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Strings</td>
+<td style="text-align: left;"><code>char *</code>, a terminator, and <code>&lt;string.h&gt;</code></td>
+<td style="text-align: left;"><code>std::string</code>, <code>std::string_view</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Compile-time values</td>
+<td style="text-align: left;"><code>#define</code>, or the enum hack</td>
+<td style="text-align: left;"><a href="./cpp.html#constexpr-and-if-constexpr"><code>constexpr</code></a>: typed, scoped</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">One name, many types</td>
+<td style="text-align: left;"><code>abs</code>, <code>labs</code>, <code>fabs</code></td>
+<td style="text-align: left;">Overloading, and <code>&lt;tgmath.h&gt;</code> becomes unnecessary</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Symbols</td>
+<td style="text-align: left;">One per name, untyped</td>
+<td style="text-align: left;"><a href="./cpp.html#name-mangling">Mangled</a>, so mismatches fail to link</td>
+</tr>
+</tbody>
+</table>
+<p>The first row carries the rest. In C, a resource’s lifetime lives in the programmer’s memory and in comments; in C++ it lives in the type system, and the compiler emits the cleanup. Once destructors exist, smart pointers are just RAII pointed at the heap and containers are RAII pointed at collections. The <code>goto</code> cleanup ladder from the <a href="#files">file-reading example</a> is the C answer to the same problem, and it works, but it is re-derived by hand in every function that acquires more than one thing.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="Valid C is not automatically valid C++">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Valid C is not automatically valid C++
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The overlap is large enough to be misleading. Several things compile in both and mean different things, and several ordinary C constructs are simply rejected by a C++ compiler:</p>
+<ul>
+<li><strong><code>void *</code> does not convert implicitly.</strong> The idiomatic <code>int *p = malloc(n);</code> is an error in C++, which is why C++ code casts, and why it should be using <code>new</code> or a container instead.</li>
+<li><strong><code>sizeof('a')</code> differs.</strong> A character constant is an <code>int</code> in C and a <code>char</code> in C++, so the answer is 4 in one language and 1 in the other.</li>
+<li><strong>Union type punning is legal in C</strong> (C99 onward) and undefined in C++, where the sanctioned tools are <code>std::bit_cast</code> or <code>memcpy</code>. See <a href="#unions">Unions</a>.</li>
+<li><strong><code>const</code> has internal linkage in C++</strong> and external linkage in C, so a <code>const</code> at file scope in a header behaves differently in each.</li>
+<li><strong>Designated initializers and VLAs</strong> are C99 features that C++ never adopted wholesale; designated initializers arrived in a restricted form in C++20, and variable-length arrays never did.</li>
+<li><strong><code>struct</code> tags share the ordinary namespace in C++</strong>, so the <code>typedef struct Foo Foo;</code> dance C requires is unnecessary.</li>
+</ul>
+<p>Compile C as C and C++ as C++, and mark the boundary with <code>extern "C"</code> so the C++ side does not mangle names the C side expects unmangled.</p>
+</div>
+</div>
+<p>The honest summary is that C++ is not “C with more features,” it is a different set of habits built on the same machine model. A C++ program written in C’s idioms, raw <code>new</code>, manual cleanup, hand-rolled containers, is worse than the C program it replaced: it pays C++’s compile times and complexity and collects none of the safety. If you move, move the idioms too.</p>
 </section>
 <section id="key-differences-from-rust" class="level2">
 <h2 class="anchored" data-anchor-id="key-differences-from-rust">Key Differences from Rust</h2>
-<!-- STUB: Table plus prose. Ownership and borrowing vs. manual malloc/free,
-     Option<T> vs. NULL, Result vs. errno and sentinel returns, slices vs. the
-     pointer+length convention, traits vs. function pointers, no UB in safe Rust
-     and what unsafe actually opts into, cargo vs. make + headers. Link to
-     rust-ho.qmd for ownership and rust-in.qmd for the basics. -->
+<div class="subheading">
+<p>The same job, fifty years apart</p>
+</div>
+<p>Rust targets C’s territory directly: systems work, no garbage collector, no runtime to speak of, performance in the same class. The difference is what each language does with the knowledge that programmers make mistakes. C’s answer, stated plainly in its design principles, is to <a href="#the-c-philosophy">trust the programmer</a>. Rust’s is to require proof.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Concern</th>
+<th style="text-align: left;">C</th>
+<th style="text-align: left;">Rust</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Memory lifetime</td>
+<td style="text-align: left;"><code>malloc</code>/<code>free</code>, correctness by discipline</td>
+<td style="text-align: left;"><a href="./rust-ho.html#ownership">Ownership</a>; freed automatically at scope end</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aliasing</td>
+<td style="text-align: left;">Unrestricted; <code>restrict</code> is a promise you can break</td>
+<td style="text-align: left;"><a href="./rust-ho.html#borrowing">Borrowing</a>: one <code>&amp;mut</code> or many <code>&amp;</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dangling pointers</td>
+<td style="text-align: left;">Compiles; undefined behavior at run time</td>
+<td style="text-align: left;">Compile error, via <a href="./rust-ho.html#lifetimes">lifetimes</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Absence</td>
+<td style="text-align: left;"><code>NULL</code>, indistinguishable from a valid pointer</td>
+<td style="text-align: left;"><a href="./rust-ho.html#option-t"><code>Option&lt;T&gt;</code></a>; the compiler forces the check</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Errors</td>
+<td style="text-align: left;">Return codes, sentinels, <code>errno</code></td>
+<td style="text-align: left;"><a href="./rust-ho.html#errors-as-values"><code>Result&lt;T, E&gt;</code></a>, and ignoring it warns</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Arrays</td>
+<td style="text-align: left;">Pointer plus a separate length, by convention</td>
+<td style="text-align: left;">Slices: pointer and length as one checked type</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Generic code</td>
+<td style="text-align: left;"><code>void *</code> and an element size</td>
+<td style="text-align: left;">Generics with trait bounds, monomorphized</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Interfaces</td>
+<td style="text-align: left;">Structs of function pointers</td>
+<td style="text-align: left;"><a href="./rust-ho.html#traits">Traits</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Initialization</td>
+<td style="text-align: left;">Reading an uninitialized local is UB</td>
+<td style="text-align: left;">Will not compile; every value is initialized</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mutability</td>
+<td style="text-align: left;">Mutable by default; <code>const</code> opts out</td>
+<td style="text-align: left;">Immutable by default; <code>mut</code> opts in</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Data races</td>
+<td style="text-align: left;">Yours to prevent</td>
+<td style="text-align: left;">Prevented at compile time by <code>Send</code>/<code>Sync</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Build and deps</td>
+<td style="text-align: left;">Headers, a linker, and Make or CMake</td>
+<td style="text-align: left;">Modules and Cargo, one tool, in the box</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Unsafety</td>
+<td style="text-align: left;">The whole language</td>
+<td style="text-align: left;"><code>unsafe</code> blocks, and they are greppable</td>
+</tr>
+</tbody>
+</table>
+<p>Every row is the same trade in a different costume. C moves a decision to run time or to the programmer; Rust moves it to compile time and refuses to build until it is settled. The <a href="#arrays-and-pointers">pointer-and-length convention</a> is the clearest small example: C passes <code>(buffer, count)</code> and every function trusts that the caller got them consistent, while a Rust slice makes them a single value that cannot disagree with itself. Nothing about the generated code differs much. What differs is who is responsible for the invariant.</p>
+<p><code>unsafe</code> is the row most often misread. It does not turn off the borrow checker or make Rust into C. It permits five specific operations, chiefly dereferencing a raw pointer and calling another <code>unsafe</code> function, and everything else stays checked. The practical difference from C is not that unsafety is absent but that it is <em>delimited</em>: the audit surface for a memory bug is what appears in <code>unsafe</code> blocks rather than the entire program.</p>
+<p>What C keeps is not sentimental. It is the substrate: every operating system’s syscall interface, every language’s FFI, every architecture that has ever had a compiler, and fifty years of libraries that are not going to be rewritten. Rust interoperates with C precisely because C is the boundary everything agrees on, and that role does not transfer. C is also genuinely smaller. You can hold the whole language in your head, which is a real virtue when the alternative is a borrow checker you are still arguing with in month two.</p>
+<p>The framing worth keeping: <strong>C assumes you are careful; Rust verifies that you were.</strong> Reading Rust makes C’s implicit contracts visible, and going back to C afterward is a different experience, because you can see exactly which invariants you have quietly agreed to maintain by hand.</p>
 </section>
 <section id="where-to-go-next" class="level2">
 <h2 class="anchored" data-anchor-id="where-to-go-next">Where to Go Next</h2>
-<!-- STUB: Annotated and subsectioned, following the rust-out.qmd / cpp.qmd
-     model: Documentation and Standards; Tooling Worth Adopting Early
-     (sanitizers, valgrind, clang-tidy, cppcheck, -Wall -Wextra -Werror);
-     Books; Practice. -->
+<p><a href="https://en.cppreference.com/w/c" target="_blank" rel="noopener noreferrer">cppreference’s C section</a> is the reference to keep open. It marks which standard introduced each feature, which is what you need when a project is pinned to C99 and half the internet’s examples assume C11.</p>
+<section id="documentation-and-standards" class="level3">
+<h3 class="anchored" data-anchor-id="documentation-and-standards">Documentation and Standards</h3>
+<ul>
+<li><a href="https://en.cppreference.com/w/c" target="_blank" rel="noopener noreferrer">cppreference: C</a> is the practical daily reference, indexed by both <a href="https://en.cppreference.com/w/c/header" target="_blank" rel="noopener noreferrer">header</a> and by language feature.</li>
+<li>The standard itself is worth reading once, for the sections on undefined behavior. Final drafts are freely available (<a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf" target="_blank" rel="noopener noreferrer">N1570</a> for C11, <a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3096.pdf" target="_blank" rel="noopener noreferrer">N3096</a> for C23) and are nearly identical to the published versions.</li>
+<li><a href="https://godbolt.org/" target="_blank" rel="noopener noreferrer">Compiler Explorer</a> shows the assembly your code becomes, across compilers and optimization levels. It settles arguments about what the optimizer does in about ten seconds, and it makes the <a href="#optimization-levels">optimization</a> and <a href="#the-volatile-keyword"><code>volatile</code></a> material concrete in a way prose cannot.</li>
+<li>The <a href="https://wiki.sei.cmu.edu/confluence/display/c" target="_blank" rel="noopener noreferrer">SEI CERT C Coding Standard</a> catalogues the rules that matter in security-sensitive code, each with non-compliant and compliant examples.</li>
+</ul>
+</section>
+<section id="tooling-worth-adopting-early" class="level3">
+<h3 class="anchored" data-anchor-id="tooling-worth-adopting-early">Tooling Worth Adopting Early</h3>
+<p>The full treatment is in <a href="#debugging-and-diagnosis">Debugging and Diagnosis</a>; this is the short list, in order of value per unit of effort.</p>
+<ul>
+<li><strong>Sanitizers.</strong> <code>-fsanitize=address,undefined</code> on every test run. This is the highest-value habit available to a C programmer, full stop: it converts the silent memory corruption that defines C’s reputation into an immediate, located error message.</li>
+<li><strong><code>-Wall -Wextra</code>.</strong> Free, and a meaningful fraction of the safety net a stricter language would give you.</li>
+<li><strong><code>valgrind</code></strong> for leak hunting and for binaries you cannot rebuild.</li>
+<li><strong><code>clang-tidy</code></strong> and <strong><code>cppcheck</code></strong> for the bugs that are visible without running anything.</li>
+<li><strong><code>clang-format</code>.</strong> Commit the config and stop discussing braces.</li>
+</ul>
+</section>
+<section id="books" class="level3">
+<h3 class="anchored" data-anchor-id="books">Books</h3>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/The_C_Programming_Language" target="_blank" rel="noopener noreferrer">The C Programming Language</a> (Kernighan and Ritchie, 2nd ed.) remains the best short book on the language, and it is short. It predates C99, so treat its examples as period-correct rather than current, but its explanations have not been improved on in forty years.</li>
+<li><em>Expert C Programming: Deep C Secrets</em> (van der Linden) is the book for the declaration syntax, the array/pointer confusion, and the war stories behind the language’s odder corners. Funny, and unusually honest about C’s mistakes.</li>
+<li><em>C Interfaces and Implementations</em> (Hanson) is the answer to “how do I structure a large C program,” which K&amp;R does not address. It builds real libraries with real APIs, and it is the best available argument that C can be written cleanly.</li>
+<li><em>Modern C</em> (Gustedt), <a href="https://gustedt.gitlabpages.inria.fr/modern-c/" target="_blank" rel="noopener noreferrer">freely available</a>, teaches C as it exists now rather than as it existed in 1988. The right corrective if your C is self-taught from older material.</li>
+</ul>
+</section>
+<section id="practice" class="level3">
+<h3 class="anchored" data-anchor-id="practice">Practice</h3>
+<p>Read something real. C’s great advantage as a language to learn from is that its most important programs are readable: <a href="https://www.sqlite.org/src/doc/trunk/README.md" target="_blank" rel="noopener noreferrer">SQLite</a> is famously well-commented, <a href="https://github.com/redis/redis" target="_blank" rel="noopener noreferrer">redis</a> is approachable, and the <a href="https://www.kernel.org/" target="_blank" rel="noopener noreferrer">Linux kernel</a> is the largest working demonstration of C’s conventions at scale.</p>
+<p>Then write something that forces the issues this chapter raised. A dynamic array or hash table teaches ownership and <code>realloc</code> semantics. A line-oriented file parser teaches the string handling and the error paths. Anything with a <code>struct</code> of function pointers teaches why C++ has <code>virtual</code>. Build all of it with sanitizers on from the first commit, and the feedback loop will teach you more about undefined behavior than any amount of reading.</p>
+</section>
 </section>
 <section id="further-reading" class="level2">
 <h2 class="anchored" data-anchor-id="further-reading">Further Reading</h2>

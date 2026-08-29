@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-08-12">
+<meta name="dcterms.date" content="2026-08-29">
 
 <title>The C++ Language – Computer Language Notebook</title>
 <style>
@@ -312,6 +312,12 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="./shell.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Shell Scripting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./latex.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LaTeX Reference</span></a>
   </div>
 </li>
       </ul>
@@ -649,7 +655,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 12, 2026</p>
+      <p class="date">August 29, 2026</p>
     </div>
   </div>
   
@@ -661,18 +667,17 @@ window.Quarto = {
 </header>
 
 
-<!--
-Audience: experienced C/C++-adjacent readers, same as the C and Rust chapters.
-Anchor every concept to what the reader knows from C, and contrast with Rust
-where the comparison illuminates (RAII vs. ownership, templates vs. generics,
-exceptions vs. Result). Keep examples idiomatic modern C++ (C++17/20), not
-"C with a few classes." Plain hosted examples unless a point needs otherwise.
--->
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p><img src="images/cpp-00.svg" class="img-fluid" style="float: left; padding: 0 2em 0 1em;width:2in"></p>
+<p><img src="images/cpp-00.svg" class="img-fluid" style="float: left; padding: 0 2em 0 1em;width:2in" alt="C++ logo"></p>
 <p><br><strong>C++</strong> is a general-purpose, multi-paradigm systems language that grew out of C but is no longer the same language. It is tempting to read it as “C with classes plus a few extras,” and its syntax invites the mistake, yet that framing badly undersells it. C++ supports procedural, object-oriented, generic, and functional styles, and the modern language leans on all four at once. What holds them together is a single organizing principle: <em>zero-overhead abstraction</em>. You do not pay for what you do not use, and the abstractions you do use should cost no more than the equivalent code you would have written by hand. This is what lets C++ compete with C on the metal while offering expressiveness closer to a high-level language.</p>
 <p>The language began as <strong>“C with Classes”</strong>, written by Bjarne Stroustrup at Bell Labs in 1979 and renamed C++ in 1983. It was first standardized as <strong>C++98</strong>, but the version most people mean today is <strong>modern C++</strong>: the run of standards from C++11 onward that added move semantics, lambdas, smart pointers, and much else. Idiomatic modern C++ looks strikingly different from the C++98 of textbook lore, and this chapter targets that modern dialect throughout. If you have read the <a href="./c.html">C chapter</a>, keep its <a href="./c.html#overview">“C is not C++”</a> callout in mind: the two languages share ancestry and much syntax, but their idioms and philosophies diverge sharply.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/cpp-02.png" class="img-fluid figure-img" style="width:9in"></p>
+<figcaption>“Grrrr, I hate parameter passing!”</figcaption>
+</figure>
+</div>
 <div style="clear: both">
 
 </div>
@@ -764,7 +769,7 @@ exceptions vs. Result). Keep examples idiomatic modern C++ (C++17/20), not
 <div class="subheading">
 <p>Zero-overhead abstraction</p>
 </div>
-<p>Every language optimizes for something, and the choice shows up in a thousand small decisions. Python optimizes for programmer time and accepts a 50x performance cost to get it. Rust optimizes for safety and accepts a borrow checker that will argue with you. C++ optimizes for <strong>abstraction you do not pay for</strong>, and accepts the complexity that goal demands.</p>
+<p>Every language optimizes for something, and the choice shows up in a thousand small decisions. Python optimizes for programmer time and accepts a 50x performance cost to get it. Rust optimizes for safety and accepts a borrow checker that will argue with you. C++ optimizes for abstraction you do not pay for, and accepts the complexity that goal demands.</p>
 <p>Stroustrup states it as two rules:</p>
 <blockquote class="blockquote">
 <p><strong>What you don’t use, you don’t pay for.</strong> And what you do use, you couldn’t hand-code any better.</p>
@@ -1815,7 +1820,7 @@ layers on, each expanded in its own section below. This is the "map." -->
 <li><code>bool</code>, <code>true</code>, <code>false</code>, and <code>nullptr</code> became real keywords rather than macros, which is C catching up to C++98.</li>
 </ul>
 <p>That is the extent of it. A C enum is still a set of <code>int</code> constants, still leaks its names into the enclosing scope, and still converts implicitly to any integer. C has no <code>enum class</code>, no <code>std::variant</code>, no sum type of any kind, and no pattern matching. Tagged unions in C are what they were in 1978: a <code>struct</code> holding an <code>enum</code> and a <code>union</code>, with the correspondence maintained by discipline.</p>
-<p>This is not an oversight so much as a statement of purpose. C’s committee is deliberately conservative, prioritizing stability, a tiny specification, and the ability to compile the language on anything. Sum types would require the compiler to track variant state and enforce exhaustiveness, which is the kind of type-system machinery C has consistently declined to take on. The practical consequence for you: <span class="hl-default">the tagged-union idiom in the C chapter is not a legacy pattern to be replaced, it is still the state of the art in C</span>. If you want compiler-enforced sum types in a systems language, C++ gives you an awkward library approximation and Rust gives you the real thing.</p>
+<p>This is not an oversight so much as a statement of purpose. C’s committee is deliberately conservative, prioritizing stability, a tiny specification, and the ability to compile the language on anything. Sum types would require the compiler to track variant state and enforce exhaustiveness, which is the kind of type-system machinery C has consistently declined to take on. The practical consequence for you: <span class="hl-default-l">the tagged-union idiom in the C chapter is not a legacy pattern to be replaced, it is still the state of the art in C</span>. If you want compiler-enforced sum types in a systems language, C++ gives you an awkward library approximation and Rust gives you the real thing.</p>
 </div>
 </div>
 </section>
@@ -1905,7 +1910,7 @@ layers on, each expanded in its own section below. This is the "map." -->
 <section id="three-kinds-of-class" class="level4">
 <h4 class="anchored" data-anchor-id="three-kinds-of-class">Three Kinds of Class</h4>
 <p>Stroustrup organizes classes into three kinds in <em>A Tour of C++</em>, and the taxonomy is worth adopting early because it tells you which C++ features a given type should use. Most classes you write should be the first kind.</p>
-<p><strong>Concrete types</strong> behave like built-in types. Their representation is part of their definition, so they can be placed on the stack, copied and moved as values, and manipulated without indirection. <code>std::vector</code>, <code>std::string</code>, a <code>Point</code>, a <code>complex</code> number: you create one, use it, and it is destroyed at the end of scope. There is no inheritance, no <code>virtual</code>, and therefore no per-object or per-call overhead. <span class="hl-default">Concrete types are the default, and the great majority of well-designed C++ classes are concrete</span>. Everything covered so far in this chapter, constructors, RAII, the Rule of Zero, move semantics, is the machinery of building good concrete types.</p>
+<p><strong>Concrete types</strong> behave like built-in types. Their representation is part of their definition, so they can be placed on the stack, copied and moved as values, and manipulated without indirection. <code>std::vector</code>, <code>std::string</code>, a <code>Point</code>, a <code>complex</code> number: you create one, use it, and it is destroyed at the end of scope. There is no inheritance, no <code>virtual</code>, and therefore no per-object or per-call overhead. <span class="hl-default-l">Concrete types are the default, and the great majority of well-designed C++ classes are concrete</span>. Everything covered so far in this chapter, constructors, RAII, the Rule of Zero, move semantics, is the machinery of building good concrete types.</p>
 <p><strong>Abstract types</strong> decouple the interface from the implementation. The class declares <em>what</em> operations exist without specifying how they are carried out or how the object is laid out, so callers work through a pointer or reference and the actual type is chosen at run time. This is what C++ means by object-oriented programming, and it requires the <code>virtual</code> machinery.</p>
 <p><strong>Class hierarchies</strong> arrange related types into an inheritance tree, where a base expresses what the family has in common and derived classes extend or specialize it. The classic example is a GUI toolkit or a shape hierarchy.</p>
 <p>The second and third kinds both rest on inheritance and virtual functions, which are the subject of <a href="#inheritance-and-polymorphism">Inheritance and Polymorphism</a> below. The ordering here is deliberate and matches modern practice: concrete types first, because that is what you will mostly write, and the hierarchy machinery afterward, because it is the specialist tool.</p>
@@ -2320,7 +2325,7 @@ layers on, each expanded in its own section below. This is the "map." -->
 <div class="subheading">
 <p>The keystone idea</p>
 </div>
-<p>If you take one idea away from this chapter, make it this one. <strong>RAII</strong> stands for <em>Resource Acquisition Is Initialization</em>, which is a famously bad name for a genuinely great idea. The name emphasizes the wrong half; what matters is the <em>release</em>, not the acquisition. Stated in plain terms: <span class="hl-default">tie the lifetime of a resource to the lifetime of an object, so that the resource is released automatically when the object is destroyed</span>. A resource is anything you acquire and must later give back: heap memory, an open file, a lock, a socket, a database handle.</p>
+<p>If you take one idea away from this chapter, make it this one. <strong>RAII</strong> stands for <em>Resource Acquisition Is Initialization</em>, which is a famously bad name for a genuinely great idea. The name emphasizes the wrong half; what matters is the <em>release</em>, not the acquisition. Stated in plain terms: <span class="hl-default-l">tie the lifetime of a resource to the lifetime of an object, so that the resource is released automatically when the object is destroyed</span>. A resource is anything you acquire and must later give back: heap memory, an open file, a lock, a socket, a database handle.</p>
 <p>The mechanism rests on one guarantee the C++ language makes and C does not: <strong>when an object goes out of scope, its destructor runs automatically, and it always runs.</strong> A destructor is the special member function named <code>~ClassName()</code>; it is C++’s counterpart to a constructor, invoked not when you build the object but when you tear it down. So the recipe is to acquire the resource in the constructor and release it in the destructor. After that, correct cleanup is not something the programmer has to remember; it is something the compiler emits.</p>
 <section id="the-problem-it-solves" class="level4">
 <h4 class="anchored" data-anchor-id="the-problem-it-solves">The Problem It Solves</h4>
@@ -2440,7 +2445,7 @@ layers on, each expanded in its own section below. This is the "map." -->
 <span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
 <span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;</span> <span class="va">data_</span><span class="op">;</span></span>
 <span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Every special member the compiler generates is now correct, because each one simply defers to <code>std::vector</code>’s, which is itself correct: copying deep-copies, moving steals, destruction frees. <span class="hl-default">The best number of special member functions to write is zero, and you achieve it by owning resources through types that already know how to own them</span>: <code>std::vector</code>, <code>std::string</code>, <code>std::unique_ptr</code>, <code>std::shared_ptr</code>. Write the Rule of Five only when you are <em>implementing</em> such an ownership type, which is rare, or wrapping a C API handle that has no existing wrapper.</p>
+<p>Every special member the compiler generates is now correct, because each one simply defers to <code>std::vector</code>’s, which is itself correct: copying deep-copies, moving steals, destruction frees. <span class="hl-default-l">The best number of special member functions to write is zero, and you achieve it by owning resources through types that already know how to own them</span>: <code>std::vector</code>, <code>std::string</code>, <code>std::unique_ptr</code>, <code>std::shared_ptr</code>. Write the Rule of Five only when you are <em>implementing</em> such an ownership type, which is rare, or wrapping a C API handle that has no existing wrapper.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Rust states this rule as a type-system law">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -3298,13 +3303,18 @@ layers on, each expanded in its own section below. This is the "map." -->
 <div class="subheading">
 <p>A generalized pointer into a container</p>
 </div>
-<p>Here is the concept the rest of the STL is built on, stated as plainly as it can be: <span class="hl-default">an iterator is an object that behaves like a pointer into a container</span>. That is not an analogy for teaching purposes; it is close to the literal truth. An iterator supports exactly the operations you already use on a C pointer walking an array:</p>
+<p>Here is the concept the rest of the STL is built on, stated as plainly as it can be: <span class="hl-default-l">an iterator is an object that behaves like a pointer into a container</span>. That is not an analogy for teaching purposes; it is close to the literal truth. An iterator supports exactly the operations you already use on a C pointer walking an array:</p>
 <ul>
 <li><code>*it</code> <strong>dereferences</strong> it to get the element it currently refers to (read or write).</li>
-<li><code>++it</code> <strong>advances</strong> it to the next element.</li>
+<li><code>++it</code> <strong>advances</strong> it to the next element, <code>--it</code> <strong>retreats</strong> it to the previous element.</li>
 <li><code>it == other</code> and <code>it != other</code> <strong>compare</strong> two iterators for position.</li>
 </ul>
 <p>For a <code>std::vector</code>, whose elements are contiguous in memory, an iterator quite literally <em>is</em> a pointer (or a thin wrapper around one), and <code>++it</code> is ordinary pointer arithmetic. For a <code>std::map</code>, whose elements live in a balanced tree, an iterator is a small object holding a node pointer, and <code>++it</code> is the code that walks to the in-order-next node. The internals differ completely, but the <em>interface</em> is identical: <code>*it</code>, <code>++it</code>, <code>!=</code>. That uniformity is the whole trick. An algorithm written in terms of <code>*it</code> and <code>++it</code> neither knows nor cares which container it is walking, which is exactly why one <code>std::sort</code> serves them all.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="./images/cpp-01.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:7.5in" alt="Iterator concept diagram"></p>
+</figure>
+</div>
 <section id="the-half-open-range-begin-end" class="level4">
 <h4 class="anchored" data-anchor-id="the-half-open-range-begin-end">The Half-Open Range <code>[begin, end)</code></h4>
 <p>Every container hands out two iterators that define its extent: <code>begin()</code> points at the first element, and <code>end()</code> points at <strong>one position past the last element</strong>. <code>end()</code> is deliberately not the last element; it is a sentinel you are never meant to dereference, marking where the sequence stops. A range written this way, first included, last excluded, is called half-open and conventionally notated <code>[begin, end)</code>.</p>
@@ -4075,13 +4085,13 @@ layers on, each expanded in its own section below. This is the "map." -->
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This trips up everyone once. Inside <code>void consume(std::string&amp;&amp; s)</code>, the parameter <code>s</code> <em>has a name</em>, so within the function body <code>s</code> is an <strong>lvalue</strong>, even though its type is an rvalue reference. Passing <code>s</code> along to another function copies it unless you write <code>std::move(s)</code> again. The rule is worth memorizing in that compressed form: <span class="hl-default">if it has a name, it is an lvalue</span>.</p>
+<p>This trips up everyone once. Inside <code>void consume(std::string&amp;&amp; s)</code>, the parameter <code>s</code> <em>has a name</em>, so within the function body <code>s</code> is an <strong>lvalue</strong>, even though its type is an rvalue reference. Passing <code>s</code> along to another function copies it unless you write <code>std::move(s)</code> again. The rule is worth memorizing in that compressed form: <span class="hl-default-l">if it has a name, it is an lvalue</span>.</p>
 </div>
 </div>
 </section>
 <section id="stdmove" class="level4">
 <h4 class="anchored" data-anchor-id="stdmove"><code>std::move</code></h4>
-<p><code>std::move</code> is the most badly named function in the standard library, because <span class="hl-default">it does not move anything</span>. It is a cast, nothing more: it takes an lvalue and returns an rvalue reference to it, which is to say it produces an expression that the overload resolution above will route to the <code>&amp;&amp;</code> version. Its entire implementation is a <code>static_cast</code>.</p>
+<p><code>std::move</code> is the most badly named function in the standard library, because <span class="hl-default-l">it does not move anything</span>. It is a cast, nothing more: it takes an lvalue and returns an rvalue reference to it, which is to say it produces an expression that the overload resolution above will route to the <code>&amp;&amp;</code> version. Its entire implementation is a <code>static_cast</code>.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb138"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb138-1"><a href="#cb138-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>string source <span class="op">=</span> <span class="st">"a long string that owns a heap buffer"</span><span class="op">;</span></span>
 <span id="cb138-2"><a href="#cb138-2" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>string target <span class="op">=</span> <span class="bu">std::</span>move<span class="op">(</span>source<span class="op">);</span>   <span class="co">// move constructor: buffer is stolen</span></span>
 <span id="cb138-3"><a href="#cb138-3" aria-hidden="true" tabindex="-1"></a><span class="co">// source is now valid but unspecified: do not read it, but it will destruct fine</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -4182,7 +4192,7 @@ layers on, each expanded in its own section below. This is the "map." -->
 </div>
 <div class="callout-body-container callout-body">
 <p>It looks like a helpful hint and it is actively harmful. Naming the local in a <code>return</code> statement already triggers RVO, or a move if RVO does not apply. Wrapping it in <code>std::move</code> produces an expression that is no longer eligible for elision, so you have <em>forced</em> a move where the compiler was going to elide the operation entirely. Just <code>return x;</code>.</p>
-<p>The same reasoning applies to returning by value in general. The old habit of taking an output parameter to avoid a copy is obsolete: <span class="hl-default">return by value, and let elision and moves make it cheap</span>.</p>
+<p>The same reasoning applies to returning by value in general. The old habit of taking an output parameter to avoid a copy is obsolete: <span class="hl-default-l">return by value, and let elision and moves make it cheap</span>.</p>
 </div>
 </div>
 </section>
@@ -4509,7 +4519,7 @@ layers on, each expanded in its own section below. This is the "map." -->
 <span id="cb158-5"><a href="#cb158-5" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> nm build/draw.o           <span class="co"># the actual symbols</span></span>
 <span id="cb158-6"><a href="#cb158-6" aria-hidden="true" tabindex="-1"></a><span class="ex">0000000000000000</span> T _ZN3gfx4drawEi</span>
 <span id="cb158-7"><a href="#cb158-7" aria-hidden="true" tabindex="-1"></a><span class="ex">0000000000000020</span> T _ZN3gfx4drawEd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><code>_ZN3gfx4drawEi</code> reads as: namespace <code>gfx</code> (3 characters), function <code>draw</code> (4 characters), parameter <code>i</code> for <code>int</code>. <span class="hl-default">The scheme is compiler-specific, which is why GCC-compiled and MSVC-compiled C++ libraries cannot be linked together, a limitation C does not have</span>.</p>
+<p><code>_ZN3gfx4drawEi</code> reads as: namespace <code>gfx</code> (3 characters), function <code>draw</code> (4 characters), parameter <code>i</code> for <code>int</code>. <span class="hl-default-l">The scheme is compiler-specific, which is why GCC-compiled and MSVC-compiled C++ libraries cannot be linked together, a limitation C does not have</span>.</p>
 <p>The practical consequence you will hit is <strong>calling C from C++</strong>. C symbols are unmangled, so the C++ compiler must be told not to mangle its references to them:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb159"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb159-1"><a href="#cb159-1" aria-hidden="true" tabindex="-1"></a><span class="at">extern</span> <span class="st">"C"</span> <span class="op">{</span></span>
 <span id="cb159-2"><a href="#cb159-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">"pico/stdlib.h"</span><span class="pp">        </span><span class="co">// C header: symbols must not be mangled</span></span>

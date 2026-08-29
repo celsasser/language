@@ -1,0 +1,462 @@
+---
+title: LaTeX Reference
+---
+
+## Overview
+![](images/ltx-00.svg){fig-alt="LaTeX logo" width=2in style="float: left; padding: 0 2em 0 1em"}
+
+LaTeX is a software system for typesetting documents. It's based on the TeX typesetting system that was designed and written by computer scientist and Stanford University professor Donald Knuth. LaTeX provides a high-level, descriptive markup language to use TeX more easily: TeX handles the document layout, while LaTeX handles the content side for document processing. Because the plain TeX formatting commands are elementary, it provides authors with ready-made commands for formatting and layout requirements such as chapter headings, footnotes, cross-references and bibliographies.
+
+### History
+When the first paper volume of Knuth's The Art of Computer Programming was published in 1968, it was typeset using hot metal typesetting on a Monotype machine. This method, dating back to the 19th century, produced a "classic style" appreciated by Knuth. When the second edition was published, in 1976, the whole book had to be typeset again because the Monotype technology had been largely replaced by phototypesetting, and the original fonts were no longer available. When Knuth received the galley proofs of the new book on March 30 1977, he found them inferior. Disappointed, Knuth set out to design his own typesetting system.
+
+Since the primary goal of the TeX language is high-quality typesetting for publishers of books, Knuth gave a lot of attention to the spacing rules for mathematical formulae. He took three bodies of work that he considered to be standards of excellence for mathematical typography:
+
+1. Books typeset by the Addison-Wesley Publishing house (the publisher of The Art of Computer Programming).
+2. Editions of the mathematical journal Acta Mathematica from around 1910.
+3. A copy of Indagationes Mathematicae, a Dutch mathematics journal.
+
+Knuth looked closely at these printed papers to sort out a set of rules for spacing. While TeX provides some basic rules and the tools needed to specify proper spacing, the exact parameters depend on the font used to typeset the formula. For example, the spacing for Knuth's Computer Modern fonts has been precisely fine-tuned over the years and is now set; but when other fonts, such as AMS Euler, were used by Knuth for the first time, new spacing parameters had to be defined.
+
+## Guide
+::: {.subheading}
+Super brief
+:::
+
+This is our abridged LaTeX reference. It's broadly broken down by category.
+
+- **command:** each word in the LaTeX vocabulary is a *command*, though we call them *terms* in our tables.
+- **context:** the LaTeX environment in which LaTeX is being executed.
+- **environment:** they are spaces that have specialized behaviors. We discuss [environments](#environments) briefly just below. And we have a listing of their [commands](#environments-1).
+
+### Modes
+How many modes are there? I don't know. How many are we concerned with? Two, but we are going to name three of them: **inline math**, **display math**, and **text mode**. This is how the genteel folk refer to them.
+
+#### Inline Math Mode
+Inline math mode is for including mathematical expressions directly within a paragraph of text. It's used for small formulas, variables, or short equations that don't need their own line.
+
+- **Delimiters:** The most common delimiters are `$...$` and `\(...\)`.
+- **Examples:**
+	- `The variable $x$ is equal to 3.`
+	- `We see that \(a^2 + b^2 = c^2\).`
+
+#### Display Math Mode
+Display math mode is for equations that are set on their own separate line. This makes them stand out from the main text and is preferred for longer or more important equations.
+
+- **Delimiters:** The most common delimiters are `$$...$$` and `\[...\]`.
+- **Examples:**
+	- `The Pythagorean theorem is stated as: $$a^2 + b^2 = c^2$$`
+	- `The quadratic formula is: \[x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\]`
+
+### Environments
+Beyond the basic delimiters, you can use specialized *environments* (like `align`, `equation`, `gather`) for more complex arrangements of equations, such as multi-line equations or systems of equations. These environments automatically switch LaTeX into *math mode* and handle formatting, spacing, and numbering. For example, `\begin{equation} ... \end{equation}` is another way to produce a numbered, displayed equation.
+
+## Commands
+### Spacing
+| Term      | Characteristic                         | LaTeX Code            | Result                  |
+|-----------|----------------------------------------|-----------------------|-------------------------|
+| **,**     | thin space                             | `a\,b`                | $a\,b$                  |
+| **:**     | medium space                           | `a\:b`                | $a\:b$                  |
+| **;**     | thick space                            | `a\;b`                | $a\;b$                  |
+| **quad**  | quad space                             | `a\quad b`            | $a\quad b$              |
+| **qquad** | double quad                            | `a\qquad b`           | $a\qquad b$             |
+| **!**     | negative thin                          | `a\!b`                | $a\!b$                  |
+| **~**     | non-breaking space (text)              | `a~b`                 | a~b                     |
+| **tag**   | right-justify reference (display mode) | `a - b = c \tag{2.2}` | $$a - b = c \tag{2.2}$$ |
+
+### Fonts
+#### Math Fonts
+| Term           | Characteristic      | LaTeX Code                                       | Result                                           |
+|----------------|---------------------|--------------------------------------------------|--------------------------------------------------|
+| **mathrm**     | roman (upright)     | `\mathrm{ABCxyz}`                                | $\mathrm{ABCxyz}$                                |
+| **mathbf**     | bold                | `\mathbf{ABCxyz}`                                | $\mathbf{ABCxyz}$                                |
+| **mathit**     | italic              | `\mathit{ABCxyz}`                                | $\mathit{ABCxyz}$                                |
+| **mathsf**     | sans-serif          | `\mathsf{ABCxyz}`                                | $\mathsf{ABCxyz}$                                |
+| **mathtt**     | typewriter          | `\mathtt{ABCxyz}`                                | $\mathtt{ABCxyz}$                                |
+| **mathcal**    | calligraphic (caps) | `\mathcal{ABC}`                                  | $\mathcal{ABC}$                                  |
+| **mathbb**     | blackboard bold     | `\mathbb{R}\,\mathbb{N}\,\mathbb{Z}\,\mathbb{Q}` | $\mathbb{R}\,\mathbb{N}\,\mathbb{Z}\,\mathbb{Q}$ |
+| **mathfrak**   | fraktur             | `\mathfrak{ABCxyz}`                              | $\mathfrak{ABCxyz}$                              |
+| **boldsymbol** | bold symbol         | `\boldsymbol{\alpha}\;\boldsymbol{v}`            | $\boldsymbol{\alpha}\;\boldsymbol{v}$            |
+
+### Delimiters
+#### Common
+| Term               | Characteristic     | LaTeX Code          | Result              |
+|--------------------|--------------------|---------------------|---------------------|
+| **(**, **)**       | parentheses        | `(x)`               | $(x)$               |
+| **[**, **]**       | brackets           | `[x]`               | $[x]$               |
+| **{**, **}**       | braces             | `\{ x \}`           | $\{ x \}$           |
+| **langle, rangle** | angle brackets     | `\langle x \rangle` | $\langle x \rangle$ |
+| **lfloor, rfloor** | floor              | `\lfloor x \rfloor` | $\lfloor x \rfloor$ |
+| **lceil, rceil**   | ceiling            | `\lceil x \rceil`   | $\lceil x \rceil$   |
+| **lvert, rvert**   | absolute value     | `\lvert x \rvert`   | $\lvert x \rvert$   |
+| **lVert, rVert**   | norm (double bars) | `\lVert x \rVert`   | $\lVert x \rVert$   |
+
+#### Sizing
+| Term                      | Characteristic   | LaTeX Code                        | Result                            |
+|---------------------------|------------------|-----------------------------------|-----------------------------------|
+| **left(**, **right)**     | automatic sizing | `\left( \dfrac{a}{b} \right)`     | $\left( \dfrac{a}{b} \right)$     |
+| **left\\{**, **right\\}** | middle (infix)   | `\left\{ x \middle| x>0 \right\}` | $\left\{ x \middle| x>0 \right\}$ |
+| **lVert**, **rVert**      | auto double bars | `\left\lVert x \right\rVert`      | $\left\lVert x \right\rVert$      |
+| **bigl(**, **bigr)**      | big              | `\bigl( x \bigr)`                 | $\bigl( x \bigr)$                 |
+| **Bigl(**, **Bigr)**      | bigger           | `\Bigl( x \Bigr)`                 | $\Bigl( x \Bigr)$                 |
+| **biggl(**, **biggr)**    | even bigger      | `\biggl( x \biggr)`               | $\biggl( x \biggr)$               |
+| **Biggl(**, **Biggr)**    | biggest          | `\Biggl( x \Biggr)`               | $\Biggl( x \Biggr)$               |
+
+### Accents, Decorations
+| Term           | Characteristic     | LaTeX Code                                  | Result                                      |
+|----------------|--------------------|---------------------------------------------|---------------------------------------------|
+| **hat**        | hat                | `\hat{x}`                                   | $\hat{x}$                                   |
+| **widehat**    | widehat            | `\widehat{ABC}`                             | $\widehat{ABC}$                             |
+| **bar**        | bar                | `\bar{x}`                                   | $\bar{x}$                                   |
+| **overline**   | overline           | `\overline{z}`                              | $\overline{z}$                              |
+| **tilde**      | tilde              | `\tilde{x}`                                 | $\tilde{x}$                                 |
+| **widetilde**  | widetilde          | `\widetilde{ABC}`                           | $\widetilde{ABC}$                           |
+| **vec**        | vector             | `\vec{v}`                                   | $\vec{v}$                                   |
+| **dot**        | dot                | `\dot{x}`                                   | $\dot{x}$                                   |
+| **ddot**       | ddot               | `\ddot{x}`                                  | $\ddot{x}$                                  |
+| **underline**  | underline          | `\underline{x}`                             | $\underline{x}$                             |
+| **overbrace**  | overbrace          | `\overbrace{a+\cdots+b}^{n\ \text{terms}}`  | $\overbrace{a+\cdots+b}^{n\ \text{terms}}$  |
+| **underbrace** | underbrace         | `\underbrace{a+\cdots+b}_{n\ \text{terms}}` | $\underbrace{a+\cdots+b}_{n\ \text{terms}}$ |
+| **boxed**      | rectangular border | `\boxed{LittleMan}`                         | $\boxed{LittleMan}$                         |
+
+### Mathematical Operators
+#### Binary
+| Term         | Characteristic     | LaTeX Code     | Result         |
+|--------------|--------------------|----------------|----------------|
+| **+**        | plus               | `a+b`          | $a+b$          |
+| **-**        | minus              | `a-b`          | $a-b$          |
+| **pm**       | plus-minus         | `a\pm b`       | $a\pm b$       |
+| **mp**       | minus-plus         | `a\mp b`       | $a\mp b$       |
+| **cdot**     | dot (scalar)       | `a\cdot b`     | $a\cdot b$     |
+| **times**    | times (vector)     | `a\times b`    | $a\times b$    |
+| **ast**      | star               | `a\ast b`      | $a\ast b$      |
+| **circ**     | circ (composition) | `a\circ b`     | $a\circ b$     |
+| **bullet**   | bullet             | `a\bullet b`   | $a\bullet b$   |
+| **cup**      | union              | `A\cup B`      | $A\cup B$      |
+| **cap**      | intersection       | `A\cap B`      | $A\cap B$      |
+| **setminus** | set difference     | `A\setminus B` | $A\setminus B$ |
+| **wedge**    | logical and        | `p\wedge q`    | $p\wedge q$    |
+| **vee**      | logical or         | `p\vee q`      | $p\vee q$      |
+| **oplus**    | direct sum         | `V\oplus W`    | $V\oplus W$    |
+| **otimes**   | tensor product     | `V\otimes W`   | $V\otimes W$   |
+| **odot**     | odot               | `a\odot b`     | $a\odot b$     |
+
+#### Fractions, Binomials, Roots
+| Term       | Characteristic       | LaTeX Code      | Result          |
+|------------|----------------------|-----------------|-----------------|
+| **frac**   | fraction             | `\frac{a}{b}`   | $\frac{a}{b}$   |
+| **tfrac**  | text fraction        | `\tfrac{a}{b}`  | $\tfrac{a}{b}$  |
+| **dfrac**  | display fraction     | `\dfrac{a}{b}`  | $\dfrac{a}{b}$  |
+| **binom**  | binomial coefficient | `\binom{n}{k}`  | $\binom{n}{k}$  |
+| **dbinom** | display binomial     | `\dbinom{n}{k}` | $\dbinom{n}{k}$ |
+| **sqrt**   | square root          | `\sqrt{x}`      | $\sqrt{x}$      |
+| **sqrt**   | nth root             | `\sqrt[n]{x}`   | $\sqrt[n]{x}$   |
+
+#### Big Operators
+| Term         | Characteristic     | LaTeX Code               | Result                   |
+|--------------|--------------------|--------------------------|--------------------------|
+| **sum**      | sum                | `\sum_{i=1}^n i`         | $\sum_{i=1}^n i$         |
+| **prod**     | product            | `\prod_{i=1}^n a_i`      | $\prod_{i=1}^n a_i$      |
+| **coprod**   | coproduct          | `\coprod_{i\in I} A_i`   | $\coprod_{i\in I} A_i$   |
+| **bigcup**   | big union          | `\bigcup_{i\in I} A_i`   | $\bigcup_{i\in I} A_i$   |
+| **bigcap**   | big intersection   | `\bigcap_{i\in I} A_i`   | $\bigcap_{i\in I} A_i$   |
+| **bigsqcup** | big disjoint union | `\bigsqcup_{i\in I} A_i` | $\bigsqcup_{i\in I} A_i$ |
+| **bigvee**   | big logical or     | `\bigvee_{i=1}^n P_i`    | $\bigvee_{i=1}^n P_i$    |
+| **bigwedge** | big logical and    | `\bigwedge_{i=1}^n P_i`  | $\bigwedge_{i=1}^n P_i$  |
+| **int**      | integral           | `\int_0^1 x\,dx`         | $\int_0^1 x\,dx$         |
+| **iint**     | double integral    | `\iint_D f\,dA`          | $\iint_D f\,dA$          |
+| **iiint**    | triple integral    | `\iiint_V f\,dV`         | $\iiint_V f\,dV$         |
+| **oint**     | contour integral   | `\oint_\Gamma f(z)\,dz`  | $\oint_\Gamma f(z)\,dz$  |
+| **lim**      | limit              | `\lim_{x\to 0} f(x)`     | $\lim_{x\to 0} f(x)$     |
+
+#### Set Operators
+| Term         | Characteristic    | LaTeX Code         | Result             |
+|--------------|-------------------|--------------------|--------------------|
+| `in`         | element of        | `a \in A`          | $a \in A$          |
+| `notin`      | not an element of | `a \notin A`       | $a \notin A$       |
+| `ni`         | owns, contains    | `A \ni a`          | $A \ni a$          |
+| `subset`     | subset            | `A \subset B`      | $A \subset B$      |
+| `subseteq`   | subset or equal   | `A \subseteq B`    | $A \subseteq B$    |
+| `supset`     | supset            | `A \supset B`      | $A \supset B$      |
+| `supseteq`   | supset or equal   | `A \supseteq B`    | $A \supseteq B$    |
+| `cup`        | union             | `A \cup B`         | $A \cup B$         |
+| `cap`        | intersection      | `A \cap B`         | $A \cap B$         |
+| `emptyset`   | empty set         | `\emptyset`        | $\emptyset$        |
+| `forall`     | for all           | `\forall x`        | $\forall x$        |
+| `exists`     | there exists      | `\exists x`        | $\exists x$        |
+| `nexists`    | does not exist    | `\nexists x`       | $\nexists x$       |
+| `complement` | complement        | `A^\complement`    | $A^\complement$    |
+| `mid`        | such that         | `\{x \mid x > 0\}` | $\{x \mid x > 0\}$ |
+
+#### Probability Operators
+| Term        | Characteristic                      | LaTeX Code                 | Result                     |
+|-------------|-------------------------------------|----------------------------|----------------------------|
+| `\approx`   | approximately equal to              | `a \approx b`              | $a \approx b$              |
+| `\cap`      | intersection (of events or sets)    | `a \cap b`                 | $a \cap b$                 |
+| `\cup`      | union (of events or sets)           | `a \cup b`                 | $a \cup b$                 |
+| `\in`       | element of a set                    | `x \in s`                  | $x \in s$                  |
+| `^c`        | complement                          | `e^c`                      | $e^c$                      |
+| `^C`        | complement                          | `e^C`                      | $e^C$                      |
+| `\tilde`    | complement                          | `\tilde{e}`                | $\tilde{e}$                |
+| `\overline` | complement                          | `\overline{e}`             | $\overline{e}$             |
+| `\emptyset` | empty set                           | `\emptyset`                | $\emptyset$                |
+| `\mathbb`   | expected value (the e must be bold) | `\mathbb{e}[x]`            | $\mathbb{e}[x]$            |
+| `\mid`      | given (in conditional probability)  | `p(a \mid b)`              | $p(a \mid b)$              |
+| `\sim`      | is distributed as                   | `X \sim \mathcal{N}(0, 1)` | $X \sim \mathcal{N}(0, 1)$ |
+| `\sigma^2`  | variance                            | `\sigma^2`                 | $\sigma^2$                 |
+| `\sum`      | summation                           | `\sum_{i=1}^n`             | $\sum_{i=1}^n$             |
+| `\forall`   | for all                             | `\forall x`                | $\forall x$                |
+
+#### Calculus Operators
+| Term        | Characteristic       | LaTeX Code                      | Result                          |
+|-------------|----------------------|---------------------------------|---------------------------------|
+| `partial`   | partial derivative   | `\frac{\partial f}{\partial x}` | $\frac{\partial f}{\partial x}$ |
+| `nabla`     | gradient             | `\nabla f`                      | $\nabla f$                      |
+| `prime`     | prime (derivative)   | `f'(x)`                         | $f'(x)$                         |
+| `infty`     | infinity             | `\infty`                        | $\infty$                        |
+| `circ`      | function composition | `(f \circ g)(x)`                | $(f \circ g)(x)$                |
+| `mathrm{d}` | differential d       | `\int_a^b f(x)\,\mathrm{d}x`    | $\int_a^b f(x)\,\mathrm{d}x$    |
+| `int`       | integral             | `\int_a^b x\,dx`                | $\int_a^b x\,dx$                |
+| `iint`      | double integral      | `\iint_D f\,dA`                 | $\iint_D f\,dA$                 |
+| `iiint`     | triple integral      | `\iiint_V f\,dV`                | $\iiint_V f\,dV$                |
+| `oint`      | contour integral     | `\oint_\Gamma f(z)\,dz`         | $\oint_\Gamma f(z)\,dz$         |
+
+### Arrows
+#### Single-Shaft Arrows
+| Term                   | LaTeX Code            | Result                |
+|------------------------|-----------------------|-----------------------|
+| **leftarrow**          | `\leftarrow`          | $\leftarrow$          |
+| **rightarrow**         | `\rightarrow`         | $\rightarrow$         |
+| **uparrow**            | `\uparrow`            | $\uparrow$            |
+| **downarrow**          | `\downarrow`          | $\downarrow$          |
+| **longleftarrow**      | `\longleftarrow`      | $\longleftarrow$      |
+| **longrightarrow**     | `\longrightarrow`     | $\longrightarrow$     |
+| **leftrightarrow**     | `\leftrightarrow`     | $\leftrightarrow$     |
+| **longleftrightarrow** | `\longleftrightarrow` | $\longleftrightarrow$ |
+| **updownarrow**        | `\updownarrow`        | $\updownarrow$        |
+| **nearrow**            | `\nearrow`            | $\nearrow$            |
+| **searrow**            | `\searrow`            | $\searrow$            |
+| **swarrow**            | `\swarrow`            | $\swarrow$            |
+| **nwarrow**            | `\nwarrow`            | $\nwarrow$            |
+| **hookleftarrow**      | `\hookleftarrow`      | $\hookleftarrow$      |
+| **hookrightarrow**     | `\hookrightarrow`     | $\hookrightarrow$     |
+| **mapsto**             | `\mapsto`             | $\mapsto$             |
+| **longmapsto**         | `\longmapsto`         | $\longmapsto$         |
+
+#### Double-Shaft Arrows
+| Term                   | LaTeX Code            | Result                |
+|------------------------|-----------------------|-----------------------|
+| **Leftarrow**          | `\Leftarrow`          | $\Leftarrow$          |
+| **Rightarrow**         | `\Rightarrow`         | $\Rightarrow$         |
+| **Uparrow**            | `\Uparrow`            | $\Uparrow$            |
+| **Downarrow**          | `\Downarrow`          | $\Downarrow$          |
+| **Longleftarrow**      | `\Longleftarrow`      | $\Longleftarrow$      |
+| **Longrightarrow**     | `\Longrightarrow`     | $\Longrightarrow$     |
+| **Leftrightarrow**     | `\Leftrightarrow`     | $\Leftrightarrow$     |
+| **Longleftrightarrow** | `\Longleftrightarrow` | $\Longleftrightarrow$ |
+| **Updownarrow**        | `\Updownarrow`        | $\Updownarrow$        |
+| **implies**            | `\implies`            | $\implies$            |
+| **impliedby**          | `\impliedby`          | $\impliedby$          |
+| **iff**                | `\iff`                | $\iff$                |
+
+#### Miscellaneous Arrows
+| Term                    | LaTeX Code             | Result                 |
+|-------------------------|------------------------|------------------------|
+| **gets**                | `\gets`                | $\gets$                |
+| **to**                  | `\to`                  | $\to$                  |
+| **leadsto**             | `\leadsto`             | $\leadsto$             |
+| **rightsquigarrow**     | `\rightsquigarrow`     | $\rightsquigarrow$     |
+| **leftrightsquigarrow** | `\leftrightsquigarrow` | $\leftrightsquigarrow$ |
+| **rightharpoonup**      | `\rightharpoonup`      | $\rightharpoonup$      |
+| **rightharpoondown**    | `\rightharpoondown`    | $\rightharpoondown$    |
+| **leftharpoonup**       | `\leftharpoonup`       | $\leftharpoonup$       |
+| **leftharpoondown**     | `\leftharpoondown`     | $\leftharpoondown$     |
+| **rightleftharpoons**   | `\rightleftharpoons`   | $\rightleftharpoons$   |
+| **leftleftarrows**      | `\leftleftarrows`      | $\leftleftarrows$      |
+| **rightrightarrows**    | `\rightrightarrows`    | $\rightrightarrows$    |
+| **leftrightarrows**     | `\leftrightarrows`     | $\leftrightarrows$     |
+| **rightleftarrows**     | `\rightleftarrows`     | $\rightleftarrows$     |
+| **twoheadrightarrow**   | `\twoheadrightarrow`   | $\twoheadrightarrow$   |
+| **twoheadleftarrow**    | `\twoheadleftarrow`    | $\twoheadleftarrow$    |
+
+### Environments
+All LaTeX environments follow the same basic syntax pattern:
+
+```latex
+\begin{environment_name}[optional_parameters]{required_parameters}
+  content
+\end{environment_name}
+```
+
+**Important considerations**:
+
+- Environment names at the beginning and end must match exactly
+- Many environments require specific packages to be loaded (e.g., `amsmath` for advanced math environments)
+- Some environments can be nested within others
+- Optional parameters are specified in square brackets `[]`
+- Required parameters are specified in curly braces `{}`
+- The visual results shown are approximations of the actual LaTeX output
+
+#### Mathematical Environments
+Mathematical environments are used for displaying equations, formulas, and mathematical expressions. Some environments stand on their own. Others are dependent on a surrounding environment. For example, `align` and `align*` are both standalone environments. They don't need nobody (Furry sings the blues):
+
+```latex
+\begin{align}
+  a + b &= c + d \\
+  e + f &= g + h
+\end{align}
+```
+
+On the other hand, we have a chap like `aligned`. He is called a sub-environment (with love) and must be placed inside another math environment, like `equation` or `gather`.
+
+```latex
+\begin{equation}
+\begin{aligned}
+  a + b &= c + d \\
+  e + f &= g + h
+\end{aligned}
+\end{equation}
+```
+
+| Environment   | Characteristics                 | Example                                                                                                       | LaTeX                                                                                                         |
+|---------------|---------------------------------|---------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| **equation**  | centered, numbered              | `\begin{equation} E = mc^2 \end{equation}`                                                                    | $\begin{equation} E = mc^2 \end{equation}$                                                                    |
+| **equation*** | centered, unnumbered            | `\begin{equation*} E = mc^2 \end{equation*}`                                                                  | $$\begin{equation*} E = mc^2 \end{equation*}$$                                                                |
+| **align**     | standalone, aligned, numbered   | `\begin{align} x &= y \\ a &= b \end{align}`                                                                  | $\begin{align} x &= y \\ a &= b \end{align}$                                                                  |
+| **align***    | standalone, aligned, unnumbered | `\begin{align*} x &= y \\ a &= b \end{align*}`                                                                | $$\begin{align*} x &= y \\ a &= b \end{align*}$$                                                              |
+| **gather**    | centered                        | `\begin{gather} x = y \\ a = b \end{gather}`                                                                  | $\begin{gather} x = y \\ a = b \end{gather}$                                                                  |
+| **gather***   | centered, unnumbered            | `\begin{gather*} x = y \\ a = b \end{gather*}`                                                                | $$\begin{gather*} x = y \\ a = b \end{gather*}$$                                                              |
+| **multline**  | multiline                       | `\begin{multline} x + y + z = \\ a + b + c \end{multline}`                                                    | x + y + z = &nbsp;&nbsp;&nbsp;(1)<br>&nbsp;&nbsp;&nbsp;&nbsp;a + b + c&nbsp;&nbsp;&nbsp;(2)                   |
+| **multline*** | multiline, unnumbered           | `\begin{multline*} x + y + z = \\ a + b + c \end{multline*}`                                                  | x + y + z =<br>&nbsp;&nbsp;&nbsp;&nbsp;a + b + c                                                              |
+| **split**     | split equation                  | `\begin{equation}\begin{split} x &= y \\ &= z \end{split}\end{equation}`                                      | $\begin{equation}\begin{split} x &= y \\ &= z \end{split}\end{equation}$                                      |
+| **aligned**   | aligned within equation         | `\begin{equation}\begin{aligned} x &= y \\ &= z \end{aligned}\end{equation}`                                  | $\begin{equation}\begin{aligned} x &= y \\ &= z \end{aligned}\end{equation}$                                  |
+| **flalign**   | full width alignment            | `\begin{flalign} x &= y & \\ a &= b & \end{flalign}`                                                          | x = y&nbsp;&nbsp;&nbsp;&nbsp;<br>a = b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(numbered)                                |
+| **flalign***  | full width, unnumbered          | `\begin{flalign*} x &= y & \\ a &= b & \end{flalign*}`                                                        | x = y&nbsp;&nbsp;&nbsp;&nbsp;<br>a = b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                                          |
+| **eqnarray**  | deprecated format               | `\begin{eqnarray} x &=& y \\ a &=& b \end{eqnarray}`                                                          | x = y<br>a = b&nbsp;&nbsp;&nbsp;&nbsp;(numbered)                                                              |
+| **eqnarray*** | deprecated, unnumbered          | `\begin{eqnarray*} x &=& y \\ a &=& b \end{eqnarray*}`                                                        | x = y<br>a = b                                                                                                |
+| **cases**     |                                 | `\begin{equation}f(x) = \begin{cases} x & \text{if } x > 0 \\ 0 & \text{otherwise} \end{cases}\end{equation}` | $\begin{equation}f(x) = \begin{cases} x & \text{if } x > 0 \\ 0 & \text{otherwise} \end{cases}\end{equation}$ |
+
+#### Matrix Environments
+Matrix environments create matrices with different bracket styles.
+
+| Environment     | Characteristics        | Example                                                | Result                                                 |
+|-----------------|------------------------|--------------------------------------------------------|--------------------------------------------------------|
+| **matrix**      | no brackets            | `\begin{matrix} a & b \\ c & d \end{matrix}`           | $\begin{matrix} a & b \\ c & d \end{matrix}$           |
+| **pmatrix**     | parentheses            | `\begin{pmatrix} a & b \\ c & d \end{pmatrix}`         | $\begin{pmatrix} a & b \\ c & d \end{pmatrix}$         |
+| **bmatrix**     | square brackets        | `\begin{bmatrix} a & b \\ c & d \end{bmatrix}`         | $\begin{bmatrix} a & b \\ c & d \end{bmatrix}$         |
+| **Bmatrix**     | curly braces           | `\begin{Bmatrix} a & b \\ c & d \end{Bmatrix}`         | $\begin{Bmatrix} a & b \\ c & d \end{Bmatrix}$         |
+| **vmatrix**     | determinant bars       | `\begin{vmatrix} a & b \\ c & d \end{vmatrix}`         | $\begin{vmatrix} a & b \\ c & d \end{vmatrix}$         |
+| **Vmatrix**     | double bars            | `\begin{Vmatrix} a & b \\ c & d \end{Vmatrix}`         | $\begin{Vmatrix} a & b \\ c & d \end{Vmatrix}$         |
+| **array**       | customizable alignment | `\begin{array}{cc} a & b \\ c & d \end{array}`         | $\begin{array}{cc} a & b \\ c & d \end{array}$         |
+| **smallmatrix** | small inline matrix    | `\begin{smallmatrix} a & b \\ c & d \end{smallmatrix}` | $\begin{smallmatrix} a & b \\ c & d \end{smallmatrix}$ |
+
+#### List Environments
+List environments create structured lists with different formatting.
+
+| Environment     | Example                                                                                            | Result                                                                                    |
+|-----------------|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| **itemize**     | `\begin{itemize} \item First item \item Second item \end{itemize}`                                 | -  First item<br>-  Second item                                                           |
+| **enumerate**   | `\begin{enumerate} \item First item \item Second item \end{enumerate}`                             | 1. First item<br>2. Second item                                                           |
+| **description** | `\begin{description} \item[Term] Description \item[Word] Definition \end{description}`             | **Term**&nbsp;&nbsp;&nbsp;&nbsp;Description<br>**Word**&nbsp;&nbsp;&nbsp;&nbsp;Definition |
+| **list**        | `\begin{list}{$\bullet$}{\setlength{\itemsep}{0pt}} \item First item \item Second item \end{list}` | -  First item<br>-  Second item (custom)                                                  |
+
+#### Table and Tabular Environments
+Table environments are used for creating tables and tabular data.
+
+| Environment      | Example                                                                                                             | Result                                                                                                                              |
+|------------------|---------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| **tabular**      | `\begin{tabular}{\|c\|c\|} \hline Cell 1 & Cell 2 \\ \hline Cell 3 & Cell 4 \\ \hline \end{tabular}`                | ┌────┬────┐<br>│ Cell 1&nbsp;&nbsp;│ Cell 2&nbsp;&nbsp;│<br>├───-┼────┤<br>│ Cell 3&nbsp;&nbsp;│ Cell 4&nbsp;&nbsp;│<br>└────┴────┘ |
+| **table**        | `\begin{table}[ht] \centering \begin{tabular}{cc} A & B \\ C & D \end{tabular} \caption{Table caption} \end{table}` | Floating table with:<br>A&nbsp;&nbsp;B<br>C&nbsp;&nbsp;D<br>Table caption                                                           |
+| **longtable**    | `\begin{longtable}{cc} A & B \\ C & D \end{longtable}`                                                              | A&nbsp;&nbsp;B<br>C&nbsp;&nbsp;D (multi-page table)                                                                                 |
+| **supertabular** | `\begin{supertabular}{cc} A & B \\ C & D \end{supertabular}`                                                        | A&nbsp;&nbsp;B<br>C&nbsp;&nbsp;D (page-breaking table)                                                                              |
+| **tabularx**     | `\begin{tabularx}{\textwidth}{XX} Column 1 & Column 2 \end{tabularx}`                                               | Column 1&nbsp;&nbsp;&nbsp;&nbsp;Column 2<br>(width-adjustable)                                                                      |
+| **array**        | `\begin{array}{\|c\|c\|} \hline a & b \\ \hline c & d \\ \hline \end{array}`                                        | ┌───┬───┐<br>│ a │ b │<br>├───┼───┤<br>│ c │ d │<br>└───┴───┘                                                                       |
+
+#### Figure Environments
+Figure environments handle graphics and image placement.
+
+| Environment    | Example                                                                                                      | Result                                                |
+|----------------|--------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
+| **figure**     | `\begin{figure}[ht] \includegraphics{image.png} \caption{Figure caption} \label{fig:label} \end{figure}`     | [Image]<br>Figure 1: Figure caption                   |
+| **figure***    | `\begin{figure*}[ht] \includegraphics{image.png} \caption{Two-column figure} \end{figure*}`                  | [Wide Image]<br>Figure 1: Two-column figure           |
+| **subfigure**  | `\begin{subfigure}{0.5\textwidth} \includegraphics{image1.png} \caption{Subfigure 1} \end{subfigure}`        | [Image] (a)<br>Subfigure 1                            |
+| **wrapfigure** | `\begin{wrapfigure}{r}{0.5\textwidth} \includegraphics{image.png} \caption{Wrapped figure} \end{wrapfigure}` | Text wraps around<br>[Image] figure<br>Wrapped figure |
+
+#### Text Formatting Environments
+Text formatting environments control text alignment and presentation.
+
+| Environment    | Example                                                         | Result                                                                                    |
+|----------------|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| **center**     | `\begin{center} Centered text \end{center}`                     | &nbsp;&nbsp;&nbsp;&nbsp;Centered text                                                     |
+| **flushleft**  | `\begin{flushleft} Left-aligned text \end{flushleft}`           | Left-aligned text                                                                         |
+| **flushright** | `\begin{flushright} Right-aligned text \end{flushright}`        | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right-aligned text                  |
+| **quote**      | `\begin{quote} This is a quoted text. \end{quote}`              | &nbsp;&nbsp;This is a quoted text.<br>&nbsp;&nbsp;(indented)                              |
+| **quotation**  | `\begin{quotation} This is a longer quotation. \end{quotation}` | &nbsp;&nbsp;&nbsp;&nbsp;This is a longer<br>&nbsp;&nbsp;&nbsp;&nbsp;quotation. (indented) |
+| **verse**      | `\begin{verse} Roses are red \\ Violets are blue \end{verse}`   | &nbsp;&nbsp;Roses are red<br>&nbsp;&nbsp;Violets are blue                                 |
+| **abstract**   | `\begin{abstract} This is the abstract. \end{abstract}`         | **Abstract**<br>This is the abstract.                                                     |
+
+#### Box and Minipage Environments
+Box environments create contained areas for text and content.
+
+| Environment   | Example                                                           | Result                                                                                                                                                                                                                  |
+|---------------|-------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **minipage**  | `\begin{minipage}{0.5\textwidth} Text in minipage \end{minipage}` | ┌─────────────────┐<br>│ Text in&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>│ minipage&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>└─────────────────┘                                           |
+| **parbox**    | `\parbox{0.5\textwidth}{ Text in parbox }`                        | ┌─────────────────┐<br>│ Text in parbox&nbsp;&nbsp;│<br>└─────────────────┘                                                                                                                                             |
+| **fbox**      | `\fbox{ Boxed text }`                                             | ┌─────────────┐<br>│ Boxed text&nbsp;&nbsp;│<br>└─────────────┘                                                                                                                                                         |
+| **framebox**  | `\framebox[width][pos]{ Framed text }`                            | ┌─────────────────┐<br>│&nbsp;&nbsp;&nbsp;Framed text&nbsp;&nbsp;&nbsp;│<br>└─────────────────┘                                                                                                                         |
+| **colorbox**  | `\colorbox{yellow}{ Colored background }`                         | ██████████████████<br>█ Colored&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;█<br>█ background&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;█<br>██████████████████                                                                   |
+| **fcolorbox** | `\fcolorbox{red}{yellow}{ Colored frame and background }`         | ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓<br>▓████████████████▓<br>▓█ Colored&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;█▓<br>▓█ frame and&nbsp;&nbsp;&nbsp;&nbsp;█▓<br>▓█ background&nbsp;&nbsp;&nbsp;█▓<br>▓████████████████▓<br>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ |
+
+#### Code and Verbatim Environments
+Code environments display code and literal text without interpretation.
+
+| Environment    | Example                                                                                  | Result                                                                                                 |
+|----------------|------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| **verbatim**   | `\begin{verbatim} This is verbatim text \LaTeX commands ignored \end{verbatim}`          | This is verbatim text<br>\\LaTeX commands ignored<br>(monospace font)                                  |
+| **verbatim***  | `\begin{verbatim*} Verbatim with visible spaces \end{verbatim*}`                         | Verbatim·with·visible·spaces<br>(shows spaces as ·)                                                    |
+| **lstlisting** | `\begin{lstlisting}[language=Python] def hello(): print("Hello World") \end{lstlisting}` | **def** hello():<br>&nbsp;&nbsp;&nbsp;&nbsp;**print**("Hello World")<br>(syntax highlighted)           |
+| **minted**     | `\begin{minted}{python} def hello(): print("Hello World") \end{minted}`                  | **def** hello():<br>&nbsp;&nbsp;&nbsp;&nbsp;**print**("Hello World")<br>(advanced syntax highlighting) |
+| **alltt**      | `\begin{alltt} Almost verbatim but \textbf{commands} work \end{alltt}`                   | Almost verbatim but **commands** work<br>(mixed formatting)                                            |
+| **comment**    | `\begin{comment} This text will be ignored \end{comment}`                                | (text is completely hidden)                                                                            |
+
+#### Theorem-like Environments
+Theorem environments are used for mathematical statements, definitions, and proofs.
+
+| Environment     | Example                                                          | Result                                      |
+|-----------------|------------------------------------------------------------------|---------------------------------------------|
+| **theorem**     | `\begin{theorem} Statement of theorem \end{theorem}`             | **Theorem 1.** Statement of theorem         |
+| **lemma**       | `\begin{lemma} Statement of lemma \end{lemma}`                   | **Lemma 1.** Statement of lemma             |
+| **proposition** | `\begin{proposition} Statement of proposition \end{proposition}` | **Proposition 1.** Statement of proposition |
+| **corollary**   | `\begin{corollary} Statement of corollary \end{corollary}`       | **Corollary 1.** Statement of corollary     |
+| **definition**  | `\begin{definition} Definition text \end{definition}`            | **Definition 1.** Definition text           |
+| **example**     | `\begin{example} Example text \end{example}`                     | **Example 1.** Example text                 |
+| **remark**      | `\begin{remark} Remark text \end{remark}`                        | **Remark 1.** Remark text                   |
+| **proof**       | `\begin{proof} Proof content \end{proof}`                        | **Proof.** Proof content □                  |
+| **problem**     | `\begin{problem} Problem statement \end{problem}`                | **Problem 1.** Problem statement            |
+| **exercise**    | `\begin{exercise} Exercise content \end{exercise}`               | **Exercise 1.** Exercise content            |
+
+#### Document Structure Environments
+Document structure environments organize the overall document layout.
+
+| Environment         | Example                                                                        | Result                                                                                          |
+|---------------------|--------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| **document**        | `\begin{document} Document content \end{document}`                             | Document content<br>(main document body)                                                        |
+| **titlepage**       | `\begin{titlepage} Custom title page \end{titlepage}`                          | ═══════════════════<br>&nbsp;&nbsp;&nbsp;TITLE PAGE<br>═══════════════════<br>Custom title page |
+| **appendix**        | `\begin{appendix} Appendix content \end{appendix}`                             | **Appendix A**<br>Appendix content                                                              |
+| **thebibliography** | `\begin{thebibliography}{99} \bibitem{ref1} Reference 1 \end{thebibliography}` | **References**<br>[12] Reference 1                                                              |
+
+#### Specialized Environments
+Specialized environments provide advanced features for graphics, layout, and formatting.
+
+| Environment        | Example                                                                        | Result                                                                                                                                                                                                                                  |
+|--------------------|--------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **tikzpicture**    | `\begin{tikzpicture} \draw (0,0) -- (1,1); \end{tikzpicture}`                  | &nbsp;&nbsp;&nbsp;&nbsp;/<br>&nbsp;&nbsp;&nbsp;/<br>&nbsp;&nbsp;/<br>&nbsp;/<br>/<br>(vector graphics)                                                                                                                                  |
+| **pgfpicture**     | `\begin{pgfpicture} \pgfpathcircle{\pgfpoint{0cm}{0cm}}{1cm} \end{pgfpicture}` | &nbsp;&nbsp;◯<br>(graphics)                                                                                                                                                                                                             |
+| **picture**        | `\begin{picture}(100,50) \put(10,10){\circle{20}} \end{picture}`               | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;○<br>(basic graphics)                                                                                                                                                                                     |
+| **multicols**      | `\begin{multicols}{2} Text in multiple columns \end{multicols}`                | Text in │ multiple<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ columns                                                                                                                                                         |
+| **landscape**      | `\begin{landscape} Landscape oriented content \end{landscape}`                 | L<br>a<br>n<br>d<br>s<br>c<br>a<br>p<br>e&nbsp;&nbsp;(rotated 90°)                                                                                                                                                                      |
+| **sidewaystable**  | `\begin{sidewaystable} Rotated table \end{sidewaystable}`                      | R │ T<br>o │ a<br>t │ b<br>a │ l<br>t │ e<br>e │&nbsp;&nbsp;<br>d │&nbsp;&nbsp;                                                                                                                                                         |
+| **sidewaysfigure** | `\begin{sidewaysfigure} Rotated figure \end{sidewaysfigure}`                   | R │ [Image]<br>o │ Figure 1<br>t │ Caption<br>a │<br>t │<br>e │<br>d │                                                                                                                                                                  |
+| **mdframed**       | `\begin{mdframed} Framed content \end{mdframed}`                               | ╔═══════════════╗<br>║ Framed&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;║<br>║ content&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;║<br>╚═══════════════╝                                                                             |
+| **tcolorbox**      | `\begin{tcolorbox} Colored box content \end{tcolorbox}`                        | ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓<br>▓ Colored box&nbsp;&nbsp;&nbsp;▓<br>▓ content&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▓<br>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓                                                                                                      |
+| **adjustbox**      | `\begin{adjustbox}{width=0.5\textwidth} Adjusted content \end{adjustbox}`      | ┌─────────────────┐<br>│ Adjusted&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>│ content&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>│ (resized)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>└─────────────────┘ |

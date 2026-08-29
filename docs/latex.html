@@ -1,0 +1,2922 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2026-08-29">
+
+<title>LaTeX Reference – Computer Language Notebook</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./ecosystem.html" rel="next">
+<link href="./shell.html" rel="prev">
+<link href="././favicon.png" rel="icon" type="image/png">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f876f781226a33a7a2f77a56c5ae090f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": true,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Computer Language Notebook</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Languages</a></li><li class="breadcrumb-item"><a href="./latex.html">LaTeX Reference</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="./index.html" class="sidebar-logo-link">
+      <img src="././images/logo.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="././images/logo.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Languages</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./assembly.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./c.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The C Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">The C++ Language</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cpp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cpp-GL.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Guidelines</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Build Systems</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./make.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Makefile Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cmake.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CMake Language</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">The Rust Language</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-in.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-ho.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Hands On</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-cc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cargo and Crates</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-out.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Places You’ll Go</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./python.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Python Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./css.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CSS Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./matlab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The MATLAB Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shell.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Shell Scripting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./latex.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">LaTeX Reference</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text">The Ecosystem</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./ecosystem.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./git.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Git Version Control</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">Briefs</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./b-pyperf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Python Performance Analysis</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false">
+ <span class="menu-text">Reference</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/assembly-pc.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PC Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-general.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Web Guide</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-selectors.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Selector Guide</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="false">
+ <span class="menu-text">Appendix</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossary</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a>
+  <ul>
+  <li><a href="#history" id="toc-history" class="nav-link" data-scroll-target="#history">History</a></li>
+  </ul></li>
+  <li><a href="#guide" id="toc-guide" class="nav-link" data-scroll-target="#guide">Guide</a>
+  <ul>
+  <li><a href="#modes" id="toc-modes" class="nav-link" data-scroll-target="#modes">Modes</a>
+  <ul class="collapse">
+  <li><a href="#inline-math-mode" id="toc-inline-math-mode" class="nav-link" data-scroll-target="#inline-math-mode">Inline Math Mode</a></li>
+  <li><a href="#display-math-mode" id="toc-display-math-mode" class="nav-link" data-scroll-target="#display-math-mode">Display Math Mode</a></li>
+  </ul></li>
+  <li><a href="#environments" id="toc-environments" class="nav-link" data-scroll-target="#environments">Environments</a></li>
+  </ul></li>
+  <li><a href="#commands" id="toc-commands" class="nav-link" data-scroll-target="#commands">Commands</a>
+  <ul>
+  <li><a href="#spacing" id="toc-spacing" class="nav-link" data-scroll-target="#spacing">Spacing</a></li>
+  <li><a href="#fonts" id="toc-fonts" class="nav-link" data-scroll-target="#fonts">Fonts</a>
+  <ul class="collapse">
+  <li><a href="#math-fonts" id="toc-math-fonts" class="nav-link" data-scroll-target="#math-fonts">Math Fonts</a></li>
+  </ul></li>
+  <li><a href="#delimiters" id="toc-delimiters" class="nav-link" data-scroll-target="#delimiters">Delimiters</a>
+  <ul class="collapse">
+  <li><a href="#common" id="toc-common" class="nav-link" data-scroll-target="#common">Common</a></li>
+  <li><a href="#sizing" id="toc-sizing" class="nav-link" data-scroll-target="#sizing">Sizing</a></li>
+  </ul></li>
+  <li><a href="#accents-decorations" id="toc-accents-decorations" class="nav-link" data-scroll-target="#accents-decorations">Accents, Decorations</a></li>
+  <li><a href="#mathematical-operators" id="toc-mathematical-operators" class="nav-link" data-scroll-target="#mathematical-operators">Mathematical Operators</a>
+  <ul class="collapse">
+  <li><a href="#binary" id="toc-binary" class="nav-link" data-scroll-target="#binary">Binary</a></li>
+  <li><a href="#fractions-binomials-roots" id="toc-fractions-binomials-roots" class="nav-link" data-scroll-target="#fractions-binomials-roots">Fractions, Binomials, Roots</a></li>
+  <li><a href="#big-operators" id="toc-big-operators" class="nav-link" data-scroll-target="#big-operators">Big Operators</a></li>
+  <li><a href="#set-operators" id="toc-set-operators" class="nav-link" data-scroll-target="#set-operators">Set Operators</a></li>
+  <li><a href="#probability-operators" id="toc-probability-operators" class="nav-link" data-scroll-target="#probability-operators">Probability Operators</a></li>
+  <li><a href="#calculus-operators" id="toc-calculus-operators" class="nav-link" data-scroll-target="#calculus-operators">Calculus Operators</a></li>
+  </ul></li>
+  <li><a href="#arrows" id="toc-arrows" class="nav-link" data-scroll-target="#arrows">Arrows</a>
+  <ul class="collapse">
+  <li><a href="#single-shaft-arrows" id="toc-single-shaft-arrows" class="nav-link" data-scroll-target="#single-shaft-arrows">Single-Shaft Arrows</a></li>
+  <li><a href="#double-shaft-arrows" id="toc-double-shaft-arrows" class="nav-link" data-scroll-target="#double-shaft-arrows">Double-Shaft Arrows</a></li>
+  <li><a href="#miscellaneous-arrows" id="toc-miscellaneous-arrows" class="nav-link" data-scroll-target="#miscellaneous-arrows">Miscellaneous Arrows</a></li>
+  </ul></li>
+  <li><a href="#environments-1" id="toc-environments-1" class="nav-link" data-scroll-target="#environments-1">Environments</a>
+  <ul class="collapse">
+  <li><a href="#mathematical-environments" id="toc-mathematical-environments" class="nav-link" data-scroll-target="#mathematical-environments">Mathematical Environments</a></li>
+  <li><a href="#matrix-environments" id="toc-matrix-environments" class="nav-link" data-scroll-target="#matrix-environments">Matrix Environments</a></li>
+  <li><a href="#list-environments" id="toc-list-environments" class="nav-link" data-scroll-target="#list-environments">List Environments</a></li>
+  <li><a href="#table-and-tabular-environments" id="toc-table-and-tabular-environments" class="nav-link" data-scroll-target="#table-and-tabular-environments">Table and Tabular Environments</a></li>
+  <li><a href="#figure-environments" id="toc-figure-environments" class="nav-link" data-scroll-target="#figure-environments">Figure Environments</a></li>
+  <li><a href="#text-formatting-environments" id="toc-text-formatting-environments" class="nav-link" data-scroll-target="#text-formatting-environments">Text Formatting Environments</a></li>
+  <li><a href="#box-and-minipage-environments" id="toc-box-and-minipage-environments" class="nav-link" data-scroll-target="#box-and-minipage-environments">Box and Minipage Environments</a></li>
+  <li><a href="#code-and-verbatim-environments" id="toc-code-and-verbatim-environments" class="nav-link" data-scroll-target="#code-and-verbatim-environments">Code and Verbatim Environments</a></li>
+  <li><a href="#theorem-like-environments" id="toc-theorem-like-environments" class="nav-link" data-scroll-target="#theorem-like-environments">Theorem-like Environments</a></li>
+  <li><a href="#document-structure-environments" id="toc-document-structure-environments" class="nav-link" data-scroll-target="#document-structure-environments">Document Structure Environments</a></li>
+  <li><a href="#specialized-environments" id="toc-specialized-environments" class="nav-link" data-scroll-target="#specialized-environments">Specialized Environments</a></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Languages</a></li><li class="breadcrumb-item"><a href="./latex.html">LaTeX Reference</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">LaTeX Reference</h1>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">August 29, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p><img src="images/ltx-00.svg" class="img-fluid" style="float: left; padding: 0 2em 0 1em;width:2in" alt="LaTeX logo"></p>
+<p>LaTeX is a software system for typesetting documents. It’s based on the TeX typesetting system that was designed and written by computer scientist and Stanford University professor Donald Knuth. LaTeX provides a high-level, descriptive markup language to use TeX more easily: TeX handles the document layout, while LaTeX handles the content side for document processing. Because the plain TeX formatting commands are elementary, it provides authors with ready-made commands for formatting and layout requirements such as chapter headings, footnotes, cross-references and bibliographies.</p>
+<section id="history" class="level3">
+<h3 class="anchored" data-anchor-id="history">History</h3>
+<p>When the first paper volume of Knuth’s The Art of Computer Programming was published in 1968, it was typeset using hot metal typesetting on a Monotype machine. This method, dating back to the 19th century, produced a “classic style” appreciated by Knuth. When the second edition was published, in 1976, the whole book had to be typeset again because the Monotype technology had been largely replaced by phototypesetting, and the original fonts were no longer available. When Knuth received the galley proofs of the new book on March 30 1977, he found them inferior. Disappointed, Knuth set out to design his own typesetting system.</p>
+<p>Since the primary goal of the TeX language is high-quality typesetting for publishers of books, Knuth gave a lot of attention to the spacing rules for mathematical formulae. He took three bodies of work that he considered to be standards of excellence for mathematical typography:</p>
+<ol type="1">
+<li>Books typeset by the Addison-Wesley Publishing house (the publisher of The Art of Computer Programming).</li>
+<li>Editions of the mathematical journal Acta Mathematica from around 1910.</li>
+<li>A copy of Indagationes Mathematicae, a Dutch mathematics journal.</li>
+</ol>
+<p>Knuth looked closely at these printed papers to sort out a set of rules for spacing. While TeX provides some basic rules and the tools needed to specify proper spacing, the exact parameters depend on the font used to typeset the formula. For example, the spacing for Knuth’s Computer Modern fonts has been precisely fine-tuned over the years and is now set; but when other fonts, such as AMS Euler, were used by Knuth for the first time, new spacing parameters had to be defined.</p>
+</section>
+</section>
+<section id="guide" class="level2">
+<h2 class="anchored" data-anchor-id="guide">Guide</h2>
+<div class="subheading">
+<p>Super brief</p>
+</div>
+<p>This is our abridged LaTeX reference. It’s broadly broken down by category.</p>
+<ul>
+<li><strong>command:</strong> each word in the LaTeX vocabulary is a <em>command</em>, though we call them <em>terms</em> in our tables.</li>
+<li><strong>context:</strong> the LaTeX environment in which LaTeX is being executed.</li>
+<li><strong>environment:</strong> they are spaces that have specialized behaviors. We discuss <a href="#environments">environments</a> briefly just below. And we have a listing of their <a href="#environments-1">commands</a>.</li>
+</ul>
+<section id="modes" class="level3">
+<h3 class="anchored" data-anchor-id="modes">Modes</h3>
+<p>How many modes are there? I don’t know. How many are we concerned with? Two, but we are going to name three of them: <strong>inline math</strong>, <strong>display math</strong>, and <strong>text mode</strong>. This is how the genteel folk refer to them.</p>
+<section id="inline-math-mode" class="level4">
+<h4 class="anchored" data-anchor-id="inline-math-mode">Inline Math Mode</h4>
+<p>Inline math mode is for including mathematical expressions directly within a paragraph of text. It’s used for small formulas, variables, or short equations that don’t need their own line.</p>
+<ul>
+<li><strong>Delimiters:</strong> The most common delimiters are <code>$...$</code> and <code>\(...\)</code>.</li>
+<li><strong>Examples:</strong>
+<ul>
+<li><code>The variable $x$ is equal to 3.</code></li>
+<li><code>We see that \(a^2 + b^2 = c^2\).</code></li>
+</ul></li>
+</ul>
+</section>
+<section id="display-math-mode" class="level4">
+<h4 class="anchored" data-anchor-id="display-math-mode">Display Math Mode</h4>
+<p>Display math mode is for equations that are set on their own separate line. This makes them stand out from the main text and is preferred for longer or more important equations.</p>
+<ul>
+<li><strong>Delimiters:</strong> The most common delimiters are <code>$$...$$</code> and <code>\[...\]</code>.</li>
+<li><strong>Examples:</strong>
+<ul>
+<li><code>The Pythagorean theorem is stated as: $$a^2 + b^2 = c^2$$</code></li>
+<li><code>The quadratic formula is: \[x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\]</code></li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section id="environments" class="level3">
+<h3 class="anchored" data-anchor-id="environments">Environments</h3>
+<p>Beyond the basic delimiters, you can use specialized <em>environments</em> (like <code>align</code>, <code>equation</code>, <code>gather</code>) for more complex arrangements of equations, such as multi-line equations or systems of equations. These environments automatically switch LaTeX into <em>math mode</em> and handle formatting, spacing, and numbering. For example, <code>\begin{equation} ... \end{equation}</code> is another way to produce a numbered, displayed equation.</p>
+</section>
+</section>
+<section id="commands" class="level2">
+<h2 class="anchored" data-anchor-id="commands">Commands</h2>
+<section id="spacing" class="level3">
+<h3 class="anchored" data-anchor-id="spacing">Spacing</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 40%">
+<col style="width: 23%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Characteristic</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>,</strong></td>
+<td>thin space</td>
+<td><code>a\,b</code></td>
+<td><span class="math inline">\(a\,b\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>:</strong></td>
+<td>medium space</td>
+<td><code>a\:b</code></td>
+<td><span class="math inline">\(a\:b\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>;</strong></td>
+<td>thick space</td>
+<td><code>a\;b</code></td>
+<td><span class="math inline">\(a\;b\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>quad</strong></td>
+<td>quad space</td>
+<td><code>a\quad b</code></td>
+<td><span class="math inline">\(a\quad b\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>qquad</strong></td>
+<td>double quad</td>
+<td><code>a\qquad b</code></td>
+<td><span class="math inline">\(a\qquad b\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>!</strong></td>
+<td>negative thin</td>
+<td><code>a\!b</code></td>
+<td><span class="math inline">\(a\!b\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>~</strong></td>
+<td>non-breaking space (text)</td>
+<td><code>a~b</code></td>
+<td>a~b</td>
+</tr>
+<tr class="even">
+<td><strong>tag</strong></td>
+<td>right-justify reference (display mode)</td>
+<td><code>a - b = c \tag{2.2}</code></td>
+<td><span class="math display">\[a - b = c \tag{2.2}\]</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="fonts" class="level3">
+<h3 class="anchored" data-anchor-id="fonts">Fonts</h3>
+<section id="math-fonts" class="level4">
+<h4 class="anchored" data-anchor-id="math-fonts">Math Fonts</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 15%">
+<col style="width: 36%">
+<col style="width: 36%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Characteristic</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>mathrm</strong></td>
+<td>roman (upright)</td>
+<td><code>\mathrm{ABCxyz}</code></td>
+<td><span class="math inline">\(\mathrm{ABCxyz}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>mathbf</strong></td>
+<td>bold</td>
+<td><code>\mathbf{ABCxyz}</code></td>
+<td><span class="math inline">\(\mathbf{ABCxyz}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>mathit</strong></td>
+<td>italic</td>
+<td><code>\mathit{ABCxyz}</code></td>
+<td><span class="math inline">\(\mathit{ABCxyz}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>mathsf</strong></td>
+<td>sans-serif</td>
+<td><code>\mathsf{ABCxyz}</code></td>
+<td><span class="math inline">\(\mathsf{ABCxyz}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>mathtt</strong></td>
+<td>typewriter</td>
+<td><code>\mathtt{ABCxyz}</code></td>
+<td><span class="math inline">\(\mathtt{ABCxyz}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>mathcal</strong></td>
+<td>calligraphic (caps)</td>
+<td><code>\mathcal{ABC}</code></td>
+<td><span class="math inline">\(\mathcal{ABC}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>mathbb</strong></td>
+<td>blackboard bold</td>
+<td><code>\mathbb{R}\,\mathbb{N}\,\mathbb{Z}\,\mathbb{Q}</code></td>
+<td><span class="math inline">\(\mathbb{R}\,\mathbb{N}\,\mathbb{Z}\,\mathbb{Q}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>mathfrak</strong></td>
+<td>fraktur</td>
+<td><code>\mathfrak{ABCxyz}</code></td>
+<td><span class="math inline">\(\mathfrak{ABCxyz}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>boldsymbol</strong></td>
+<td>bold symbol</td>
+<td><code>\boldsymbol{\alpha}\;\boldsymbol{v}</code></td>
+<td><span class="math inline">\(\boldsymbol{\alpha}\;\boldsymbol{v}\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="delimiters" class="level3">
+<h3 class="anchored" data-anchor-id="delimiters">Delimiters</h3>
+<section id="common" class="level4">
+<h4 class="anchored" data-anchor-id="common">Common</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 24%">
+<col style="width: 24%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Characteristic</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>(</strong>, <strong>)</strong></td>
+<td>parentheses</td>
+<td><code>(x)</code></td>
+<td><span class="math inline">\((x)\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>[<strong>, </strong>]</strong></td>
+<td>brackets</td>
+<td><code>[x]</code></td>
+<td><span class="math inline">\([x]\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>{</strong>, <strong>}</strong></td>
+<td>braces</td>
+<td><code>\{ x \}</code></td>
+<td><span class="math inline">\(\{ x \}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>langle, rangle</strong></td>
+<td>angle brackets</td>
+<td><code>\langle x \rangle</code></td>
+<td><span class="math inline">\(\langle x \rangle\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>lfloor, rfloor</strong></td>
+<td>floor</td>
+<td><code>\lfloor x \rfloor</code></td>
+<td><span class="math inline">\(\lfloor x \rfloor\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>lceil, rceil</strong></td>
+<td>ceiling</td>
+<td><code>\lceil x \rceil</code></td>
+<td><span class="math inline">\(\lceil x \rceil\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>lvert, rvert</strong></td>
+<td>absolute value</td>
+<td><code>\lvert x \rvert</code></td>
+<td><span class="math inline">\(\lvert x \rvert\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>lVert, rVert</strong></td>
+<td>norm (double bars)</td>
+<td><code>\lVert x \rVert</code></td>
+<td><span class="math inline">\(\lVert x \rVert\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="sizing" class="level4">
+<h4 class="anchored" data-anchor-id="sizing">Sizing</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 15%">
+<col style="width: 30%">
+<col style="width: 30%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Characteristic</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>left(</strong>, <strong>right)</strong></td>
+<td>automatic sizing</td>
+<td><code>\left( \dfrac{a}{b} \right)</code></td>
+<td><span class="math inline">\(\left( \dfrac{a}{b} \right)\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>left\{</strong>, <strong>right\}</strong></td>
+<td>middle (infix)</td>
+<td><code>\left\{ x \middle| x&gt;0 \right\}</code></td>
+<td><span class="math inline">\(\left\{ x \middle| x&gt;0 \right\}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>lVert</strong>, <strong>rVert</strong></td>
+<td>auto double bars</td>
+<td><code>\left\lVert x \right\rVert</code></td>
+<td><span class="math inline">\(\left\lVert x \right\rVert\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>bigl(</strong>, <strong>bigr)</strong></td>
+<td>big</td>
+<td><code>\bigl( x \bigr)</code></td>
+<td><span class="math inline">\(\bigl( x \bigr)\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>Bigl(</strong>, <strong>Bigr)</strong></td>
+<td>bigger</td>
+<td><code>\Bigl( x \Bigr)</code></td>
+<td><span class="math inline">\(\Bigl( x \Bigr)\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>biggl(</strong>, <strong>biggr)</strong></td>
+<td>even bigger</td>
+<td><code>\biggl( x \biggr)</code></td>
+<td><span class="math inline">\(\biggl( x \biggr)\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>Biggl(</strong>, <strong>Biggr)</strong></td>
+<td>biggest</td>
+<td><code>\Biggl( x \Biggr)</code></td>
+<td><span class="math inline">\(\Biggl( x \Biggr)\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="accents-decorations" class="level3">
+<h3 class="anchored" data-anchor-id="accents-decorations">Accents, Decorations</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 15%">
+<col style="width: 35%">
+<col style="width: 35%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Characteristic</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>hat</strong></td>
+<td>hat</td>
+<td><code>\hat{x}</code></td>
+<td><span class="math inline">\(\hat{x}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>widehat</strong></td>
+<td>widehat</td>
+<td><code>\widehat{ABC}</code></td>
+<td><span class="math inline">\(\widehat{ABC}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>bar</strong></td>
+<td>bar</td>
+<td><code>\bar{x}</code></td>
+<td><span class="math inline">\(\bar{x}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>overline</strong></td>
+<td>overline</td>
+<td><code>\overline{z}</code></td>
+<td><span class="math inline">\(\overline{z}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>tilde</strong></td>
+<td>tilde</td>
+<td><code>\tilde{x}</code></td>
+<td><span class="math inline">\(\tilde{x}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>widetilde</strong></td>
+<td>widetilde</td>
+<td><code>\widetilde{ABC}</code></td>
+<td><span class="math inline">\(\widetilde{ABC}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>vec</strong></td>
+<td>vector</td>
+<td><code>\vec{v}</code></td>
+<td><span class="math inline">\(\vec{v}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>dot</strong></td>
+<td>dot</td>
+<td><code>\dot{x}</code></td>
+<td><span class="math inline">\(\dot{x}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>ddot</strong></td>
+<td>ddot</td>
+<td><code>\ddot{x}</code></td>
+<td><span class="math inline">\(\ddot{x}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>underline</strong></td>
+<td>underline</td>
+<td><code>\underline{x}</code></td>
+<td><span class="math inline">\(\underline{x}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>overbrace</strong></td>
+<td>overbrace</td>
+<td><code>\overbrace{a+\cdots+b}^{n\ \text{terms}}</code></td>
+<td><span class="math inline">\(\overbrace{a+\cdots+b}^{n\ \text{terms}}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>underbrace</strong></td>
+<td>underbrace</td>
+<td><code>\underbrace{a+\cdots+b}_{n\ \text{terms}}</code></td>
+<td><span class="math inline">\(\underbrace{a+\cdots+b}_{n\ \text{terms}}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>boxed</strong></td>
+<td>rectangular border</td>
+<td><code>\boxed{LittleMan}</code></td>
+<td><span class="math inline">\(\boxed{LittleMan}\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="mathematical-operators" class="level3">
+<h3 class="anchored" data-anchor-id="mathematical-operators">Mathematical Operators</h3>
+<section id="binary" class="level4">
+<h4 class="anchored" data-anchor-id="binary">Binary</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Characteristic</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>+</strong></td>
+<td>plus</td>
+<td><code>a+b</code></td>
+<td><span class="math inline">\(a+b\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>-</strong></td>
+<td>minus</td>
+<td><code>a-b</code></td>
+<td><span class="math inline">\(a-b\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>pm</strong></td>
+<td>plus-minus</td>
+<td><code>a\pm b</code></td>
+<td><span class="math inline">\(a\pm b\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>mp</strong></td>
+<td>minus-plus</td>
+<td><code>a\mp b</code></td>
+<td><span class="math inline">\(a\mp b\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>cdot</strong></td>
+<td>dot (scalar)</td>
+<td><code>a\cdot b</code></td>
+<td><span class="math inline">\(a\cdot b\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>times</strong></td>
+<td>times (vector)</td>
+<td><code>a\times b</code></td>
+<td><span class="math inline">\(a\times b\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>ast</strong></td>
+<td>star</td>
+<td><code>a\ast b</code></td>
+<td><span class="math inline">\(a\ast b\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>circ</strong></td>
+<td>circ (composition)</td>
+<td><code>a\circ b</code></td>
+<td><span class="math inline">\(a\circ b\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>bullet</strong></td>
+<td>bullet</td>
+<td><code>a\bullet b</code></td>
+<td><span class="math inline">\(a\bullet b\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>cup</strong></td>
+<td>union</td>
+<td><code>A\cup B</code></td>
+<td><span class="math inline">\(A\cup B\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>cap</strong></td>
+<td>intersection</td>
+<td><code>A\cap B</code></td>
+<td><span class="math inline">\(A\cap B\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>setminus</strong></td>
+<td>set difference</td>
+<td><code>A\setminus B</code></td>
+<td><span class="math inline">\(A\setminus B\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>wedge</strong></td>
+<td>logical and</td>
+<td><code>p\wedge q</code></td>
+<td><span class="math inline">\(p\wedge q\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>vee</strong></td>
+<td>logical or</td>
+<td><code>p\vee q</code></td>
+<td><span class="math inline">\(p\vee q\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>oplus</strong></td>
+<td>direct sum</td>
+<td><code>V\oplus W</code></td>
+<td><span class="math inline">\(V\oplus W\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>otimes</strong></td>
+<td>tensor product</td>
+<td><code>V\otimes W</code></td>
+<td><span class="math inline">\(V\otimes W\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>odot</strong></td>
+<td>odot</td>
+<td><code>a\odot b</code></td>
+<td><span class="math inline">\(a\odot b\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="fractions-binomials-roots" class="level4">
+<h4 class="anchored" data-anchor-id="fractions-binomials-roots">Fractions, Binomials, Roots</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 17%">
+<col style="width: 32%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Characteristic</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>frac</strong></td>
+<td>fraction</td>
+<td><code>\frac{a}{b}</code></td>
+<td><span class="math inline">\(\frac{a}{b}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>tfrac</strong></td>
+<td>text fraction</td>
+<td><code>\tfrac{a}{b}</code></td>
+<td><span class="math inline">\(\tfrac{a}{b}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>dfrac</strong></td>
+<td>display fraction</td>
+<td><code>\dfrac{a}{b}</code></td>
+<td><span class="math inline">\(\dfrac{a}{b}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>binom</strong></td>
+<td>binomial coefficient</td>
+<td><code>\binom{n}{k}</code></td>
+<td><span class="math inline">\(\binom{n}{k}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>dbinom</strong></td>
+<td>display binomial</td>
+<td><code>\dbinom{n}{k}</code></td>
+<td><span class="math inline">\(\dbinom{n}{k}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>sqrt</strong></td>
+<td>square root</td>
+<td><code>\sqrt{x}</code></td>
+<td><span class="math inline">\(\sqrt{x}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>sqrt</strong></td>
+<td>nth root</td>
+<td><code>\sqrt[n]{x}</code></td>
+<td><span class="math inline">\(\sqrt[n]{x}\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="big-operators" class="level4">
+<h4 class="anchored" data-anchor-id="big-operators">Big Operators</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 23%">
+<col style="width: 30%">
+<col style="width: 30%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Characteristic</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>sum</strong></td>
+<td>sum</td>
+<td><code>\sum_{i=1}^n i</code></td>
+<td><span class="math inline">\(\sum_{i=1}^n i\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>prod</strong></td>
+<td>product</td>
+<td><code>\prod_{i=1}^n a_i</code></td>
+<td><span class="math inline">\(\prod_{i=1}^n a_i\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>coprod</strong></td>
+<td>coproduct</td>
+<td><code>\coprod_{i\in I} A_i</code></td>
+<td><span class="math inline">\(\coprod_{i\in I} A_i\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>bigcup</strong></td>
+<td>big union</td>
+<td><code>\bigcup_{i\in I} A_i</code></td>
+<td><span class="math inline">\(\bigcup_{i\in I} A_i\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>bigcap</strong></td>
+<td>big intersection</td>
+<td><code>\bigcap_{i\in I} A_i</code></td>
+<td><span class="math inline">\(\bigcap_{i\in I} A_i\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>bigsqcup</strong></td>
+<td>big disjoint union</td>
+<td><code>\bigsqcup_{i\in I} A_i</code></td>
+<td><span class="math inline">\(\bigsqcup_{i\in I} A_i\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>bigvee</strong></td>
+<td>big logical or</td>
+<td><code>\bigvee_{i=1}^n P_i</code></td>
+<td><span class="math inline">\(\bigvee_{i=1}^n P_i\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>bigwedge</strong></td>
+<td>big logical and</td>
+<td><code>\bigwedge_{i=1}^n P_i</code></td>
+<td><span class="math inline">\(\bigwedge_{i=1}^n P_i\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>int</strong></td>
+<td>integral</td>
+<td><code>\int_0^1 x\,dx</code></td>
+<td><span class="math inline">\(\int_0^1 x\,dx\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>iint</strong></td>
+<td>double integral</td>
+<td><code>\iint_D f\,dA</code></td>
+<td><span class="math inline">\(\iint_D f\,dA\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>iiint</strong></td>
+<td>triple integral</td>
+<td><code>\iiint_V f\,dV</code></td>
+<td><span class="math inline">\(\iiint_V f\,dV\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>oint</strong></td>
+<td>contour integral</td>
+<td><code>\oint_\Gamma f(z)\,dz</code></td>
+<td><span class="math inline">\(\oint_\Gamma f(z)\,dz\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>lim</strong></td>
+<td>limit</td>
+<td><code>\lim_{x\to 0} f(x)</code></td>
+<td><span class="math inline">\(\lim_{x\to 0} f(x)\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="set-operators" class="level4">
+<h4 class="anchored" data-anchor-id="set-operators">Set Operators</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 26%">
+<col style="width: 27%">
+<col style="width: 27%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Characteristic</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>in</code></td>
+<td>element of</td>
+<td><code>a \in A</code></td>
+<td><span class="math inline">\(a \in A\)</span></td>
+</tr>
+<tr class="even">
+<td><code>notin</code></td>
+<td>not an element of</td>
+<td><code>a \notin A</code></td>
+<td><span class="math inline">\(a \notin A\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>ni</code></td>
+<td>owns, contains</td>
+<td><code>A \ni a</code></td>
+<td><span class="math inline">\(A \ni a\)</span></td>
+</tr>
+<tr class="even">
+<td><code>subset</code></td>
+<td>subset</td>
+<td><code>A \subset B</code></td>
+<td><span class="math inline">\(A \subset B\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>subseteq</code></td>
+<td>subset or equal</td>
+<td><code>A \subseteq B</code></td>
+<td><span class="math inline">\(A \subseteq B\)</span></td>
+</tr>
+<tr class="even">
+<td><code>supset</code></td>
+<td>supset</td>
+<td><code>A \supset B</code></td>
+<td><span class="math inline">\(A \supset B\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>supseteq</code></td>
+<td>supset or equal</td>
+<td><code>A \supseteq B</code></td>
+<td><span class="math inline">\(A \supseteq B\)</span></td>
+</tr>
+<tr class="even">
+<td><code>cup</code></td>
+<td>union</td>
+<td><code>A \cup B</code></td>
+<td><span class="math inline">\(A \cup B\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>cap</code></td>
+<td>intersection</td>
+<td><code>A \cap B</code></td>
+<td><span class="math inline">\(A \cap B\)</span></td>
+</tr>
+<tr class="even">
+<td><code>emptyset</code></td>
+<td>empty set</td>
+<td><code>\emptyset</code></td>
+<td><span class="math inline">\(\emptyset\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>forall</code></td>
+<td>for all</td>
+<td><code>\forall x</code></td>
+<td><span class="math inline">\(\forall x\)</span></td>
+</tr>
+<tr class="even">
+<td><code>exists</code></td>
+<td>there exists</td>
+<td><code>\exists x</code></td>
+<td><span class="math inline">\(\exists x\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>nexists</code></td>
+<td>does not exist</td>
+<td><code>\nexists x</code></td>
+<td><span class="math inline">\(\nexists x\)</span></td>
+</tr>
+<tr class="even">
+<td><code>complement</code></td>
+<td>complement</td>
+<td><code>A^\complement</code></td>
+<td><span class="math inline">\(A^\complement\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>mid</code></td>
+<td>such that</td>
+<td><code>\{x \mid x &gt; 0\}</code></td>
+<td><span class="math inline">\(\{x \mid x &gt; 0\}\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="probability-operators" class="level4">
+<h4 class="anchored" data-anchor-id="probability-operators">Probability Operators</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 34%">
+<col style="width: 26%">
+<col style="width: 26%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Characteristic</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>\approx</code></td>
+<td>approximately equal to</td>
+<td><code>a \approx b</code></td>
+<td><span class="math inline">\(a \approx b\)</span></td>
+</tr>
+<tr class="even">
+<td><code>\cap</code></td>
+<td>intersection (of events or sets)</td>
+<td><code>a \cap b</code></td>
+<td><span class="math inline">\(a \cap b\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>\cup</code></td>
+<td>union (of events or sets)</td>
+<td><code>a \cup b</code></td>
+<td><span class="math inline">\(a \cup b\)</span></td>
+</tr>
+<tr class="even">
+<td><code>\in</code></td>
+<td>element of a set</td>
+<td><code>x \in s</code></td>
+<td><span class="math inline">\(x \in s\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>^c</code></td>
+<td>complement</td>
+<td><code>e^c</code></td>
+<td><span class="math inline">\(e^c\)</span></td>
+</tr>
+<tr class="even">
+<td><code>^C</code></td>
+<td>complement</td>
+<td><code>e^C</code></td>
+<td><span class="math inline">\(e^C\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>\tilde</code></td>
+<td>complement</td>
+<td><code>\tilde{e}</code></td>
+<td><span class="math inline">\(\tilde{e}\)</span></td>
+</tr>
+<tr class="even">
+<td><code>\overline</code></td>
+<td>complement</td>
+<td><code>\overline{e}</code></td>
+<td><span class="math inline">\(\overline{e}\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>\emptyset</code></td>
+<td>empty set</td>
+<td><code>\emptyset</code></td>
+<td><span class="math inline">\(\emptyset\)</span></td>
+</tr>
+<tr class="even">
+<td><code>\mathbb</code></td>
+<td>expected value (the e must be bold)</td>
+<td><code>\mathbb{e}[x]</code></td>
+<td><span class="math inline">\(\mathbb{e}[x]\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>\mid</code></td>
+<td>given (in conditional probability)</td>
+<td><code>p(a \mid b)</code></td>
+<td><span class="math inline">\(p(a \mid b)\)</span></td>
+</tr>
+<tr class="even">
+<td><code>\sim</code></td>
+<td>is distributed as</td>
+<td><code>X \sim \mathcal{N}(0, 1)</code></td>
+<td><span class="math inline">\(X \sim \mathcal{N}(0, 1)\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>\sigma^2</code></td>
+<td>variance</td>
+<td><code>\sigma^2</code></td>
+<td><span class="math inline">\(\sigma^2\)</span></td>
+</tr>
+<tr class="even">
+<td><code>\sum</code></td>
+<td>summation</td>
+<td><code>\sum_{i=1}^n</code></td>
+<td><span class="math inline">\(\sum_{i=1}^n\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>\forall</code></td>
+<td>for all</td>
+<td><code>\forall x</code></td>
+<td><span class="math inline">\(\forall x\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="calculus-operators" class="level4">
+<h4 class="anchored" data-anchor-id="calculus-operators">Calculus Operators</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 21%">
+<col style="width: 32%">
+<col style="width: 32%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>Characteristic</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>partial</code></td>
+<td>partial derivative</td>
+<td><code>\frac{\partial f}{\partial x}</code></td>
+<td><span class="math inline">\(\frac{\partial f}{\partial x}\)</span></td>
+</tr>
+<tr class="even">
+<td><code>nabla</code></td>
+<td>gradient</td>
+<td><code>\nabla f</code></td>
+<td><span class="math inline">\(\nabla f\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>prime</code></td>
+<td>prime (derivative)</td>
+<td><code>f'(x)</code></td>
+<td><span class="math inline">\(f'(x)\)</span></td>
+</tr>
+<tr class="even">
+<td><code>infty</code></td>
+<td>infinity</td>
+<td><code>\infty</code></td>
+<td><span class="math inline">\(\infty\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>circ</code></td>
+<td>function composition</td>
+<td><code>(f \circ g)(x)</code></td>
+<td><span class="math inline">\((f \circ g)(x)\)</span></td>
+</tr>
+<tr class="even">
+<td><code>mathrm{d}</code></td>
+<td>differential d</td>
+<td><code>\int_a^b f(x)\,\mathrm{d}x</code></td>
+<td><span class="math inline">\(\int_a^b f(x)\,\mathrm{d}x\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>int</code></td>
+<td>integral</td>
+<td><code>\int_a^b x\,dx</code></td>
+<td><span class="math inline">\(\int_a^b x\,dx\)</span></td>
+</tr>
+<tr class="even">
+<td><code>iint</code></td>
+<td>double integral</td>
+<td><code>\iint_D f\,dA</code></td>
+<td><span class="math inline">\(\iint_D f\,dA\)</span></td>
+</tr>
+<tr class="odd">
+<td><code>iiint</code></td>
+<td>triple integral</td>
+<td><code>\iiint_V f\,dV</code></td>
+<td><span class="math inline">\(\iiint_V f\,dV\)</span></td>
+</tr>
+<tr class="even">
+<td><code>oint</code></td>
+<td>contour integral</td>
+<td><code>\oint_\Gamma f(z)\,dz</code></td>
+<td><span class="math inline">\(\oint_\Gamma f(z)\,dz\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="arrows" class="level3">
+<h3 class="anchored" data-anchor-id="arrows">Arrows</h3>
+<section id="single-shaft-arrows" class="level4">
+<h4 class="anchored" data-anchor-id="single-shaft-arrows">Single-Shaft Arrows</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 34%">
+<col style="width: 32%">
+<col style="width: 32%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>leftarrow</strong></td>
+<td><code>\leftarrow</code></td>
+<td><span class="math inline">\(\leftarrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>rightarrow</strong></td>
+<td><code>\rightarrow</code></td>
+<td><span class="math inline">\(\rightarrow\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>uparrow</strong></td>
+<td><code>\uparrow</code></td>
+<td><span class="math inline">\(\uparrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>downarrow</strong></td>
+<td><code>\downarrow</code></td>
+<td><span class="math inline">\(\downarrow\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>longleftarrow</strong></td>
+<td><code>\longleftarrow</code></td>
+<td><span class="math inline">\(\longleftarrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>longrightarrow</strong></td>
+<td><code>\longrightarrow</code></td>
+<td><span class="math inline">\(\longrightarrow\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>leftrightarrow</strong></td>
+<td><code>\leftrightarrow</code></td>
+<td><span class="math inline">\(\leftrightarrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>longleftrightarrow</strong></td>
+<td><code>\longleftrightarrow</code></td>
+<td><span class="math inline">\(\longleftrightarrow\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>updownarrow</strong></td>
+<td><code>\updownarrow</code></td>
+<td><span class="math inline">\(\updownarrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>nearrow</strong></td>
+<td><code>\nearrow</code></td>
+<td><span class="math inline">\(\nearrow\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>searrow</strong></td>
+<td><code>\searrow</code></td>
+<td><span class="math inline">\(\searrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>swarrow</strong></td>
+<td><code>\swarrow</code></td>
+<td><span class="math inline">\(\swarrow\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>nwarrow</strong></td>
+<td><code>\nwarrow</code></td>
+<td><span class="math inline">\(\nwarrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>hookleftarrow</strong></td>
+<td><code>\hookleftarrow</code></td>
+<td><span class="math inline">\(\hookleftarrow\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>hookrightarrow</strong></td>
+<td><code>\hookrightarrow</code></td>
+<td><span class="math inline">\(\hookrightarrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>mapsto</strong></td>
+<td><code>\mapsto</code></td>
+<td><span class="math inline">\(\mapsto\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>longmapsto</strong></td>
+<td><code>\longmapsto</code></td>
+<td><span class="math inline">\(\longmapsto\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="double-shaft-arrows" class="level4">
+<h4 class="anchored" data-anchor-id="double-shaft-arrows">Double-Shaft Arrows</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 34%">
+<col style="width: 32%">
+<col style="width: 32%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Leftarrow</strong></td>
+<td><code>\Leftarrow</code></td>
+<td><span class="math inline">\(\Leftarrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>Rightarrow</strong></td>
+<td><code>\Rightarrow</code></td>
+<td><span class="math inline">\(\Rightarrow\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>Uparrow</strong></td>
+<td><code>\Uparrow</code></td>
+<td><span class="math inline">\(\Uparrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>Downarrow</strong></td>
+<td><code>\Downarrow</code></td>
+<td><span class="math inline">\(\Downarrow\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>Longleftarrow</strong></td>
+<td><code>\Longleftarrow</code></td>
+<td><span class="math inline">\(\Longleftarrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>Longrightarrow</strong></td>
+<td><code>\Longrightarrow</code></td>
+<td><span class="math inline">\(\Longrightarrow\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>Leftrightarrow</strong></td>
+<td><code>\Leftrightarrow</code></td>
+<td><span class="math inline">\(\Leftrightarrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>Longleftrightarrow</strong></td>
+<td><code>\Longleftrightarrow</code></td>
+<td><span class="math inline">\(\Longleftrightarrow\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>Updownarrow</strong></td>
+<td><code>\Updownarrow</code></td>
+<td><span class="math inline">\(\Updownarrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>implies</strong></td>
+<td><code>\implies</code></td>
+<td><span class="math inline">\(\implies\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>impliedby</strong></td>
+<td><code>\impliedby</code></td>
+<td><span class="math inline">\(\impliedby\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>iff</strong></td>
+<td><code>\iff</code></td>
+<td><span class="math inline">\(\iff\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="miscellaneous-arrows" class="level4">
+<h4 class="anchored" data-anchor-id="miscellaneous-arrows">Miscellaneous Arrows</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 34%">
+<col style="width: 32%">
+<col style="width: 32%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Term</th>
+<th>LaTeX Code</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>gets</strong></td>
+<td><code>\gets</code></td>
+<td><span class="math inline">\(\gets\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>to</strong></td>
+<td><code>\to</code></td>
+<td><span class="math inline">\(\to\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>leadsto</strong></td>
+<td><code>\leadsto</code></td>
+<td><span class="math inline">\(\leadsto\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>rightsquigarrow</strong></td>
+<td><code>\rightsquigarrow</code></td>
+<td><span class="math inline">\(\rightsquigarrow\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>leftrightsquigarrow</strong></td>
+<td><code>\leftrightsquigarrow</code></td>
+<td><span class="math inline">\(\leftrightsquigarrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>rightharpoonup</strong></td>
+<td><code>\rightharpoonup</code></td>
+<td><span class="math inline">\(\rightharpoonup\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>rightharpoondown</strong></td>
+<td><code>\rightharpoondown</code></td>
+<td><span class="math inline">\(\rightharpoondown\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>leftharpoonup</strong></td>
+<td><code>\leftharpoonup</code></td>
+<td><span class="math inline">\(\leftharpoonup\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>leftharpoondown</strong></td>
+<td><code>\leftharpoondown</code></td>
+<td><span class="math inline">\(\leftharpoondown\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>rightleftharpoons</strong></td>
+<td><code>\rightleftharpoons</code></td>
+<td><span class="math inline">\(\rightleftharpoons\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>leftleftarrows</strong></td>
+<td><code>\leftleftarrows</code></td>
+<td><span class="math inline">\(\leftleftarrows\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>rightrightarrows</strong></td>
+<td><code>\rightrightarrows</code></td>
+<td><span class="math inline">\(\rightrightarrows\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>leftrightarrows</strong></td>
+<td><code>\leftrightarrows</code></td>
+<td><span class="math inline">\(\leftrightarrows\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>rightleftarrows</strong></td>
+<td><code>\rightleftarrows</code></td>
+<td><span class="math inline">\(\rightleftarrows\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>twoheadrightarrow</strong></td>
+<td><code>\twoheadrightarrow</code></td>
+<td><span class="math inline">\(\twoheadrightarrow\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>twoheadleftarrow</strong></td>
+<td><code>\twoheadleftarrow</code></td>
+<td><span class="math inline">\(\twoheadleftarrow\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="environments-1" class="level3">
+<h3 class="anchored" data-anchor-id="environments-1">Environments</h3>
+<p>All LaTeX environments follow the same basic syntax pattern:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode latex code-with-copy"><code class="sourceCode latex"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">\begin</span>{<span class="ex">environment</span><span class="er">_name</span>}[optional_parameters]{required_parameters}</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  content</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">\end</span>{<span class="ex">environment</span><span class="er">_name</span>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Important considerations</strong>:</p>
+<ul>
+<li>Environment names at the beginning and end must match exactly</li>
+<li>Many environments require specific packages to be loaded (e.g., <code>amsmath</code> for advanced math environments)</li>
+<li>Some environments can be nested within others</li>
+<li>Optional parameters are specified in square brackets <code>[]</code></li>
+<li>Required parameters are specified in curly braces <code>{}</code></li>
+<li>The visual results shown are approximations of the actual LaTeX output</li>
+</ul>
+<section id="mathematical-environments" class="level4">
+<h4 class="anchored" data-anchor-id="mathematical-environments">Mathematical Environments</h4>
+<p>Mathematical environments are used for displaying equations, formulas, and mathematical expressions. Some environments stand on their own. Others are dependent on a surrounding environment. For example, <code>align</code> and <code>align*</code> are both standalone environments. They don’t need nobody (Furry sings the blues):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode latex code-with-copy"><code class="sourceCode latex"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">\begin</span>{<span class="ex">align</span>}</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ss">  a + b &amp;= c + d </span><span class="sc">\\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ss">  e + f &amp;= g + h</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">\end</span>{<span class="ex">align</span>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>On the other hand, we have a chap like <code>aligned</code>. He is called a sub-environment (with love) and must be placed inside another math environment, like <code>equation</code> or <code>gather</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode latex code-with-copy"><code class="sourceCode latex"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">\begin</span>{<span class="ex">equation</span>}</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">\begin</span>{<span class="ex">aligned</span>}</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ss">  a + b &amp;= c + d </span><span class="sc">\\</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ss">  e + f &amp;= g + h</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">\end</span>{<span class="ex">aligned</span>}</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="kw">\end</span>{<span class="ex">equation</span>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 12%">
+<col style="width: 41%">
+<col style="width: 41%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Characteristics</th>
+<th>Example</th>
+<th>LaTeX</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>equation</strong></td>
+<td>centered, numbered</td>
+<td><code>\begin{equation} E = mc^2 \end{equation}</code></td>
+<td><span class="math inline">\(\begin{equation} E = mc^2 \end{equation}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>equation</strong>*</td>
+<td>centered, unnumbered</td>
+<td><code>\begin{equation*} E = mc^2 \end{equation*}</code></td>
+<td><span class="math display">\[\begin{equation*} E = mc^2 \end{equation*}\]</span></td>
+</tr>
+<tr class="odd">
+<td><strong>align</strong></td>
+<td>standalone, aligned, numbered</td>
+<td><code>\begin{align} x &amp;= y \\ a &amp;= b \end{align}</code></td>
+<td><span class="math inline">\(\begin{align} x &amp;= y \\ a &amp;= b \end{align}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>align</strong>*</td>
+<td>standalone, aligned, unnumbered</td>
+<td><code>\begin{align*} x &amp;= y \\ a &amp;= b \end{align*}</code></td>
+<td><span class="math display">\[\begin{align*} x &amp;= y \\ a &amp;= b \end{align*}\]</span></td>
+</tr>
+<tr class="odd">
+<td><strong>gather</strong></td>
+<td>centered</td>
+<td><code>\begin{gather} x = y \\ a = b \end{gather}</code></td>
+<td><span class="math inline">\(\begin{gather} x = y \\ a = b \end{gather}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>gather</strong>*</td>
+<td>centered, unnumbered</td>
+<td><code>\begin{gather*} x = y \\ a = b \end{gather*}</code></td>
+<td><span class="math display">\[\begin{gather*} x = y \\ a = b \end{gather*}\]</span></td>
+</tr>
+<tr class="odd">
+<td><strong>multline</strong></td>
+<td>multiline</td>
+<td><code>\begin{multline} x + y + z = \\ a + b + c \end{multline}</code></td>
+<td>x + y + z = &nbsp;&nbsp;&nbsp;(1)<br>&nbsp;&nbsp;&nbsp;&nbsp;a + b + c&nbsp;&nbsp;&nbsp;(2)</td>
+</tr>
+<tr class="even">
+<td><strong>multline</strong>*</td>
+<td>multiline, unnumbered</td>
+<td><code>\begin{multline*} x + y + z = \\ a + b + c \end{multline*}</code></td>
+<td>x + y + z =<br>&nbsp;&nbsp;&nbsp;&nbsp;a + b + c</td>
+</tr>
+<tr class="odd">
+<td><strong>split</strong></td>
+<td>split equation</td>
+<td><code>\begin{equation}\begin{split} x &amp;= y \\ &amp;= z \end{split}\end{equation}</code></td>
+<td><span class="math inline">\(\begin{equation}\begin{split} x &amp;= y \\ &amp;= z \end{split}\end{equation}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>aligned</strong></td>
+<td>aligned within equation</td>
+<td><code>\begin{equation}\begin{aligned} x &amp;= y \\ &amp;= z \end{aligned}\end{equation}</code></td>
+<td><span class="math inline">\(\begin{equation}\begin{aligned} x &amp;= y \\ &amp;= z \end{aligned}\end{equation}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>flalign</strong></td>
+<td>full width alignment</td>
+<td><code>\begin{flalign} x &amp;= y &amp; \\ a &amp;= b &amp; \end{flalign}</code></td>
+<td>x = y&nbsp;&nbsp;&nbsp;&nbsp;<br>a = b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(numbered)</td>
+</tr>
+<tr class="even">
+<td><strong>flalign</strong>*</td>
+<td>full width, unnumbered</td>
+<td><code>\begin{flalign*} x &amp;= y &amp; \\ a &amp;= b &amp; \end{flalign*}</code></td>
+<td>x = y&nbsp;&nbsp;&nbsp;&nbsp;<br>a = b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr class="odd">
+<td><strong>eqnarray</strong></td>
+<td>deprecated format</td>
+<td><code>\begin{eqnarray} x &amp;=&amp; y \\ a &amp;=&amp; b \end{eqnarray}</code></td>
+<td>x = y<br>a = b&nbsp;&nbsp;&nbsp;&nbsp;(numbered)</td>
+</tr>
+<tr class="even">
+<td><strong>eqnarray</strong>*</td>
+<td>deprecated, unnumbered</td>
+<td><code>\begin{eqnarray*} x &amp;=&amp; y \\ a &amp;=&amp; b \end{eqnarray*}</code></td>
+<td>x = y<br>a = b</td>
+</tr>
+<tr class="odd">
+<td><strong>cases</strong></td>
+<td></td>
+<td><code>\begin{equation}f(x) = \begin{cases} x &amp; \text{if } x &gt; 0 \\ 0 &amp; \text{otherwise} \end{cases}\end{equation}</code></td>
+<td><span class="math inline">\(\begin{equation}f(x) = \begin{cases} x &amp; \text{if } x &gt; 0 \\ 0 &amp; \text{otherwise} \end{cases}\end{equation}\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="matrix-environments" class="level4">
+<h4 class="anchored" data-anchor-id="matrix-environments">Matrix Environments</h4>
+<p>Matrix environments create matrices with different bracket styles.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 15%">
+<col style="width: 36%">
+<col style="width: 36%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Characteristics</th>
+<th>Example</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>matrix</strong></td>
+<td>no brackets</td>
+<td><code>\begin{matrix} a &amp; b \\ c &amp; d \end{matrix}</code></td>
+<td><span class="math inline">\(\begin{matrix} a &amp; b \\ c &amp; d \end{matrix}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>pmatrix</strong></td>
+<td>parentheses</td>
+<td><code>\begin{pmatrix} a &amp; b \\ c &amp; d \end{pmatrix}</code></td>
+<td><span class="math inline">\(\begin{pmatrix} a &amp; b \\ c &amp; d \end{pmatrix}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>bmatrix</strong></td>
+<td>square brackets</td>
+<td><code>\begin{bmatrix} a &amp; b \\ c &amp; d \end{bmatrix}</code></td>
+<td><span class="math inline">\(\begin{bmatrix} a &amp; b \\ c &amp; d \end{bmatrix}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>Bmatrix</strong></td>
+<td>curly braces</td>
+<td><code>\begin{Bmatrix} a &amp; b \\ c &amp; d \end{Bmatrix}</code></td>
+<td><span class="math inline">\(\begin{Bmatrix} a &amp; b \\ c &amp; d \end{Bmatrix}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>vmatrix</strong></td>
+<td>determinant bars</td>
+<td><code>\begin{vmatrix} a &amp; b \\ c &amp; d \end{vmatrix}</code></td>
+<td><span class="math inline">\(\begin{vmatrix} a &amp; b \\ c &amp; d \end{vmatrix}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>Vmatrix</strong></td>
+<td>double bars</td>
+<td><code>\begin{Vmatrix} a &amp; b \\ c &amp; d \end{Vmatrix}</code></td>
+<td><span class="math inline">\(\begin{Vmatrix} a &amp; b \\ c &amp; d \end{Vmatrix}\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>array</strong></td>
+<td>customizable alignment</td>
+<td><code>\begin{array}{cc} a &amp; b \\ c &amp; d \end{array}</code></td>
+<td><span class="math inline">\(\begin{array}{cc} a &amp; b \\ c &amp; d \end{array}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>smallmatrix</strong></td>
+<td>small inline matrix</td>
+<td><code>\begin{smallmatrix} a &amp; b \\ c &amp; d \end{smallmatrix}</code></td>
+<td><span class="math inline">\(\begin{smallmatrix} a &amp; b \\ c &amp; d \end{smallmatrix}\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="list-environments" class="level4">
+<h4 class="anchored" data-anchor-id="list-environments">List Environments</h4>
+<p>List environments create structured lists with different formatting.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 48%">
+<col style="width: 43%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Example</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>itemize</strong></td>
+<td><code>\begin{itemize} \item First item \item Second item \end{itemize}</code></td>
+<td>- First item<br>- Second item</td>
+</tr>
+<tr class="even">
+<td><strong>enumerate</strong></td>
+<td><code>\begin{enumerate} \item First item \item Second item \end{enumerate}</code></td>
+<td>1. First item<br>2. Second item</td>
+</tr>
+<tr class="odd">
+<td><strong>description</strong></td>
+<td><code>\begin{description} \item[Term] Description \item[Word] Definition \end{description}</code></td>
+<td><strong>Term</strong>&nbsp;&nbsp;&nbsp;&nbsp;Description<br><strong>Word</strong>&nbsp;&nbsp;&nbsp;&nbsp;Definition</td>
+</tr>
+<tr class="even">
+<td><strong>list</strong></td>
+<td><code>\begin{list}{$\bullet$}{\setlength{\itemsep}{0pt}} \item First item \item Second item \end{list}</code></td>
+<td>- First item<br>- Second item (custom)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="table-and-tabular-environments" class="level4">
+<h4 class="anchored" data-anchor-id="table-and-tabular-environments">Table and Tabular Environments</h4>
+<p>Table environments are used for creating tables and tabular data.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 43%">
+<col style="width: 49%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Example</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>tabular</strong></td>
+<td><code>\begin{tabular}{\|c\|c\|} \hline Cell 1 &amp; Cell 2 \\ \hline Cell 3 &amp; Cell 4 \\ \hline \end{tabular}</code></td>
+<td>┌────┬────┐<br>│ Cell 1&nbsp;&nbsp;│ Cell 2&nbsp;&nbsp;│<br>├───-┼────┤<br>│ Cell 3&nbsp;&nbsp;│ Cell 4&nbsp;&nbsp;│<br>└────┴────┘</td>
+</tr>
+<tr class="even">
+<td><strong>table</strong></td>
+<td><code>\begin{table}[ht] \centering \begin{tabular}{cc} A &amp; B \\ C &amp; D \end{tabular} \caption{Table caption} \end{table}</code></td>
+<td>Floating table with:<br>A&nbsp;&nbsp;B<br>C&nbsp;&nbsp;D<br>Table caption</td>
+</tr>
+<tr class="odd">
+<td><strong>longtable</strong></td>
+<td><code>\begin{longtable}{cc} A &amp; B \\ C &amp; D \end{longtable}</code></td>
+<td>A&nbsp;&nbsp;B<br>C&nbsp;&nbsp;D (multi-page table)</td>
+</tr>
+<tr class="even">
+<td><strong>supertabular</strong></td>
+<td><code>\begin{supertabular}{cc} A &amp; B \\ C &amp; D \end{supertabular}</code></td>
+<td>A&nbsp;&nbsp;B<br>C&nbsp;&nbsp;D (page-breaking table)</td>
+</tr>
+<tr class="odd">
+<td><strong>tabularx</strong></td>
+<td><code>\begin{tabularx}{\textwidth}{XX} Column 1 &amp; Column 2 \end{tabularx}</code></td>
+<td>Column 1&nbsp;&nbsp;&nbsp;&nbsp;Column 2<br>(width-adjustable)</td>
+</tr>
+<tr class="even">
+<td><strong>array</strong></td>
+<td><code>\begin{array}{\|c\|c\|} \hline a &amp; b \\ \hline c &amp; d \\ \hline \end{array}</code></td>
+<td>┌───┬───┐<br>│ a │ b │<br>├───┼───┤<br>│ c │ d │<br>└───┴───┘</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="figure-environments" class="level4">
+<h4 class="anchored" data-anchor-id="figure-environments">Figure Environments</h4>
+<p>Figure environments handle graphics and image placement.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 60%">
+<col style="width: 30%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Example</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>figure</strong></td>
+<td><code>\begin{figure}[ht] \includegraphics{image.png} \caption{Figure caption} \label{fig:label} \end{figure}</code></td>
+<td>[Image]<br>Figure 1: Figure caption</td>
+</tr>
+<tr class="even">
+<td><strong>figure</strong>*</td>
+<td><code>\begin{figure*}[ht] \includegraphics{image.png} \caption{Two-column figure} \end{figure*}</code></td>
+<td>[Wide Image]<br>Figure 1: Two-column figure</td>
+</tr>
+<tr class="odd">
+<td><strong>subfigure</strong></td>
+<td><code>\begin{subfigure}{0.5\textwidth} \includegraphics{image1.png} \caption{Subfigure 1} \end{subfigure}</code></td>
+<td>[Image] (a)<br>Subfigure 1</td>
+</tr>
+<tr class="even">
+<td><strong>wrapfigure</strong></td>
+<td><code>\begin{wrapfigure}{r}{0.5\textwidth} \includegraphics{image.png} \caption{Wrapped figure} \end{wrapfigure}</code></td>
+<td>Text wraps around<br>[Image] figure<br>Wrapped figure</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="text-formatting-environments" class="level4">
+<h4 class="anchored" data-anchor-id="text-formatting-environments">Text Formatting Environments</h4>
+<p>Text formatting environments control text alignment and presentation.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 37%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Example</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>center</strong></td>
+<td><code>\begin{center} Centered text \end{center}</code></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;Centered text</td>
+</tr>
+<tr class="even">
+<td><strong>flushleft</strong></td>
+<td><code>\begin{flushleft} Left-aligned text \end{flushleft}</code></td>
+<td>Left-aligned text</td>
+</tr>
+<tr class="odd">
+<td><strong>flushright</strong></td>
+<td><code>\begin{flushright} Right-aligned text \end{flushright}</code></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Right-aligned text</td>
+</tr>
+<tr class="even">
+<td><strong>quote</strong></td>
+<td><code>\begin{quote} This is a quoted text. \end{quote}</code></td>
+<td>&nbsp;&nbsp;This is a quoted text.<br>&nbsp;&nbsp;(indented)</td>
+</tr>
+<tr class="odd">
+<td><strong>quotation</strong></td>
+<td><code>\begin{quotation} This is a longer quotation. \end{quotation}</code></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;This is a longer<br>&nbsp;&nbsp;&nbsp;&nbsp;quotation. (indented)</td>
+</tr>
+<tr class="even">
+<td><strong>verse</strong></td>
+<td><code>\begin{verse} Roses are red \\ Violets are blue \end{verse}</code></td>
+<td>&nbsp;&nbsp;Roses are red<br>&nbsp;&nbsp;Violets are blue</td>
+</tr>
+<tr class="odd">
+<td><strong>abstract</strong></td>
+<td><code>\begin{abstract} This is the abstract. \end{abstract}</code></td>
+<td><strong>Abstract</strong><br>This is the abstract.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="box-and-minipage-environments" class="level4">
+<h4 class="anchored" data-anchor-id="box-and-minipage-environments">Box and Minipage Environments</h4>
+<p>Box environments create contained areas for text and content.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 22%">
+<col style="width: 72%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Example</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>minipage</strong></td>
+<td><code>\begin{minipage}{0.5\textwidth} Text in minipage \end{minipage}</code></td>
+<td>┌─────────────────┐<br>│ Text in&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>│ minipage&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>└─────────────────┘</td>
+</tr>
+<tr class="even">
+<td><strong>parbox</strong></td>
+<td><code>\parbox{0.5\textwidth}{ Text in parbox }</code></td>
+<td>┌─────────────────┐<br>│ Text in parbox&nbsp;&nbsp;│<br>└─────────────────┘</td>
+</tr>
+<tr class="odd">
+<td><strong>fbox</strong></td>
+<td><code>\fbox{ Boxed text }</code></td>
+<td>┌─────────────┐<br>│ Boxed text&nbsp;&nbsp;│<br>└─────────────┘</td>
+</tr>
+<tr class="even">
+<td><strong>framebox</strong></td>
+<td><code>\framebox[width][pos]{ Framed text }</code></td>
+<td>┌─────────────────┐<br>│&nbsp;&nbsp;&nbsp;Framed text&nbsp;&nbsp;&nbsp;│<br>└─────────────────┘</td>
+</tr>
+<tr class="odd">
+<td><strong>colorbox</strong></td>
+<td><code>\colorbox{yellow}{ Colored background }</code></td>
+<td>██████████████████<br>█ Colored&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;█<br>█ background&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;█<br>██████████████████</td>
+</tr>
+<tr class="even">
+<td><strong>fcolorbox</strong></td>
+<td><code>\fcolorbox{red}{yellow}{ Colored frame and background }</code></td>
+<td>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓<br>▓████████████████▓<br>▓█ Colored&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;█▓<br>▓█ frame and&nbsp;&nbsp;&nbsp;&nbsp;█▓<br>▓█ background&nbsp;&nbsp;&nbsp;█▓<br>▓████████████████▓<br>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="code-and-verbatim-environments" class="level4">
+<h4 class="anchored" data-anchor-id="code-and-verbatim-environments">Code and Verbatim Environments</h4>
+<p>Code environments display code and literal text without interpretation.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 42%">
+<col style="width: 49%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Example</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>verbatim</strong></td>
+<td><code>\begin{verbatim} This is verbatim text \LaTeX commands ignored \end{verbatim}</code></td>
+<td>This is verbatim text<br>\LaTeX commands ignored<br>(monospace font)</td>
+</tr>
+<tr class="even">
+<td><strong>verbatim</strong>*</td>
+<td><code>\begin{verbatim*} Verbatim with visible spaces \end{verbatim*}</code></td>
+<td>Verbatim·with·visible·spaces<br>(shows spaces as ·)</td>
+</tr>
+<tr class="odd">
+<td><strong>lstlisting</strong></td>
+<td><code>\begin{lstlisting}[language=Python] def hello(): print("Hello World") \end{lstlisting}</code></td>
+<td><strong>def</strong> hello():<br>&nbsp;&nbsp;&nbsp;&nbsp;<strong>print</strong>(“Hello World”)<br>(syntax highlighted)</td>
+</tr>
+<tr class="even">
+<td><strong>minted</strong></td>
+<td><code>\begin{minted}{python} def hello(): print("Hello World") \end{minted}</code></td>
+<td><strong>def</strong> hello():<br>&nbsp;&nbsp;&nbsp;&nbsp;<strong>print</strong>(“Hello World”)<br>(advanced syntax highlighting)</td>
+</tr>
+<tr class="odd">
+<td><strong>alltt</strong></td>
+<td><code>\begin{alltt} Almost verbatim but \textbf{commands} work \end{alltt}</code></td>
+<td>Almost verbatim but <strong>commands</strong> work<br>(mixed formatting)</td>
+</tr>
+<tr class="even">
+<td><strong>comment</strong></td>
+<td><code>\begin{comment} This text will be ignored \end{comment}</code></td>
+<td>(text is completely hidden)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="theorem-like-environments" class="level4">
+<h4 class="anchored" data-anchor-id="theorem-like-environments">Theorem-like Environments</h4>
+<p>Theorem environments are used for mathematical statements, definitions, and proofs.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 51%">
+<col style="width: 35%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Example</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>theorem</strong></td>
+<td><code>\begin{theorem} Statement of theorem \end{theorem}</code></td>
+<td><strong>Theorem 1.</strong> Statement of theorem</td>
+</tr>
+<tr class="even">
+<td><strong>lemma</strong></td>
+<td><code>\begin{lemma} Statement of lemma \end{lemma}</code></td>
+<td><strong>Lemma 1.</strong> Statement of lemma</td>
+</tr>
+<tr class="odd">
+<td><strong>proposition</strong></td>
+<td><code>\begin{proposition} Statement of proposition \end{proposition}</code></td>
+<td><strong>Proposition 1.</strong> Statement of proposition</td>
+</tr>
+<tr class="even">
+<td><strong>corollary</strong></td>
+<td><code>\begin{corollary} Statement of corollary \end{corollary}</code></td>
+<td><strong>Corollary 1.</strong> Statement of corollary</td>
+</tr>
+<tr class="odd">
+<td><strong>definition</strong></td>
+<td><code>\begin{definition} Definition text \end{definition}</code></td>
+<td><strong>Definition 1.</strong> Definition text</td>
+</tr>
+<tr class="even">
+<td><strong>example</strong></td>
+<td><code>\begin{example} Example text \end{example}</code></td>
+<td><strong>Example 1.</strong> Example text</td>
+</tr>
+<tr class="odd">
+<td><strong>remark</strong></td>
+<td><code>\begin{remark} Remark text \end{remark}</code></td>
+<td><strong>Remark 1.</strong> Remark text</td>
+</tr>
+<tr class="even">
+<td><strong>proof</strong></td>
+<td><code>\begin{proof} Proof content \end{proof}</code></td>
+<td><strong>Proof.</strong> Proof content □</td>
+</tr>
+<tr class="odd">
+<td><strong>problem</strong></td>
+<td><code>\begin{problem} Problem statement \end{problem}</code></td>
+<td><strong>Problem 1.</strong> Problem statement</td>
+</tr>
+<tr class="even">
+<td><strong>exercise</strong></td>
+<td><code>\begin{exercise} Exercise content \end{exercise}</code></td>
+<td><strong>Exercise 1.</strong> Exercise content</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="document-structure-environments" class="level4">
+<h4 class="anchored" data-anchor-id="document-structure-environments">Document Structure Environments</h4>
+<p>Document structure environments organize the overall document layout.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 40%">
+<col style="width: 48%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Example</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>document</strong></td>
+<td><code>\begin{document} Document content \end{document}</code></td>
+<td>Document content<br>(main document body)</td>
+</tr>
+<tr class="even">
+<td><strong>titlepage</strong></td>
+<td><code>\begin{titlepage} Custom title page \end{titlepage}</code></td>
+<td>═══════════════════<br>&nbsp;&nbsp;&nbsp;TITLE PAGE<br>═══════════════════<br>Custom title page</td>
+</tr>
+<tr class="odd">
+<td><strong>appendix</strong></td>
+<td><code>\begin{appendix} Appendix content \end{appendix}</code></td>
+<td><strong>Appendix A</strong><br>Appendix content</td>
+</tr>
+<tr class="even">
+<td><strong>thebibliography</strong></td>
+<td><code>\begin{thebibliography}{99} \bibitem{ref1} Reference 1 \end{thebibliography}</code></td>
+<td><strong>References</strong><br>[12] Reference 1</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="specialized-environments" class="level4">
+<h4 class="anchored" data-anchor-id="specialized-environments">Specialized Environments</h4>
+<p>Specialized environments provide advanced features for graphics, layout, and formatting.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 24%">
+<col style="width: 69%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Example</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>tikzpicture</strong></td>
+<td><code>\begin{tikzpicture} \draw (0,0) -- (1,1); \end{tikzpicture}</code></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;/<br>&nbsp;&nbsp;&nbsp;/<br>&nbsp;&nbsp;/<br>&nbsp;/<br>/<br>(vector graphics)</td>
+</tr>
+<tr class="even">
+<td><strong>pgfpicture</strong></td>
+<td><code>\begin{pgfpicture} \pgfpathcircle{\pgfpoint{0cm}{0cm}}{1cm} \end{pgfpicture}</code></td>
+<td>&nbsp;&nbsp;◯<br>(graphics)</td>
+</tr>
+<tr class="odd">
+<td><strong>picture</strong></td>
+<td><code>\begin{picture}(100,50) \put(10,10){\circle{20}} \end{picture}</code></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;○<br>(basic graphics)</td>
+</tr>
+<tr class="even">
+<td><strong>multicols</strong></td>
+<td><code>\begin{multicols}{2} Text in multiple columns \end{multicols}</code></td>
+<td>Text in │ multiple<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ columns</td>
+</tr>
+<tr class="odd">
+<td><strong>landscape</strong></td>
+<td><code>\begin{landscape} Landscape oriented content \end{landscape}</code></td>
+<td>L<br>a<br>n<br>d<br>s<br>c<br>a<br>p<br>e&nbsp;&nbsp;(rotated 90°)</td>
+</tr>
+<tr class="even">
+<td><strong>sidewaystable</strong></td>
+<td><code>\begin{sidewaystable} Rotated table \end{sidewaystable}</code></td>
+<td>R │ T<br>o │ a<br>t │ b<br>a │ l<br>t │ e<br>e │&nbsp;&nbsp;<br>d │&nbsp;&nbsp;</td>
+</tr>
+<tr class="odd">
+<td><strong>sidewaysfigure</strong></td>
+<td><code>\begin{sidewaysfigure} Rotated figure \end{sidewaysfigure}</code></td>
+<td>R │ [Image]<br>o │ Figure 1<br>t │ Caption<br>a │<br>t │<br>e │<br>d │</td>
+</tr>
+<tr class="even">
+<td><strong>mdframed</strong></td>
+<td><code>\begin{mdframed} Framed content \end{mdframed}</code></td>
+<td>╔═══════════════╗<br>║ Framed&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;║<br>║ content&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;║<br>╚═══════════════╝</td>
+</tr>
+<tr class="odd">
+<td><strong>tcolorbox</strong></td>
+<td><code>\begin{tcolorbox} Colored box content \end{tcolorbox}</code></td>
+<td>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓<br>▓ Colored box&nbsp;&nbsp;&nbsp;▓<br>▓ content&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▓<br>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</td>
+</tr>
+<tr class="even">
+<td><strong>adjustbox</strong></td>
+<td><code>\begin{adjustbox}{width=0.5\textwidth} Adjusted content \end{adjustbox}</code></td>
+<td>┌─────────────────┐<br>│ Adjusted&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>│ content&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>│ (resized)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>└─────────────────┘</td>
+</tr>
+</tbody>
+</table>
+
+
+</section>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation column-body">
+  <div class="nav-page nav-page-previous">
+      <a href="./shell.html" class="pagination-link" aria-label="Shell Scripting">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Shell Scripting</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./ecosystem.html" class="pagination-link" aria-label="Introduction">
+        <span class="nav-page-text">Introduction</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

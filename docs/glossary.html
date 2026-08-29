@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-07-31">
+<meta name="dcterms.date" content="2026-08-29">
 
 <title>Glossary – Computer Language Notebook</title>
 <style>
@@ -313,6 +313,12 @@ window.Quarto = {
  <span class="menu-text">Shell Scripting</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./latex.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LaTeX Reference</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -417,6 +423,11 @@ window.Quarto = {
   <li><a href="#block-started-by-symbol" id="toc-block-started-by-symbol" class="nav-link" data-scroll-target="#block-started-by-symbol">Block Started by Symbol</a></li>
   <li><a href="#circular-buffer" id="toc-circular-buffer" class="nav-link" data-scroll-target="#circular-buffer">Circular Buffer</a></li>
   <li><a href="#comparator" id="toc-comparator" class="nav-link" data-scroll-target="#comparator">Comparator</a></li>
+  <li><a href="#dynamic-dispatch" id="toc-dynamic-dispatch" class="nav-link" data-scroll-target="#dynamic-dispatch">Dynamic Dispatch</a>
+  <ul class="collapse">
+  <li><a href="#under-the-hood" id="toc-under-the-hood" class="nav-link" data-scroll-target="#under-the-hood">Under the Hood</a></li>
+  <li><a href="#what-it-costs" id="toc-what-it-costs" class="nav-link" data-scroll-target="#what-it-costs">What It Costs</a></li>
+  </ul></li>
   <li><a href="#fixed-point-numbers" id="toc-fixed-point-numbers" class="nav-link" data-scroll-target="#fixed-point-numbers">Fixed Point Numbers</a></li>
   <li><a href="#floating-point-numbers" id="toc-floating-point-numbers" class="nav-link" data-scroll-target="#floating-point-numbers">Floating Point Numbers</a></li>
   <li><a href="#mac" id="toc-mac" class="nav-link" data-scroll-target="#mac">MAC</a></li>
@@ -433,6 +444,10 @@ window.Quarto = {
   <li><a href="#key-characteristics-1" id="toc-key-characteristics-1" class="nav-link" data-scroll-target="#key-characteristics-1">Key Characteristics</a></li>
   <li><a href="#types-of-serial-interfaces" id="toc-types-of-serial-interfaces" class="nav-link" data-scroll-target="#types-of-serial-interfaces">Types of Serial Interfaces</a></li>
   <li><a href="#advantages-over-parallel" id="toc-advantages-over-parallel" class="nav-link" data-scroll-target="#advantages-over-parallel">Advantages Over Parallel</a></li>
+  </ul></li>
+  <li><a href="#sink" id="toc-sink" class="nav-link" data-scroll-target="#sink">Sink</a>
+  <ul class="collapse">
+  <li><a href="#in-practice" id="toc-in-practice" class="nav-link" data-scroll-target="#in-practice">In Practice</a></li>
   </ul></li>
   <li><a href="#uart" id="toc-uart" class="nav-link" data-scroll-target="#uart">UART</a></li>
   </ul></li>
@@ -455,7 +470,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 31, 2026</p>
+      <p class="date">August 29, 2026</p>
     </div>
   </div>
   
@@ -582,6 +597,106 @@ Figure&nbsp;1: Comparator Operation: Converting a Sine Wave (Analog) to a Square
 </ul>
 </section>
 </section>
+<section id="dynamic-dispatch" class="level3">
+<h3 class="anchored" data-anchor-id="dynamic-dispatch">Dynamic Dispatch</h3>
+<div class="subheading">
+<p>Deciding at run time which code to run</p>
+</div>
+<p><strong>Dispatch</strong> is the act of selecting which function a call actually invokes. It comes in two forms, and the distinction is about <em>when</em> the selection happens:</p>
+<ul>
+<li><strong>Static dispatch</strong> resolves the target at <strong>compile time</strong>. The compiler knows the destination and writes its address directly into the call instruction.</li>
+<li><strong>Dynamic dispatch</strong> resolves it at <strong>run time</strong>. The compiler emits a call to an address that is <em>read from memory</em> at the moment of the call, because the correct target cannot be known until then.</li>
+</ul>
+<p>The useful test is to ask what the compiler could write down. If the call site tells it “call <code>sink_write</code>,” dispatch is static. If it tells it “load an address out of this object and call whatever you find,” dispatch is dynamic.</p>
+<p>That distinction, and not inheritance, is the definition. Object orientation is the most <em>familiar</em> consumer of dynamic dispatch, and C++ virtual functions are the clearest place to watch it happen, so that is where the walkthrough below goes. But the mechanism predates OOP, is not owned by it, and shows up throughout code that has no classes anywhere in it.</p>
+<section id="under-the-hood" class="level4">
+<h4 class="anchored" data-anchor-id="under-the-hood">Under the Hood</h4>
+<p>Consider a base class with a <code>virtual</code> method and two derived classes, one of which overrides it. The compiler needs <code>base_pointer-&gt;method()</code> to reach the right implementation without knowing, at that line, which kind of object it holds. It solves this with two pieces of machinery.</p>
+<p>First, for every class with virtual functions, the compiler builds a <strong>vtable</strong> (virtual table): a static, per-class array of function pointers, one slot per virtual method, filled in with that class’s implementations. There is exactly one vtable per class, not per object, and it is laid down at compile time.</p>
+<p>Second, it inserts a hidden pointer, the <strong>vptr</strong>, as an invisible member at the start of every object of such a class. The constructor sets it to point at that class’s vtable. So a <code>Child2</code> object’s vptr points to Child 2’s vtable, and a <code>Base</code> object’s points to Base’s.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/gloss-02.webp" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:5.5in" alt="C++ vtable / vptr dispatch diagram"></p>
+</figure>
+</div>
+<p>Follow the diagram and the whole trick is visible. Every object carries a vptr, inherited from the base, pointing at its own class’s table. <code>Child 1</code> never overrode <code>method()</code>, so its vtable slot points back at Base’s implementation. <code>Child 2</code> did override it, so its slot points at its own. The objects differ only in where their vptr aims.</p>
+<p>A virtual call therefore compiles to roughly three steps rather than one:</p>
+<ol type="1">
+<li>Load the vptr from the object.</li>
+<li>Load the function address from a <strong>fixed offset</strong> into that vtable. The offset for <code>method()</code> is decided at compile time and is identical for every class in the hierarchy, which is what makes the whole scheme work.</li>
+<li>Call that address.</li>
+</ol>
+<p>In C-like pseudocode, <code>object-&gt;method()</code> becomes:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="op">(*(</span>object<span class="op">-&gt;</span>vptr<span class="op">[</span>METHOD_SLOT<span class="op">]))(</span>object<span class="op">);</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>METHOD_SLOT</code> index is a compile-time constant. Only the <em>contents</em> of the slot vary at run time, and that indirection is the entire mechanism. Nothing searches, nothing compares type names, and the cost does not grow with the depth of the hierarchy.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="This is not an OOP-only trick">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>This is not an OOP-only trick
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Dynamic dispatch needs a function pointer and something to select it. Classes are one way to arrange that, not the only one.</p>
+<p>C has no objects and does dynamic dispatch constantly: a <code>struct</code> of function pointers is a hand-rolled vtable, and it is how the Linux kernel’s <code>file_operations</code> drives every filesystem and driver through one interface. <code>qsort</code> is dynamically dispatched on its comparison argument. So is any callback you register.</p>
+<p>Rust does it with <code>dyn Trait</code> objects, which carry a data pointer and a vtable pointer as a <em>fat pointer</em> rather than embedding a vptr in the value. Go does the same for interfaces. Python and JavaScript dispatch dynamically on nearly every call, looking methods up in a dictionary at run time, which is more flexible and considerably slower than a fixed-offset table lookup.</p>
+<p>The <a href="./c.html#function-pointers">C chapter</a> covers the hand-built version, and the <a href="./cpp.html#virtual-functions">C++ chapter</a> covers the compiler-generated one.</p>
+</div>
+</div>
+</section>
+<section id="what-it-costs" class="level4">
+<h4 class="anchored" data-anchor-id="what-it-costs">What It Costs</h4>
+<p>Dynamic dispatch is cheap but not free, and the price is worth knowing because it explains several design decisions in other languages.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Static dispatch</th>
+<th style="text-align: left;">Dynamic dispatch</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Target known</td>
+<td style="text-align: left;">Compile time</td>
+<td style="text-align: left;">Run time</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Indirection</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">Two loads (vptr, then slot)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Inlining</td>
+<td style="text-align: left;">Possible</td>
+<td style="text-align: left;">Generally not</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Per-object cost</td>
+<td style="text-align: left;">None</td>
+<td style="text-align: left;">One pointer (the vptr)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Branch prediction</td>
+<td style="text-align: left;">Direct call</td>
+<td style="text-align: left;">Indirect; can mispredict</td>
+</tr>
+</tbody>
+</table>
+<p>The two loads are minor and usually cached. The real cost is the lost <strong>inlining</strong>: because the compiler does not know the target, it cannot paste the function body into the call site, and it therefore also cannot apply any of the optimizations that would have followed from seeing the two together. For a small method called in a tight loop, that lost inlining dwarfs the cost of the indirection itself.</p>
+<p>This is why C++ makes <code>virtual</code> opt-in rather than the default, which surprises people arriving from Java, where every method is virtual unless marked otherwise. It is also why Rust generics and C++ templates <strong>monomorphize</strong>: when the concrete type is known at compile time, they generate a specialized copy and dispatch statically, paying nothing. <code>dyn Trait</code> in Rust and <code>virtual</code> in C++ are the deliberate opt-outs for when you genuinely need one call site to serve many types.</p>
+<section id="see-also" class="level5">
+<h5 class="anchored" data-anchor-id="see-also">See Also</h5>
+<ul>
+<li><a href="./c.html#function-pointers">Function Pointers</a> in the C chapter: the manual construction.</li>
+<li><a href="./cpp.html#virtual-functions">Virtual Functions</a> in the C++ chapter: the language-supported version.</li>
+<li><a href="https://en.wikipedia.org/wiki/Virtual_method_table" target="_blank" rel="noopener noreferrer">Virtual method table</a> on Wikipedia.</li>
+</ul>
+</section>
+</section>
+</section>
 <section id="fixed-point-numbers" class="level3">
 <h3 class="anchored" data-anchor-id="fixed-point-numbers">Fixed Point Numbers</h3>
 <p>A method of representing real (fractional) numbers using standard integer hardware by implicitly fixing the position of the binary point.</p>
@@ -671,55 +786,55 @@ V = (-1)^S \times (1.M) \times 2^{(E - Bias)}
 <div id="cell-fig-float-ieee" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.patches <span class="im">as</span> patches</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">3</span>))</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Draw Main Box</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>rect_total <span class="op">=</span> patches.Rectangle(</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">0</span>, <span class="dv">0</span>), <span class="dv">32</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"none"</span>, edgecolor<span class="op">=</span><span class="st">"black"</span>, linewidth<span class="op">=</span><span class="dv">2</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>ax.add_patch(rect_total)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Sign Bit (1 bit)</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>rect_sign <span class="op">=</span> patches.Rectangle(</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">31</span>, <span class="dv">0</span>), <span class="dv">1</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"tab:red"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, edgecolor<span class="op">=</span><span class="st">"black"</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>ax.add_patch(rect_sign)</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">31.5</span>, <span class="fl">0.5</span>, <span class="st">"S"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>, fontweight<span class="op">=</span><span class="st">"bold"</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">31.5</span>, <span class="fl">1.2</span>, <span class="st">"Sign</span><span class="ch">\n</span><span class="st">(1 bit)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"bottom"</span>, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Exponent (8 bits)</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>rect_exp <span class="op">=</span> patches.Rectangle(</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">23</span>, <span class="dv">0</span>), <span class="dv">8</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"tab:green"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, edgecolor<span class="op">=</span><span class="st">"black"</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>ax.add_patch(rect_exp)</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="dv">27</span>, <span class="fl">0.5</span>, <span class="st">"Exponent"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>, fontweight<span class="op">=</span><span class="st">"bold"</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="dv">27</span>, <span class="fl">1.2</span>, <span class="st">"Exponent</span><span class="ch">\n</span><span class="st">(8 bits)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"bottom"</span>, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Mantissa (23 bits)</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>rect_mant <span class="op">=</span> patches.Rectangle(</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">0</span>, <span class="dv">0</span>), <span class="dv">23</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"tab:blue"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, edgecolor<span class="op">=</span><span class="st">"black"</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>ax.add_patch(rect_mant)</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>ax.text(</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="fl">11.5</span>,</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.5</span>,</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Mantissa / Fraction"</span>,</span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    ha<span class="op">=</span><span class="st">"center"</span>,</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>    va<span class="op">=</span><span class="st">"center"</span>,</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    fontweight<span class="op">=</span><span class="st">"bold"</span>,</span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    fontsize<span class="op">=</span><span class="dv">12</span>,</span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">11.5</span>, <span class="fl">1.2</span>, <span class="st">"Mantissa</span><span class="ch">\n</span><span class="st">(23 bits)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"bottom"</span>, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
-<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Axis formatting</span></span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="op">-</span><span class="dv">1</span>, <span class="dv">33</span>)</span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="op">-</span><span class="fl">0.5</span>, <span class="dv">2</span>)</span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>ax.axis(<span class="st">"off"</span>)</span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"IEEE 754 Single Precision Structure"</span>, y<span class="op">=</span><span class="fl">0.9</span>)</span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.patches <span class="im">as</span> patches</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">3</span>))</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Draw Main Box</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>rect_total <span class="op">=</span> patches.Rectangle(</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">0</span>, <span class="dv">0</span>), <span class="dv">32</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"none"</span>, edgecolor<span class="op">=</span><span class="st">"black"</span>, linewidth<span class="op">=</span><span class="dv">2</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>ax.add_patch(rect_total)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Sign Bit (1 bit)</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>rect_sign <span class="op">=</span> patches.Rectangle(</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">31</span>, <span class="dv">0</span>), <span class="dv">1</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"tab:red"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, edgecolor<span class="op">=</span><span class="st">"black"</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>ax.add_patch(rect_sign)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">31.5</span>, <span class="fl">0.5</span>, <span class="st">"S"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>, fontweight<span class="op">=</span><span class="st">"bold"</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">31.5</span>, <span class="fl">1.2</span>, <span class="st">"Sign</span><span class="ch">\n</span><span class="st">(1 bit)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"bottom"</span>, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Exponent (8 bits)</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>rect_exp <span class="op">=</span> patches.Rectangle(</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">23</span>, <span class="dv">0</span>), <span class="dv">8</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"tab:green"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, edgecolor<span class="op">=</span><span class="st">"black"</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>ax.add_patch(rect_exp)</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="dv">27</span>, <span class="fl">0.5</span>, <span class="st">"Exponent"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>, fontweight<span class="op">=</span><span class="st">"bold"</span>, fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="dv">27</span>, <span class="fl">1.2</span>, <span class="st">"Exponent</span><span class="ch">\n</span><span class="st">(8 bits)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"bottom"</span>, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Mantissa (23 bits)</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>rect_mant <span class="op">=</span> patches.Rectangle(</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">0</span>, <span class="dv">0</span>), <span class="dv">23</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"tab:blue"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>, edgecolor<span class="op">=</span><span class="st">"black"</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>ax.add_patch(rect_mant)</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>ax.text(</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    <span class="fl">11.5</span>,</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.5</span>,</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Mantissa / Fraction"</span>,</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    ha<span class="op">=</span><span class="st">"center"</span>,</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    va<span class="op">=</span><span class="st">"center"</span>,</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    fontweight<span class="op">=</span><span class="st">"bold"</span>,</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    fontsize<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">11.5</span>, <span class="fl">1.2</span>, <span class="st">"Mantissa</span><span class="ch">\n</span><span class="st">(23 bits)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"bottom"</span>, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Axis formatting</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="op">-</span><span class="dv">1</span>, <span class="dv">33</span>)</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="op">-</span><span class="fl">0.5</span>, <span class="dv">2</span>)</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>ax.axis(<span class="st">"off"</span>)</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"IEEE 754 Single Precision Structure"</span>, y<span class="op">=</span><span class="fl">0.9</span>)</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-float-ieee" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -772,62 +887,62 @@ A \leftarrow A + (B \times C)
 <div id="cell-fig-mac-unit" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.patches <span class="im">as</span> patches</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">3</span>))</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Multiplier Box</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>mult <span class="op">=</span> patches.Rectangle(</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">1</span>, <span class="dv">2</span>), <span class="fl">1.5</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"tab:blue"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>, edgecolor<span class="op">=</span><span class="st">"black"</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>ax.add_patch(mult)</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">1.75</span>, <span class="fl">2.5</span>, <span class="st">"Multiplier</span><span class="ch">\n</span><span class="st">($B </span><span class="ch">\\</span><span class="st">times C$)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>)</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Adder Box</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>adder <span class="op">=</span> patches.Rectangle(</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">4</span>, <span class="dv">2</span>), <span class="fl">1.5</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"tab:red"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>, edgecolor<span class="op">=</span><span class="st">"black"</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>ax.add_patch(adder)</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">4.75</span>, <span class="fl">2.5</span>, <span class="st">"Adder</span><span class="ch">\n</span><span class="st">(+)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>)</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Accumulator Box (Register)</span></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>acc <span class="op">=</span> patches.Rectangle(</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">7</span>, <span class="dv">2</span>), <span class="fl">1.6</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"tab:green"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>, edgecolor<span class="op">=</span><span class="st">"black"</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>ax.add_patch(acc)</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">7.75</span>, <span class="fl">2.5</span>, <span class="st">"Accumulator</span><span class="ch">\n</span><span class="st">Register (A)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>)</span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Arrows</span></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Inputs to Multiplier</span></span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">"B"</span>, xy<span class="op">=</span>(<span class="dv">1</span>, <span class="fl">2.7</span>), xytext<span class="op">=</span>(<span class="dv">0</span>, <span class="fl">2.7</span>), arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>))</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">"C"</span>, xy<span class="op">=</span>(<span class="dv">1</span>, <span class="fl">2.3</span>), xytext<span class="op">=</span>(<span class="dv">0</span>, <span class="fl">2.3</span>), arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>))</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Multiplier to Adder</span></span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">""</span>, xy<span class="op">=</span>(<span class="dv">4</span>, <span class="fl">2.5</span>), xytext<span class="op">=</span>(<span class="fl">2.5</span>, <span class="fl">2.5</span>), arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>))</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Adder to Accumulator</span></span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">""</span>, xy<span class="op">=</span>(<span class="dv">7</span>, <span class="fl">2.5</span>), xytext<span class="op">=</span>(<span class="fl">5.5</span>, <span class="fl">2.5</span>), arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>))</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Feedback loop (Accumulator to Adder)</span></span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>ax.annotate(</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">""</span>,</span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    xy<span class="op">=</span>(<span class="fl">4.75</span>, <span class="dv">3</span>),</span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>    xytext<span class="op">=</span>(<span class="fl">7.75</span>, <span class="dv">3</span>),</span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>    arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>, connectionstyle<span class="op">=</span><span class="st">"bar,fraction=0.2"</span>, color<span class="op">=</span><span class="st">"gray"</span>),</span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">6.25</span>, <span class="fl">3.725</span>, <span class="st">"Feedback (Previous Sum)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, color<span class="op">=</span><span class="st">"gray"</span>)</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Output</span></span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>ax.annotate(</span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Result"</span>, xy<span class="op">=</span>(<span class="fl">8.6</span>, <span class="fl">2.5</span>), xytext<span class="op">=</span>(<span class="fl">9.2</span>, <span class="fl">2.465</span>), arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"&lt;-"</span>)</span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="op">-</span><span class="fl">0.5</span>, <span class="dv">10</span>)</span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="dv">1</span>, <span class="dv">5</span>)</span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>ax.axis(<span class="st">"off"</span>)</span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"MAC Unit Architecture"</span>, fontsize<span class="op">=</span><span class="dv">14</span>, fontweight<span class="op">=</span><span class="st">"bold"</span>)</span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.patches <span class="im">as</span> patches</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">3</span>))</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Multiplier Box</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>mult <span class="op">=</span> patches.Rectangle(</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">1</span>, <span class="dv">2</span>), <span class="fl">1.5</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"tab:blue"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>, edgecolor<span class="op">=</span><span class="st">"black"</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>ax.add_patch(mult)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">1.75</span>, <span class="fl">2.5</span>, <span class="st">"Multiplier</span><span class="ch">\n</span><span class="st">($B </span><span class="ch">\\</span><span class="st">times C$)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Adder Box</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>adder <span class="op">=</span> patches.Rectangle(</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">4</span>, <span class="dv">2</span>), <span class="fl">1.5</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"tab:red"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>, edgecolor<span class="op">=</span><span class="st">"black"</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>ax.add_patch(adder)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">4.75</span>, <span class="fl">2.5</span>, <span class="st">"Adder</span><span class="ch">\n</span><span class="st">(+)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Accumulator Box (Register)</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>acc <span class="op">=</span> patches.Rectangle(</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    (<span class="dv">7</span>, <span class="dv">2</span>), <span class="fl">1.6</span>, <span class="dv">1</span>, facecolor<span class="op">=</span><span class="st">"tab:green"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>, edgecolor<span class="op">=</span><span class="st">"black"</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>ax.add_patch(acc)</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">7.75</span>, <span class="fl">2.5</span>, <span class="st">"Accumulator</span><span class="ch">\n</span><span class="st">Register (A)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>)</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Arrows</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Inputs to Multiplier</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">"B"</span>, xy<span class="op">=</span>(<span class="dv">1</span>, <span class="fl">2.7</span>), xytext<span class="op">=</span>(<span class="dv">0</span>, <span class="fl">2.7</span>), arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>))</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">"C"</span>, xy<span class="op">=</span>(<span class="dv">1</span>, <span class="fl">2.3</span>), xytext<span class="op">=</span>(<span class="dv">0</span>, <span class="fl">2.3</span>), arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>))</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Multiplier to Adder</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">""</span>, xy<span class="op">=</span>(<span class="dv">4</span>, <span class="fl">2.5</span>), xytext<span class="op">=</span>(<span class="fl">2.5</span>, <span class="fl">2.5</span>), arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>))</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Adder to Accumulator</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">""</span>, xy<span class="op">=</span>(<span class="dv">7</span>, <span class="fl">2.5</span>), xytext<span class="op">=</span>(<span class="fl">5.5</span>, <span class="fl">2.5</span>), arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>))</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Feedback loop (Accumulator to Adder)</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>ax.annotate(</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">""</span>,</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>    xy<span class="op">=</span>(<span class="fl">4.75</span>, <span class="dv">3</span>),</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>    xytext<span class="op">=</span>(<span class="fl">7.75</span>, <span class="dv">3</span>),</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>    arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-&gt;"</span>, connectionstyle<span class="op">=</span><span class="st">"bar,fraction=0.2"</span>, color<span class="op">=</span><span class="st">"gray"</span>),</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>ax.text(<span class="fl">6.25</span>, <span class="fl">3.725</span>, <span class="st">"Feedback (Previous Sum)"</span>, ha<span class="op">=</span><span class="st">"center"</span>, color<span class="op">=</span><span class="st">"gray"</span>)</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Output</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>ax.annotate(</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Result"</span>, xy<span class="op">=</span>(<span class="fl">8.6</span>, <span class="fl">2.5</span>), xytext<span class="op">=</span>(<span class="fl">9.2</span>, <span class="fl">2.465</span>), arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"&lt;-"</span>)</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="op">-</span><span class="fl">0.5</span>, <span class="dv">10</span>)</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="dv">1</span>, <span class="dv">5</span>)</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>ax.axis(<span class="st">"off"</span>)</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"MAC Unit Architecture"</span>, fontsize<span class="op">=</span><span class="dv">14</span>, fontweight<span class="op">=</span><span class="st">"bold"</span>)</span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-mac-unit" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -885,53 +1000,53 @@ Y = \bar{S}I_0 + SI_1
 <div id="cell-fig-mux-tdm" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Parameters</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>fs <span class="op">=</span> <span class="dv">2000</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="fl">0.1</span>, fs)</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Two different signals to multiplex</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>sig_a <span class="op">=</span> np.sin(<span class="dv">2</span> <span class="op">*</span> np.pi <span class="op">*</span> <span class="dv">50</span> <span class="op">*</span> t)  <span class="co"># 50 Hz Sine</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>sig_b <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> np.sign(np.sin(<span class="dv">2</span> <span class="op">*</span> np.pi <span class="op">*</span> <span class="dv">30</span> <span class="op">*</span> t))  <span class="co"># 30 Hz Square</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Selector signal (Switching at 200 Hz)</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># When &gt; 0, select sig_b; when &lt;= 0, select sig_a</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>f_select <span class="op">=</span> <span class="dv">200</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>selector <span class="op">=</span> (np.sin(<span class="dv">2</span> <span class="op">*</span> np.pi <span class="op">*</span> f_select <span class="op">*</span> t) <span class="op">&gt;</span> <span class="dv">0</span>).astype(<span class="bu">float</span>)</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Multiplexed Output</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>mux_out <span class="op">=</span> np.where(selector <span class="op">==</span> <span class="dv">0</span>, sig_a, sig_b)</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">10</span>), sharex<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(t, sig_a, color<span class="op">=</span><span class="st">"tab:blue"</span>, label<span class="op">=</span><span class="st">"Signal A (Sine)"</span>)</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Input Signal A"</span>)</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend(loc<span class="op">=</span><span class="st">"upper right"</span>)</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].plot(t, sig_b, color<span class="op">=</span><span class="st">"tab:green"</span>, label<span class="op">=</span><span class="st">"Signal B (Square)"</span>)</span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Input Signal B"</span>)</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend(loc<span class="op">=</span><span class="st">"upper right"</span>)</span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].step(t, mux_out, color<span class="op">=</span><span class="st">"tab:red"</span>, where<span class="op">=</span><span class="st">"post"</span>, label<span class="op">=</span><span class="st">"MUX Output"</span>)</span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="st">"Multiplexed Output (TDM)"</span>)</span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_xlabel(<span class="st">"Time (s)"</span>)</span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].legend(loc<span class="op">=</span><span class="st">"upper right"</span>)</span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Add background shading for selector state</span></span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, <span class="bu">len</span>(t) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">10</span>):  <span class="co"># Sparse shading for performance</span></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> selector[i] <span class="op">&gt;</span> <span class="dv">0</span>:</span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>        axes[<span class="dv">2</span>].axvspan(t[i], t[<span class="bu">min</span>(i <span class="op">+</span> <span class="dv">10</span>, <span class="bu">len</span>(t) <span class="op">-</span> <span class="dv">1</span>)], color<span class="op">=</span><span class="st">"tab:green"</span>, alpha<span class="op">=</span><span class="fl">0.1</span>)</span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>        axes[<span class="dv">2</span>].axvspan(t[i], t[<span class="bu">min</span>(i <span class="op">+</span> <span class="dv">10</span>, <span class="bu">len</span>(t) <span class="op">-</span> <span class="dv">1</span>)], color<span class="op">=</span><span class="st">"tab:blue"</span>, alpha<span class="op">=</span><span class="fl">0.1</span>)</span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Parameters</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>fs <span class="op">=</span> <span class="dv">2000</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="fl">0.1</span>, fs)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Two different signals to multiplex</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>sig_a <span class="op">=</span> np.sin(<span class="dv">2</span> <span class="op">*</span> np.pi <span class="op">*</span> <span class="dv">50</span> <span class="op">*</span> t)  <span class="co"># 50 Hz Sine</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>sig_b <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> np.sign(np.sin(<span class="dv">2</span> <span class="op">*</span> np.pi <span class="op">*</span> <span class="dv">30</span> <span class="op">*</span> t))  <span class="co"># 30 Hz Square</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Selector signal (Switching at 200 Hz)</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># When &gt; 0, select sig_b; when &lt;= 0, select sig_a</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>f_select <span class="op">=</span> <span class="dv">200</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>selector <span class="op">=</span> (np.sin(<span class="dv">2</span> <span class="op">*</span> np.pi <span class="op">*</span> f_select <span class="op">*</span> t) <span class="op">&gt;</span> <span class="dv">0</span>).astype(<span class="bu">float</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Multiplexed Output</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>mux_out <span class="op">=</span> np.where(selector <span class="op">==</span> <span class="dv">0</span>, sig_a, sig_b)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Plotting</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">10</span>), sharex<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(t, sig_a, color<span class="op">=</span><span class="st">"tab:blue"</span>, label<span class="op">=</span><span class="st">"Signal A (Sine)"</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Input Signal A"</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend(loc<span class="op">=</span><span class="st">"upper right"</span>)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].plot(t, sig_b, color<span class="op">=</span><span class="st">"tab:green"</span>, label<span class="op">=</span><span class="st">"Signal B (Square)"</span>)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Input Signal B"</span>)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend(loc<span class="op">=</span><span class="st">"upper right"</span>)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].step(t, mux_out, color<span class="op">=</span><span class="st">"tab:red"</span>, where<span class="op">=</span><span class="st">"post"</span>, label<span class="op">=</span><span class="st">"MUX Output"</span>)</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="st">"Multiplexed Output (TDM)"</span>)</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_xlabel(<span class="st">"Time (s)"</span>)</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].legend(loc<span class="op">=</span><span class="st">"upper right"</span>)</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Add background shading for selector state</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, <span class="bu">len</span>(t) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">10</span>):  <span class="co"># Sparse shading for performance</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> selector[i] <span class="op">&gt;</span> <span class="dv">0</span>:</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>        axes[<span class="dv">2</span>].axvspan(t[i], t[<span class="bu">min</span>(i <span class="op">+</span> <span class="dv">10</span>, <span class="bu">len</span>(t) <span class="op">-</span> <span class="dv">1</span>)], color<span class="op">=</span><span class="st">"tab:green"</span>, alpha<span class="op">=</span><span class="fl">0.1</span>)</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>        axes[<span class="dv">2</span>].axvspan(t[i], t[<span class="bu">min</span>(i <span class="op">+</span> <span class="dv">10</span>, <span class="bu">len</span>(t) <span class="op">-</span> <span class="dv">1</span>)], color<span class="op">=</span><span class="st">"tab:blue"</span>, alpha<span class="op">=</span><span class="fl">0.1</span>)</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-mux-tdm" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -1003,8 +1118,8 @@ Figure&nbsp;4: Time-Division Multiplexing of two signals. The ‘MUX Output’ s
 </section>
 <section id="example" class="level5">
 <h5 class="anchored" data-anchor-id="example">Example</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> x <span class="op">=</span> a <span class="op">+</span> b<span class="op">;</span>  <span class="co">// Compiler uses CPU registers (e.g., W0, W1)</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                <span class="co">// to hold a, b, and result</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> x <span class="op">=</span> a <span class="op">+</span> b<span class="op">;</span>  <span class="co">// Compiler uses CPU registers (e.g., W0, W1)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>                <span class="co">// to hold a, b, and result</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="hardware-registers" class="level4">
@@ -1031,10 +1146,10 @@ Figure&nbsp;4: Time-Division Multiplexing of two signals. The ‘MUX Output’ s
 <li><code>ADC1BUF0</code>: Holds the most recent ADC conversion result</li>
 <li><code>T1CON</code>: Configures Timer 1 operation</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>TRISCbits<span class="op">.</span>TRISC1 <span class="op">=</span> <span class="dv">0</span><span class="op">;</span>  <span class="co">// Writing to memory address 0x0042</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>                       <span class="co">// → Hardware sees write</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>                       <span class="co">// → Configures pin C1 as output</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                       <span class="co">// → Physical pin direction changes!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>TRISCbits<span class="op">.</span>TRISC1 <span class="op">=</span> <span class="dv">0</span><span class="op">;</span>  <span class="co">// Writing to memory address 0x0042</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>                       <span class="co">// → Hardware sees write</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                       <span class="co">// → Configures pin C1 as output</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                       <span class="co">// → Physical pin direction changes!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="memory-mapped-io" class="level5">
 <h5 class="anchored" data-anchor-id="memory-mapped-io">Memory-Mapped I/O</h5>
@@ -1068,7 +1183,7 @@ Figure&nbsp;4: Time-Division Multiplexing of two signals. The ‘MUX Output’ s
 <p><span class="math display">\[
 \underbrace{01111111}_{127} + \underbrace{00000001}_{1} = \underbrace{10000000}_{-128}
 \]</span></p>
-<p>This is catastrophic in audio and control systems—a loud signal suddenly becomes maximally negative, causing audible clicks or system instability.</p>
+<p>This is catastrophic in audio and control systems: a loud signal suddenly becomes maximally negative, causing audible clicks or system instability.</p>
 </section>
 <section id="saturation-arithmetic" class="level5">
 <h5 class="anchored" data-anchor-id="saturation-arithmetic">Saturation Arithmetic</h5>
@@ -1116,10 +1231,10 @@ Figure&nbsp;4: Time-Division Multiplexing of two signals. The ‘MUX Output’ s
 </section>
 <section id="example-1" class="level5">
 <h5 class="anchored" data-anchor-id="example-1">Example</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">// On dsPIC with saturation enabled</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> a <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> b <span class="op">=</span> <span class="dv">10000</span><span class="op">;</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> result <span class="op">=</span> a <span class="op">+</span> b<span class="op">;</span>  <span class="co">// Result saturates to 32767 instead of wrapping to -25536</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">// On dsPIC with saturation enabled</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> a <span class="op">=</span> <span class="dv">30000</span><span class="op">;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> b <span class="op">=</span> <span class="dv">10000</span><span class="op">;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> result <span class="op">=</span> a <span class="op">+</span> b<span class="op">;</span>  <span class="co">// Result saturates to 32767 instead of wrapping to -25536</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Saturation is essential for <a href="#fixed-point-numbers">fixed-point</a> DSP where dynamic range management is critical.</p>
 </section>
 </section>
@@ -1181,6 +1296,65 @@ Figure&nbsp;4: Time-Division Multiplexing of two signals. The ‘MUX Output’ s
 </ol>
 </section>
 </section>
+<section id="sink" class="level3">
+<h3 class="anchored" data-anchor-id="sink">Sink</h3>
+<div class="subheading">
+<p>Where data goes to stop</p>
+</div>
+<p>A <strong>sink</strong> is an endpoint that <em>accepts</em> data without passing it back into the flow being described. Its counterpart is a <strong>source</strong>, an endpoint that <em>produces</em> data without having received it from anywhere in that same flow. Everything between the two is a transform: it both accepts and produces.</p>
+<p>That is the whole idea, and the useful part is what it does <em>not</em> say. A sink is not necessarily a final destination, and it need not store anything. It is defined entirely by the direction of flow across a boundary you have chosen to draw:</p>
+<ul>
+<li>A sink <strong>accepts</strong> and does not emit. Data arrives and, as far as this pipeline is concerned, stops.</li>
+<li>A source <strong>emits</strong> and does not accept. Data appears from outside.</li>
+<li>Both are <strong>relative to the boundary</strong>. Widen it and today’s sink becomes tomorrow’s transform.</li>
+</ul>
+<p>This last point is where most confused definitions go wrong. Writing rows to a database is a sink for your program, but the database has its own pipeline in which that write is a <em>source</em> for replication and indexing. Nothing about the write changed; the boundary moved. So “sink” describes a role in a particular flow, not a permanent property of a component.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Why 'sink'?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Why ‘sink’?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The word is borrowed, through a long chain, from plumbing.</p>
+<p>It enters technical vocabulary in <strong>fluid dynamics</strong>, where a source is a point at which fluid is injected into a flow and a sink is a point at which it is drawn out, exactly the faucet and drain of a basin. The pairing is not decorative: it is what makes the continuity equation work. Fluid is conserved everywhere <em>except</em> at sources and sinks, so those two are precisely the points where the accounting is allowed to not balance.</p>
+<p><strong>Vector calculus</strong> generalized it. The divergence of a field measures how much more flux leaves an infinitesimal region than enters it, so positive divergence marks a source and negative divergence marks a sink, for any field at all rather than only for moving fluid. From there the vocabulary spread to wherever something flows and is conserved: <strong>electromagnetism</strong> (charges as the sources and sinks of field lines), <strong>thermodynamics</strong> (a <em>heat sink</em> is a body that absorbs heat without appreciably warming, which is the same relationship applied to energy), and <strong>electronics</strong> (a circuit <em>sources</em> current when it supplies it and <em>sinks</em> current when it accepts it to ground).</p>
+<p><strong>Graph theory</strong> then borrowed the flow model wholesale for <strong>flow networks</strong>, keeping the names: a source is a vertex with only outgoing edges, a sink a vertex with only incoming ones, and conservation holds at every other vertex. This is the direct graph-theoretic restatement of the fluid continuity equation.</p>
+<p>Computing inherits the term from that last step, since dataflow graphs, pipelines, and stream processors are flow networks. The metaphor survives intact: data is conserved as it moves through the system, appearing only at sources and disappearing only at sinks.</p>
+</div>
+</div>
+<section id="in-practice" class="level4">
+<h4 class="anchored" data-anchor-id="in-practice">In Practice</h4>
+<p>The exact emphasis shifts by context, but the relationship above holds in every one of them.</p>
+<ol type="1">
+<li><p><strong>Data Pipelines and Stream Processing</strong> A source produces records, transforms reshape them, and a sink writes them out to an external system: a file, a database table, a message topic. Frameworks name this explicitly (Kafka Connect has source and sink connectors, as do Flink and Logstash), and the sink is where the pipeline’s effect on the outside world actually happens.</p></li>
+<li><p><strong>Asynchronous Programming and Reactive Streams</strong> Here a sink is a <em>type</em>, the write half of a stream. Rust’s <code>futures::Sink</code> is the mirror of <code>Stream</code>: where <code>Stream</code> yields values over time, <code>Sink</code> accepts them over time, with backpressure so a slow consumer can make a fast producer wait. <code>Rx</code> and Akka Streams use the term the same way. The distinguishing feature is that acceptance is asynchronous and may be refused for now, which a plain function call cannot express.</p></li>
+<li><p><strong>Security and Static Analysis (Taint Analysis)</strong> This usage is worth reading carefully, because it inverts the intuition that a sink is a resting place. A source is any input an attacker may control (a request parameter, a filename, an environment variable), and a sink is a <strong>sensitive operation</strong> where untrusted data becomes dangerous: <code>eval</code>, <code>exec</code>, a raw SQL query, a shell invocation, an HTML template. The analyzer’s job is to decide whether tainted data reaches a sink without passing through validation or escaping on the way. So a taint sink is not where data is <em>stored</em>, it is where data is <em>acted upon</em>. It qualifies as a sink because the flow being modeled is the flow of untrusted influence, and that flow terminates the moment the data is interpreted rather than merely moved.</p></li>
+<li><p><strong>Graph Theory and Flow Networks</strong> The formal case, and the one the others are informally quoting. In a directed graph a <strong>sink</strong> is a vertex with in-degree <span class="math inline">\(&gt; 0\)</span> and out-degree <span class="math inline">\(= 0\)</span>; a <strong>source</strong> has in-degree <span class="math inline">\(= 0\)</span>. Topological sorting, dead-code analysis, and max-flow algorithms all lean on the distinction. Note that a graph may have many sinks, or none at all: a cycle has no vertex of out-degree zero, which is exactly why a dependency graph with a cycle cannot be topologically sorted.</p></li>
+</ol>
+<div class="callout callout-style-default callout-note callout-titled" title="Related uses of the same word">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Related uses of the same word
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Two nearby meanings are the same metaphor applied to something other than data, and are worth recognizing so they do not muddy the definition above.</p>
+<ul>
+<li>A <strong>heat sink</strong> absorbs thermal energy rather than data. Same relationship, different quantity.</li>
+<li>To <strong>sink current</strong> in electronics is to accept current into a pin rather than supply it. An LED wired to a microcontroller is switched by sinking or sourcing, and a datasheet’s “sink current” rating is the maximum it can safely accept.</li>
+<li><strong>Sinking a signal to <code>/dev/null</code></strong> is the degenerate case: a sink that discards. It illustrates that a sink is not obliged to store or do anything at all; accepting and not emitting is sufficient.</li>
+</ul>
+</div>
+</div>
+</section>
+</section>
 <section id="uart" class="level3">
 <h3 class="anchored" data-anchor-id="uart">UART</h3>
 <div class="subheading">
@@ -1206,57 +1380,57 @@ Figure&nbsp;4: Time-Division Multiplexing of two signals. The ‘MUX Output’ s
 <div id="cell-fig-uart-frame" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Data for ASCII 'A' (0x41) -&gt; 01000001</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Transmitted LSB first: 1, 0, 0, 0, 0, 0, 1, 0</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>]</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>frame <span class="op">=</span> [<span class="dv">0</span>] <span class="op">+</span> data <span class="op">+</span> [<span class="dv">1</span>]  <span class="co"># Start(0), Data, Stop(1)</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>bit_labels <span class="op">=</span> [</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Start"</span>,</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D0</span><span class="ch">\n</span><span class="st">(LSB)"</span>,</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D1"</span>,</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D2"</span>,</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D3"</span>,</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D4"</span>,</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D5"</span>,</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D6"</span>,</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D7</span><span class="ch">\n</span><span class="st">(MSB)"</span>,</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Stop"</span>,</span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare signal for plotting (Idle High -&gt; Frame -&gt; Idle High)</span></span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>bits <span class="op">=</span> [<span class="dv">1</span>] <span class="op">+</span> frame <span class="op">+</span> [<span class="dv">1</span>]</span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.arange(<span class="bu">len</span>(bits))</span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>plt.step(t, bits, where<span class="op">=</span><span class="st">"post"</span>, color<span class="op">=</span><span class="st">"tab:blue"</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Annotate Bits</span></span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="bu">len</span>(bits) <span class="op">-</span> <span class="dv">1</span>):</span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    plt.text(</span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>        i <span class="op">+</span> <span class="fl">0.5</span>,</span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>        <span class="fl">0.5</span>,</span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>        bit_labels[i <span class="op">-</span> <span class="dv">1</span>],</span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>        ha<span class="op">=</span><span class="st">"center"</span>,</span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>        va<span class="op">=</span><span class="st">"center"</span>,</span>
-<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>        fontsize<span class="op">=</span><span class="dv">9</span>,</span>
-<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>        fontweight<span class="op">=</span><span class="st">"bold"</span>,</span>
-<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>    plt.axvline(i, color<span class="op">=</span><span class="st">"gray"</span>, linestyle<span class="op">=</span><span class="st">"--"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>plt.axvline(<span class="bu">len</span>(bits) <span class="op">-</span> <span class="dv">1</span>, color<span class="op">=</span><span class="st">"gray"</span>, linestyle<span class="op">=</span><span class="st">"--"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
-<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Labeling</span></span>
-<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"UART Timing Diagram: Transmitting 'A' (0x41)"</span>)</span>
-<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Bit Period"</span>)</span>
-<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Logic Level"</span>)</span>
-<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>)</span>
-<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>plt.yticks([<span class="dv">0</span>, <span class="dv">1</span>], [<span class="st">"0 (Low)"</span>, <span class="st">"1 (High)"</span>])</span>
-<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>plt.grid(<span class="va">False</span>)</span>
-<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Data for ASCII 'A' (0x41) -&gt; 01000001</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Transmitted LSB first: 1, 0, 0, 0, 0, 0, 1, 0</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>]</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>frame <span class="op">=</span> [<span class="dv">0</span>] <span class="op">+</span> data <span class="op">+</span> [<span class="dv">1</span>]  <span class="co"># Start(0), Data, Stop(1)</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>bit_labels <span class="op">=</span> [</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Start"</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D0</span><span class="ch">\n</span><span class="st">(LSB)"</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D1"</span>,</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D2"</span>,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D3"</span>,</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D4"</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D5"</span>,</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D6"</span>,</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"D7</span><span class="ch">\n</span><span class="st">(MSB)"</span>,</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Stop"</span>,</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare signal for plotting (Idle High -&gt; Frame -&gt; Idle High)</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>bits <span class="op">=</span> [<span class="dv">1</span>] <span class="op">+</span> frame <span class="op">+</span> [<span class="dv">1</span>]</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.arange(<span class="bu">len</span>(bits))</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>plt.step(t, bits, where<span class="op">=</span><span class="st">"post"</span>, color<span class="op">=</span><span class="st">"tab:blue"</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Annotate Bits</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="bu">len</span>(bits) <span class="op">-</span> <span class="dv">1</span>):</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>    plt.text(</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>        i <span class="op">+</span> <span class="fl">0.5</span>,</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>        <span class="fl">0.5</span>,</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>        bit_labels[i <span class="op">-</span> <span class="dv">1</span>],</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>        ha<span class="op">=</span><span class="st">"center"</span>,</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>        va<span class="op">=</span><span class="st">"center"</span>,</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>        fontsize<span class="op">=</span><span class="dv">9</span>,</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>        fontweight<span class="op">=</span><span class="st">"bold"</span>,</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>    plt.axvline(i, color<span class="op">=</span><span class="st">"gray"</span>, linestyle<span class="op">=</span><span class="st">"--"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>plt.axvline(<span class="bu">len</span>(bits) <span class="op">-</span> <span class="dv">1</span>, color<span class="op">=</span><span class="st">"gray"</span>, linestyle<span class="op">=</span><span class="st">"--"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Labeling</span></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"UART Timing Diagram: Transmitting 'A' (0x41)"</span>)</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Bit Period"</span>)</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Logic Level"</span>)</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>)</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>plt.yticks([<span class="dv">0</span>, <span class="dv">1</span>], [<span class="st">"0 (Low)"</span>, <span class="st">"1 (High)"</span>])</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>plt.grid(<span class="va">False</span>)</span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-uart-frame" class="quarto-float quarto-figure quarto-figure-center anchored">

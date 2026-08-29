@@ -3,19 +3,14 @@ title: "The C++ Language"
 subtitle: "From C to a multi-paradigm systems language"
 ---
 
-<!--
-Audience: experienced C/C++-adjacent readers, same as the C and Rust chapters.
-Anchor every concept to what the reader knows from C, and contrast with Rust
-where the comparison illuminates (RAII vs. ownership, templates vs. generics,
-exceptions vs. Result). Keep examples idiomatic modern C++ (C++17/20), not
-"C with a few classes." Plain hosted examples unless a point needs otherwise.
--->
 ## Overview
-![](images/cpp-00.svg){width=2in style="float: left; padding: 0 2em 0 1em"}
+![](images/cpp-00.svg){fig-alt="C++ logo" width=2in style="float: left; padding: 0 2em 0 1em"}
 
 <br/>**C++** is a general-purpose, multi-paradigm systems language that grew out of C but is no longer the same language. It is tempting to read it as "C with classes plus a few extras," and its syntax invites the mistake, yet that framing badly undersells it. C++ supports procedural, object-oriented, generic, and functional styles, and the modern language leans on all four at once. What holds them together is a single organizing principle: *zero-overhead abstraction*. You do not pay for what you do not use, and the abstractions you do use should cost no more than the equivalent code you would have written by hand. This is what lets C++ compete with C on the metal while offering expressiveness closer to a high-level language.
 
 The language began as **"C with Classes"**, written by Bjarne Stroustrup at Bell Labs in 1979 and renamed C++ in 1983. It was first standardized as **C++98**, but the version most people mean today is **modern C++**: the run of standards from C++11 onward that added move semantics, lambdas, smart pointers, and much else. Idiomatic modern C++ looks strikingly different from the C++98 of textbook lore, and this chapter targets that modern dialect throughout. If you have read the [C chapter](c.qmd), keep its ["C is not C++"](c.qmd#overview) callout in mind: the two languages share ancestry and much syntax, but their idioms and philosophies diverge sharply.
+
+!["Grrrr, I hate parameter passing!"](images/cpp-02.png){width=9in}
 
 ::: {style="clear: both"}
 
@@ -44,7 +39,7 @@ When practitioners say "modern C++," they mean C++11 onward. The difference is n
 Zero-overhead abstraction
 :::
 
-Every language optimizes for something, and the choice shows up in a thousand small decisions. Python optimizes for programmer time and accepts a 50x performance cost to get it. Rust optimizes for safety and accepts a borrow checker that will argue with you. C++ optimizes for **abstraction you do not pay for**, and accepts the complexity that goal demands.
+Every language optimizes for something, and the choice shows up in a thousand small decisions. Python optimizes for programmer time and accepts a 50x performance cost to get it. Rust optimizes for safety and accepts a borrow checker that will argue with you. C++ optimizes for abstraction you do not pay for, and accepts the complexity that goal demands.
 
 Stroustrup states it as two rules:
 
@@ -943,7 +938,7 @@ Since you asked directly: **C has not moved toward this, and shows no sign of do
 
 That is the extent of it. A C enum is still a set of `int` constants, still leaks its names into the enclosing scope, and still converts implicitly to any integer. C has no `enum class`, no `std::variant`, no sum type of any kind, and no pattern matching. Tagged unions in C are what they were in 1978: a `struct` holding an `enum` and a `union`, with the correspondence maintained by discipline.
 
-This is not an oversight so much as a statement of purpose. C's committee is deliberately conservative, prioritizing stability, a tiny specification, and the ability to compile the language on anything. Sum types would require the compiler to track variant state and enforce exhaustiveness, which is the kind of type-system machinery C has consistently declined to take on. The practical consequence for you: [the tagged-union idiom in the C chapter is not a legacy pattern to be replaced, it is still the state of the art in C]{.hl-default}. If you want compiler-enforced sum types in a systems language, C++ gives you an awkward library approximation and Rust gives you the real thing.
+This is not an oversight so much as a statement of purpose. C's committee is deliberately conservative, prioritizing stability, a tiny specification, and the ability to compile the language on anything. Sum types would require the compiler to track variant state and enforce exhaustiveness, which is the kind of type-system machinery C has consistently declined to take on. The practical consequence for you: [the tagged-union idiom in the C chapter is not a legacy pattern to be replaced, it is still the state of the art in C]{.hl-default-l}. If you want compiler-enforced sum types in a systems language, C++ gives you an awkward library approximation and Rust gives you the real thing.
 :::
 
 ### Uniform Initialization
@@ -1048,7 +1043,7 @@ So the progression from C is not mainly about syntax (`acct.deposit(100)` instea
 #### Three Kinds of Class
 Stroustrup organizes classes into three kinds in *A Tour of C++*, and the taxonomy is worth adopting early because it tells you which C++ features a given type should use. Most classes you write should be the first kind.
 
-**Concrete types** behave like built-in types. Their representation is part of their definition, so they can be placed on the stack, copied and moved as values, and manipulated without indirection. `std::vector`, `std::string`, a `Point`, a `complex` number: you create one, use it, and it is destroyed at the end of scope. There is no inheritance, no `virtual`, and therefore no per-object or per-call overhead. [Concrete types are the default, and the great majority of well-designed C++ classes are concrete]{.hl-default}. Everything covered so far in this chapter, constructors, RAII, the Rule of Zero, move semantics, is the machinery of building good concrete types.
+**Concrete types** behave like built-in types. Their representation is part of their definition, so they can be placed on the stack, copied and moved as values, and manipulated without indirection. `std::vector`, `std::string`, a `Point`, a `complex` number: you create one, use it, and it is destroyed at the end of scope. There is no inheritance, no `virtual`, and therefore no per-object or per-call overhead. [Concrete types are the default, and the great majority of well-designed C++ classes are concrete]{.hl-default-l}. Everything covered so far in this chapter, constructors, RAII, the Rule of Zero, move semantics, is the machinery of building good concrete types.
 
 **Abstract types** decouple the interface from the implementation. The class declares *what* operations exist without specifying how they are carried out or how the object is laid out, so callers work through a pointer or reference and the actual type is chosen at run time. This is what C++ means by object-oriented programming, and it requires the `virtual` machinery.
 
@@ -1420,7 +1415,7 @@ You almost never write move constructors yourself, for the same reason you rarel
 The keystone idea
 :::
 
-If you take one idea away from this chapter, make it this one. **RAII** stands for *Resource Acquisition Is Initialization*, which is a famously bad name for a genuinely great idea. The name emphasizes the wrong half; what matters is the *release*, not the acquisition. Stated in plain terms: [tie the lifetime of a resource to the lifetime of an object, so that the resource is released automatically when the object is destroyed]{.hl-default}. A resource is anything you acquire and must later give back: heap memory, an open file, a lock, a socket, a database handle.
+If you take one idea away from this chapter, make it this one. **RAII** stands for *Resource Acquisition Is Initialization*, which is a famously bad name for a genuinely great idea. The name emphasizes the wrong half; what matters is the *release*, not the acquisition. Stated in plain terms: [tie the lifetime of a resource to the lifetime of an object, so that the resource is released automatically when the object is destroyed]{.hl-default-l}. A resource is anything you acquire and must later give back: heap memory, an open file, a lock, a socket, a database handle.
 
 The mechanism rests on one guarantee the C++ language makes and C does not: **when an object goes out of scope, its destructor runs automatically, and it always runs.** A destructor is the special member function named `~ClassName()`; it is C++'s counterpart to a constructor, invoked not when you build the object but when you tear it down. So the recipe is to acquire the resource in the constructor and release it in the destructor. After that, correct cleanup is not something the programmer has to remember; it is something the compiler emits.
 
@@ -1552,7 +1547,7 @@ private:
 };
 ```
 
-Every special member the compiler generates is now correct, because each one simply defers to `std::vector`'s, which is itself correct: copying deep-copies, moving steals, destruction frees. [The best number of special member functions to write is zero, and you achieve it by owning resources through types that already know how to own them]{.hl-default}: `std::vector`, `std::string`, `std::unique_ptr`, `std::shared_ptr`. Write the Rule of Five only when you are *implementing* such an ownership type, which is rare, or wrapping a C API handle that has no existing wrapper.
+Every special member the compiler generates is now correct, because each one simply defers to `std::vector`'s, which is itself correct: copying deep-copies, moving steals, destruction frees. [The best number of special member functions to write is zero, and you achieve it by owning resources through types that already know how to own them]{.hl-default-l}: `std::vector`, `std::string`, `std::unique_ptr`, `std::shared_ptr`. Write the Rule of Five only when you are *implementing* such an ownership type, which is rare, or wrapping a C API handle that has no existing wrapper.
 
 ::: {.callout-note title="Rust states this rule as a type-system law"}
 Rust has no equivalent folklore because the question cannot arise. Moving is the default for every type, and it is the compiler that moves, so no move constructor exists to forget. Copying is opt-in: a type is duplicable only if it derives `Clone` (explicit `.clone()`) or `Copy` (implicit, and only for types that are trivially bit-copyable). Cleanup is the `Drop` trait, and implementing `Drop` does not silently disable anything. The Rule of Three/Five is, in effect, C++ asking you to maintain by hand an invariant that Rust made unbreakable by construction.
@@ -2422,13 +2417,15 @@ The `[]` on a `std::map` is worth a note for the C programmer: it *inserts* a de
 A generalized pointer into a container
 :::
 
-Here is the concept the rest of the STL is built on, stated as plainly as it can be: [an iterator is an object that behaves like a pointer into a container]{.hl-default}. That is not an analogy for teaching purposes; it is close to the literal truth. An iterator supports exactly the operations you already use on a C pointer walking an array:
+Here is the concept the rest of the STL is built on, stated as plainly as it can be: [an iterator is an object that behaves like a pointer into a container]{.hl-default-l}. That is not an analogy for teaching purposes; it is close to the literal truth. An iterator supports exactly the operations you already use on a C pointer walking an array:
 
 - `*it` **dereferences** it to get the element it currently refers to (read or write).
-- `++it` **advances** it to the next element.
+- `++it` **advances** it to the next element, `--it` **retreats** it to the previous element.
 - `it == other` and `it != other` **compare** two iterators for position.
 
 For a `std::vector`, whose elements are contiguous in memory, an iterator quite literally *is* a pointer (or a thin wrapper around one), and `++it` is ordinary pointer arithmetic. For a `std::map`, whose elements live in a balanced tree, an iterator is a small object holding a node pointer, and `++it` is the code that walks to the in-order-next node. The internals differ completely, but the *interface* is identical: `*it`, `++it`, `!=`. That uniformity is the whole trick. An algorithm written in terms of `*it` and `++it` neither knows nor cares which container it is walking, which is exactly why one `std::sort` serves them all.
+
+![](./images/cpp-01.png){fig-alt="Iterator concept diagram" fig-align="center" width="7.5in"}
 
 #### The Half-Open Range `[begin, end)`
 Every container hands out two iterators that define its extent: `begin()` points at the first element, and `end()` points at **one position past the last element**. `end()` is deliberately not the last element; it is a sentinel you are never meant to dereference, marking where the sequence stops. A range written this way, first included, last excluded, is called half-open and conventionally notated `[begin, end)`.
@@ -2978,11 +2975,11 @@ consume("literal");         // rvalue  -> std::string&&       overload
 When both overloads exist, the compiler picks the `&&` one for temporaries automatically. No caller has to know; the optimization is invisible at the call site. Apply this pattern to constructors and assignment operators and you get the move constructor and move-assignment operator.
 
 ::: {.callout-warning title="A named rvalue reference is an lvalue"}
-This trips up everyone once. Inside `void consume(std::string&& s)`, the parameter `s` *has a name*, so within the function body `s` is an **lvalue**, even though its type is an rvalue reference. Passing `s` along to another function copies it unless you write `std::move(s)` again. The rule is worth memorizing in that compressed form: [if it has a name, it is an lvalue]{.hl-default}.
+This trips up everyone once. Inside `void consume(std::string&& s)`, the parameter `s` *has a name*, so within the function body `s` is an **lvalue**, even though its type is an rvalue reference. Passing `s` along to another function copies it unless you write `std::move(s)` again. The rule is worth memorizing in that compressed form: [if it has a name, it is an lvalue]{.hl-default-l}.
 :::
 
 #### `std::move`
-`std::move` is the most badly named function in the standard library, because [it does not move anything]{.hl-default}. It is a cast, nothing more: it takes an lvalue and returns an rvalue reference to it, which is to say it produces an expression that the overload resolution above will route to the `&&` version. Its entire implementation is a `static_cast`.
+`std::move` is the most badly named function in the standard library, because [it does not move anything]{.hl-default-l}. It is a cast, nothing more: it takes an lvalue and returns an rvalue reference to it, which is to say it produces an expression that the overload resolution above will route to the `&&` version. Its entire implementation is a `static_cast`.
 
 ```cpp
 std::string source = "a long string that owns a heap buffer";
@@ -3085,7 +3082,7 @@ This has a practical corollary that reverses old advice:
 ::: {.callout-warning title="Do not write `return std::move(x);`"}
 It looks like a helpful hint and it is actively harmful. Naming the local in a `return` statement already triggers RVO, or a move if RVO does not apply. Wrapping it in `std::move` produces an expression that is no longer eligible for elision, so you have *forced* a move where the compiler was going to elide the operation entirely. Just `return x;`.
 
-The same reasoning applies to returning by value in general. The old habit of taking an output parameter to avoid a copy is obsolete: [return by value, and let elision and moves make it cheap]{.hl-default}.
+The same reasoning applies to returning by value in general. The old habit of taking an output parameter to avoid a copy is obsolete: [return by value, and let elision and moves make it cheap]{.hl-default-l}.
 :::
 
 #### Perfect Forwarding
@@ -3417,7 +3414,7 @@ $ nm build/draw.o           # the actual symbols
 0000000000000020 T _ZN3gfx4drawEd
 ```
 
-`_ZN3gfx4drawEi` reads as: namespace `gfx` (3 characters), function `draw` (4 characters), parameter `i` for `int`. [The scheme is compiler-specific, which is why GCC-compiled and MSVC-compiled C++ libraries cannot be linked together, a limitation C does not have]{.hl-default}.
+`_ZN3gfx4drawEi` reads as: namespace `gfx` (3 characters), function `draw` (4 characters), parameter `i` for `int`. [The scheme is compiler-specific, which is why GCC-compiled and MSVC-compiled C++ libraries cannot be linked together, a limitation C does not have]{.hl-default-l}.
 
 The practical consequence you will hit is **calling C from C++**. C symbols are unmangled, so the C++ compiler must be told not to mangle its references to them:
 

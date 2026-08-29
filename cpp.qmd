@@ -4,11 +4,13 @@ subtitle: "From C to a multi-paradigm systems language"
 ---
 
 ## Overview
-![](images/cpp-00.svg){width=2in style="float: left; padding: 0 2em 0 1em"}
+![](images/cpp-00.svg){fig-alt="C++ logo" width=2in style="float: left; padding: 0 2em 0 1em"}
 
 <br/>**C++** is a general-purpose, multi-paradigm systems language that grew out of C but is no longer the same language. It is tempting to read it as "C with classes plus a few extras," and its syntax invites the mistake, yet that framing badly undersells it. C++ supports procedural, object-oriented, generic, and functional styles, and the modern language leans on all four at once. What holds them together is a single organizing principle: *zero-overhead abstraction*. You do not pay for what you do not use, and the abstractions you do use should cost no more than the equivalent code you would have written by hand. This is what lets C++ compete with C on the metal while offering expressiveness closer to a high-level language.
 
 The language began as **"C with Classes"**, written by Bjarne Stroustrup at Bell Labs in 1979 and renamed C++ in 1983. It was first standardized as **C++98**, but the version most people mean today is **modern C++**: the run of standards from C++11 onward that added move semantics, lambdas, smart pointers, and much else. Idiomatic modern C++ looks strikingly different from the C++98 of textbook lore, and this chapter targets that modern dialect throughout. If you have read the [C chapter](c.qmd), keep its ["C is not C++"](c.qmd#overview) callout in mind: the two languages share ancestry and much syntax, but their idioms and philosophies diverge sharply.
+
+!["Grrrr, I hate parameter passing!"](images/cpp-02.png){width=9in}
 
 ::: {style="clear: both"}
 
@@ -2423,7 +2425,7 @@ Here is the concept the rest of the STL is built on, stated as plainly as it can
 
 For a `std::vector`, whose elements are contiguous in memory, an iterator quite literally *is* a pointer (or a thin wrapper around one), and `++it` is ordinary pointer arithmetic. For a `std::map`, whose elements live in a balanced tree, an iterator is a small object holding a node pointer, and `++it` is the code that walks to the in-order-next node. The internals differ completely, but the *interface* is identical: `*it`, `++it`, `!=`. That uniformity is the whole trick. An algorithm written in terms of `*it` and `++it` neither knows nor cares which container it is walking, which is exactly why one `std::sort` serves them all.
 
-![](./images/cpp-01.png){fig-align="center" width="7.5in"}
+![](./images/cpp-01.png){fig-alt="Iterator concept diagram" fig-align="center" width="7.5in"}
 
 #### The Half-Open Range `[begin, end)`
 Every container hands out two iterators that define its extent: `begin()` points at the first element, and `end()` points at **one position past the last element**. `end()` is deliberately not the last element; it is a sentinel you are never meant to dereference, marking where the sequence stops. A range written this way, first included, last excluded, is called half-open and conventionally notated `[begin, end)`.

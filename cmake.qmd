@@ -4,24 +4,13 @@ subtitle: "A build system generator, and the language you have to speak to it"
 ---
 
 <!--
-Audience: the same systems reader as make.qmd, arriving directly from it. Assume
-Make is understood; anchor everything to it. Assume NO prior CMake.
-
-The thesis: CMake is not a build tool, it is a generator, and its unit of
-thought is the target-as-object-with-properties rather than the rule. Most
-CMake pain is either (a) reading it as a build tool, or (b) forgetting the
-language is string-typed.
-
-make.qmd's "Make and CMake" section answers "what generated these makefiles?"
-and stays there. This chapter answers "how do I read and write CMake?" Cross-
-link, do not duplicate: that section owns add_subdirectory tree collection and
-the recursive-make contrast.
-
 Dialect: CMake 3.16+ as the floor, noting 3.20+ where it matters. Target-based
 "modern CMake" throughout; directory-scoped commands shown only as things to
 recognize in old projects and replace.
 -->
 ## Overview
+![](images/cmake-00.svg){fig-alt="CMake logo" width=2in style="float: left; padding: 0 2em 0.5em 1em"}
+
 **CMake** occupies an odd position. It is the de facto build system for C and C++, it is what nearly every vendor SDK ships, and it is widely disliked by the people who use it every day. All three of those are true at once, and the reason is worth understanding before you write a line of it.
 
 [CMake solves a real problem that [Make](make.qmd) does not. A makefile describes how to build a project *on the machine that wrote it*.]{.hl-default-l} Move it to a different compiler, a different operating system, or a different build tool and it needs editing. [CMake describes a project's structure abstractly and then generates the actual build files for whatever toolchain is present]{.hl-default-l}: Makefiles on Unix, Ninja anywhere, Visual Studio solutions on Windows, Xcode projects on macOS. One description, many builds.

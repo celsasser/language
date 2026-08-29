@@ -109,10 +109,10 @@ CFLAGS  := -Wall -O2              # `macro`
 OBJS    := main.o util.o          # `macro`
 
 app: $(OBJS)                      # `rule`, with `macro` expansions in it
-	$(CC) $(CFLAGS) -o $@ $^      # `shell`, after `macros` are expanded
+   $(CC) $(CFLAGS) -o $@ $^      # `shell`, after `macros` are expanded
 
 %.o: %.c                          # `rule` (a pattern rule)
-	$(CC) $(CFLAGS) -c $< -o $@   # `shell`, after `macros` are expanded
+   $(CC) $(CFLAGS) -c $< -o $@   # `shell`, after `macros` are expanded
 ```
 
 Note what the tab-indented lines are and are not. They are shell, but Make gets to them first: [it expands every `$(...)` and *then* hands the resulting text to `/bin/sh`]{.hl-default-l}. Two languages occupy the same line, one after the other. That single fact generates a surprising number of bugs.
@@ -144,7 +144,7 @@ A rule has three parts:
 
 ```makefile
 target: prerequisites
-	recipe
+   recipe
 ```
 
 - **Target**: what this rule produces. Usually a file, occasionally just a name (see [Phony Targets](#phony-targets)).
@@ -155,7 +155,7 @@ Read a rule as a sentence with two clauses: *"`target` is built from `prerequisi
 
 ```makefile
 app: main.o util.o
-	gcc -o app main.o util.o
+   gcc -o app main.o util.o
 ```
 
 This says `app` depends on the two object files, and if either is newer than `app`, run `gcc`. Nothing more is implied. Make does not know that `gcc` produces `app`, or that these are C programs at all. It compares timestamps and runs the command you gave it.
@@ -166,7 +166,7 @@ Prerequisites are a whitespace-separated list, and long lists are conventionally
 ```makefile
 app: main.o util.o parser.o network.o \
      config.o logging.o
-	gcc -o app $^
+   gcc -o app $^
 ```
 
 Order within the list does not matter for correctness. Make may build them in any order, and under `-j` it will build them simultaneously. If two prerequisites genuinely must be built in sequence, that ordering has to come from a dependency between *them*, not from their position in this list. Assuming left-to-right order is one of the most common ways a makefile works serially and then fails under `make --jobs=8`.
@@ -176,7 +176,7 @@ A rule may name several targets. The meaning is probably not what you would gues
 
 ```makefile
 a.o b.o: shared.h
-	@echo "rebuilding for $@"
+   @echo "rebuilding for $@"
 ```
 
 This is shorthand for writing the same rule once per target, and the recipe runs **once for each** out-of-date target, not once in total. For the common case of one command producing several files at once, this is the wrong construct; GNU Make 4.3 added `&:` (grouped targets) for that, and older makefiles fake it with a stamp file.
@@ -186,8 +186,8 @@ Each line of a recipe is passed to the shell, and every line gets **its own shel
 
 ```makefile
 report.txt:
-	echo "building"
-	date > report.txt
+   echo "building"
+   date > report.txt
 ```
 
 Two lines, two separate `sh` invocations. This is the source of a classic frustration:
@@ -195,15 +195,15 @@ Two lines, two separate `sh` invocations. This is the source of a classic frustr
 ```makefile
 # BROKEN: the cd does not persist to the second line
 install:
-	cd build
-	cp app /usr/local/bin/
+   cd build
+   cp app /usr/local/bin/
 ```
 
 The `cd` affects only the shell that ran it, which exits immediately. The `cp` runs in the original directory. The fix is to make it one shell command:
 
 ```makefile
 install:
-	cd build && cp app /usr/local/bin/
+   cd build && cp app /usr/local/bin/
 ```
 
 GNU Make's `.ONESHELL` special target changes this globally so that an entire recipe runs in a single shell. It is convenient and it is also a portability tradeoff, discussed in [Special Targets](#special-targets).
@@ -218,8 +218,8 @@ Two characters at the start of a recipe line modify how Make treats it:
 
 ```makefile
 clean:
-	@echo "Cleaning..."
-	-rm -f app *.o
+   @echo "Cleaning..."
+   -rm -f app *.o
 ```
 
 By default Make prints each command as it runs it, which is genuinely useful and worth keeping for real build steps. Reserve `@` for messages, not for hiding compiler invocations that you will want to see when a build breaks.
@@ -246,7 +246,7 @@ Nothing stops you from writing two rules for the same target, and Make's respons
 
 ```makefile
 main.o: main.c
-	$(CC) $(CFLAGS) -c $< -o $@
+   $(CC) $(CFLAGS) -c $< -o $@
 
 main.o: config.h util.h
 ```
@@ -275,10 +275,10 @@ CMakeFiles/picotracker_core.dir/Users/curtis/pico-tracker/sources/System/io/Stat
 
 ```makefile
 app: main.o
-	$(CC) -o $@ $^
+   $(CC) -o $@ $^
 
 app: main.o util.o
-	$(CC) -O2 -o $@ $^
+   $(CC) -O2 -o $@ $^
 ```
 
 ```
@@ -292,10 +292,10 @@ Make uses the second recipe and discards the first. The prerequisites still comb
 
 ```makefile
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+   $(CC) $(CFLAGS) -c $< -o $@
 
 legacy.o: legacy.c
-	$(CC) -w -O0 -c $< -o $@      # this one, always
+   $(CC) -w -O0 -c $< -o $@      # this one, always
 ```
 
 No warning here, because there is no ambiguity to warn about. This is the ordinary way to carve out a special case, and it composes with the pattern-rule layering shown in [How Make Chooses Among Candidates](#how-make-chooses-among-candidates).
@@ -318,16 +318,16 @@ Putting it together, here is a working build for a two-file program:
 
 ```makefile
 app: main.o util.o
-	gcc -o app main.o util.o
+   gcc -o app main.o util.o
 
 main.o: main.c util.h
-	gcc -Wall -c main.c
+   gcc -Wall -c main.c
 
 util.o: util.c util.h
-	gcc -Wall -c util.c
+   gcc -Wall -c util.c
 
 clean:
-	-rm -f app *.o
+   -rm -f app *.o
 ```
 
 Everything in this chapter after this point is about writing that same build with less repetition and more correctness. The variables in [Variables](#variables) remove the duplicated `gcc -Wall`. The pattern rules in [Pattern Rules](#pattern-rules) collapse the two nearly identical `.o` rules into one. The automatic dependency generation in [Auto-Generated Dependencies](#auto-generated-dependencies) replaces the hand-written `util.h` prerequisites, which are already a maintenance liability at this size and hopeless at a hundred files.
@@ -377,10 +377,10 @@ Running `make` with no arguments builds the **default goal**: the first target i
 all: app docs        # this is the default goal, because it comes first
 
 app: main.o
-	gcc -o app main.o
+   gcc -o app main.o
 
 docs:
-	quarto render
+   quarto render
 ```
 
 Convention puts a target named `all` at the top, listing everything the project normally builds as its prerequisites. It is a convention worth following: it means `make` alone does the obvious thing, and it survives someone later adding a rule above it only if they know the rule. Which is why GNU Make lets you state it explicitly instead of relying on file position:
@@ -394,7 +394,7 @@ With that line, `all` is the default no matter where it sits in the file or what
 You can also name goals on the command line, and Make builds them in the order given:
 
 ```bash
-make clean app        		# clean first, then build app
+make clean app             # clean first, then build app
 make --jobs=8 app docs     # build both, in parallel where the graph allows
 ```
 
@@ -413,7 +413,7 @@ Without that declaration, they are a bug waiting for the right filename. Conside
 
 ```makefile
 clean:
-	-rm -f app *.o
+   -rm -f app *.o
 ```
 
 This works until the day a file or directory named `clean` exists in the project. Then:
@@ -430,7 +430,7 @@ Declaring the target phony tells Make that the name does not refer to a file, so
 ```makefile
 .PHONY: clean
 clean:
-	-rm -f app *.o
+   -rm -f app *.o
 ```
 
 Now `make clean` runs its recipe unconditionally, whatever happens to exist on disk.
@@ -448,11 +448,11 @@ Declaring each next to its rule keeps the pair visible and never drifts, at the 
 ```makefile
 .PHONY: clean
 clean:
-	-rm -f app *.o
+   -rm -f app *.o
 
 .PHONY: test
 test: app
-	./run-tests.sh
+   ./run-tests.sh
 ```
 
 Either is fine. The failure mode to avoid is a `.PHONY` list at the top that someone forgets to update when adding a target, which is exactly the case where the bug lies dormant until a filename collides. Phony targets carry most of the weight in [Make as a Task Runner](#make-as-a-task-runner), where essentially every target is one.
@@ -517,10 +517,10 @@ Consider building objects into `build/`. The directory must be there before the 
 ```makefile
 # BROKEN: rebuilds everything, constantly
 build/%.o: %.c build
-	$(CC) -c $< -o $@
+   $(CC) -c $< -o $@
 
 build:
-	mkdir -p build
+   mkdir -p build
 ```
 
 This builds correctly and then rebuilds far more than it should. The reason is that [a directory's modification time changes every time a file is created inside it]{.hl-default-l}, so `build` is a prerequisite whose timestamp moves on its own, without anyone editing a source file.
@@ -531,10 +531,10 @@ The `|` separator solves it. Prerequisites listed after the pipe are **order-onl
 
 ```makefile
 build/%.o: %.c | build
-	$(CC) -c $< -o $@
+   $(CC) -c $< -o $@
 
 build:
-	mkdir -p build
+   mkdir -p build
 ```
 
 Now `build` is created if missing and otherwise ignored. The ordering guarantee is kept; the false staleness is gone.
@@ -570,8 +570,8 @@ The cause is almost always a mismatched clock across a boundary: a network files
 
 ```makefile
 generated.h: schema.json
-	./generate $< > $@.tmp
-	@if cmp -s $@.tmp $@; then rm $@.tmp; else mv $@.tmp $@; fi
+   ./generate $< > $@.tmp
+   @if cmp -s $@.tmp $@; then rm $@.tmp; else mv $@.tmp $@; fi
 ```
 
 This restores content-sensitivity by hand, for the one file where it matters most.
@@ -705,8 +705,8 @@ A point that catches people: recipes do **not** automatically see makefile varia
 GREETING := hello
 
 show:
-	echo $(GREETING)      # Make expands this to: echo hello
-	echo $$GREETING       # the shell sees $GREETING, which is unset -> empty
+   echo $(GREETING)      # Make expands this to: echo hello
+   echo $$GREETING       # the shell sees $GREETING, which is unset -> empty
 ```
 
 The first line works because Make substitutes the text *before* the shell ever runs, exactly as described in [The Three Languages in One File](#the-three-languages-in-one-file). The second asks the shell for an environment variable that was never exported. `export` bridges the gap:
@@ -715,7 +715,7 @@ The first line works because Make substitutes the text *before* the shell ever r
 export GREETING := hello
 
 show:
-	echo $$GREETING       # now the shell has it too
+   echo $$GREETING       # now the shell has it too
 ```
 
 A bare `export` with no arguments exports everything, which is occasionally convenient and mostly a way to leak makefile internals into every subprocess. Export deliberately, and prefer plain `$(VAR)` expansion unless a recipe genuinely needs the value in its environment, as when it invokes a script that reads it.
@@ -733,7 +733,7 @@ This is how build variants are done without duplicating rules. The classic is a 
 CFLAGS := -Wall -O2
 
 app: main.o util.o
-	$(CC) $(CFLAGS) -o $@ $^
+   $(CC) $(CFLAGS) -o $@ $^
 
 debug: CFLAGS += -g -O0 -DDEBUG
 debug: app
@@ -773,8 +773,8 @@ Here they are at work in a realistic pattern rule:
 
 ```makefile
 build/%.o: src/%.c include/config.h | build
-	@echo "compiling $* ..."
-	$(CC) $(CFLAGS) -c $< -o $@
+   @echo "compiling $* ..."
+   $(CC) $(CFLAGS) -c $< -o $@
 ```
 
 Building `build/parser.o` from this rule gives:
@@ -792,14 +792,14 @@ Note why `$<` rather than `$^` is passed to the compiler. `$^` would include `in
 
 ```makefile
 app: $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $^      # every object goes on the link line
+   $(CC) $(LDFLAGS) -o $@ $^      # every object goes on the link line
 ```
 
 `$?` is the specialist of the group, expanding to only those prerequisites newer than the target. Its natural use is a target that can be updated incrementally rather than rebuilt, such as an archive:
 
 ```makefile
 libutil.a: $(OBJS)
-	ar rcs $@ $?            # replace only the members that changed
+   ar rcs $@ $?            # replace only the members that changed
 ```
 
 ::: {.callout-important title="Automatic variables exist only inside recipes"}
@@ -851,9 +851,9 @@ The consequences are specific enough to enumerate.
 BUILD_TIME := $(shell date +%T)
 
 app: main.o
-	@echo "starting link at $$(date +%T)"
-	@echo "BUILD_TIME says $(BUILD_TIME)"
-	$(CC) -o $@ $^
+   @echo "starting link at $$(date +%T)"
+   @echo "BUILD_TIME says $(BUILD_TIME)"
+   $(CC) -o $@ $^
 ```
 
 On a build where compilation takes a minute, those two lines print times a minute apart. `$(BUILD_TIME)` was frozen before the first object file was compiled. That is usually what you want for stamping a version into a binary, and it is emphatically not a way to time a build step.
@@ -865,7 +865,7 @@ On a build where compilation takes a minute, those two lines print times a minut
 OBJS := $(wildcard build/*.o)
 
 app: $(OBJS)
-	$(CC) -o $@ $^
+   $(CC) -o $@ $^
 ```
 
 On the first run, `build/` is empty or missing, `$(wildcard)` returns nothing, and `app` links against no objects. Run `make` a second time and it works, because now the files exist at parse time. A makefile that only builds correctly on the second invocation is nearly always this bug. The fix is to derive the object list from the *sources*, which do exist when the file is read:
@@ -890,7 +890,7 @@ Conditionals are for configuration (platform, toolchain, build variant), all of 
 
 ```makefile
 list:
-	for f in *.c; do echo "found $$f"; done
+   for f in *.c; do echo "found $$f"; done
 ```
 
 Written as `$f`, Make would expand it first, find no variable named `f`, substitute the empty string, and the shell would receive `echo "found "`. Silently, with no error, on every iteration. The rule is mechanical: [inside a recipe, `$(...)` is Make's, `$$` is the shell's]{.hl-default-l}.
@@ -920,7 +920,7 @@ PROGRAMS := server client monitor
 
 define program_rule
 $(1): $(1).o common.o
-	$$(CC) $$(LDFLAGS) -o $$@ $$^
+   $$(CC) $$(LDFLAGS) -o $$@ $$^
 endef
 
 $(foreach p,$(PROGRAMS),$(eval $(call program_rule,$(p))))
@@ -950,7 +950,7 @@ The original form, standardized by POSIX and still lurking in old makefiles, key
 .SUFFIXES: .c .o
 
 .c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
+   $(CC) $(CFLAGS) -c $< -o $@
 ```
 
 `.c.o:` reads backwards from what you would guess: it means "to make a `.o` from a `.c`", source first. Only suffixes listed in `.SUFFIXES` participate, which is why the declaration is there.
@@ -964,7 +964,7 @@ The modern form uses `%` as a wildcard matching one or more characters:
 
 ```makefile
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+   $(CC) $(CFLAGS) -c $< -o $@
 ```
 
 The text matched by `%` is the **stem**, and it must be the same on both sides. Building `parser.o` matches this rule with a stem of `parser`, which makes the prerequisite `parser.c`. The [automatic variables](#automatic-variables) then carry the specifics into the recipe: `$<` is `parser.c`, `$@` is `parser.o`, and `$*` is the stem itself.
@@ -978,16 +978,16 @@ CFLAGS := -Wall
 OBJS := main.o util.o
 
 app: $(OBJS)
-	$(CC) -o $@ $^
+   $(CC) -o $@ $^
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+   $(CC) $(CFLAGS) -c $< -o $@
 
 main.o util.o: util.h
 
 .PHONY: clean
 clean:
-	-rm -f app *.o
+   -rm -f app *.o
 ```
 
 Adding a source file now means adding one word to `OBJS`. The pattern rule does not change.
@@ -999,7 +999,7 @@ Because `%` matches directory separators too, pattern rules handle out-of-tree b
 
 ```makefile
 build/%.o: src/%.c | build
-	$(CC) $(CFLAGS) -c $< -o $@
+   $(CC) $(CFLAGS) -c $< -o $@
 ```
 
 Building `build/net/socket.o` gives a stem of `net/socket` and a prerequisite of `src/net/socket.c`. The `%` spans the subdirectory without any special handling. This is the shape most real makefiles use, and it is worth noting that the target's directory must exist before the compiler writes into it, hence the order-only `| build`. For nested output directories, `@mkdir -p $(@D)` in the recipe is the more robust choice.
@@ -1015,10 +1015,10 @@ The practical consequence is that you can layer a special case over a general on
 
 ```makefile
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+   $(CC) $(CFLAGS) -c $< -o $@
 
 generated/%.o: generated/%.c
-	$(CC) $(CFLAGS) -w -c $< -o $@       # generated code compiles warning-free
+   $(CC) $(CFLAGS) -w -c $< -o $@       # generated code compiles warning-free
 ```
 
 #### Chained Inference
@@ -1085,7 +1085,7 @@ A pattern rule applies to *anything* that matches, which is more freedom than yo
 
 ```makefile
 targets: target-pattern: prereq-pattern
-	recipe
+   recipe
 ```
 
 Three colon-separated parts instead of two. The first is the list of targets the rule governs; the second is the pattern each of them is matched against to extract a stem; the third builds the prerequisite from that stem.
@@ -1094,7 +1094,7 @@ Three colon-separated parts instead of two. The first is the list of targets the
 OBJS := main.o util.o parser.o
 
 $(OBJS): %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+   $(CC) $(CFLAGS) -c $< -o $@
 ```
 
 This behaves like `%.o: %.c` restricted to exactly those three objects. A `stray.o` in the directory will not be built by it.
@@ -1115,7 +1115,7 @@ OBJS := $(patsubst src/%.c,build/%.o,$(SRCS))
 DEPS := $(patsubst src/%.c,build/%.d,$(SRCS))
 
 $(OBJS): build/%.o: src/%.c | build
-	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+   $(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 ```
 
 ::: {.callout-tip title="Prefer static pattern rules when you know the list"}
@@ -1129,7 +1129,7 @@ By default Make looks for prerequisites relative to the directory it was invoked
 VPATH = src:src/net:src/util
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+   $(CC) $(CFLAGS) -c $< -o $@
 ```
 
 Now `socket.o` can be built even though `socket.c` is in `src/net/`. Make searches the `VPATH` directories in order, finds it, and `$<` expands to the *found* path, `src/net/socket.c`, so the recipe works unchanged. The directive form `vpath` (lowercase) restricts the search to a pattern, which is a little less blunt:
@@ -1150,8 +1150,8 @@ SRCS := $(wildcard src/*.c src/net/*.c src/util/*.c)
 OBJS := $(patsubst src/%.c,build/%.o,$(SRCS))
 
 $(OBJS): build/%.o: src/%.c
-	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
+   @mkdir -p $(@D)
+   $(CC) $(CFLAGS) -c $< -o $@
 ```
 
 More text, and every path is stated rather than searched for. Object files mirror the source layout, so nothing collides, and reading a rule tells you exactly which file it compiles. `VPATH` earns its place mainly in one situation: an out-of-tree build where you run Make from a build directory and point it back at the source tree, which is how Autotools builds work. That is a legitimate use. For a build you write yourself, prefer explicit paths.
@@ -1295,8 +1295,8 @@ Multi-line bodies use `define`:
 
 ```makefile
 define compile_and_size
-	$(CC) $(CFLAGS) -c $< -o $@
-	@$(SIZE) $@
+   $(CC) $(CFLAGS) -c $< -o $@
+   @$(SIZE) $@
 endef
 ```
 
@@ -1320,16 +1320,16 @@ Two things about it deserve care.
 TOTAL_SIZE := $(shell cat build/*.o | wc -c)
 
 app: $(OBJS)
-	$(CC) -o $@ $^
-	@echo "objects totalled $(TOTAL_SIZE) bytes"
+   $(CC) -o $@ $^
+   @echo "objects totalled $(TOTAL_SIZE) bytes"
 ```
 
 The `cat` runs before the first compile, fails, and `TOTAL_SIZE` is empty. Anything that must observe the state of the build after work has happened belongs in a recipe, where it is written as ordinary shell:
 
 ```makefile
 app: $(OBJS)
-	$(CC) -o $@ $^
-	@echo "objects totalled $$(cat $^ | wc -c) bytes"
+   $(CC) -o $@ $^
+   @echo "objects totalled $$(cat $^ | wc -c) bytes"
 ```
 
 Note the `$$(...)`: that is shell command substitution, escaped so it survives Make's expansion.
@@ -1448,8 +1448,8 @@ Two differences separate these from `#ifdef`, and both bite.
 
 ```makefile
 app: main.o
-	ifeq ($(DEBUG),1)          # TAB: this is now a shell command
-	...
+   ifeq ($(DEBUG),1)          # TAB: this is now a shell command
+   ...
 ```
 
 The shell has no `ifeq`, so you get `ifeq: command not found`, an error that says nothing about makefiles. Indent conditional bodies with **spaces** if you indent them at all. This is the one place in a makefile where spaces are correct and a tab is a bug, which is the exact inverse of the rule for recipes and catches people accordingly.
@@ -1459,7 +1459,7 @@ Once you are inside a tab-indented recipe, `ifeq` is unavailable and shell synta
 
 ```makefile
 app: main.o
-	if [ "$(DEBUG)" = "1" ]; then echo "debug build"; fi
+   if [ "$(DEBUG)" = "1" ]; then echo "debug build"; fi
 ```
 
 Note this is a *shell* conditional testing text that Make already substituted. Because each recipe line is its own shell, a multi-line shell `if` needs `&&`/`\` continuation or [`.ONESHELL`](#oneshell).
@@ -1580,7 +1580,7 @@ There is a subtlety here that is easy to miss and genuinely clever. When Make ca
 
 ```makefile
 config.mk: config.mk.in
-	./configure-script $< > $@
+   ./configure-script $< > $@
 
 include config.mk
 ```
@@ -1601,7 +1601,7 @@ Consider the honest-looking rule:
 
 ```makefile
 main.o: main.c
-	$(CC) $(CFLAGS) -c $< -o $@
+   $(CC) $(CFLAGS) -c $< -o $@
 ```
 
 It is wrong, and it is wrong in the way [How Make Decides What to Rebuild](#how-make-decides-what-to-rebuild) warned about. `main.c` does not depend only on itself. It includes headers:
@@ -1644,7 +1644,7 @@ OBJS := $(patsubst src/%.c,build/%.o,$(SRCS))
 DEPS := $(OBJS:.o=.d)
 
 $(OBJS): build/%.o: src/%.c | build
-	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+   $(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 -include $(DEPS)
 ```
@@ -1667,7 +1667,7 @@ Reading it in order: derive objects from sources, derive dependency filenames fr
 When objects go in a separate directory, the target written into the `.d` file must match the target Make is building. `-MMD` handles this correctly on modern GCC and Clang because it derives the name from `-o`, but older toolchains write a bare `main.o` rather than `build/main.o`, producing a rule for a target that does not exist. `-MT` fixes it explicitly:
 
 ```makefile
-	$(CC) $(CFLAGS) -MMD -MP -MT $@ -MF $(@:.o=.d) -c $< -o $@
+   $(CC) $(CFLAGS) -MMD -MP -MT $@ -MF $(@:.o=.d) -c $< -o $@
 ```
 
 Worth knowing when a dependency setup silently fails to trigger rebuilds.
@@ -1698,7 +1698,7 @@ Dependency files are build artifacts. Leaving them behind after `make clean` mea
 ```makefile
 .PHONY: clean
 clean:
-	-rm -rf build
+   -rm -rf build
 ```
 
 This is another argument for putting objects and `.d` files in a build directory rather than beside the sources, where cleaning them means globbing for artifacts and hoping the pattern is right.
@@ -1714,7 +1714,7 @@ SUBDIRS := lib src tools
 all: $(SUBDIRS)
 
 $(SUBDIRS):
-	$(MAKE) -C $@
+   $(MAKE) -C $@
 ```
 
 `$(MAKE) -C dir` changes into a directory and runs Make there. Use `$(MAKE)` rather than a literal `make`: it carries the correct executable name and, critically, the **jobserver** file descriptors that let a single `--jobs=8` budget be shared across the whole recursion. Write `make` instead and each sub-make starts its own unlimited job pool, which is how a build ends up spawning hundreds of compilers and thrashing the machine.
@@ -1756,8 +1756,8 @@ include tools/module.mk
 all: $(ALL_TARGETS)
 
 %.o: %.c
-	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+   @mkdir -p $(@D)
+   $(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 -include $(ALL_DEPS)
 ```
@@ -1768,7 +1768,7 @@ LIB_SRCS := $(wildcard lib/*.c)
 LIB_OBJS := $(LIB_SRCS:.c=.o)
 
 lib/libutil.a: $(LIB_OBJS)
-	$(AR) rcs $@ $^
+   $(AR) rcs $@ $^
 
 ALL_TARGETS += lib/libutil.a
 ALL_DEPS    += $(LIB_OBJS:.o=.d)
@@ -1780,7 +1780,7 @@ SRC_SRCS := $(wildcard src/*.c)
 SRC_OBJS := $(SRC_SRCS:.c=.o)
 
 src/app: $(SRC_OBJS) lib/libutil.a
-	$(CC) $(LDFLAGS) -o $@ $^
+   $(CC) $(LDFLAGS) -o $@ $^
 
 ALL_TARGETS += src/app
 ALL_DEPS    += $(SRC_OBJS:.o=.d)
@@ -1835,13 +1835,13 @@ CFLAGS := -Wall -Wextra -std=c17 -O2
 all: processor
 
 processor: upper.o
-	$(CC) -o $@ $^
+   $(CC) -o $@ $^
 
 upper.o: upper.c
-	$(CC) $(CFLAGS) -c $< -o $@
+   $(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	-rm -f processor upper.o
+   -rm -f processor upper.o
 ```
 
 Ten lines, and every construct has appeared already: variables for the toolchain, `all` as the [default goal](#the-default-goal), `$@` and `$^` and `$<` from [Automatic Variables](#automatic-variables), and a [phony](#phony-targets) `clean`. Run `make` and you get `processor`. Run it again and Make says there is nothing to do.
@@ -1892,18 +1892,18 @@ DEPS := $(OBJS:.o=.d)
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	@mkdir -p $(@D)
-	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+   @mkdir -p $(@D)
+   $(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(OBJS): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(@D)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
+   @mkdir -p $(@D)
+   $(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
 
 test: $(TARGET)
-	./tests/run.sh $(TARGET)
+   ./tests/run.sh $(TARGET)
 
 clean:
-	-rm -rf build
+   -rm -rf build
 
 -include $(DEPS)
 ```
@@ -1970,32 +1970,32 @@ DEPS := $(OBJS:.o=.d)
 all: $(HEX) $(BIN) size
 
 $(ELF): $(OBJS)
-	@mkdir -p $(@D)
-	$(CC) $(LDFLAGS) -o $@ $^
+   @mkdir -p $(@D)
+   $(CC) $(LDFLAGS) -o $@ $^
 
 $(BUILD_DIR)/%.c.o: src/%.c
-	@mkdir -p $(@D)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
+   @mkdir -p $(@D)
+   $(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
 
 $(BUILD_DIR)/%.S.o: src/%.S
-	@mkdir -p $(@D)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
+   @mkdir -p $(@D)
+   $(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
 
 %.hex: %.elf
-	$(OBJCOPY) -O ihex $< $@
+   $(OBJCOPY) -O ihex $< $@
 
 %.bin: %.elf
-	$(OBJCOPY) -O binary $< $@
+   $(OBJCOPY) -O binary $< $@
 
 size: $(ELF)
-	@$(SIZE) --format=berkeley $<
+   @$(SIZE) --format=berkeley $<
 
 flash: $(HEX)
-	openocd -f interface/stlink.cfg -f target/stm32f4x.cfg \
-	        -c "program $< verify reset exit"
+   openocd -f interface/stlink.cfg -f target/stm32f4x.cfg \
+           -c "program $< verify reset exit"
 
 clean:
-	-rm -rf $(BUILD_DIR)
+   -rm -rf $(BUILD_DIR)
 ```
 
 What is different from the hosted build, and why:
@@ -2033,32 +2033,32 @@ VENV := .venv
 PY   := $(VENV)/bin/python
 
 help:  ## Show this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
-	  | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
+   @grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
+     | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
 $(VENV):  ## Create the virtual environment
-	python3 -m venv $(VENV)
-	$(PY) -m pip install --upgrade pip
+   python3 -m venv $(VENV)
+   $(PY) -m pip install --upgrade pip
 
 install: $(VENV)  ## Install dependencies
-	$(PY) -m pip install -e '.[dev]'
+   $(PY) -m pip install -e '.[dev]'
 
 fmt:  ## Format the source tree
-	$(PY) -m ruff format src tests
+   $(PY) -m ruff format src tests
 
 lint:  ## Run the linter and type checker
-	$(PY) -m ruff check src tests
-	$(PY) -m mypy src
+   $(PY) -m ruff check src tests
+   $(PY) -m mypy src
 
 test:  ## Run the test suite
-	$(PY) -m pytest -q
+   $(PY) -m pytest -q
 
 docs:  ## Render the notebooks
-	quarto render
+   quarto render
 
 clean:  ## Remove build artifacts
-	-rm -rf dist .pytest_cache .ruff_cache .mypy_cache
-	find . -name __pycache__ -type d -exec rm -rf {} +
+   -rm -rf dist .pytest_cache .ruff_cache .mypy_cache
+   find . -name __pycache__ -type d -exec rm -rf {} +
 ```
 
 Running `make` prints a formatted list of targets:
@@ -2127,17 +2127,17 @@ The classic instance is a generated header:
 ```makefile
 # BROKEN under -j: nothing says main.o needs version.h
 main.o: main.c
-	$(CC) -c $< -o $@
+   $(CC) -c $< -o $@
 
 version.h:
-	./gen-version > $@
+   ./gen-version > $@
 ```
 
 Serially, if `version.h` is built first, everything works and you never notice. Under `--jobs=8`, the compile of `main.c` starts while `gen-version` is still writing, and you get a missing header, or worse, a *half-written* one. The fix is to state the truth:
 
 ```makefile
 main.o: main.c version.h
-	$(CC) -c $< -o $@
+   $(CC) -c $< -o $@
 ```
 
 A related failure is two recipes writing the same file. Nothing in Make prevents it, and under `-j` they interleave. If two rules both `>>` into a log, or both produce an intermediate with the same name, the output is nondeterministic garbage. Every output file should be produced by exactly one rule.
@@ -2236,7 +2236,7 @@ Consider what happens when a recipe fails partway through:
 
 ```makefile
 report.txt: data.csv
-	./analyze data.csv > report.txt
+   ./analyze data.csv > report.txt
 ```
 
 The shell creates `report.txt` and opens it for writing *before* `analyze` runs. If `analyze` writes half its output and then crashes, the file exists, contains truncated garbage, and carries a modification time newer than `data.csv`. Make reports the failure and stops. So far so good.
@@ -2271,9 +2271,9 @@ By default each recipe line gets its own shell, which is the source of the `cd` 
 .ONESHELL:
 
 install:
-	cd build
-	cp app /usr/local/bin/
-	echo "installed"
+   cd build
+   cp app /usr/local/bin/
+   echo "installed"
 ```
 
 Now all three lines run in one shell, `cd` persists, and shell variables set on one line are visible on the next. Recipes stop needing `&&` chains and trailing backslashes, which makes anything with real shell logic in it far more readable.
@@ -2382,13 +2382,13 @@ CC := gcc
 all: app
 
 app: main.o version
-	$(CC) -o $@ main.o
+   $(CC) -o $@ main.o
 
 main.o: main.c
-	$(CC) -c $< -o $@
+   $(CC) -c $< -o $@
 
 version:
-	@echo "stamping version"
+   @echo "stamping version"
 ```
 
 The symptom, on a tree where everything is already built:
@@ -2423,18 +2423,18 @@ The fix depends on intent. If the version stamp is genuinely an input, it must p
 
 ```makefile
 app: main.o version.txt
-	$(CC) -o $@ main.o
+   $(CC) -o $@ main.o
 
 version.txt: $(shell git rev-parse HEAD > /dev/null && echo .git/HEAD)
-	git describe --always > $@
+   git describe --always > $@
 ```
 
 If it is just a message, it does not belong in the graph at all; move it into the recipe:
 
 ```makefile
 app: main.o
-	@echo "stamping version"
-	$(CC) -o $@ main.o
+   @echo "stamping version"
+   $(CC) -o $@ main.o
 ```
 
 #### The Other Causes
@@ -2515,7 +2515,7 @@ A tab in front of `ifeq` makes it a recipe line, and the shell has no `ifeq`. Th
 ```makefile
 # BROKEN: prints "found " repeatedly
 list:
-	for f in *.c; do echo "found $f"; done
+   for f in *.c; do echo "found $f"; done
 ```
 
 **Cause.** Make expands the recipe before handing it to the shell. `$f` is read by Make, which finds no variable `f` and substitutes nothing. The shell never sees it.
@@ -2524,7 +2524,7 @@ list:
 
 ```makefile
 list:
-	for f in *.c; do echo "found $$f"; done
+   for f in *.c; do echo "found $$f"; done
 ```
 
 The rule is mechanical: inside a recipe, `$(...)` belongs to Make and `$$` belongs to the shell. This applies equally to shell command substitution, `$$(date)`, and to `awk` scripts needing `$$1`.
@@ -2538,7 +2538,7 @@ The rule is mechanical: inside a recipe, `$(...)` belongs to Make and `$$` belon
 
 ```makefile
 install:
-	cd build && cp app /usr/local/bin/
+   cd build && cp app /usr/local/bin/
 ```
 
 Covered in [Multi-Line Recipes](#multi-line-recipes); the `.ONESHELL` tradeoffs are in [Special Targets](#oneshell).

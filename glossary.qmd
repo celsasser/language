@@ -116,7 +116,7 @@ First, for every class with virtual functions, the compiler builds a **vtable** 
 
 Second, it inserts a hidden pointer, the **vptr**, as an invisible member at the start of every object of such a class. The constructor sets it to point at that class's vtable. So a `Child2` object's vptr points to Child 2's vtable, and a `Base` object's points to Base's.
 
-![](images/gloss-02.webp){fig-align=center width=5.5in}
+![](images/gloss-02.webp){fig-alt="C++ vtable / vptr dispatch diagram" fig-align=center width=5.5in}
 
 Follow the diagram and the whole trick is visible. Every object carries a vptr, inherited from the base, pointing at its own class's table. `Child 1` never overrode `method()`, so its vtable slot points back at Base's implementation. `Child 2` did override it, so its slot points at its own. The objects differ only in where their vptr aims.
 

@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-08-29">
+<meta name="dcterms.date" content="2026-09-05">
 
 <title>Git Reference Manual – Computer Language Notebook</title>
 <style>
@@ -109,6 +109,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<meta name="mermaid-theme" content="neutral">
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
 
 <link rel="stylesheet" href="styles.css">
@@ -414,28 +418,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#managing-diverged-branches" id="toc-managing-diverged-branches" class="nav-link" data-scroll-target="#managing-diverged-branches">Managing Diverged Branches</a>
   <ul>
-  <li><a href="#the-concept" id="toc-the-concept" class="nav-link" data-scroll-target="#the-concept">The Concept</a></li>
   <li><a href="#finding-where-two-branches-diverged" id="toc-finding-where-two-branches-diverged" class="nav-link" data-scroll-target="#finding-where-two-branches-diverged">Finding Where Two Branches Diverged</a></li>
   <li><a href="#reference-commands" id="toc-reference-commands" class="nav-link" data-scroll-target="#reference-commands">Reference &amp; Commands</a></li>
   <li><a href="#tutorial-1" id="toc-tutorial-1" class="nav-link" data-scroll-target="#tutorial-1">Tutorial</a></li>
   </ul></li>
   <li><a href="#interactive-rebasing" id="toc-interactive-rebasing" class="nav-link" data-scroll-target="#interactive-rebasing">Interactive Rebasing</a>
   <ul>
-  <li><a href="#the-concept-1" id="toc-the-concept-1" class="nav-link" data-scroll-target="#the-concept-1">The Concept</a></li>
   <li><a href="#reference-commands-1" id="toc-reference-commands-1" class="nav-link" data-scroll-target="#reference-commands-1">Reference &amp; Commands</a></li>
   <li><a href="#tutorial-2" id="toc-tutorial-2" class="nav-link" data-scroll-target="#tutorial-2">Tutorial</a></li>
   </ul></li>
   <li><a href="#git-submodules" id="toc-git-submodules" class="nav-link" data-scroll-target="#git-submodules">Git Submodules</a>
   <ul>
-  <li><a href="#the-concept-2" id="toc-the-concept-2" class="nav-link" data-scroll-target="#the-concept-2">The Concept</a></li>
   <li><a href="#reference-commands-2" id="toc-reference-commands-2" class="nav-link" data-scroll-target="#reference-commands-2">Reference &amp; Commands</a></li>
   <li><a href="#tutorial-3" id="toc-tutorial-3" class="nav-link" data-scroll-target="#tutorial-3">Tutorial</a></li>
   </ul></li>
+  <li><a href="#scrub-a-dub" id="toc-scrub-a-dub" class="nav-link" data-scroll-target="#scrub-a-dub">Scrub-a-Dub</a>
+  <ul>
+  <li><a href="#reference-commands-3" id="toc-reference-commands-3" class="nav-link" data-scroll-target="#reference-commands-3">Reference &amp; Commands</a>
+  <ul class="collapse">
+  <li><a href="#untracked-files" id="toc-untracked-files" class="nav-link" data-scroll-target="#untracked-files">Untracked Files</a></li>
+  <li><a href="#modified-staged-files" id="toc-modified-staged-files" class="nav-link" data-scroll-target="#modified-staged-files">Modified &amp; Staged Files</a></li>
+  <li><a href="#commits" id="toc-commits" class="nav-link" data-scroll-target="#commits">Commits</a></li>
+  <li><a href="#branches" id="toc-branches" class="nav-link" data-scroll-target="#branches">Branches</a></li>
+  <li><a href="#stashes" id="toc-stashes" class="nav-link" data-scroll-target="#stashes">Stashes</a></li>
+  <li><a href="#the-repository-itself" id="toc-the-repository-itself" class="nav-link" data-scroll-target="#the-repository-itself">The Repository Itself</a></li>
+  </ul></li>
+  <li><a href="#tutorial-4" id="toc-tutorial-4" class="nav-link" data-scroll-target="#tutorial-4">Tutorial</a>
+  <ul class="collapse">
+  <li><a href="#if-you-cleaned-too-much" id="toc-if-you-cleaned-too-much" class="nav-link" data-scroll-target="#if-you-cleaned-too-much">If You Cleaned Too Much</a></li>
+  <li><a href="#the-clean-slate" id="toc-the-clean-slate" class="nav-link" data-scroll-target="#the-clean-slate">The Clean Slate</a></li>
+  </ul></li>
+  </ul></li>
   <li><a href="#emergency-recovery-options" id="toc-emergency-recovery-options" class="nav-link" data-scroll-target="#emergency-recovery-options">Emergency Recovery Options</a>
   <ul>
-  <li><a href="#the-concept-3" id="toc-the-concept-3" class="nav-link" data-scroll-target="#the-concept-3">The Concept</a></li>
-  <li><a href="#reference-commands-3" id="toc-reference-commands-3" class="nav-link" data-scroll-target="#reference-commands-3">Reference &amp; Commands</a></li>
-  <li><a href="#tutorial-4" id="toc-tutorial-4" class="nav-link" data-scroll-target="#tutorial-4">Tutorial</a></li>
+  <li><a href="#reference-commands-4" id="toc-reference-commands-4" class="nav-link" data-scroll-target="#reference-commands-4">Reference &amp; Commands</a></li>
+  <li><a href="#tutorial-5" id="toc-tutorial-5" class="nav-link" data-scroll-target="#tutorial-5">Tutorial</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -457,7 +474,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 29, 2026</p>
+      <p class="date">September 5, 2026</p>
     </div>
   </div>
   
@@ -914,12 +931,7 @@ Note
 <section id="managing-diverged-branches" class="level2">
 <h2 class="anchored" data-anchor-id="managing-diverged-branches">Managing Diverged Branches</h2>
 <div class="subheading">
-<p><code>merge</code> vs.&nbsp;<code>rebase</code></p>
-</div>
-<section id="the-concept" class="level3">
-<h3 class="anchored" data-anchor-id="the-concept">The Concept</h3>
-<div class="subheading">
-<p>Divergence Architecture</p>
+<p>Divergence Architecture: <code>merge</code> vs.&nbsp;<code>rebase</code></p>
 </div>
 <p>Branches diverge when your local branch and its remote counterpart (or a base branch like <code>main</code>) both receive unique commits after their last common ancestor.</p>
 <pre><code>          B---C [feature] (Your Local Branch)
@@ -933,7 +945,6 @@ Note
 <pre><code>                B'---C' [feature] (Rewritten History)
                /
     A---D---E [main]</code></pre>
-</section>
 <section id="finding-where-two-branches-diverged" class="level3">
 <h3 class="anchored" data-anchor-id="finding-where-two-branches-diverged">Finding Where Two Branches Diverged</h3>
 <div class="subheading">
@@ -1048,18 +1059,12 @@ Note
 <section id="interactive-rebasing" class="level2">
 <h2 class="anchored" data-anchor-id="interactive-rebasing">Interactive Rebasing</h2>
 <div class="subheading">
-<p><code>rebase -i</code></p>
-</div>
-<section id="the-concept-1" class="level3">
-<h3 class="anchored" data-anchor-id="the-concept-1">The Concept</h3>
-<div class="subheading">
-<p>History Sanitization</p>
+<p>History Sanitization with <code>rebase -i</code></p>
 </div>
 <p>Interactive rebasing provides precise control over local commits <em>before</em> sharing them with an upstream repository. It allows you to clean up erratic commit history (“fixed typo”, “trying again”, “actual fix”) into clean, logical semantic units.</p>
 <blockquote class="blockquote">
 <p><strong>Absolute Rule:</strong> Never interactively rebase commits that have already been pushed to a public or shared repository. Rewriting shared history invalidates the commit hashes of your collaborators, breaking their downstream trees.</p>
 </blockquote>
-</section>
 <section id="reference-commands-1" class="level3">
 <h3 class="anchored" data-anchor-id="reference-commands-1">Reference &amp; Commands</h3>
 <table class="caption-top table">
@@ -1125,8 +1130,6 @@ Note
 </section>
 <section id="git-submodules" class="level2">
 <h2 class="anchored" data-anchor-id="git-submodules">Git Submodules</h2>
-<section id="the-concept-2" class="level3">
-<h3 class="anchored" data-anchor-id="the-concept-2">The Concept</h3>
 <div class="subheading">
 <p>Pointers to External Repositories</p>
 </div>
@@ -1135,7 +1138,6 @@ Note
 <li>The <strong>submodule path</strong> and its source URL (recorded in a <code>.gitmodules</code> file).</li>
 <li>A <strong>gitlink entry</strong>: a specific, fixed commit hash pointing to the exact state of the submodule repository.</li>
 </ol>
-</section>
 <section id="reference-commands-2" class="level3">
 <h3 class="anchored" data-anchor-id="reference-commands-2">Reference &amp; Commands</h3>
 <table class="caption-top table">
@@ -1195,17 +1197,524 @@ Note
 </ol>
 </section>
 </section>
+<section id="scrub-a-dub" class="level2">
+<h2 class="anchored" data-anchor-id="scrub-a-dub">Scrub-a-Dub</h2>
+<div class="subheading">
+<p>Cleanup: putting the working tree back the way you found it</p>
+</div>
+<p>Things don’t always go as planned. You went down a path of no return and are seeking the comfort of the last commit. Or maybe the commit before it. Or maybe you’ve littered your project with temporary build artifacts and they are no longer welcome. Git, the beautiful beast, almost never deletes anything that has been committed. Each commit is a place we can visit, and if we like it there we can move <code>HEAD</code> to that commit.</p>
+<p>The trick to cleanup is realizing there is no single “clean” command, and there shouldn’t be. Recall the three trees from <a href="#the-anatomy-of-a-git-repository">The Anatomy of a Git Repository</a>: the working directory, the index, and the commit history. A mess can live in any one of them, or in all three at once, and the command you need depends entirely on which tree is holding the garbage. “Undo my last commit” and “delete these scratch files” feel like the same impulse when you are annoyed, but they touch completely different machinery. Sort the mess by tree first and the command falls out on its own.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A[What do I want gone?] --&gt; B{Was it ever committed?}
+    B --&gt;|"No: files Git has never seen"| C["&lt;code&gt;git clean&lt;/code&gt;"]
+    B --&gt;|"No: edits to tracked files"| D["&lt;code&gt;git restore&lt;/code&gt;"]
+    B --&gt;|"No: staged but uncommitted"| E["&lt;code&gt;git restore --staged&lt;/code&gt;"]
+    B --&gt;|"Yes: whole commits"| F{Has anyone else pulled it?}
+    F --&gt;|No| G["&lt;code&gt;git reset&lt;/code&gt;"]
+    F --&gt;|Yes| H["&lt;code&gt;git revert&lt;/code&gt;"]
+    A --&gt; I{Cleaning refs, not content?}
+    I --&gt;|Stale branches| J["&lt;code&gt;git branch -d&lt;/code&gt;&lt;br&gt;&lt;code&gt;git fetch --prune&lt;/code&gt;"]
+    I --&gt;|Disk bloat| K["&lt;code&gt;git gc&lt;/code&gt;"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Know which half of the map you are on.</strong> Everything Git has committed is recoverable. The commit objects sit in the database for weeks after you “delete” them, and the reflog knows their addresses. But <code>git clean</code> and <code>git restore</code> operate on content Git <em>never recorded</em>: untracked files and uncommitted edits have no blob in the object database, so there is nothing to recover them from. Those two commands are ordinary file deletion wearing a Git costume. This is why the dry run below is a habit worth building rather than a courtesy.</p>
+</div>
+</div>
+<section id="reference-commands-3" class="level3">
+<h3 class="anchored" data-anchor-id="reference-commands-3">Reference &amp; Commands</h3>
+<section id="untracked-files" class="level4">
+<h4 class="anchored" data-anchor-id="untracked-files">Untracked Files</h4>
+<div class="subheading">
+<p><code>git clean</code></p>
+</div>
+<p><code>git clean</code> is deliberately hard to fire by accident. It refuses to do anything without <code>-f</code>, because unlike almost every other Git command it cannot be undone. Two of its flags account for most of the confusion, and they differ only in case. Lowercase <code>-x</code> <em>adds</em> ignored files to the normal sweep, so <code>-fdx</code> takes untracked files and build artifacts together. Uppercase <code>-X</code> <em>restricts</em> the sweep to only ignored files, leaving anything untracked-but-not-ignored alone. For a Quarto project, <code>-fdX</code> is the gentle one: it clears <code>_site/</code> and <code>.quarto/</code> while your un-added draft survives.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 22%">
+<col style="width: 18%">
+<col style="width: 58%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Objective</th>
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Context</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Preview the Damage</strong></td>
+<td style="text-align: left;"><code>git clean -nd</code></td>
+<td style="text-align: left;">Dry run (<code>-n</code>). Lists what would be deleted without deleting it.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Remove Untracked Files</strong></td>
+<td style="text-align: left;"><code>git clean -f</code></td>
+<td style="text-align: left;">Files only; leaves untracked directories standing.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Remove Files &amp; Directories</strong></td>
+<td style="text-align: left;"><code>git clean -fd</code></td>
+<td style="text-align: left;">The common case after a stray build or a scratch folder.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Choose Interactively</strong></td>
+<td style="text-align: left;"><code>git clean -id</code></td>
+<td style="text-align: left;">Menu-driven. Walk the list and pick what goes.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Include Ignored Files</strong></td>
+<td style="text-align: left;"><code>git clean -fdx</code></td>
+<td style="text-align: left;">Also removes <code>.gitignore</code>d artifacts (<code>_site/</code>, <code>.venv/</code>, caches).</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Only Ignored Files</strong></td>
+<td style="text-align: left;"><code>git clean -fdX</code></td>
+<td style="text-align: left;">Removes build output but keeps new source you haven’t staged yet.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Spare a Pattern</strong></td>
+<td style="text-align: left;"><code>git clean -fd -e &lt;pattern&gt;</code></td>
+<td style="text-align: left;">Excludes a pattern from this run without touching <code>.gitignore</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Limit to a Subtree</strong></td>
+<td style="text-align: left;"><code>git clean -fd &lt;path&gt;</code></td>
+<td style="text-align: left;">Scopes the sweep to one directory.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="modified-staged-files" class="level4">
+<h4 class="anchored" data-anchor-id="modified-staged-files">Modified &amp; Staged Files</h4>
+<div class="subheading">
+<p><code>git restore</code></p>
+</div>
+<p><code>git restore</code> arrived in Git 2.23 to split the wildly overloaded <code>git checkout</code> into two honest verbs: <code>git switch</code> for moving between branches, <code>git restore</code> for putting file contents back. The older spellings still work and you will meet them constantly in older documentation, so both are listed here. The mental model is simple once you name the source: <code>git restore &lt;path&gt;</code> copies the file <em>out of the index</em> into your working tree, while <code>--staged</code> copies <em>out of HEAD</em> into the index. Naming both flags does both hops at once.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 22%">
+<col style="width: 30%">
+<col style="width: 46%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Objective</th>
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Context</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Discard Changes to a File</strong></td>
+<td style="text-align: left;"><code>git restore &lt;path&gt;</code></td>
+<td style="text-align: left;">Rewrites the file from the index. Old spelling: <code>git checkout -- &lt;path&gt;</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Discard All Working Changes</strong></td>
+<td style="text-align: left;"><code>git restore .</code></td>
+<td style="text-align: left;">Every tracked modification, gone. No undo.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Unstage, Keep Edits</strong></td>
+<td style="text-align: left;"><code>git restore --staged &lt;path&gt;</code></td>
+<td style="text-align: left;">Old spelling: <code>git reset &lt;path&gt;</code>. Your edits survive.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Unstage and Discard</strong></td>
+<td style="text-align: left;"><code>git restore --staged --worktree &lt;path&gt;</code></td>
+<td style="text-align: left;">Wipes both trees for that path.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Discard Hunk by Hunk</strong></td>
+<td style="text-align: left;"><code>git restore -p &lt;path&gt;</code></td>
+<td style="text-align: left;">Interactive. Keep some edits, drop others.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Restore from Another Commit</strong></td>
+<td style="text-align: left;"><code>git restore --source=HEAD~2 &lt;path&gt;</code></td>
+<td style="text-align: left;">Pulls one file’s content out of history, leaving HEAD alone.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="commits" class="level4">
+<h4 class="anchored" data-anchor-id="commits">Commits</h4>
+<div class="subheading">
+<p><code>git reset</code> and <code>git revert</code></p>
+</div>
+<p>The three <code>git reset</code> modes confuse people because the documentation describes them in the abstract. In terms of the three trees they are trivial: all three move the branch pointer, and the mode simply decides how many of the other two trees get dragged along.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 32%">
+<col style="width: 8%">
+<col style="width: 12%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Mode</th>
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">HEAD</th>
+<th style="text-align: left;">Index</th>
+<th style="text-align: left;">Working Tree</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Soft</strong></td>
+<td style="text-align: left;"><code>git reset --soft HEAD~1</code></td>
+<td style="text-align: left;">moves</td>
+<td style="text-align: left;">untouched</td>
+<td style="text-align: left;">untouched</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Mixed</strong> (default)</td>
+<td style="text-align: left;"><code>git reset HEAD~1</code></td>
+<td style="text-align: left;">moves</td>
+<td style="text-align: left;">reset</td>
+<td style="text-align: left;">untouched</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Hard</strong></td>
+<td style="text-align: left;"><code>git reset --hard HEAD~1</code></td>
+<td style="text-align: left;">moves</td>
+<td style="text-align: left;">reset</td>
+<td style="text-align: left;"><strong>overwritten</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Read the table as a spectrum of destruction. <code>--soft</code> uncommits but leaves everything staged, which is what you want when the commit was premature and you intend to reshape it. Mixed additionally unstages, leaving your edits as plain working-tree modifications. <code>--hard</code> throws the edits away entirely, and it is the only one of the three that can lose work, because the content in your working tree may never have been committed anywhere.</p>
+<p><code>git revert &lt;hash&gt;</code> is the non-destructive counterpart. Rather than moving the branch pointer backwards, it computes the inverse of a commit and applies it as a <em>new</em> commit on top. History grows instead of shrinking, and no existing hash changes. The rule for choosing between them is about audience, not preference: <code>reset</code> for commits that live only on your machine, <code>revert</code> for anything you have already pushed. Rewriting shared history invalidates everyone else’s hashes, the same hazard spelled out under <a href="#interactive-rebasing">Interactive Rebasing</a>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 23%">
+<col style="width: 53%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Objective</th>
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Context</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Undo Last Local Commit</strong></td>
+<td style="text-align: left;"><code>git reset --soft HEAD~1</code></td>
+<td style="text-align: left;">Uncommits, keeping changes staged and ready to recommit.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Uncommit and Unstage</strong></td>
+<td style="text-align: left;"><code>git reset HEAD~1</code></td>
+<td style="text-align: left;">Changes drop back to plain working-tree modifications.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Discard Last Commit</strong></td>
+<td style="text-align: left;"><code>git reset --hard HEAD~1</code></td>
+<td style="text-align: left;">Commit and its content both gone from the working tree.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Undo a Published Commit</strong></td>
+<td style="text-align: left;"><code>git revert &lt;hash&gt;</code></td>
+<td style="text-align: left;">Adds an inverse commit. Safe on shared branches.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Revert Without Committing</strong></td>
+<td style="text-align: left;"><code>git revert -n &lt;hash&gt;</code></td>
+<td style="text-align: left;">Stages the inverse so you can bundle or edit it first.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Fix the Last Commit</strong></td>
+<td style="text-align: left;"><code>git commit --amend</code></td>
+<td style="text-align: left;">Replaces the tip commit; opens an editor for the message.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Amend, Keep the Message</strong></td>
+<td style="text-align: left;"><code>git commit --amend --no-edit</code></td>
+<td style="text-align: left;">Folds staged changes into the tip commit silently.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="branches" class="level4">
+<h4 class="anchored" data-anchor-id="branches">Branches</h4>
+<div class="subheading">
+<p>Pruning Refs</p>
+</div>
+<p>Branches are cheap to make and easy to forget, so a working repository accumulates them. There are two distinct piles: local branches you created, and remote-tracking refs like <code>origin/feature-x</code> that linger in your repository after the branch was deleted on the server. <code>git fetch --prune</code> handles the second pile; only you can decide about the first.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 23%">
+<col style="width: 55%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Objective</th>
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Context</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Delete a Merged Branch</strong></td>
+<td style="text-align: left;"><code>git branch -d &lt;name&gt;</code></td>
+<td style="text-align: left;">Refuses if the branch holds unmerged commits. The safe default.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Force-Delete a Branch</strong></td>
+<td style="text-align: left;"><code>git branch -D &lt;name&gt;</code></td>
+<td style="text-align: left;">Deletes regardless. The commits survive in the reflog.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>List Merged Branches</strong></td>
+<td style="text-align: left;"><code>git branch --merged main</code></td>
+<td style="text-align: left;">Already folded into <code>main</code>, so deleting them loses nothing.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>List Unmerged Branches</strong></td>
+<td style="text-align: left;"><code>git branch --no-merged main</code></td>
+<td style="text-align: left;">Work that would be orphaned by deletion. Read this before a purge.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Audit Tracking State</strong></td>
+<td style="text-align: left;"><code>git branch -vv</code></td>
+<td style="text-align: left;">Shows each branch’s upstream; <code>gone</code> marks a deleted remote.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Drop Stale Remote Refs</strong></td>
+<td style="text-align: left;"><code>git fetch --prune</code></td>
+<td style="text-align: left;">Removes <code>origin/*</code> refs for branches deleted on the server.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Prune Without Fetching</strong></td>
+<td style="text-align: left;"><code>git remote prune origin</code></td>
+<td style="text-align: left;">Same cleanup, no network fetch of new objects.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Delete a Remote Branch</strong></td>
+<td style="text-align: left;"><code>git push origin --delete &lt;name&gt;</code></td>
+<td style="text-align: left;">Removes the branch on the server itself.</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Squash-merged branches will not show up as merged.</strong> If your workflow ends each milestone with a squashed PR, <code>git branch --merged main</code> will <em>not</em> list the feature branch you just merged, and <code>git branch -d</code> will refuse to delete it. This is not a bug. Squashing produces a brand new commit whose content matches your branch but whose hash is not a descendant of the branch tip, so as far as the graph is concerned your branch was never merged at all. <code>git branch -D</code> is the correct tool here. Verify the work really did land (<code>git log main --oneline | head</code>) and then force the delete without guilt.</p>
+</div>
+</div>
+</section>
+<section id="stashes" class="level4">
+<h4 class="anchored" data-anchor-id="stashes">Stashes</h4>
+<div class="subheading">
+<p><code>git stash</code></p>
+</div>
+<p>The stash deserves a place in a cleanup section because it is the reversible alternative to everything above. When you are certain the changes are worthless, <code>git restore</code> them. When you are merely <em>fairly</em> certain, stash them instead: the tree comes out just as clean and the content is still there tomorrow. Stashes are a stack, with <code>stash@{0}</code> the most recent, and they are stored as real commit objects, which is why the reflog can sometimes rescue one you dropped.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 21%">
+<col style="width: 24%">
+<col style="width: 53%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Objective</th>
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Context</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Shelve Working Changes</strong></td>
+<td style="text-align: left;"><code>git stash push -m "&lt;message&gt;"</code></td>
+<td style="text-align: left;">Cleans the working tree, keeps the content retrievable. Name it.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Include Untracked Files</strong></td>
+<td style="text-align: left;"><code>git stash push -u</code></td>
+<td style="text-align: left;">Sweeps untracked files into the stash instead of deleting them.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Shelve Everything</strong></td>
+<td style="text-align: left;"><code>git stash push -a</code></td>
+<td style="text-align: left;">Includes ignored files too. The nuclear checkpoint.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Shelve Selected Hunks</strong></td>
+<td style="text-align: left;"><code>git stash push -p</code></td>
+<td style="text-align: left;">Interactive. Shelve part of your work, keep the rest.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>List the Shelf</strong></td>
+<td style="text-align: left;"><code>git stash list</code></td>
+<td style="text-align: left;">Stashes are a stack: <code>stash@{0}</code> is the newest.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Inspect Without Applying</strong></td>
+<td style="text-align: left;"><code>git stash show -p stash@{0}</code></td>
+<td style="text-align: left;">Diff of what is inside before you commit to restoring it.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Restore and Remove</strong></td>
+<td style="text-align: left;"><code>git stash pop</code></td>
+<td style="text-align: left;">Applies the top stash and drops it from the stack.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Restore and Keep</strong></td>
+<td style="text-align: left;"><code>git stash apply stash@{1}</code></td>
+<td style="text-align: left;">Applies without removing, so you can apply it elsewhere too.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Branch from a Stash</strong></td>
+<td style="text-align: left;"><code>git stash branch &lt;name&gt;</code></td>
+<td style="text-align: left;">Creates a branch at the stash’s parent and applies it. Dodges conflicts.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Discard One</strong></td>
+<td style="text-align: left;"><code>git stash drop stash@{0}</code></td>
+<td style="text-align: left;">Removes a single entry.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Discard All</strong></td>
+<td style="text-align: left;"><code>git stash clear</code></td>
+<td style="text-align: left;">Empties the shelf. Recoverable only through <code>fsck</code> archaeology.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="the-repository-itself" class="level4">
+<h4 class="anchored" data-anchor-id="the-repository-itself">The Repository Itself</h4>
+<div class="subheading">
+<p><code>git gc</code></p>
+</div>
+<p>This last category is about disk, not content. Every operation you perform writes loose objects into <code>.git/objects</code>, and an active repository accumulates thousands of them along with reflog entries for every pointer movement. Git runs <code>gc</code> automatically when the clutter crosses a threshold, so manual invocation is rarely necessary. It is worth knowing about mostly so you understand what the automatic version is doing to your safety net.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 22%">
+<col style="width: 26%">
+<col style="width: 51%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Objective</th>
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Context</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>Report Disk Usage</strong></td>
+<td style="text-align: left;"><code>git count-objects -vH</code></td>
+<td style="text-align: left;">Loose object count and pack size, human readable.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>Repack and Tidy</strong></td>
+<td style="text-align: left;"><code>git gc</code></td>
+<td style="text-align: left;">Compresses loose objects into packs; expires stale reflog entries.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Force a Full Repack</strong></td>
+<td style="text-align: left;"><code>git gc --aggressive --prune=now</code></td>
+<td style="text-align: left;">Slow and thorough. Discards unreachable objects immediately.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>List Unreachable Objects</strong></td>
+<td style="text-align: left;"><code>git fsck --unreachable</code></td>
+<td style="text-align: left;">Exactly what <code>gc</code> would collect. A last look before pruning.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Find a Lost Commit</strong></td>
+<td style="text-align: left;"><code>git fsck --unreachable \| grep commit</code></td>
+<td style="text-align: left;">Surfaces orphaned commits, including dropped stashes.</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong><code>--prune=now</code> destroys your safety net.</strong> Every recovery technique in Emergency Recovery Options below depends on unreachable commits still being in the database and the reflog still remembering where pointers used to be. Pruning immediately expires both. Run it only when you are certain there is nothing left to recover, which in practice means almost never. Plain <code>git gc</code> respects the usual grace period and is the one you want.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="tutorial-4" class="level3">
+<h3 class="anchored" data-anchor-id="tutorial-4">Tutorial</h3>
+<div class="subheading">
+<p>Reclaiming a Messy Working Directory</p>
+</div>
+<p>An experiment went sideways. There are edits scattered across a handful of tracked files, some scratch files you created and never added, a <code>_site/</code> directory full of build output, and two local commits that turned out to be a dead end. You want a clean tree, and you want to be sure that nothing worth keeping goes down the drain with the rest.</p>
+<p>The order below matters more than any individual command. <strong>Survey, preserve, then destroy.</strong> Every step that deletes something comes after a step that showed you what would be deleted, because half of these operations have no undo.</p>
+<ol type="1">
+<li><p><strong>Survey before touching anything.</strong> Get the whole picture in one screen: <code>bash  git status --short  git stash list</code> The short format uses two columns. The left column is the index, the right is the working tree, so <code>M</code> means staged, <code>M</code> means modified but unstaged, <code>MM</code> means both, and <code>??</code> means Git has never seen this file. Those <code>??</code> entries are the ones <code>git clean</code> will take. Checking <code>git stash list</code> first is a habit worth having, because it is easy to forget you shelved something last week and then bury it under a new stash.</p></li>
+<li><p><strong>Preview the untracked sweep.</strong> Never run <code>git clean</code> without looking first: <code>bash  git clean -nd  git clean -ndx</code> The first shows what an ordinary sweep takes. The second adds ignored files, so you can see whether <code>_site/</code> and friends are in scope. This is the step that catches the <code>.env</code> file you never committed, or the draft you wrote at midnight and forgot to <code>git add</code>. Read the output properly; it is the only warning you get.</p></li>
+<li><p><strong>Preserve anything ambiguous.</strong> If the dry run surfaced files you are not sure about, or if the tracked edits might be worth revisiting, shelve everything in one move: <code>bash  git stash push -u -m "sideways experiment"</code> The <code>-u</code> is what makes this work as a cleanup tool: it sweeps untracked files into the stash along with your tracked edits. Your working tree comes out clean, but nothing is actually gone. Quite often this single command is the entire cleanup, and steps 4 and 5 become unnecessary.</p></li>
+<li><p><strong>Discard the tracked edits</strong> you are certain about: <code>bash  git restore .</code> Every tracked file goes back to its committed state. When only some of your changes are garbage, <code>git restore -p &lt;path&gt;</code> walks you through hunk by hunk so you can keep the good parts.</p></li>
+<li><p><strong>Sweep the untracked files</strong>, now that you have read the dry run: <code>bash  git clean -fd</code> Or <code>git clean -fdX</code> if you only want build artifacts gone and would rather keep your un-added scratch files. This is the point of no return; the dry run in step 2 was the whole reason it is safe.</p></li>
+<li><p><strong>Drop the unwanted commits.</strong> Two dead-end commits, and nothing has been pushed: <code>bash  git reset --soft HEAD~2</code> <code>--soft</code> uncommits while leaving the content staged, which is the right choice if you suspect there was one good idea buried in those two commits and you want to reshape it into a single clean one. If the whole detour was worthless, <code>git reset --hard HEAD~2</code> discards it outright. Unlike steps 4 and 5, this one is reversible: the commits are still in the database and the reflog knows where they were.</p></li>
+<li><p><strong>Verify.</strong> Confirm the tree and history both landed where you intended: <code>bash  git status  git log --oneline -5</code> <code>git status</code> should report a clean working tree with nothing to commit, and the log should show your branch tip where you expect it.</p></li>
+</ol>
+<section id="if-you-cleaned-too-much" class="level4">
+<h4 class="anchored" data-anchor-id="if-you-cleaned-too-much">If You Cleaned Too Much</h4>
+<p>For anything that was ever committed, relax: <code>git reflog</code> will show you where your branch pointer used to be, and <code>git reset --hard HEAD@{n}</code> puts it back. That recovery is worked through in full in Emergency Recovery Options below. A stash you dropped by accident is also usually salvageable, since stashes are commit objects like any other:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> fsck <span class="at">--unreachable</span> <span class="kw">|</span> <span class="fu">grep</span> commit</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Inspect the candidates with <code>git show &lt;hash&gt;</code> until you find yours, then <code>git stash apply &lt;hash&gt;</code>.</p>
+<p>Files removed by <code>git clean</code> are the exception, and it is worth being blunt about it: they were never in the object database, no blob was ever written for them, and no amount of reflog spelunking will bring them back. Your editor’s local history or a Time Machine backup are the only remaining options. That asymmetry is the entire reason step 2 exists.</p>
+</section>
+<section id="the-clean-slate" class="level4">
+<h4 class="anchored" data-anchor-id="the-clean-slate">The Clean Slate</h4>
+<p>Once you know exactly what you want and the surveying is second nature, the whole routine collapses into three lines:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> stash push <span class="at">-u</span> <span class="at">-m</span> <span class="st">"just in case"</span>   <span class="co"># safety net, costs nothing</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> reset <span class="at">--hard</span> HEAD                 <span class="co"># tracked files back to last commit</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clean <span class="at">-fdx</span>                        <span class="co"># everything untracked and ignored, gone</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The stash on the first line is what makes the other two comfortable to run. Delete it later with <code>git stash drop</code> once you are confident, or leave it; a forgotten stash costs a few kilobytes and nothing else.</p>
+</section>
+</section>
+</section>
 <section id="emergency-recovery-options" class="level2">
 <h2 class="anchored" data-anchor-id="emergency-recovery-options">Emergency Recovery Options</h2>
-<section id="the-concept-3" class="level3">
-<h3 class="anchored" data-anchor-id="the-concept-3">The Concept</h3>
 <div class="subheading">
 <p>The Safety Net (<code>git reflog</code>)</p>
 </div>
-<p>Git almost never deletes anything that has been committed. Even when you rewrite history, delete a branch, or perform a destructive rebase, the old commits remain dangling in your database for a grace period (typically 30–90 days). The <strong>Reference Log</strong> (<code>reflog</code>) records every single movement of the <code>HEAD</code> pointer on your local machine.</p>
-</section>
-<section id="reference-commands-3" class="level3">
-<h3 class="anchored" data-anchor-id="reference-commands-3">Reference &amp; Commands</h3>
+<p>Take a deep breath. Everything is going to be okay. Git almost never deletes anything that has been committed. Even when you rewrite history, delete a branch, or perform a destructive rebase, the old commits remain dangling in your database for a grace period (typically 30 to 90 days). The <strong>Reference Log</strong> (<code>reflog</code>) records every single movement of the <code>HEAD</code> pointer on your local machine.</p>
+<section id="reference-commands-4" class="level3">
+<h3 class="anchored" data-anchor-id="reference-commands-4">Reference &amp; Commands</h3>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 19%">
@@ -1243,8 +1752,8 @@ Note
 </tbody>
 </table>
 </section>
-<section id="tutorial-4" class="level3">
-<h3 class="anchored" data-anchor-id="tutorial-4">Tutorial</h3>
+<section id="tutorial-5" class="level3">
+<h3 class="anchored" data-anchor-id="tutorial-5">Tutorial</h3>
 <div class="subheading">
 <p>Recovering from a Destructive Rebase</p>
 </div>

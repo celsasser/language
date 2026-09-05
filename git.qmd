@@ -218,12 +218,7 @@ git blame <formatting_commit>^ -- analysis.qmd
 
 ## Managing Diverged Branches
 ::: {.subheading}
-`merge` vs. `rebase`
-:::
-
-### The Concept
-::: {.subheading}
-Divergence Architecture
+Divergence Architecture: `merge` vs. `rebase`
 :::
 
 Branches diverge when your local branch and its remote counterpart (or a base branch like `main`) both receive unique commits after their last common ancestor.
@@ -305,12 +300,7 @@ When your local branch cannot be pushed because the remote tracking branch has n
 
 ## Interactive Rebasing
 ::: {.subheading}
-`rebase -i`
-:::
-
-### The Concept
-::: {.subheading}
-History Sanitization
+History Sanitization with `rebase -i`
 :::
 
 Interactive rebasing provides precise control over local commits *before* sharing them with an upstream repository. It allows you to clean up erratic commit history ("fixed typo", "trying again", "actual fix") into clean, logical semantic units.
@@ -355,7 +345,6 @@ Assume you have made 4 commits locally, but the middle two are intermediate fixe
 4. **Save and Close** the editor. Git will sequentially apply `a1b2c3d`, merge the structural changes of the next two commits directly into it without changing its intent, and then apply `m3n4o5p`. Your history is now condensed into two pristine commits.
 
 ## Git Submodules
-### The Concept
 ::: {.subheading}
 Pointers to External Repositories
 :::
@@ -395,13 +384,242 @@ A common point of failure occurs when a collaborator updates a submodule referen
 	- Stage, commit, and push your changes *within* the submodule repository first.
 	- Return to the parent repository (`cd ..`) and commit the new submodule pointer change so the superproject links to your new work.
 
+## Scrub-a-Dub
+::: {.subheading}
+Cleanup: putting the working tree back the way you found it
+:::
+
+Things don't always go as planned. You went down a path of no return and are seeking the comfort of the last commit. Or maybe the commit before it. Or maybe you've littered your project with temporary build artifacts and they are no longer welcome. Git, the beautiful beast, almost never deletes anything that has been committed. Each commit is a place we can visit, and if we like it there we can move `HEAD` to that commit.
+
+The trick to cleanup is realizing there is no single "clean" command, and there shouldn't be. Recall the three trees from [The Anatomy of a Git Repository](#the-anatomy-of-a-git-repository): the working directory, the index, and the commit history. A mess can live in any one of them, or in all three at once, and the command you need depends entirely on which tree is holding the garbage. "Undo my last commit" and "delete these scratch files" feel like the same impulse when you are annoyed, but they touch completely different machinery. Sort the mess by tree first and the command falls out on its own.
+
+```{mermaid}
+flowchart TD
+    A[What do I want gone?] --> B{Was it ever committed?}
+    B -->|"No: files Git has never seen"| C["<code>git clean</code>"]
+    B -->|"No: edits to tracked files"| D["<code>git restore</code>"]
+    B -->|"No: staged but uncommitted"| E["<code>git restore --staged</code>"]
+    B -->|"Yes: whole commits"| F{Has anyone else pulled it?}
+    F -->|No| G["<code>git reset</code>"]
+    F -->|Yes| H["<code>git revert</code>"]
+    A --> I{Cleaning refs, not content?}
+    I -->|Stale branches| J["<code>git branch -d</code><br><code>git fetch --prune</code>"]
+    I -->|Disk bloat| K["<code>git gc</code>"]
+```
+
+::: {.callout-warning}
+**Know which half of the map you are on.** Everything Git has committed is recoverable. The commit objects sit in the database for weeks after you "delete" them, and the reflog knows their addresses. But `git clean` and `git restore` operate on content Git *never recorded*: untracked files and uncommitted edits have no blob in the object database, so there is nothing to recover them from. Those two commands are ordinary file deletion wearing a Git costume. This is why the dry run below is a habit worth building rather than a courtesy.
+:::
+
+### Reference & Commands
+
+#### Untracked Files
+::: {.subheading}
+`git clean`
+:::
+
+`git clean` is deliberately hard to fire by accident. It refuses to do anything without `-f`, because unlike almost every other Git command it cannot be undone. Two of its flags account for most of the confusion, and they differ only in case. Lowercase `-x` *adds* ignored files to the normal sweep, so `-fdx` takes untracked files and build artifacts together. Uppercase `-X` *restricts* the sweep to only ignored files, leaving anything untracked-but-not-ignored alone. For a Quarto project, `-fdX` is the gentle one: it clears `_site/` and `.quarto/` while your un-added draft survives.
+
+| Objective                        | Command                    | Context                                                                              |
+|:---------------------------------|:---------------------------|:--------------------------------------------------------------------------------------|
+| **Preview the Damage**           | `git clean -nd`            | Dry run (`-n`). Lists what would be deleted without deleting it.                     |
+| **Remove Untracked Files**       | `git clean -f`             | Files only; leaves untracked directories standing.                                   |
+| **Remove Files & Directories**   | `git clean -fd`            | The common case after a stray build or a scratch folder.                             |
+| **Choose Interactively**         | `git clean -id`            | Menu-driven. Walk the list and pick what goes.                                       |
+| **Include Ignored Files**        | `git clean -fdx`           | Also removes `.gitignore`d artifacts (`_site/`, `.venv/`, caches).                   |
+| **Only Ignored Files**           | `git clean -fdX`           | Removes build output but keeps new source you haven't staged yet.                    |
+| **Spare a Pattern**              | `git clean -fd -e <pattern>` | Excludes a pattern from this run without touching `.gitignore`.                    |
+| **Limit to a Subtree**           | `git clean -fd <path>`     | Scopes the sweep to one directory.                                                   |
+
+#### Modified & Staged Files
+::: {.subheading}
+`git restore`
+:::
+
+`git restore` arrived in Git 2.23 to split the wildly overloaded `git checkout` into two honest verbs: `git switch` for moving between branches, `git restore` for putting file contents back. The older spellings still work and you will meet them constantly in older documentation, so both are listed here. The mental model is simple once you name the source: `git restore <path>` copies the file *out of the index* into your working tree, while `--staged` copies *out of HEAD* into the index. Naming both flags does both hops at once.
+
+| Objective                       | Command                                     | Context                                                          |
+|:--------------------------------|:--------------------------------------------|:-------------------------------------------------------------------|
+| **Discard Changes to a File**   | `git restore <path>`                        | Rewrites the file from the index. Old spelling: `git checkout -- <path>`. |
+| **Discard All Working Changes** | `git restore .`                             | Every tracked modification, gone. No undo.                       |
+| **Unstage, Keep Edits**         | `git restore --staged <path>`               | Old spelling: `git reset <path>`. Your edits survive.            |
+| **Unstage and Discard**         | `git restore --staged --worktree <path>`    | Wipes both trees for that path.                                  |
+| **Discard Hunk by Hunk**        | `git restore -p <path>`                     | Interactive. Keep some edits, drop others.                       |
+| **Restore from Another Commit** | `git restore --source=HEAD~2 <path>`        | Pulls one file's content out of history, leaving HEAD alone.     |
+
+#### Commits
+::: {.subheading}
+`git reset` and `git revert`
+:::
+
+The three `git reset` modes confuse people because the documentation describes them in the abstract. In terms of the three trees they are trivial: all three move the branch pointer, and the mode simply decides how many of the other two trees get dragged along.
+
+| Mode                 | Command                    | HEAD  | Index     | Working Tree    |
+|:---------------------|:---------------------------|:------|:----------|:------------------|
+| **Soft**             | `git reset --soft HEAD~1`  | moves | untouched | untouched       |
+| **Mixed** (default)  | `git reset HEAD~1`         | moves | reset     | untouched       |
+| **Hard**             | `git reset --hard HEAD~1`  | moves | reset     | **overwritten** |
+
+Read the table as a spectrum of destruction. `--soft` uncommits but leaves everything staged, which is what you want when the commit was premature and you intend to reshape it. Mixed additionally unstages, leaving your edits as plain working-tree modifications. `--hard` throws the edits away entirely, and it is the only one of the three that can lose work, because the content in your working tree may never have been committed anywhere.
+
+`git revert <hash>` is the non-destructive counterpart. Rather than moving the branch pointer backwards, it computes the inverse of a commit and applies it as a *new* commit on top. History grows instead of shrinking, and no existing hash changes. The rule for choosing between them is about audience, not preference: `reset` for commits that live only on your machine, `revert` for anything you have already pushed. Rewriting shared history invalidates everyone else's hashes, the same hazard spelled out under [Interactive Rebasing](#interactive-rebasing).
+
+| Objective                     | Command                       | Context                                                              |
+|:------------------------------|:------------------------------|:-----------------------------------------------------------------------|
+| **Undo Last Local Commit**    | `git reset --soft HEAD~1`     | Uncommits, keeping changes staged and ready to recommit.             |
+| **Uncommit and Unstage**      | `git reset HEAD~1`            | Changes drop back to plain working-tree modifications.               |
+| **Discard Last Commit**       | `git reset --hard HEAD~1`     | Commit and its content both gone from the working tree.              |
+| **Undo a Published Commit**   | `git revert <hash>`           | Adds an inverse commit. Safe on shared branches.                     |
+| **Revert Without Committing** | `git revert -n <hash>`        | Stages the inverse so you can bundle or edit it first.               |
+| **Fix the Last Commit**       | `git commit --amend`          | Replaces the tip commit; opens an editor for the message.            |
+| **Amend, Keep the Message**   | `git commit --amend --no-edit`| Folds staged changes into the tip commit silently.                   |
+
+#### Branches
+::: {.subheading}
+Pruning Refs
+:::
+
+Branches are cheap to make and easy to forget, so a working repository accumulates them. There are two distinct piles: local branches you created, and remote-tracking refs like `origin/feature-x` that linger in your repository after the branch was deleted on the server. `git fetch --prune` handles the second pile; only you can decide about the first.
+
+| Objective                    | Command                          | Context                                                                     |
+|:-----------------------------|:---------------------------------|:------------------------------------------------------------------------------|
+| **Delete a Merged Branch**   | `git branch -d <name>`           | Refuses if the branch holds unmerged commits. The safe default.             |
+| **Force-Delete a Branch**    | `git branch -D <name>`           | Deletes regardless. The commits survive in the reflog.                       |
+| **List Merged Branches**     | `git branch --merged main`       | Already folded into `main`, so deleting them loses nothing.                 |
+| **List Unmerged Branches**   | `git branch --no-merged main`    | Work that would be orphaned by deletion. Read this before a purge.          |
+| **Audit Tracking State**     | `git branch -vv`                 | Shows each branch's upstream; `gone` marks a deleted remote.                 |
+| **Drop Stale Remote Refs**   | `git fetch --prune`              | Removes `origin/*` refs for branches deleted on the server.                  |
+| **Prune Without Fetching**   | `git remote prune origin`        | Same cleanup, no network fetch of new objects.                              |
+| **Delete a Remote Branch**   | `git push origin --delete <name>`| Removes the branch on the server itself.                                    |
+
+::: {.callout-note}
+**Squash-merged branches will not show up as merged.** If your workflow ends each milestone with a squashed PR, `git branch --merged main` will *not* list the feature branch you just merged, and `git branch -d` will refuse to delete it. This is not a bug. Squashing produces a brand new commit whose content matches your branch but whose hash is not a descendant of the branch tip, so as far as the graph is concerned your branch was never merged at all. `git branch -D` is the correct tool here. Verify the work really did land (`git log main --oneline | head`) and then force the delete without guilt.
+:::
+
+#### Stashes
+::: {.subheading}
+`git stash`
+:::
+
+The stash deserves a place in a cleanup section because it is the reversible alternative to everything above. When you are certain the changes are worthless, `git restore` them. When you are merely *fairly* certain, stash them instead: the tree comes out just as clean and the content is still there tomorrow. Stashes are a stack, with `stash@{0}` the most recent, and they are stored as real commit objects, which is why the reflog can sometimes rescue one you dropped.
+
+| Objective                    | Command                          | Context                                                                 |
+|:-----------------------------|:---------------------------------|:--------------------------------------------------------------------------|
+| **Shelve Working Changes**   | `git stash push -m "<message>"`  | Cleans the working tree, keeps the content retrievable. Name it.        |
+| **Include Untracked Files**  | `git stash push -u`              | Sweeps untracked files into the stash instead of deleting them.         |
+| **Shelve Everything**        | `git stash push -a`              | Includes ignored files too. The nuclear checkpoint.                     |
+| **Shelve Selected Hunks**    | `git stash push -p`              | Interactive. Shelve part of your work, keep the rest.                   |
+| **List the Shelf**           | `git stash list`                 | Stashes are a stack: `stash@{0}` is the newest.                         |
+| **Inspect Without Applying** | `git stash show -p stash@{0}`    | Diff of what is inside before you commit to restoring it.               |
+| **Restore and Remove**       | `git stash pop`                  | Applies the top stash and drops it from the stack.                      |
+| **Restore and Keep**         | `git stash apply stash@{1}`      | Applies without removing, so you can apply it elsewhere too.            |
+| **Branch from a Stash**      | `git stash branch <name>`        | Creates a branch at the stash's parent and applies it. Dodges conflicts.|
+| **Discard One**              | `git stash drop stash@{0}`       | Removes a single entry.                                                 |
+| **Discard All**              | `git stash clear`                | Empties the shelf. Recoverable only through `fsck` archaeology.         |
+
+#### The Repository Itself
+::: {.subheading}
+`git gc`
+:::
+
+This last category is about disk, not content. Every operation you perform writes loose objects into `.git/objects`, and an active repository accumulates thousands of them along with reflog entries for every pointer movement. Git runs `gc` automatically when the clutter crosses a threshold, so manual invocation is rarely necessary. It is worth knowing about mostly so you understand what the automatic version is doing to your safety net.
+
+| Objective                     | Command                            | Context                                                            |
+|:------------------------------|:-----------------------------------|:---------------------------------------------------------------------|
+| **Report Disk Usage**         | `git count-objects -vH`            | Loose object count and pack size, human readable.                  |
+| **Repack and Tidy**           | `git gc`                           | Compresses loose objects into packs; expires stale reflog entries. |
+| **Force a Full Repack**       | `git gc --aggressive --prune=now`  | Slow and thorough. Discards unreachable objects immediately.       |
+| **List Unreachable Objects**  | `git fsck --unreachable`           | Exactly what `gc` would collect. A last look before pruning.       |
+| **Find a Lost Commit**        | `git fsck --unreachable \| grep commit` | Surfaces orphaned commits, including dropped stashes.         |
+
+::: {.callout-warning}
+**`--prune=now` destroys your safety net.** Every recovery technique in Emergency Recovery Options below depends on unreachable commits still being in the database and the reflog still remembering where pointers used to be. Pruning immediately expires both. Run it only when you are certain there is nothing left to recover, which in practice means almost never. Plain `git gc` respects the usual grace period and is the one you want.
+:::
+
+### Tutorial
+::: {.subheading}
+Reclaiming a Messy Working Directory
+:::
+
+An experiment went sideways. There are edits scattered across a handful of tracked files, some scratch files you created and never added, a `_site/` directory full of build output, and two local commits that turned out to be a dead end. You want a clean tree, and you want to be sure that nothing worth keeping goes down the drain with the rest.
+
+The order below matters more than any individual command. **Survey, preserve, then destroy.** Every step that deletes something comes after a step that showed you what would be deleted, because half of these operations have no undo.
+
+1. **Survey before touching anything.** Get the whole picture in one screen:
+	```bash
+	git status --short
+	git stash list
+	```
+	The short format uses two columns. The left column is the index, the right is the working tree, so `M ` means staged, ` M` means modified but unstaged, `MM` means both, and `??` means Git has never seen this file. Those `??` entries are the ones `git clean` will take. Checking `git stash list` first is a habit worth having, because it is easy to forget you shelved something last week and then bury it under a new stash.
+
+2. **Preview the untracked sweep.** Never run `git clean` without looking first:
+	```bash
+	git clean -nd
+	git clean -ndx
+	```
+	The first shows what an ordinary sweep takes. The second adds ignored files, so you can see whether `_site/` and friends are in scope. This is the step that catches the `.env` file you never committed, or the draft you wrote at midnight and forgot to `git add`. Read the output properly; it is the only warning you get.
+
+3. **Preserve anything ambiguous.** If the dry run surfaced files you are not sure about, or if the tracked edits might be worth revisiting, shelve everything in one move:
+	```bash
+	git stash push -u -m "sideways experiment"
+	```
+	The `-u` is what makes this work as a cleanup tool: it sweeps untracked files into the stash along with your tracked edits. Your working tree comes out clean, but nothing is actually gone. Quite often this single command is the entire cleanup, and steps 4 and 5 become unnecessary.
+
+4. **Discard the tracked edits** you are certain about:
+	```bash
+	git restore .
+	```
+	Every tracked file goes back to its committed state. When only some of your changes are garbage, `git restore -p <path>` walks you through hunk by hunk so you can keep the good parts.
+
+5. **Sweep the untracked files**, now that you have read the dry run:
+	```bash
+	git clean -fd
+	```
+	Or `git clean -fdX` if you only want build artifacts gone and would rather keep your un-added scratch files. This is the point of no return; the dry run in step 2 was the whole reason it is safe.
+
+6. **Drop the unwanted commits.** Two dead-end commits, and nothing has been pushed:
+	```bash
+	git reset --soft HEAD~2
+	```
+	`--soft` uncommits while leaving the content staged, which is the right choice if you suspect there was one good idea buried in those two commits and you want to reshape it into a single clean one. If the whole detour was worthless, `git reset --hard HEAD~2` discards it outright. Unlike steps 4 and 5, this one is reversible: the commits are still in the database and the reflog knows where they were.
+
+7. **Verify.** Confirm the tree and history both landed where you intended:
+	```bash
+	git status
+	git log --oneline -5
+	```
+	`git status` should report a clean working tree with nothing to commit, and the log should show your branch tip where you expect it.
+
+#### If You Cleaned Too Much
+
+For anything that was ever committed, relax: `git reflog` will show you where your branch pointer used to be, and `git reset --hard HEAD@{n}` puts it back. That recovery is worked through in full in Emergency Recovery Options below. A stash you dropped by accident is also usually salvageable, since stashes are commit objects like any other:
+
+```bash
+git fsck --unreachable | grep commit
+```
+
+Inspect the candidates with `git show <hash>` until you find yours, then `git stash apply <hash>`.
+
+Files removed by `git clean` are the exception, and it is worth being blunt about it: they were never in the object database, no blob was ever written for them, and no amount of reflog spelunking will bring them back. Your editor's local history or a Time Machine backup are the only remaining options. That asymmetry is the entire reason step 2 exists.
+
+#### The Clean Slate
+
+Once you know exactly what you want and the surveying is second nature, the whole routine collapses into three lines:
+
+```bash
+git stash push -u -m "just in case"   # safety net, costs nothing
+git reset --hard HEAD                 # tracked files back to last commit
+git clean -fdx                        # everything untracked and ignored, gone
+```
+
+The stash on the first line is what makes the other two comfortable to run. Delete it later with `git stash drop` once you are confident, or leave it; a forgotten stash costs a few kilobytes and nothing else.
+
 ## Emergency Recovery Options
-### The Concept
 ::: {.subheading}
 The Safety Net (`git reflog`)
 :::
 
-Git almost never deletes anything that has been committed. Even when you rewrite history, delete a branch, or perform a destructive rebase, the old commits remain dangling in your database for a grace period (typically 30–90 days). The **Reference Log** (`reflog`) records every single movement of the `HEAD` pointer on your local machine.
+Take a deep breath. Everything is going to be okay. Git almost never deletes anything that has been committed. Even when you rewrite history, delete a branch, or perform a destructive rebase, the old commits remain dangling in your database for a grace period (typically 30 to 90 days). The **Reference Log** (`reflog`) records every single movement of the `HEAD` pointer on your local machine.
 
 ### Reference & Commands
 | Objective                      | Command                         | Context                                                                                              |

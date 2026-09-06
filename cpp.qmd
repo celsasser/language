@@ -1765,7 +1765,7 @@ class Circle : public Shape {
                                      // quietly call the base version
 ```
 
-That silent failure, a subtly mismatched signature creating an unrelated function instead of an override, was one of the classic C++ bugs before `override` existed. Its counterpart `final` closes a class or function to further overriding.
+That silent failure, a subtly mismatched signature creating an unrelated function instead of an override, was one of the classic C++ bugs before `override` existed. Its counterpart `final` closes a class or function to further overriding, covered under [Closing the Hierarchy](#final).
 
 ### How It Works
 ::: {.subheading}
@@ -1837,6 +1837,78 @@ public:
 ```
 
 This is Stroustrup's *abstract type*: the interface is completely decoupled from the representation. Callers depend only on `Drawable`, and implementations can be added, changed, or loaded from a plugin without recompiling any of them.
+
+### Closing the Hierarchy {#final}
+::: {.subheading}
+`final`
+:::
+
+Virtual functions are an invitation: any class below yours may replace this behavior. Sometimes that invitation is a mistake. A middle class in a hierarchy implements a pure virtual, that implementation upholds an invariant the rest of the class depends on, and further overriding would break it. `final` (C++11) revokes the invitation:
+
+```cpp
+struct Base {
+    virtual void process() = 0;         // pure virtual: must be implemented
+    virtual ~Base() = default;
+};
+
+struct Middle : Base {
+    void process() override final;      // implements it, and closes the door
+};
+
+struct Derived : Middle {
+    void process() override;            // ERROR: overriding final function
+};
+```
+
+`Middle::process` still overrides `Base::process`, so a call through a `Base*` still dispatches to it correctly. What `final` forbids is any class below `Middle` overriding it again. `final` may also be applied to a whole class, which forbids deriving from it at all:
+
+```cpp
+struct Leaf final : Middle { };         // nothing may inherit from Leaf
+struct Bad : Leaf { };                  // ERROR: cannot derive from final class
+```
+
+Note the ordering: `override final`, both after the signature. They are not keywords in the usual sense but **contextual identifiers**, meaningful only in this position, which is how C++11 added them without invalidating every existing program that used `final` as a variable name.
+
+::: {.callout-warning title="`final` does not remove virtualness"}
+This is the point that trips people up, so it is worth stating flatly. Once a function is declared `virtual` in a base class, it is virtual in every descendant, permanently. There is no syntax to un-virtual it, and `final` does not try. `Middle::process` still occupies a vtable slot, and a call through a base pointer is still an indirect call:
+
+```cpp
+Base* obj = get_something();
+obj->process();          // still dynamic dispatch: the compiler cannot know
+                         // the dynamic type, so the vtable is unavoidable
+```
+
+`final` constrains the *type system*, not the object layout. What it removes is the possibility of further overriding, not the machinery of dispatch.
+:::
+
+#### What `final` Buys You
+
+Even though the vtable slot remains, `final` gives the optimizer something it cannot otherwise prove, and this recovers the most expensive item in the [cost table above](#how-it-works): the lost inlining.
+
+```cpp
+Middle* obj = get_middle();
+obj->process();          // static type is Middle; Middle::process is final,
+                         // so no override can exist below it. The target is
+                         // known: direct call, and inlinable.
+```
+
+This is **devirtualization**. The compiler reasons that because no override may exist below `Middle`, the static type alone determines the target, so the vptr load and indirect call collapse into an ordinary direct call that can then be inlined. Marking the *class* `final` unlocks the same reasoning more broadly, since it proves the dynamic type cannot be anything more derived. The vtable slot still exists; what disappears is the indirection through it, wherever the static type is specific enough to settle the question.
+
+The practical guidance is narrower than it may sound. Do not sprinkle `final` everywhere in hope of speed: the optimization only fires when the static type at the call site is already the final class, and in the polymorphic code that motivates virtual functions in the first place, it usually isn't. Reach for `final` when you mean the design statement ("this behavior is settled, do not override it"), and treat the codegen as a bonus that occasionally matters in a hot loop.
+
+::: {.callout-note title="`final` blocks overriding, not hiding"}
+A derived class cannot override a `final` function, but it can still **hide** the name with a different signature:
+
+```cpp
+struct Derived : Middle {
+    void process(int);      // fine: different signature, so it hides rather
+                            // than overrides. Unqualified `d.process()` on a
+                            // Derived now fails to compile: the name is shadowed.
+};
+```
+
+The same-signature case is caught as an error; this one is not. If a derived class needs both, `using Middle::process;` pulls the base name back into scope. This is ordinary name hiding, the rule that a name declared in a derived class shadows every base-class overload of that name, rather than anything specific to `final`. But it is the one gap left in "nobody downstream may change this."
+:::
 
 ### Slicing
 One trap has no analogue in Java or Rust and catches C++ programmers regularly. Because C++ objects are values, assigning a derived object to a base *variable* copies only the base part and discards the rest:

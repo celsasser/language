@@ -57,15 +57,6 @@ A **class selector** matches elements whose `class` attribute includes the speci
 }
 ```
 
-An element may belong to multiple classes. Chaining class selectors without spaces requires all of them to be present on the same element:
-
-```css
-/* Matches elements that have both 'card' and 'featured' classes */
-.card.featured {
-    border: 2px solid gold;
-}
-```
-
 #### ID Selectors
 An **ID selector** matches a single element whose `id` attribute equals the specified value. It is prefixed with a hash symbol.
 
@@ -78,6 +69,27 @@ An **ID selector** matches a single element whose `id` attribute equals the spec
 
 ::: {.callout-note title="IDs vs. Classes"}
 Because an `id` must be unique within a document, ID selectors are rarely used in production stylesheets. Their high specificity makes them difficult to override. Class selectors are almost always preferred.
+:::
+
+#### Compound Selector
+A **compoundd selector** is a chain of multiple simple selectors (tags, classes, IDs, or pseudo-classes) joined together without any spaces. It targets a single element that must satisfy all of those conditions simultaneously.
+
+| Type                               | Example                          | Description                                                                   |
+|------------------------------------|----------------------------------|-------------------------------------------------------------------------------|
+| **Tag + Class**                    | `a.ro`                           | Targets an `<a>` element that belongs to `.ro` class                          |
+| **Tag + ID**                       | `div#hero`                       | Targets a `<div>` element that has the ID `hero`.                             |
+| **Multiple Classes**               | `.btn.primary.active`            | Targets an element that belongs to all three classes                          |
+| **Tag + Attribute + Pseudo-class** | `input[type="checkbox"]:checked` | Targets an `<input>` element that has a checkbox type and is currently checked. |
+
+::: {.example}
+Select an element that belongs to both `.card` and `.featured`.
+
+```css
+/* Matches elements that have both 'card' and 'featured' classes */
+.card.featured {
+    border: 2px solid gold;
+}
+```
 :::
 
 #### Attribute Selectors

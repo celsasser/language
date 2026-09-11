@@ -127,18 +127,18 @@ This is exactly why you `source ~/.zshrc` to reload your config rather than exec
 ### The Standard Environment Variables
 A handful of environment variables are conventional across Unix systems. Programs read them to discover where things live and how you like to work. These are the `$x` names you will see constantly:
 
-| Variable           | Holds                                                                                                                                                                                                      |
-|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `$PATH`            | colon-separated list of directories searched for commands.                                                                                                                                                 |
-| `$HOME`            | your home directory (`~` expands to this).                                                                                                                                                                 |
-| `$USER`            | your login name.                                                                                                                                                                                           |
-| `$SHELL`           | path to your login shell (e.g. `/bin/zsh`).                                                                                                                                                                |
-| `$PWD`             | the current working directory.                                                                                                                                                                             |
-| `$OLDPWD`          | the previous directory (what `cd -` returns to).                                                                                                                                                           |
-| `$LANG` / `$LC_*`  | locale: language, character encoding, formatting.                                                                                                                                                          |
-| `$EDITOR`          | your preferred editor, used by `git`, `crontab`, etc.                                                                                                                                                      |
-| `$TERM`            | terminal type, used for colors and capabilities.                                                                                                                                                           |
-| `$TMPDIR`          | directory for temporary files.                                                                                                                                                                             |
+| Variable           | Holds                                                                                                                                                                                                                                |
+|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `$PATH`            | colon-separated list of directories searched for commands.                                                                                                                                                                           |
+| `$HOME`            | your home directory (`~` expands to this).                                                                                                                                                                                           |
+| `$USER`            | your login name.                                                                                                                                                                                                                     |
+| `$SHELL`           | path to your login shell (e.g. `/bin/zsh`).                                                                                                                                                                                          |
+| `$PWD`             | the current working directory.                                                                                                                                                                                                       |
+| `$OLDPWD`          | the previous directory (what `cd -` returns to).                                                                                                                                                                                     |
+| `$LANG` / `$LC_*`  | locale: language, character encoding, formatting.                                                                                                                                                                                    |
+| `$EDITOR`          | your preferred editor, used by `git`, `crontab`, etc.                                                                                                                                                                                |
+| `$TERM`            | terminal type, used for colors and capabilities.                                                                                                                                                                                     |
+| `$TMPDIR`          | directory for temporary files.                                                                                                                                                                                                       |
 | `$PROMPT` / `$PS1` | prompt [specification](https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html){target="_blank" rel="noopener noreferrer"} expanded by the shell. The same expansion is available using the `-P` option to the `print` builtin. |
 
 Let's take a closer look at a couple of these fellas.
@@ -992,7 +992,6 @@ Three things are happening, and it helps to name them separately because none of
 3. **`cat` has no argument here.** This is the part that reads wrong at first glance. `cat file.txt` prints a file, so you expect `cat <<EOF` to be operating on something named to its right. It is not. `cat` was given *no filename at all*, so it falls back to the same behavior [`grep` has](#grep-reads-stdin-too): with no file to open, read stdin. The heredoc body is not an argument to `cat`; it arrives on stream 0. `cat`'s entire job is "copy stdin to stdout," which makes it the natural vehicle for a heredoc.
 
 #### Reading the Real-World Form
-
 The idiom you will actually meet in the wild combines a heredoc with an output redirection:
 
 ```bash
@@ -1004,10 +1003,10 @@ EOF
 
 There are *two independent redirections* on one command, which is why it looks dense. Untangled:
 
-| Piece        | Stream    | Effect                                              |
-|--------------|-----------|-----------------------------------------------------|
-| `<<EOF`      | stdin (0) | the body below becomes `cat`'s input                |
-| `> "$TMPHDR"`| stdout (1)| `cat`'s output overwrites that file                 |
+| Piece         | Stream     | Effect                               |
+|---------------|------------|--------------------------------------|
+| `<<EOF`       | stdin (0)  | the body below becomes `cat`'s input |
+| `> "$TMPHDR"` | stdout (1) | `cat`'s output overwrites that file  |
 
 So the data path is: body → `cat`'s stdin → `cat` copies it → `cat`'s stdout → the file. `cat` is a pure pass-through in the middle; the heredoc supplies the content and `>` decides where it lands. The order of the two redirections does not matter, since they touch different descriptors: `cat > "$TMPHDR" <<EOF` and `cat <<EOF > "$TMPHDR"` are the same command. And because `>` truncates, the file's previous contents are replaced, which is exactly what a generated header wants.
 
@@ -1015,7 +1014,10 @@ So the data path is: body → `cat`'s stdin → `cat` copies it → `cat`'s stdo
 For a single line, `echo "text" > file` is simpler and you should use it. Heredocs earn their keep the moment the content is multi-line, contains quotes, or is meant to be *read* as a block in the source. A heredoc lets the generated file appear in the script in its final shape, which is worth a lot when the thing you are generating is itself source code.
 :::
 
-#### Quoted vs. Unquoted: Expansion
+#### Quoted vs. Unquoted
+::: {.subheading}
+Expansion
+:::
 
 By default the body of a heredoc is treated like a double-quoted string: `$variables`, `$(command substitution)`, and backticks are all expanded. That is the whole point in the example above, since `$APP_VERSION` has to become a real version number.
 
@@ -1041,16 +1043,15 @@ EOF
 
 Quoting the delimiter (`<<'EOF'`, `<<"EOF"`, and `<<\EOF` are equivalent) makes the body behave like a single-quoted string: no expansion, no escaping needed. This is the right choice whenever you are generating a script, an `awk` program, or anything else full of dollar signs that belong to *another* language.
 
-| Form        | Expansion in body                | Use when                                        |
-|-------------|----------------------------------|-------------------------------------------------|
-| `<<EOF`     | `$var`, `$(...)`, backticks live | you want to inject shell values                 |
-| `<<'EOF'`   | none, fully literal              | the body belongs to another language            |
-| `<<-EOF`    | as `<<EOF`, plus strips leading tabs | the heredoc sits inside an indented block   |
+| Form      | Expansion in body                    | Use when                                  |
+|-----------|--------------------------------------|-------------------------------------------|
+| `<<EOF`   | `$var`, `$(...)`, backticks live     | you want to inject shell values           |
+| `<<'EOF'` | none, fully literal                  | the body belongs to another language      |
+| `<<-EOF`  | as `<<EOF`, plus strips leading tabs | the heredoc sits inside an indented block |
 
 The `<<-` variant deserves a note because indentation inside a function or `if` block is otherwise awkward. Normally the body and the terminator must start at column zero, which breaks the visual flow of an indented script. `<<-` strips **leading tab characters** (only tabs, not spaces, a genuine wart) from every body line and from the terminator, letting the block indent naturally.
 
 #### The Herestring `<<<`
-
 A close relative, worth knowing because it appears constantly in bash and zsh: `<<<` feeds a *single string* to stdin without the ceremony of a delimiter.
 
 ```bash
@@ -1446,18 +1447,39 @@ find . -name "*.qmd" -exec grep -l "matrix" {} \;
 
 The `{}` is a placeholder for each file `find` discovers, and `\;` ends the `-exec` command (escaped so the shell does not eat the semicolon). We will dig into `find` next.
 
-### Regular Expressions, Briefly
-The "regular expression" in `grep`'s name is the pattern language it tests each line against. A full treatment is its own subject, but the operators you reach for daily are few:
+### Regular Expressions
+The "regular expression" in `grep`'s name is the pattern language it tests each line against. The language consists of literal characters and meta-characters that have special meaning. GNU grep supports three regular expression syntaxes:
 
-| Pattern        | Matches                           |
-|----------------|-----------------------------------|
-| `.`            | any single character              |
-| `*`            | zero or more of the previous item |
-| `^`            | start of line                     |
-| `$`            | end of line                       |
-| `[abc]`        | one character from the set        |
-| `\b`           | a word boundary                   |
-| `word1\|word2` | either alternative (with `-E`)    |
+1. **Basic Regular Expressions** (BRE): the default. Meta-characters `?`, `+,` `{`, `}`, `|`, `(`, and `)` are treated as literal characters. To use their special meaning, escape them with a backslash (\\).
+2. **Extended Regular Expressions** (ERE): enabled with `-E` (or `--extended-regexp`). The same meta-characters work without escaping.
+3. **Perl-Compatible Regular Expressions** (PCRE): enabled with `-P` (or `--perl-regexp`). Supports advanced features such as lookaheads, lookbehinds, and non-greedy quantifiers.
+
+In GNU `grep`, BRE and ERE are functionally identical. The only difference is whether meta-characters need to be escaped. PCRE adds features that neither BRE nor ERE support.
+
+| Pattern             | Matches                                  | Support  | Notes                 |
+|---------------------|------------------------------------------|----------|-----------------------|
+| `.`                 | any single character                     | BRE, ERE |                       |
+| `?`                 | 0 or 1 of previous itme                  | BRE, ERE | `\?` in BRE mode      |
+| `*`                 | 0 or more of the previous item           | BRE, ERE |                       |
+| `+`                 | 1 or more of the previous item           | BRE, ERE | `\+` in BRE mode      |
+| `{m,n}`             | match previous item `m` to `n` times     | BRE, ERE | `\{\}` in BRE mode    |
+| `{m,}`              | match previous at least `m` times        | BRE, ERE | `\{\}` in BRE mode    |
+| `{,n}`              | match previous item up to `n` times      | BRE, ERE | `\{\}` in BRE mode    |
+| `{n}`               | match previous item `n` times            | BRE, ERE | `\{\}` in BRE mode    |
+| `^`                 | start of line                            | BRE, ERE |                       |
+| `$`                 | end of line                              | BRE, ERE |                       |
+| `[abc]`             | match character in set once              | BRE, ERE |                       |
+| `[a-z]`             | expands to all characters in range       | BRE, ERE |                       |
+| `[^abc]`            | match character not in set once          | BRE, ERE |                       |
+| `\w`                | similiar to `[a-zA-Z0-9_]`               | BRE, ERE |                       |
+| `\W`                | match non-word characters                | BRE, ERE |                       |
+| `\s`                | similiar to `[ \t\n\r\f\v]` (whitespace) | BRE, ERE |                       |
+| `\S`                | match non-whitespace characters          | BRE, ERE |                       |
+| `\b`                | a word boundary                          | BRE, ERE |                       |
+| `\n`                | newline                                  | BRE, ERE |                       |
+| `\t`                | horizontal tab                           | BRE, ERE |                       |
+| `word1|word2|word3` | match `word1`, `word2` or `word3`        | BRE, ERE | `\|` in BRE mode      |
+| `(...)`             | group pattern(s)                         | BRE, ERE | `\(...\)` in BRE mode |
 
 ```bash
 grep -i "matrix" la-eigenspace.qmd | head -3      # case-insensitive
@@ -1820,10 +1842,10 @@ Two properties fall out of this that explain most shebang confusion:
 
 The shebang is a **promise about which dialect the file is written in**. The two you will actually write:
 
-| Shebang                | Means                                    | Use when                                              |
-|------------------------|------------------------------------------|-------------------------------------------------------|
-| `#!/usr/bin/env bash`  | "this file is bash; give me bash"        | scripts for machines you control (the common case)     |
-| `#!/bin/sh`            | "this file is portable POSIX shell"      | installers, CI, containers, anything widely deployed   |
+| Shebang               | Means                               | Use when                                             |
+|-----------------------|-------------------------------------|------------------------------------------------------|
+| `#!/usr/bin/env bash` | "this file is bash; give me bash"   | scripts for machines you control (the common case)   |
+| `#!/bin/sh`           | "this file is portable POSIX shell" | installers, CI, containers, anything widely deployed |
 
 `#!/usr/bin/env bash` is preferred over `#!/bin/bash` because it searches `$PATH` rather than hard-coding a location. On macOS, `/bin/bash` is bash 3.2 from 2007 (Apple froze it over a GPLv3 licensing objection), while a Homebrew bash 5 lives in `/opt/homebrew/bin`. `env` finds the modern one; the hard-coded path is stuck with the antique.
 
@@ -1918,10 +1940,10 @@ The real threat is that **the file was already wrong before you downloaded it**.
 
 This leads to the distinction that makes the whole practice make sense. A checksum does two different jobs, and only one of them is about security:
 
-| Job              | Defends against                            | Requires                                    |
-|------------------|--------------------------------------------|---------------------------------------------|
-| **Integrity**    | truncated or corrupt download, bad mirror  | a hash from anywhere                        |
-| **Authenticity** | tampered artifact, compromised host        | a hash or signature from an *independent* path |
+| Job              | Defends against                           | Requires                                       |
+|------------------|-------------------------------------------|------------------------------------------------|
+| **Integrity**    | truncated or corrupt download, bad mirror | a hash from anywhere                           |
+| **Authenticity** | tampered artifact, compromised host       | a hash or signature from an *independent* path |
 
 ::: {.callout-warning title="A checksum from the same page proves less than it looks"}
 If you fetch the tarball and its advertised SHA-256 from the same server over the same connection, an attacker who can change one can change the other. Verifying that hash confirms your download completed intact. It does **not** establish that the artifact is genuine. The check is only as independent as the channel the hash arrived on.

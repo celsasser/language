@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-08-29">
+<meta name="dcterms.date" content="2026-09-10">
 
 <title>The Shell – Computer Language Notebook</title>
 <style>
@@ -459,7 +459,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#heredocs" id="toc-heredocs" class="nav-link" data-scroll-target="#heredocs">Heredocs: A File That Isn’t There</a>
   <ul class="collapse">
   <li><a href="#reading-the-real-world-form" id="toc-reading-the-real-world-form" class="nav-link" data-scroll-target="#reading-the-real-world-form">Reading the Real-World Form</a></li>
-  <li><a href="#quoted-vs.-unquoted-expansion" id="toc-quoted-vs.-unquoted-expansion" class="nav-link" data-scroll-target="#quoted-vs.-unquoted-expansion">Quoted vs.&nbsp;Unquoted: Expansion</a></li>
+  <li><a href="#quoted-vs.-unquoted" id="toc-quoted-vs.-unquoted" class="nav-link" data-scroll-target="#quoted-vs.-unquoted">Quoted vs.&nbsp;Unquoted</a></li>
   <li><a href="#the-herestring" id="toc-the-herestring" class="nav-link" data-scroll-target="#the-herestring">The Herestring <code>&lt;&lt;&lt;</code></a></li>
   </ul></li>
   <li><a href="#grep-reads-stdin-too" id="toc-grep-reads-stdin-too" class="nav-link" data-scroll-target="#grep-reads-stdin-too"><code>grep</code> Reads stdin Too</a></li>
@@ -493,7 +493,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#greps-own---include" id="toc-greps-own---include" class="nav-link" data-scroll-target="#greps-own---include">2. <code>grep</code>’s Own <code>--include</code></a></li>
   <li><a href="#via-find" id="toc-via-find" class="nav-link" data-scroll-target="#via-find">3. Via <code>find</code></a></li>
   </ul></li>
-  <li><a href="#regular-expressions-briefly" id="toc-regular-expressions-briefly" class="nav-link" data-scroll-target="#regular-expressions-briefly">Regular Expressions, Briefly</a></li>
+  <li><a href="#regular-expressions" id="toc-regular-expressions" class="nav-link" data-scroll-target="#regular-expressions">Regular Expressions</a></li>
   <li><a href="#the-cheat-sheet" id="toc-the-cheat-sheet" class="nav-link" data-scroll-target="#the-cheat-sheet">The Cheat Sheet</a></li>
   </ul></li>
   <li><a href="#finding" id="toc-finding" class="nav-link" data-scroll-target="#finding">Finding</a>
@@ -558,7 +558,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 29, 2026</p>
+      <p class="date">September 10, 2026</p>
     </div>
   </div>
   
@@ -1918,11 +1918,6 @@ child: sh_var=[] env_var=[dong]</code></pre>
 <span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>There are <em>two independent redirections</em> on one command, which is why it looks dense. Untangled:</p>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 17%">
-<col style="width: 14%">
-<col style="width: 67%">
-</colgroup>
 <thead>
 <tr class="header">
 <th>Piece</th>
@@ -1958,8 +1953,11 @@ child: sh_var=[] env_var=[dong]</code></pre>
 </div>
 </div>
 </section>
-<section id="quoted-vs.-unquoted-expansion" class="level4">
-<h4 class="anchored" data-anchor-id="quoted-vs.-unquoted-expansion">Quoted vs.&nbsp;Unquoted: Expansion</h4>
+<section id="quoted-vs.-unquoted" class="level4">
+<h4 class="anchored" data-anchor-id="quoted-vs.-unquoted">Quoted vs.&nbsp;Unquoted</h4>
+<div class="subheading">
+<p>Expansion</p>
+</div>
 <p>By default the body of a heredoc is treated like a double-quoted string: <code>$variables</code>, <code>$(command substitution)</code>, and backticks are all expanded. That is the whole point in the example above, since <code>$APP_VERSION</code> has to become a real version number.</p>
 <p>The consequence is that any <code>$</code>, backtick, or backslash you want to survive <em>literally</em> must be escaped:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> version.h <span class="op">&lt;&lt;EOF</span></span>
@@ -1975,9 +1973,9 @@ child: sh_var=[] env_var=[dong]</code></pre>
 <p>Quoting the delimiter (<code>&lt;&lt;'EOF'</code>, <code>&lt;&lt;"EOF"</code>, and <code>&lt;&lt;\EOF</code> are equivalent) makes the body behave like a single-quoted string: no expansion, no escaping needed. This is the right choice whenever you are generating a script, an <code>awk</code> program, or anything else full of dollar signs that belong to <em>another</em> language.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 13%">
-<col style="width: 35%">
-<col style="width: 51%">
+<col style="width: 11%">
+<col style="width: 41%">
+<col style="width: 46%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2473,44 +2471,162 @@ child: sh_var=[] env_var=[dong]</code></pre>
 </section>
 </section>
 </section>
-<section id="regular-expressions-briefly" class="level3">
-<h3 class="anchored" data-anchor-id="regular-expressions-briefly">Regular Expressions, Briefly</h3>
-<p>The “regular expression” in <code>grep</code>’s name is the pattern language it tests each line against. A full treatment is its own subject, but the operators you reach for daily are few:</p>
+<section id="regular-expressions" class="level3">
+<h3 class="anchored" data-anchor-id="regular-expressions">Regular Expressions</h3>
+<p>The “regular expression” in <code>grep</code>’s name is the pattern language it tests each line against. The language consists of literal characters and meta-characters that have special meaning. GNU grep supports three regular expression syntaxes:</p>
+<ol type="1">
+<li><strong>Basic Regular Expressions</strong> (BRE): the default. Meta-characters <code>?</code>, <code>+,</code> <code>{</code>, <code>}</code>, <code>|</code>, <code>(</code>, and <code>)</code> are treated as literal characters. To use their special meaning, escape them with a backslash (\).</li>
+<li><strong>Extended Regular Expressions</strong> (ERE): enabled with <code>-E</code> (or <code>--extended-regexp</code>). The same meta-characters work without escaping.</li>
+<li><strong>Perl-Compatible Regular Expressions</strong> (PCRE): enabled with <code>-P</code> (or <code>--perl-regexp</code>). Supports advanced features such as lookaheads, lookbehinds, and non-greedy quantifiers.</li>
+</ol>
+<p>In GNU <code>grep</code>, BRE and ERE are functionally identical. The only difference is whether meta-characters need to be escaped. PCRE adds features that neither BRE nor ERE support.</p>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 21%">
+<col style="width: 43%">
+<col style="width: 10%">
+<col style="width: 23%">
+</colgroup>
 <thead>
 <tr class="header">
 <th>Pattern</th>
 <th>Matches</th>
+<th>Support</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td><code>.</code></td>
 <td>any single character</td>
+<td>BRE, ERE</td>
+<td></td>
 </tr>
 <tr class="even">
+<td><code>?</code></td>
+<td>0 or 1 of previous itme</td>
+<td>BRE, ERE</td>
+<td><code>\?</code> in BRE mode</td>
+</tr>
+<tr class="odd">
 <td><code>*</code></td>
-<td>zero or more of the previous item</td>
+<td>0 or more of the previous item</td>
+<td>BRE, ERE</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>+</code></td>
+<td>1 or more of the previous item</td>
+<td>BRE, ERE</td>
+<td><code>\+</code> in BRE mode</td>
+</tr>
+<tr class="odd">
+<td><code>{m,n}</code></td>
+<td>match previous item <code>m</code> to <code>n</code> times</td>
+<td>BRE, ERE</td>
+<td><code>\{\}</code> in BRE mode</td>
+</tr>
+<tr class="even">
+<td><code>{m,}</code></td>
+<td>match previous at least <code>m</code> times</td>
+<td>BRE, ERE</td>
+<td><code>\{\}</code> in BRE mode</td>
+</tr>
+<tr class="odd">
+<td><code>{,n}</code></td>
+<td>match previous item up to <code>n</code> times</td>
+<td>BRE, ERE</td>
+<td><code>\{\}</code> in BRE mode</td>
+</tr>
+<tr class="even">
+<td><code>{n}</code></td>
+<td>match previous item <code>n</code> times</td>
+<td>BRE, ERE</td>
+<td><code>\{\}</code> in BRE mode</td>
 </tr>
 <tr class="odd">
 <td><code>^</code></td>
 <td>start of line</td>
+<td>BRE, ERE</td>
+<td></td>
 </tr>
 <tr class="even">
 <td><code>$</code></td>
 <td>end of line</td>
+<td>BRE, ERE</td>
+<td></td>
 </tr>
 <tr class="odd">
 <td><code>[abc]</code></td>
-<td>one character from the set</td>
+<td>match character in set once</td>
+<td>BRE, ERE</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>[a-z]</code></td>
+<td>expands to all characters in range</td>
+<td>BRE, ERE</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>[^abc]</code></td>
+<td>match character not in set once</td>
+<td>BRE, ERE</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>\w</code></td>
+<td>similiar to <code>[a-zA-Z0-9_]</code></td>
+<td>BRE, ERE</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>\W</code></td>
+<td>match non-word characters</td>
+<td>BRE, ERE</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>\s</code></td>
+<td>similiar to <code>[ \t\n\r\f\v]</code> (whitespace)</td>
+<td>BRE, ERE</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>\S</code></td>
+<td>match non-whitespace characters</td>
+<td>BRE, ERE</td>
+<td></td>
 </tr>
 <tr class="even">
 <td><code>\b</code></td>
 <td>a word boundary</td>
+<td>BRE, ERE</td>
+<td></td>
 </tr>
 <tr class="odd">
-<td><code>word1\|word2</code></td>
-<td>either alternative (with <code>-E</code>)</td>
+<td><code>\n</code></td>
+<td>newline</td>
+<td>BRE, ERE</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>\t</code></td>
+<td>horizontal tab</td>
+<td>BRE, ERE</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>word1|word2|word3</code></td>
+<td>match <code>word1</code>, <code>word2</code> or <code>word3</code></td>
+<td>BRE, ERE</td>
+<td><code>\|</code> in BRE mode</td>
+</tr>
+<tr class="even">
+<td><code>(...)</code></td>
+<td>group pattern(s)</td>
+<td>BRE, ERE</td>
+<td><code>\(...\)</code> in BRE mode</td>
 </tr>
 </tbody>
 </table>
@@ -2930,9 +3046,9 @@ echo "${args[@]}"          # quote array expansions too: "${arr[@]}"</code></pre
 <p>The shebang is a <strong>promise about which dialect the file is written in</strong>. The two you will actually write:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 19%">
-<col style="width: 34%">
-<col style="width: 45%">
+<col style="width: 20%">
+<col style="width: 32%">
+<col style="width: 47%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -3085,8 +3201,8 @@ set -euo pipefail</code></pre>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 16%">
-<col style="width: 41%">
-<col style="width: 42%">
+<col style="width: 39%">
+<col style="width: 44%">
 </colgroup>
 <thead>
 <tr class="header">

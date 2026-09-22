@@ -544,124 +544,233 @@ It is worth pointing out only because `$(cmd)` and `$(( expr ))` are one keystro
 
 Expansion is a somewhat diluted term in shell programming. It comes in the form of variable expansion within a command. It also is what happens when modifiers are applied to paths. And there are others. We cover some of them and if you don't find the droids you are looking for then see the "see more" up above.
 
-### Filename Expansion
+### Modifiers
 ::: {.subheading}
 for `zsh`
 :::
-These are totally cool, and sorely needed. They are essentially functions that let you extract (expand) information from a path. You can add a sequence of one or more of the following modifiers, each preceded by a `:`. These modifiers also work on the result of filename generation and parameter expansion, except where noted. Pretty wicked.
 
-- `a`: turn a file name into an absolute path: prepends the current directory, if necessary, and resolves any use of ‘..’ and ‘.’ in the path. Note that the transformation takes place even if the file or any intervening directories do not exist.
+These are totally cool, and sorely needed. They are small functions that extract information from a path (or edit any string) without spawning a process. You append a sequence of one or more of them, each preceded by a `:`, and they compose left to right.
 
-```zsh
-set f="./_quarto.yml"
-$f:a
-```
+The name to know is **modifier**, not "filename expansion." Modifiers come from history expansion, where `!$:h` means "last argument of the previous command, minus its final component," and zsh made them available in two more places. That history is why the reference below has a "works in" column: a few modifiers only ever made sense in the history context and were never wired up for parameters.
 
-- `A`: as ‘a’, but also resolve use of symbolic links where possible. Note that resolution of ‘..’ occurs before resolution of symbolic links. This call is equivalent to a unless your system has the realpath system call (modern systems do).
+| Context               | Form                | Example              |
+|-----------------------|---------------------|----------------------|
+| History expansion     | `!<event>:<mod>`    | `!$:h`               |
+| Parameter expansion   | `${name:<mod>}`     | `${f:h}`             |
+| Filename generation   | `*.c(:<mod>)`       | `*.c(:r)`            |
 
-```zsh
-echo $f:A
-```
-
-- `c`: resolve a command name into an absolute path by searching the command path given by the PATH variable. This does not work for commands containing directory parts. Note also that this does not usually work as a glob qualifier unless a file of the same name is found in the current directory.
-
-```zsh
-echo $f:c
-```
-
-- `e`: remove all but the part of the filename extension following the ‘.’; see the definition of the filename extension in the description of the r modifier below. Note that according to that definition the result will be empty if the string ends with a ‘.’.
-
-```zsh
-echo $f:e
-```
-
-- `h`: remove a trailing pathname component, leaving the head. This works like ‘dirname’.
-
-```zsh
-echo $f:h
-```
-
-- `l`: convert the words to all lowercase.
-
-```zsh
-echo $f:l
-```
-
-- `p`: print the new command but do not execute it. Only works with history expansion.
-
-```zsh
-echo $f:p
-```
-
-- `q`: quote the substituted words, escaping further substitutions. Works with history expansion and parameter expansion, though for parameters it is only useful if the resulting text is to be re-evaluated such as by eval.
-
-```zsh
-echo $f:q
-```
-
-- `Q`: remove one level of quotes from the substituted words.
-
-```zsh
-echo $f:Q
-```
-
-- `r`: remove a filename extension leaving the root name. Strings with no filename extension are not altered. A filename extension is a ‘.’ followed by any number of characters (including zero) that are neither ‘.’ nor ‘/’ and that continue to the end of the string. For example, the extension of ‘foo.orig.c’ is ‘.c’, and ‘dir.c/foo’ has no extension.
-
-```zsh
-echo $f:r
-```
-
-- `s`/`l`/`r[...]`: substitute `r` for `l` as described below. The substitution is done only for the first string that matches `l`. For arrays and for filename generation, this applies to each word of the expanded text. See below for further notes on substitutions. The forms `gs/l/r` and `s/l/r/:G` perform global substitution, i.e. substitute every occurrence of `r` for `l`. Note that the `g` or `:G` must appear in exactly the position shown.
-
-- `&` Repeat the previous s substitution. Like s, may be preceded immediately by a g. In parameter expansion the & must appear inside braces, and in filename generation it must be quoted with a backslash.
-
-```zsh
-echo $f:&
-```
-
-- `t`: remove all leading pathname components, leaving the tail. This works like ‘basename’.
-
-```zsh
-echo $f:t
-```
-
-- `u`: convert the words to all uppercase.
-
-```zsh
-echo $f:u
-```
-
-- `x`: like q, but break into words at whitespace. Does not work with parameter expansion.
-
-```zsh
-echo $f:x
-```
-
-::: {.note}
-The following `f`, `F`, `w` and W modifiers work only with parameter expansion and filename generation. They are listed here to provide a single point of reference for all modifiers.
+::: {.callout-warning title="Parameter expansion requires the braces"}
+Bare `$f:h` does **not** apply the modifier. It expands `$f` and then leaves the literal characters `:h` sitting on the command line. Modifiers attach without braces only to a history reference. For a variable, always write `${f:h}`.
 :::
 
-- `f`: repeats the immediately (without a colon) following modifier until the resulting word doesn’t change any more.
+#### Heads, Tails, Roots and Extensions
+::: {.subheading}
+`dirname` and `basename`, without the fork.
+:::
+
+These four are the ones you will actually reach for. They split a path at the last `/` or the last `.`:
+
+| Modifier | Keeps                         | Analogous to |
+|----------|-------------------------------|--------------|
+| `h`      | the **head**: drop last component | `dirname`    |
+| `t`      | the **tail**: drop all leading components | `basename`   |
+| `r`      | the **root**: drop the extension  | |
+| `e`      | the **extension** alone           | |
 
 ```zsh
-echo $f:f
+f=/usr/local/bin/report.txt
+
+echo ${f:h}      # /usr/local/bin
+echo ${f:t}      # report.txt
+echo ${f:r}      # /usr/local/bin/report
+echo ${f:e}      # txt
+echo ${f:t:r}    # report            chained: tail, then root
 ```
 
-- `F:expr:`: like f, but repeats only n times if the expression expr evaluates to n. Any character can be used instead of the ‘:’; if ‘(’, ‘[’, or ‘{’ is used as the opening delimiter, the closing delimiter should be ’)’, ‘]’, or ‘}’, respectively.
+That last line is the composition rule in action: each modifier feeds the next. `${f:t:r}` is the shell's equivalent of stripping a path to its bare stem, which is the single most common thing you want in a build script.
+
+These are the same operations you met under [parameter expansion](#trimming-prefixes-and-suffixes) as `${f##*/}` and `${f%/*}`. Modifiers say what you mean; the `##`/`%%` forms say how to get it. Both avoid a subprocess, which is why neither is spelled `$(basename "$f")`.
+
+::: {.callout-note title="What counts as an extension"}
+An extension is a `.` followed by characters that are neither `.` nor `/`, running to the end of the string. Three consequences catch people:
 
 ```zsh
+echo ${${:-foo.orig.c}:e}       # c           only the last dot counts
+echo "${${:-dir.c/foo}:e}"      #             empty: the dot is in a directory
+echo "${${:-foo.}:e}"           #             empty: nothing follows the dot
+echo ${${:-.gitignore}:e}       # gitignore   a dotfile is ALL extension
+echo "${${:-.gitignore}:r}"     #             ...so its root is empty
 ```
 
-- `w`: makes the immediately following modifier work on each word in the string.
+The dotfile case is the surprising one. `.gitignore` has no stem as far as zsh is concerned, so `:r` throws the whole name away. Guard any "strip the extension" loop that might meet a dotfile.
+:::
+
+#### Absolute Paths
+::: {.subheading}
+`a` normalizes, `A` also follows symlinks.
+:::
 
 ```zsh
-echo $f:w
+rel=docs/../images/logo.png
+echo ${rel:a}    # /path/to/cwd/images/logo.png     '..' resolved, cwd prepended
+
+tmp=/tmp
+echo ${tmp:a}    # /tmp                             already absolute, nothing to do
+echo ${tmp:A}    # /private/tmp                     symlink resolved (macOS)
 ```
 
-- `W:sep:`: like `w` but words are considered to be the parts of the string that are separated by sep. Any character can be used instead of the ‘:’; opening parentheses are handled specially, see above.
+`a` is pure string arithmetic: it prepends the working directory and collapses `.` and `..`, and it does so **even if the path does not exist**. `A` additionally calls `realpath`, so it touches the filesystem and can only resolve links that are really there. Order matters: `..` is resolved *before* symlinks, so `a` and `A` can disagree about more than just the link itself.
+
+#### Command Lookup
+::: {.subheading}
+`c` searches `$PATH`.
+:::
 
 ```zsh
+g=ls
+echo ${g:c}      # /bin/ls
 ```
+
+`c` is the odd one out: its input is a *command name*, not a path. It searches `$PATH` the way the shell would when running the command, which is `which` without the subprocess. It does nothing to a value containing a `/`, so `${f:c}` on a path like `./report.txt` silently returns the input unchanged.
+
+#### Case
+::: {.subheading}
+`u` up, `l` down.
+:::
+
+```zsh
+f=/usr/local/bin/Report.TXT
+echo ${f:u}      # /USR/LOCAL/BIN/REPORT.TXT
+echo ${f:l}      # /usr/local/bin/report.txt
+```
+
+Nothing subtle here, but note they apply to the whole string, separators included. For case-folding a single component you would chain: `${f:t:l}`.
+
+#### Quoting
+::: {.subheading}
+`q` adds escapes, `Q` removes them.
+:::
+
+```zsh
+s='my notes.md'
+echo ${s:q}      # my\ notes.md
+
+t='"quoted words"'
+echo ${t:Q}      # quoted words
+```
+
+`q` is for text you are about to hand back to the shell, typically through `eval` or a generated command line. Escaping the space means the re-parse sees one word instead of two. `Q` is the inverse, stripping one level of quotes off a value that arrived pre-quoted. If you are not re-evaluating the string, you want neither; ordinary `"$var"` quoting is the right tool.
+
+#### Substitution
+::: {.subheading}
+`s/pattern/replacement/` edits the value.
+:::
+
+This is the multi-argument one, and the manual's notation (`s/l/r/`) is worth decoding: `l` is the **left** side, the text to find; `r` is the **right** side, what to put there.
+
+```zsh
+p=/usr/local/bin/report.txt
+
+echo ${p:s/report/summary/}   # /usr/local/bin/summary.txt   first match only
+echo ${p:gs/o/0/}             # /usr/l0cal/bin/rep0rt.txt    g prefix = every match
+echo ${p:s|/usr|/opt|}        # /opt/local/bin/report.txt    any delimiter works
+echo ${p:s/report/[&]/}       # /usr/local/bin/[report].txt  & = the matched text
+```
+
+Four rules carry most of the weight:
+
+- **The delimiter is whatever follows `s`.** Use `|` or `#` when the text contains slashes, exactly as in `sed`. The trailing delimiter may be omitted if the modifier ends there.
+- **`g` goes in front**, as `gs/…/…/`, to replace every occurrence rather than the first.
+- **`&` in the replacement** means "the text that matched," so `s/report/[&]/` wraps rather than replaces. To insert a literal ampersand, escape it: `s/report/a\&b/`.
+- **The pattern is literal text, not a glob.** This is the trap, because nearly everything else in the shell that takes a pattern takes a glob. `${p:s/*.txt/X/}` matches nothing, since there is no literal `*` in the value.
+
+::: {.callout-note title="`&` as a modifier is a different thing"}
+Used on its own, `&` repeats the previous `s` substitution:
+
+```zsh
+p=/usr/local/bin/report.txt
+echo ${p:s/o/0/:&}     # /usr/l0cal/bin/rep0rt.txt    s ran once, & ran it again
+```
+
+It only has meaning after an `s` in the same expansion, which is why it cannot be demonstrated standalone. Note this is the *modifier* `&`, unrelated to the `&` backreference inside a replacement above.
+:::
+
+#### Repetition and Word-wise Application
+::: {.subheading}
+`f` and `F` repeat a modifier; `w` and `W` distribute it.
+:::
+
+These four are prefixes: they change how the modifier *after* them behaves, and they attach to it directly with no intervening colon.
+
+`f` repeats until the value stops changing, and `F:n:` repeats at most `n` times:
+
+```zsh
+n=archive.tar.gz.bak
+
+echo ${n:r}        # archive.tar.gz   one extension
+echo ${n:fr}       # archive          repeat :r to a fixed point
+echo ${n:F:2:r}    # archive.tar      repeat :r exactly twice
+```
+
+`F` takes its count as an *arithmetic expression*, so a bare variable name is read as its value, and a count larger than the available repetitions simply stops early rather than erroring:
+
+```zsh
+n=archive.tar.gz.bak
+k=2
+echo ${n:F:k:r}    # archive.tar      bare name, evaluated as arithmetic
+echo ${n:F:1+1:r}  # archive.tar      any expression
+echo ${n:F:9:r}    # archive          "at most" nine, not "exactly"
+```
+
+`w` applies the following modifier to each whitespace-separated word rather than to the string as a whole, and `W:sep:` lets you name the separator:
+
+```zsh
+spaced='/usr/local/bin /usr/bin /bin'
+echo ${spaced:wt}      # bin bin bin              :t on each word
+
+colons='/usr/local/bin:/usr/bin:/bin'
+echo ${colons:W.:.t}   # bin:bin:bin              :t on each colon-separated field
+echo ${colons:W.:.h}   # /usr/local:/usr:/        :h on each, separator preserved
+```
+
+The `W.:.t` spelling is the part that looks like line noise. Read it as `W` + `.` + `:` + `.` + `t`: the delimiter is `.`, the separator sitting between the delimiters is `:`, and `t` is the modifier to apply. The delimiter is arbitrary and only needs to differ from the separator, so `W/:/t` is the same instruction. Splitting `$PATH` this way, operating per entry, and getting it back still colon-joined is the case `W` exists for.
+
+::: {.callout-warning title="Do not use `{ }` as the `F` or `W` delimiter"}
+The manual says `(`, `[`, and `{` may open a delimiter with the matching character closing it. Inside `${...}` the brace form does not work: the `}` terminates the parameter expansion before the modifier is parsed, and zsh reports `unrecognized modifier`. Use `:`, `.`, or parentheses instead.
+:::
+
+#### History-only Modifiers
+::: {.subheading}
+`p` and `x` have no effect on a parameter.
+:::
+
+Two modifiers in the manual's list cannot be used in `${...}` at all:
+
+- **`p`** prints the resulting command without executing it. It only means anything in history expansion, where there is a command to print: `!!:p` echoes the previous command so you can inspect it before committing.
+- **`x`** is like `q` but breaks into words at whitespace. In a parameter expansion it is not merely a no-op, it is a hard error: `${f:x}` aborts with `unrecognized modifier 'x'`.
+
+#### Quick Reference
+| Modifier    | Effect                                        | Works in           |
+|-------------|-----------------------------------------------|--------------------|
+| `a`         | absolute path, resolving `.` and `..`         | all                |
+| `A`         | as `a`, and resolve symlinks                  | all                |
+| `c`         | resolve a command name via `$PATH`            | all                |
+| `e`         | the extension alone                           | all                |
+| `h`         | the head, like `dirname`                      | all                |
+| `l`         | lowercase                                     | all                |
+| `q`         | add quoting                                   | all                |
+| `Q`         | strip one level of quoting                    | all                |
+| `r`         | the root, extension removed                   | all                |
+| `s/l/r/`    | substitute first match (`gs/l/r/` for all)    | all                |
+| `&`         | repeat the previous `s`                       | all                |
+| `t`         | the tail, like `basename`                     | all                |
+| `u`         | uppercase                                     | all                |
+| `f`         | repeat next modifier to a fixed point         | parameter, glob    |
+| `F:n:`      | repeat next modifier at most `n` times        | parameter, glob    |
+| `w`         | apply next modifier per whitespace word       | parameter, glob    |
+| `W:sep:`    | apply next modifier per `sep`-separated field | parameter, glob    |
+| `p`         | print without executing                       | history only       |
+| `x`         | as `q`, splitting at whitespace               | history only       |
 
 ### Parameter Expansion
 ::: {.subheading}

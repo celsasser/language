@@ -1,6 +1,7 @@
 ---
 title: "The Shell"
 subtitle: "A language whose type is text and whose composer is the pipe"
+# engine: knitr
 ---
 
 ## Why the Shell Exists
@@ -403,218 +404,6 @@ Changing either one updates the other, which is what "tied" means.
 
 This is much pleasanter than the `export PATH="$PATH:/opt/bin"` string surgery from earlier, and it is why zsh users often manipulate `$path` instead. The pairing is called a **tied parameter**, created with `typeset -T`, and you can make your own. `$PATH` stays a colon-separated string because that is what the environment must contain for child processes to read it; `$path` is the same data in a form the shell can index.
 
-## Parameter Expansion
-::: {.subheading}
-`${...}` is a tiny string-editing language built into the shell.
-:::
-
-You already use the plain form, `$VAR` or `${VAR}`, to read a value. The braces, though, are not just there to disambiguate where a name ends (`${VAR}_suffix`). Inside them lives a small sublanguage for *transforming* the value on the way out: trimming a prefix or suffix, substituting a default, slicing a substring, changing case. It is the shell's answer to the string operations you would reach for `str.removeprefix` or `substr` to do elsewhere, and it runs entirely in the shell with no external process. That last point matters: `${1#--profile=}` does its work without forking `sed` or `cut`, which is why parameter expansion is the idiomatic tool for the small, hot string edits that CLI parsing is full of.
-
-The whole family shares one shape: `${` *parameter operator word* `}`. The *parameter* is the variable (`1`, `PROFILE`, `PATH`); the *operator* is a punctuation glyph that names the transformation; the *word* is the argument to it. What follows are the operators you will actually meet in the wild.
-
-### Trimming Prefixes and Suffixes
-::: {.subheading}
-`#` bites off the front, `%` bites off the back.
-:::
-
-These four are the workhorses. Each takes a **glob pattern** (the same wildcards as [globbing](#globbing), not a regex) and removes the matched piece from one end of the value:
-
-| Expansion     | Removes                                    | Mnemonic                           |
-|---------------|--------------------------------------------|------------------------------------|
-| `${var#pat}`  | shortest match of `pat` from the **front** | `#` is left of `$` on the keyboard |
-| `${var##pat}` | longest match of `pat` from the **front**  | doubled = greedy                   |
-| `${var%pat}`  | shortest match of `pat` from the **back**  | `%` is right of `$`                |
-| `${var%%pat}` | longest match of `pat` from the **back**   | doubled = greedy                   |
-
-The single/double distinction is about greed, and it only bites when the pattern contains a `*`:
-
-```bash
-path=/usr/local/bin/python3
-
-echo "${path##*/}"   # python3      longest front match of */  → strips every dir
-echo "${path#*/}"    # usr/local/bin/python3   shortest → strips just the leading /
-echo "${path%/*}"    # /usr/local/bin          shortest back match of /* → the dirname
-echo "${path%.*}"    # (unchanged; no dot)     strips a file extension when present
-```
-
-`${path##*/}` and `${path%/*}` are the shell's built-in `basename` and `dirname`, running without a subprocess. That is the single most common use you will see.
-
-Back to your parser, `${1#--profile=}` reads exactly this way: take `$1`, strip the shortest front match of the literal `--profile=`, and hand back what remains. When `$1` is `--profile=release`, the pattern `--profile=` matches the head and expansion yields `release`. There is no `*` in the pattern, so single vs. double `#` makes no difference here; `#` is just the conventional choice for "strip a known literal prefix."
-
-### Defaults and Presence
-::: {.subheading}
-Substitute a fallback, or assign one, when a variable is empty or unset.
-:::
-
-The `:-`, `:=`, `:+`, and `:?` operators branch on whether a variable has a value. They are the shell's ternary, and they retire whole `if [ -z "$x" ]` blocks:
-
-```bash
-echo "${EDITOR:-vim}"        # use $EDITOR, or "vim" if it is empty/unset
-: "${CONFIG:=/etc/app.conf}" # as above, but ALSO assign the default back into $CONFIG
-echo "${DEBUG:+--verbose}"   # if DEBUG is set, expand to "--verbose"; else to nothing
-echo "${1:?missing argument}"  # if $1 is empty/unset, print the message and abort
-```
-
-The colon is the difference between "unset or empty" (with `:`) and merely "unset" (without). `${x-default}` fires only when `x` is entirely unset; `${x:-default}` also fires when `x` is set but empty. You almost always want the colon form.
-
-`${1:?message}` is a particularly clean guard for a script's own arguments: one line that either yields the argument or exits with your error, replacing a three-line `if` at the top of the script.
-
-### Slicing, Length, and Substitution
-::: {.subheading}
-The rest of the toolkit: substrings, length, search-and-replace, case.
-:::
-
-The remaining operators round out the string library. These are bash/zsh features (not in strict POSIX `sh`), so reserve them for scripts with a `bash` shebang:
-
-```bash
-name="deploy-prod-2024"
-
-echo "${#name}"          # 16          length, like strlen
-echo "${name:0:6}"       # deploy      substring: offset 0, length 6
-echo "${name:7}"         # prod-2024   substring from offset 7 to the end
-echo "${name/prod/stage}"   # deploy-stage-2024   replace FIRST match
-echo "${name//-/_}"      # deploy_prod_2024        replace ALL matches (doubled /)
-echo "${name^^}"         # DEPLOY-PROD-2024        upper-case (bash 4+; zsh: ${name:u})
-echo "${name,,}"         # deploy-prod-2024        lower-case (bash 4+; zsh: ${name:l})
-```
-
-Substitution (`${var/from/to}`) is the in-shell `sed s///` for the common case, and like the trimming operators it takes a glob pattern for `from`, not a regex.
-
-### Argument Parsing
-::: {.subheading}
-The Real-World Loop: where parameter expansion, `case`, and `shift` come together.
-:::
-
-Nearly every hand-written CLI parser is the same shape: a `while` loop over the positional arguments, a `case` that dispatches on the current one, and `shift` to advance. Here is the pattern in full, the kind of loop you will find at the top of countless real scripts:
-
-```bash
-PROFILE=debug
-AUTO_RUN=false
-SD_ROOT=
-
-while [ "$#" -gt 0 ]; do
-    case "$1" in
-        --profile=*)
-            PROFILE="${1#--profile=}"   # strip the flag, keep the value
-            shift
-            ;;
-        -r|--run)
-            AUTO_RUN=true
-            shift
-            if [ "$#" -gt 0 ]; then     # consume the NEXT arg as this flag's value
-                SD_ROOT="$1"
-                shift
-            fi
-            ;;
-        -h|--help)
-            usage
-            exit 0
-            ;;
-        *)
-            echo "Unknown argument $1" >&2
-            usage
-            exit 1
-            ;;
-    esac
-done
-```
-
-The three moving parts: `while [ "$#" -gt 0 ]` runs until the arguments are exhausted; `case "$1"` inspects the front argument; `shift` drops `$1` and slides `$2` down into its place, decrementing `$#`. Each branch is responsible for consuming exactly the arguments it owns, one `shift` per argument eaten. Miss a `shift` and the loop spins forever on the same argument; add one too many and you skip an argument unparsed.
-
-Notice the two different ways a flag takes a value. `--profile=release` carries its value *attached*, and `${1#--profile=}` peels it off in place. `-r release` carries its value in the *next* argument, so the branch does a second `shift` to consume it. This split is exactly what the next callout is about.
-
-::: {.callout-warning title="This loop has a real bug"}
-The `-r|--run` branch unconditionally swallows the following argument as `SD_ROOT`. But `-r` is a boolean flag, "should we auto-run?", and its value here is `true`, set on the line above. Consuming the next argument as well means `myscript --run --profile=release` silently eats `--profile=release` into `SD_ROOT` and never parses the profile. Either `-r` is a boolean (take no argument) or it expects a path (document it, and reject a following flag), but it cannot quietly be both. When a flag conditionally consumes the next token, that next token is invisible to the rest of the parser, and mixing that with a boolean reading of the same flag is how parsers grow silent, order-dependent surprises.
-:::
-
-::: {.callout-note title="How should an option take its argument? Prefer `--option=value`."}
-There are three conventions in circulation, and they are not equally safe:
-
-| Style                | Example             | Cost                                                           |
-|----------------------|---------------------|----------------------------------------------------------------|
-| **Attached, `=`**    | `--profile=release` | One token, unambiguous. `${1#--profile=}` extracts it locally. |
-| **Separate token**   | `--profile release` | Two tokens; the parser must look ahead and `shift` twice.      |
-| **Glued short form** | `-prelease`         | Terse, but ambiguous with bundling (`-p -r`), and unreadable.  |
-
-The **attached `--option=value`** form is the most bullet-proof, and your instinct is right. Its value travels *with* the flag as a single argument, so there is no "is the next token my value or the next flag?" lookahead, no risk of consuming a flag by accident (the bug above), and no ambiguity if the value itself starts with a dash (`--pattern=-foo` is unmistakable, whereas `--pattern -foo` looks like two flags). The parser branch stays entirely local: match `--option=*`, then `${1#--option=}`. The separate-token form is what most GNU tools also accept, and it is fine when you handle the lookahead deliberately, but the `=` form removes the entire class of "who owns the next argument" mistakes. Reserve the glued short form for genuine single-letter boolean flags, where bundling (`-rf`) is a feature, not a hazard.
-
-For anything beyond a handful of flags, reach for a real parser instead of hand-rolling: bash's built-in `getopts` (POSIX short options), the GNU `getopt` program (long options too), or, honestly, a different language once the flag matrix gets wide.
-:::
-
-### Optional Values Need Two Patterns
-::: {.subheading}
-When a flag's `=value` is optional, bare `--flag` and `--flag=value` are different tokens.
-:::
-
-Once you commit to the `=` convention, a subtlety surfaces the moment a flag's value becomes *optional*. Suppose `--run` should enable auto-run on its own, but also accept an optional `--run=<path>` to override a default. The trap: the glob `--run=*` requires the literal `=` to be present, so a bare `--run` **does not match it**. You need two branches, one per spelling:
-
-```bash
---run)                           # bare: enable, keep the default path
-    AUTO_RUN=true
-    shift
-    ;;
---run=*)                         # with a value: enable, and maybe override
-    AUTO_RUN=true
-    value="${1#--run=}"          # everything after '='; may be the empty string
-    if [ -n "$value" ]; then     # only override when a real path was given
-        SD_ROOT="$value"
-    fi
-    shift
-    ;;
-```
-
-This also settles a tempting shortcut: "can't I just assign `${1#--run=}` to a variable and test whether it's empty?" You can, but only to answer *one* of three separate questions, and it is easy to conflate them:
-
-| What you want to know                       | How you actually test it                                                                      |
-|---------------------------------------------|-----------------------------------------------------------------------------------------------|
-| Was `--run` passed at all?                  | The `case` pattern. Entering **either** branch means yes; do not inspect a variable for this. |
-| Did they use `--run=value` or bare `--run`? | **Which** branch fired. Matching `--run=*` means a value was supplied (possibly empty).       |
-| Was the supplied value non-empty?           | `[ -n "$value" ]` (or `[ -z "$value" ]`), always quoted.                                      |
-
-Emptiness alone cannot distinguish the first two rows, because `SD_ROOT` ends up empty both when the user passes nothing (`--run`) and when they pass an empty value (`--run=`). That ambiguity is exactly why a separate boolean like `AUTO_RUN` earns its place: it records "did they ask to run?" unambiguously, set the instant either branch fires, independent of whether a path came with it. Reserve the emptiness test for the narrow question it answers well, "is there a usable value here?", and let the `case` structure answer the rest.
-
-### The Built-in Parser `getopts`
-::: {.subheading}
-The POSIX shell's own option parser, for when the hand-rolled loop gets tedious
-:::
-
-The hand-rolled `while`/`case`/`shift` loop is portable, but it grows repetitive: every flag needs its own branch, its own `shift` bookkeeping, and its own error handling. `getopts` is a POSIX built-in that absorbs that boilerplate for **short options** (`-v`, `-o file`, and bundled forms like `-vo`). It is not a separate program; it is a shell keyword you call once per iteration of a `while` loop, and it walks the arguments for you.
-
-The mental model: you hand `getopts` an *option string* describing which flags exist, and it hands you back, one call at a time, the next flag it found:
-
-```bash
-verbose=false
-output=
-
-while getopts "vo:h" opt; do
-    case "$opt" in
-        v) verbose=true ;;
-        o) output="$OPTARG" ;;      # $OPTARG holds the value for a flag with ':'
-        h) usage; exit 0 ;;
-        ?) usage; exit 1 ;;         # getopts sets opt to '?' on an unknown flag
-    esac
-done
-
-shift "$((OPTIND - 1))"            # drop the parsed options; leave the positionals
-echo "remaining arguments: $@"
-```
-
-Three pieces do the work:
-
-- **The option string `"vo:h"`.** Each letter is a valid flag. A **colon after a letter** means that flag *takes an argument*: `o:` is `-o value`. So `v` and `h` are boolean, `o` expects a value. A **leading colon** (`":vo:h"`) switches `getopts` into *silent error mode*, where you handle bad input yourself instead of letting it print to stderr.
-- **`$OPTARG`.** When a flag takes an argument, `getopts` puts that argument here. In the loop above, `-o report.txt` leaves `opt=o` and `OPTARG=report.txt`.
-- **`$OPTIND`.** The index of the *next* argument `getopts` will look at. After the loop, `OPTIND - 1` is the count of tokens consumed by options, so `shift "$((OPTIND - 1))"` slides the leftover positional arguments (the filenames, the paths) down to `$1`, `$2`, ready for a `for arg in "$@"` afterward. This is the step people forget, and without it your positionals still have the flags in front of them.
-
-What you get for free is exactly the tedium the manual loop makes you write by hand: **bundling** (`-vo file` is understood as `-v -o file`), the `=` and separate-token forms of an argument (`-ofile` and `-o file` both work), and a clean stop at the first non-option argument or at the `--` sentinel.
-
-::: {.callout-warning title="`getopts` does short options only"}
-This is the catch, and it is why the hand-rolled loop never fully goes away. POSIX `getopts` understands `-v`, not `--verbose`; there is no long-option support, and `--profile=release` will not parse. If you need long options you have three choices: accept short-only, hand-roll the `case` loop from the previous section (which handles `--profile=*` naturally), or step outside the shell to the separate GNU `getopt` **program** (note: no `s`), which does support long options but has its own quoting sharp edges. For anything with a serious flag matrix, that last signal, "I am now fighting the parser", is usually the moment to reach for Python's `argparse` or Rust's `clap` instead.
-:::
-
-::: {.callout-note title="`getopts` (built-in) vs. `getopt` (program)"}
-The near-identical names hide a real difference. **`getopts`** (with the `s`) is the shell built-in shown above: POSIX, portable, short options only, no subprocess. **`getopt`** (no `s`) is an external program, GNU's version parses long options and can re-order arguments, but its classic form mishandles values with spaces and its "enhanced" mode needs careful `eval set -- "$@"` wrapping. When someone says "use getopts," they almost always mean the safe built-in. Reach for the external `getopt` only when you specifically need long options *and* cannot move to a real language.
-:::
-
 ## Running Commands and Capturing Output
 ::: {.subheading}
 Every command hands back two separate things, and confusing them is the root of most "why didn't that work?" moments.
@@ -748,7 +537,349 @@ It is worth pointing out only because `$(cmd)` and `$(( expr ))` are one keystro
 | Capture output and status together  | `out=$(cmd); st=$?`   |
 | Evaluate arithmetic                 | `$(( expression ))`   |
 
-## Quoting and Expansion
+## Expansion
+::: {.see-more}
+[Expansion (zsh)](https://www-zeuthen.desy.de/unix/unixguide/infohtml/zsh/Expansion.html){target=_blank}
+:::
+
+Expansion is a somewhat diluted term in shell programming. It comes in the form of variable expansion within a command. It also is what happens when modifiers are applied to paths. And there are others. We cover some of them and if you don't find the droids you are looking for then see the "see more" up above.
+
+### Filename Expansion
+::: {.subheading}
+for `zsh`
+:::
+These are totally cool, and sorely needed. They are essentially functions that let you extract (expand) information from a path. You can add a sequence of one or more of the following modifiers, each preceded by a `:`. These modifiers also work on the result of filename generation and parameter expansion, except where noted. Pretty wicked.
+
+- `a`: turn a file name into an absolute path: prepends the current directory, if necessary, and resolves any use of ‘..’ and ‘.’ in the path. Note that the transformation takes place even if the file or any intervening directories do not exist.
+
+```zsh
+set f="./_quarto.yml"
+$f:a
+```
+
+- `A`: as ‘a’, but also resolve use of symbolic links where possible. Note that resolution of ‘..’ occurs before resolution of symbolic links. This call is equivalent to a unless your system has the realpath system call (modern systems do).
+
+```zsh
+echo $f:A
+```
+
+- `c`: resolve a command name into an absolute path by searching the command path given by the PATH variable. This does not work for commands containing directory parts. Note also that this does not usually work as a glob qualifier unless a file of the same name is found in the current directory.
+
+```zsh
+echo $f:c
+```
+
+- `e`: remove all but the part of the filename extension following the ‘.’; see the definition of the filename extension in the description of the r modifier below. Note that according to that definition the result will be empty if the string ends with a ‘.’.
+
+```zsh
+echo $f:e
+```
+
+- `h`: remove a trailing pathname component, leaving the head. This works like ‘dirname’.
+
+```zsh
+echo $f:h
+```
+
+- `l`: convert the words to all lowercase.
+
+```zsh
+echo $f:l
+```
+
+- `p`: print the new command but do not execute it. Only works with history expansion.
+
+```zsh
+echo $f:p
+```
+
+- `q`: quote the substituted words, escaping further substitutions. Works with history expansion and parameter expansion, though for parameters it is only useful if the resulting text is to be re-evaluated such as by eval.
+
+```zsh
+echo $f:q
+```
+
+- `Q`: remove one level of quotes from the substituted words.
+
+```zsh
+echo $f:Q
+```
+
+- `r`: remove a filename extension leaving the root name. Strings with no filename extension are not altered. A filename extension is a ‘.’ followed by any number of characters (including zero) that are neither ‘.’ nor ‘/’ and that continue to the end of the string. For example, the extension of ‘foo.orig.c’ is ‘.c’, and ‘dir.c/foo’ has no extension.
+
+```zsh
+echo $f:r
+```
+
+- `s`/`l`/`r[...]`: substitute `r` for `l` as described below. The substitution is done only for the first string that matches `l`. For arrays and for filename generation, this applies to each word of the expanded text. See below for further notes on substitutions. The forms `gs/l/r` and `s/l/r/:G` perform global substitution, i.e. substitute every occurrence of `r` for `l`. Note that the `g` or `:G` must appear in exactly the position shown.
+
+- `&` Repeat the previous s substitution. Like s, may be preceded immediately by a g. In parameter expansion the & must appear inside braces, and in filename generation it must be quoted with a backslash.
+
+```zsh
+echo $f:&
+```
+
+- `t`: remove all leading pathname components, leaving the tail. This works like ‘basename’.
+
+```zsh
+echo $f:t
+```
+
+- `u`: convert the words to all uppercase.
+
+```zsh
+echo $f:u
+```
+
+- `x`: like q, but break into words at whitespace. Does not work with parameter expansion.
+
+```zsh
+echo $f:x
+```
+
+::: {.note}
+The following `f`, `F`, `w` and W modifiers work only with parameter expansion and filename generation. They are listed here to provide a single point of reference for all modifiers.
+:::
+
+- `f`: repeats the immediately (without a colon) following modifier until the resulting word doesn’t change any more.
+
+```zsh
+echo $f:f
+```
+
+- `F:expr:`: like f, but repeats only n times if the expression expr evaluates to n. Any character can be used instead of the ‘:’; if ‘(’, ‘[’, or ‘{’ is used as the opening delimiter, the closing delimiter should be ’)’, ‘]’, or ‘}’, respectively.
+
+```zsh
+```
+
+- `w`: makes the immediately following modifier work on each word in the string.
+
+```zsh
+echo $f:w
+```
+
+- `W:sep:`: like `w` but words are considered to be the parts of the string that are separated by sep. Any character can be used instead of the ‘:’; opening parentheses are handled specially, see above.
+
+```zsh
+```
+
+### Parameter Expansion
+::: {.subheading}
+`${...}` is a tiny string-editing language built into the shell.
+:::
+
+You already use the plain form, `$VAR` or `${VAR}`, to read a value. The braces, though, are not just there to disambiguate where a name ends (`${VAR}_suffix`). Inside them lives a small sublanguage for *transforming* the value on the way out: trimming a prefix or suffix, substituting a default, slicing a substring, changing case. It is the shell's answer to the string operations you would reach for `str.removeprefix` or `substr` to do elsewhere, and it runs entirely in the shell with no external process. That last point matters: `${1#--profile=}` does its work without forking `sed` or `cut`, which is why parameter expansion is the idiomatic tool for the small, hot string edits that CLI parsing is full of.
+
+The whole family shares one shape: `${` *parameter operator word* `}`. The *parameter* is the variable (`1`, `PROFILE`, `PATH`); the *operator* is a punctuation glyph that names the transformation; the *word* is the argument to it. What follows are the operators you will actually meet in the wild.
+
+#### Trimming Prefixes and Suffixes
+::: {.subheading}
+`#` bites off the front, `%` bites off the back.
+:::
+
+These four are the workhorses. Each takes a **glob pattern** (the same wildcards as [globbing](#globbing), not a regex) and removes the matched piece from one end of the value:
+
+| Expansion     | Removes                                    | Mnemonic                           |
+|---------------|--------------------------------------------|------------------------------------|
+| `${var#pat}`  | shortest match of `pat` from the **front** | `#` is left of `$` on the keyboard |
+| `${var##pat}` | longest match of `pat` from the **front**  | doubled = greedy                   |
+| `${var%pat}`  | shortest match of `pat` from the **back**  | `%` is right of `$`                |
+| `${var%%pat}` | longest match of `pat` from the **back**   | doubled = greedy                   |
+
+The single/double distinction is about greed, and it only bites when the pattern contains a `*`:
+
+```bash
+path=/usr/local/bin/python3
+
+echo "${path##*/}"   # python3      longest front match of */  → strips every dir
+echo "${path#*/}"    # usr/local/bin/python3   shortest → strips just the leading /
+echo "${path%/*}"    # /usr/local/bin          shortest back match of /* → the dirname
+echo "${path%.*}"    # (unchanged; no dot)     strips a file extension when present
+```
+
+`${path##*/}` and `${path%/*}` are the shell's built-in `basename` and `dirname`, running without a subprocess. That is the single most common use you will see.
+
+Back to your parser, `${1#--profile=}` reads exactly this way: take `$1`, strip the shortest front match of the literal `--profile=`, and hand back what remains. When `$1` is `--profile=release`, the pattern `--profile=` matches the head and expansion yields `release`. There is no `*` in the pattern, so single vs. double `#` makes no difference here; `#` is just the conventional choice for "strip a known literal prefix."
+
+#### Defaults and Presence
+::: {.subheading}
+Substitute a fallback, or assign one, when a variable is empty or unset.
+:::
+
+The `:-`, `:=`, `:+`, and `:?` operators branch on whether a variable has a value. They are the shell's ternary, and they retire whole `if [ -z "$x" ]` blocks:
+
+```bash
+echo "${EDITOR:-vim}"        # use $EDITOR, or "vim" if it is empty/unset
+: "${CONFIG:=/etc/app.conf}" # as above, but ALSO assign the default back into $CONFIG
+echo "${DEBUG:+--verbose}"   # if DEBUG is set, expand to "--verbose"; else to nothing
+echo "${1:?missing argument}"  # if $1 is empty/unset, print the message and abort
+```
+
+The colon is the difference between "unset or empty" (with `:`) and merely "unset" (without). `${x-default}` fires only when `x` is entirely unset; `${x:-default}` also fires when `x` is set but empty. You almost always want the colon form.
+
+`${1:?message}` is a particularly clean guard for a script's own arguments: one line that either yields the argument or exits with your error, replacing a three-line `if` at the top of the script.
+
+#### Slicing, Length, and Substitution
+::: {.subheading}
+The rest of the toolkit: substrings, length, search-and-replace, case.
+:::
+
+The remaining operators round out the string library. These are bash/zsh features (not in strict POSIX `sh`), so reserve them for scripts with a `bash` shebang:
+
+```bash
+name="deploy-prod-2024"
+
+echo "${#name}"          # 16          length, like strlen
+echo "${name:0:6}"       # deploy      substring: offset 0, length 6
+echo "${name:7}"         # prod-2024   substring from offset 7 to the end
+echo "${name/prod/stage}"   # deploy-stage-2024   replace FIRST match
+echo "${name//-/_}"      # deploy_prod_2024        replace ALL matches (doubled /)
+echo "${name^^}"         # DEPLOY-PROD-2024        upper-case (bash 4+; zsh: ${name:u})
+echo "${name,,}"         # deploy-prod-2024        lower-case (bash 4+; zsh: ${name:l})
+```
+
+Substitution (`${var/from/to}`) is the in-shell `sed s///` for the common case, and like the trimming operators it takes a glob pattern for `from`, not a regex.
+
+#### Argument Parsing
+::: {.subheading}
+The Real-World Loop: where parameter expansion, `case`, and `shift` come together.
+:::
+
+Nearly every hand-written CLI parser is the same shape: a `while` loop over the positional arguments, a `case` that dispatches on the current one, and `shift` to advance. Here is the pattern in full, the kind of loop you will find at the top of countless real scripts:
+
+```bash
+PROFILE=debug
+AUTO_RUN=false
+SD_ROOT=
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --profile=*)
+            PROFILE="${1#--profile=}"   # strip the flag, keep the value
+            shift
+            ;;
+        -r|--run)
+            AUTO_RUN=true
+            shift
+            if [ "$#" -gt 0 ]; then     # consume the NEXT arg as this flag's value
+                SD_ROOT="$1"
+                shift
+            fi
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
+```
+
+The three moving parts: `while [ "$#" -gt 0 ]` runs until the arguments are exhausted; `case "$1"` inspects the front argument; `shift` drops `$1` and slides `$2` down into its place, decrementing `$#`. Each branch is responsible for consuming exactly the arguments it owns, one `shift` per argument eaten. Miss a `shift` and the loop spins forever on the same argument; add one too many and you skip an argument unparsed.
+
+Notice the two different ways a flag takes a value. `--profile=release` carries its value *attached*, and `${1#--profile=}` peels it off in place. `-r release` carries its value in the *next* argument, so the branch does a second `shift` to consume it. This split is exactly what the next callout is about.
+
+::: {.callout-warning title="This loop has a real bug"}
+The `-r|--run` branch unconditionally swallows the following argument as `SD_ROOT`. But `-r` is a boolean flag, "should we auto-run?", and its value here is `true`, set on the line above. Consuming the next argument as well means `myscript --run --profile=release` silently eats `--profile=release` into `SD_ROOT` and never parses the profile. Either `-r` is a boolean (take no argument) or it expects a path (document it, and reject a following flag), but it cannot quietly be both. When a flag conditionally consumes the next token, that next token is invisible to the rest of the parser, and mixing that with a boolean reading of the same flag is how parsers grow silent, order-dependent surprises.
+:::
+
+::: {.callout-note title="How should an option take its argument? Prefer `--option=value`."}
+There are three conventions in circulation, and they are not equally safe:
+
+| Style                | Example             | Cost                                                           |
+|----------------------|---------------------|----------------------------------------------------------------|
+| **Attached, `=`**    | `--profile=release` | One token, unambiguous. `${1#--profile=}` extracts it locally. |
+| **Separate token**   | `--profile release` | Two tokens; the parser must look ahead and `shift` twice.      |
+| **Glued short form** | `-prelease`         | Terse, but ambiguous with bundling (`-p -r`), and unreadable.  |
+
+The **attached `--option=value`** form is the most bullet-proof, and your instinct is right. Its value travels *with* the flag as a single argument, so there is no "is the next token my value or the next flag?" lookahead, no risk of consuming a flag by accident (the bug above), and no ambiguity if the value itself starts with a dash (`--pattern=-foo` is unmistakable, whereas `--pattern -foo` looks like two flags). The parser branch stays entirely local: match `--option=*`, then `${1#--option=}`. The separate-token form is what most GNU tools also accept, and it is fine when you handle the lookahead deliberately, but the `=` form removes the entire class of "who owns the next argument" mistakes. Reserve the glued short form for genuine single-letter boolean flags, where bundling (`-rf`) is a feature, not a hazard.
+
+For anything beyond a handful of flags, reach for a real parser instead of hand-rolling: bash's built-in `getopts` (POSIX short options), the GNU `getopt` program (long options too), or, honestly, a different language once the flag matrix gets wide.
+:::
+
+#### Optional Values Need Two Patterns
+::: {.subheading}
+When a flag's `=value` is optional, bare `--flag` and `--flag=value` are different tokens.
+:::
+
+Once you commit to the `=` convention, a subtlety surfaces the moment a flag's value becomes *optional*. Suppose `--run` should enable auto-run on its own, but also accept an optional `--run=<path>` to override a default. The trap: the glob `--run=*` requires the literal `=` to be present, so a bare `--run` **does not match it**. You need two branches, one per spelling:
+
+```bash
+--run)                           # bare: enable, keep the default path
+    AUTO_RUN=true
+    shift
+    ;;
+--run=*)                         # with a value: enable, and maybe override
+    AUTO_RUN=true
+    value="${1#--run=}"          # everything after '='; may be the empty string
+    if [ -n "$value" ]; then     # only override when a real path was given
+        SD_ROOT="$value"
+    fi
+    shift
+    ;;
+```
+
+This also settles a tempting shortcut: "can't I just assign `${1#--run=}` to a variable and test whether it's empty?" You can, but only to answer *one* of three separate questions, and it is easy to conflate them:
+
+| What you want to know                       | How you actually test it                                                                      |
+|---------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Was `--run` passed at all?                  | The `case` pattern. Entering **either** branch means yes; do not inspect a variable for this. |
+| Did they use `--run=value` or bare `--run`? | **Which** branch fired. Matching `--run=*` means a value was supplied (possibly empty).       |
+| Was the supplied value non-empty?           | `[ -n "$value" ]` (or `[ -z "$value" ]`), always quoted.                                      |
+
+Emptiness alone cannot distinguish the first two rows, because `SD_ROOT` ends up empty both when the user passes nothing (`--run`) and when they pass an empty value (`--run=`). That ambiguity is exactly why a separate boolean like `AUTO_RUN` earns its place: it records "did they ask to run?" unambiguously, set the instant either branch fires, independent of whether a path came with it. Reserve the emptiness test for the narrow question it answers well, "is there a usable value here?", and let the `case` structure answer the rest.
+
+#### The Built-in Parser `getopts`
+::: {.subheading}
+The POSIX shell's own option parser, for when the hand-rolled loop gets tedious
+:::
+
+The hand-rolled `while`/`case`/`shift` loop is portable, but it grows repetitive: every flag needs its own branch, its own `shift` bookkeeping, and its own error handling. `getopts` is a POSIX built-in that absorbs that boilerplate for **short options** (`-v`, `-o file`, and bundled forms like `-vo`). It is not a separate program; it is a shell keyword you call once per iteration of a `while` loop, and it walks the arguments for you.
+
+The mental model: you hand `getopts` an *option string* describing which flags exist, and it hands you back, one call at a time, the next flag it found:
+
+```bash
+verbose=false
+output=
+
+while getopts "vo:h" opt; do
+    case "$opt" in
+        v) verbose=true ;;
+        o) output="$OPTARG" ;;      # $OPTARG holds the value for a flag with ':'
+        h) usage; exit 0 ;;
+        ?) usage; exit 1 ;;         # getopts sets opt to '?' on an unknown flag
+    esac
+done
+
+shift "$((OPTIND - 1))"            # drop the parsed options; leave the positionals
+echo "remaining arguments: $@"
+```
+
+Three pieces do the work:
+
+- **The option string `"vo:h"`.** Each letter is a valid flag. A **colon after a letter** means that flag *takes an argument*: `o:` is `-o value`. So `v` and `h` are boolean, `o` expects a value. A **leading colon** (`":vo:h"`) switches `getopts` into *silent error mode*, where you handle bad input yourself instead of letting it print to stderr.
+- **`$OPTARG`.** When a flag takes an argument, `getopts` puts that argument here. In the loop above, `-o report.txt` leaves `opt=o` and `OPTARG=report.txt`.
+- **`$OPTIND`.** The index of the *next* argument `getopts` will look at. After the loop, `OPTIND - 1` is the count of tokens consumed by options, so `shift "$((OPTIND - 1))"` slides the leftover positional arguments (the filenames, the paths) down to `$1`, `$2`, ready for a `for arg in "$@"` afterward. This is the step people forget, and without it your positionals still have the flags in front of them.
+
+What you get for free is exactly the tedium the manual loop makes you write by hand: **bundling** (`-vo file` is understood as `-v -o file`), the `=` and separate-token forms of an argument (`-ofile` and `-o file` both work), and a clean stop at the first non-option argument or at the `--` sentinel.
+
+::: {.callout-warning title="`getopts` does short options only"}
+This is the catch, and it is why the hand-rolled loop never fully goes away. POSIX `getopts` understands `-v`, not `--verbose`; there is no long-option support, and `--profile=release` will not parse. If you need long options you have three choices: accept short-only, hand-roll the `case` loop from the previous section (which handles `--profile=*` naturally), or step outside the shell to the separate GNU `getopt` **program** (note: no `s`), which does support long options but has its own quoting sharp edges. For anything with a serious flag matrix, that last signal, "I am now fighting the parser", is usually the moment to reach for Python's `argparse` or Rust's `clap` instead.
+:::
+
+::: {.callout-note title="`getopts` (built-in) vs. `getopt` (program)"}
+The near-identical names hide a real difference. **`getopts`** (with the `s`) is the shell built-in shown above: POSIX, portable, short options only, no subprocess. **`getopt`** (no `s`) is an external program, GNU's version parses long options and can re-order arguments, but its classic form mishandles values with spaces and its "enhanced" mode needs careful `eval set -- "$@"` wrapping. When someone says "use getopts," they almost always mean the safe built-in. Reach for the external `getopt` only when you specifically need long options *and* cannot move to a real language.
+:::
+
+## Quoting
+::: {.subheading}
+with Expansion Control
+:::
+
 Quoting is not decoration. It is how you *control the shell's rewriting of your command line* (decision #4 above). Get quoting wrong and the shell hands your program a mangled set of arguments; get it right and you have exact control over what every program receives.
 
 ### The Processing Order

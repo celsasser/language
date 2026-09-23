@@ -1247,11 +1247,12 @@ Returning a pointer to a local is therefore a use-after-return bug: the storage 
 `<stdlib.h>`
 :::
 
-- **`malloc(size)`**: allocates uninitialized memory; contents are garbage.
-- **`calloc(n, size)`**: allocates `n * size` bytes and zeroes them.
-- **`realloc(ptr, size)`**: resizes an allocation, possibly moving it.
-- **`free(ptr)`**: releases an allocation. `free(NULL)` is safe and does nothing.
+##### `malloc(size)`
+The term `malloc` stands for memory allocation and that's just what he does. He allocates uninitialized memory and returns a `void*` that points to it. The `size` argument specifies the size of the buffer you want in bytes. `sizeof()` is your friend when allocating via `malloc`.
 
+Because `malloc` does not initialize memory, there is a small performance improvement over `calloc`. But there is risk as well because if use it without preparing it, you can expect the unexpected.
+
+::: {.example}
 ```c
 int16_t *samples = malloc(count * sizeof *samples);
 if (samples == NULL) {
@@ -1263,10 +1264,22 @@ samples = NULL;             // avoids an accidental use-after-free
 ```
 
 Two habits in that snippet are worth adopting. `sizeof *samples` rather than `sizeof(int16_t)` stays correct if the type ever changes. And the `malloc` result is not cast: in C the `void*` converts implicitly, and an explicit cast can mask a missing `<stdlib.h>` include. (This is one of the places C and C++ genuinely differ; C++ requires the cast, which is a hint that you should be using `new` or a container instead.)
-
-::: {.callout-warning title="`realloc` can leak if you are careless"}
-`realloc` returns `NULL` on failure *without* freeing the original block. Writing `p = realloc(p, n);` therefore leaks the original allocation whenever it fails. Assign to a temporary, check it, and only then overwrite `p`.
 :::
+
+##### `calloc(n, size)`
+The term `calloc` is short for contiguous allocation. Similar to the `malloc()` function, `calloc()` is also used to dynamically allocate memory. But unlike `malloc`, the `calloc()` function initializes the allocated memory to zero.
+
+::: {.explanation data-label="Why two Arguments?"}
+Let's make sure we understand the fellas: `n` denotes the number of elements and `size` indicates the size in bytes of each element. Why not pull a `malloc` and use one argument? Frankly, I don't know. Maybe people hated do multiplication in the 70s. Maybe computers didn't exist in the 70s. Maybe they didn't have fiber in their diets. I don't know. But I do know that I don't like the inconsistency. You can't simply swap one for the other. Rant over.
+:::
+
+##### `realloc(ptr, size)`
+It resizes an allocation and if the memory manager deems it necessary, it will move it.
+
+`realloc` can leak if you are careless. `realloc` returns `NULL` on failure *without* freeing the original block. Writing `p = realloc(p, n);` therefore leaks the original allocation whenever it fails. Assign to a temporary, check it, and only then overwrite `p`.
+
+##### `free(ptr)`
+It releases an allocation. `free(NULL)` is safe and does nothing.
 
 The failure modes to know by name: **use-after-free** (dereferencing a freed pointer), **double free** (freeing twice), **memory leak** (never freeing), and **buffer overrun** (writing past the end). None are diagnosed by the language, all are undefined behavior, and all are what tools like AddressSanitizer and Valgrind exist to catch. Run them.
 

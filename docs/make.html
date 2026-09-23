@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-08-29">
+<meta name="dcterms.date" content="2026-09-23">
 
 <title>Makefile Language – Computer Language Notebook</title>
 <style>
@@ -482,8 +482,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#auto-generated-dependencies" id="toc-auto-generated-dependencies" class="nav-link" data-scroll-target="#auto-generated-dependencies">Auto-Generated Dependencies</a>
   <ul class="collapse">
-  <li><a href="#the-problem-your-prerequisites-are-a-lie" id="toc-the-problem-your-prerequisites-are-a-lie" class="nav-link" data-scroll-target="#the-problem-your-prerequisites-are-a-lie">The Problem: Your Prerequisites Are a Lie</a></li>
-  <li><a href="#the-solution-ask-the-compiler" id="toc-the-solution-ask-the-compiler" class="nav-link" data-scroll-target="#the-solution-ask-the-compiler">The Solution: Ask the Compiler</a></li>
+  <li><a href="#the-problem" id="toc-the-problem" class="nav-link" data-scroll-target="#the-problem">The Problem</a></li>
+  <li><a href="#the-solution" id="toc-the-solution" class="nav-link" data-scroll-target="#the-solution">The Solution</a></li>
   <li><a href="#what-the-flags-mean" id="toc-what-the-flags-mean" class="nav-link" data-scroll-target="#what-the-flags-mean">What the Flags Mean</a></li>
   <li><a href="#why--mp-matters" id="toc-why--mp-matters" class="nav-link" data-scroll-target="#why--mp-matters">Why <code>-MP</code> Matters</a></li>
   </ul></li>
@@ -523,7 +523,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#debugging-makefiles" id="toc-debugging-makefiles" class="nav-link" data-scroll-target="#debugging-makefiles">Debugging Makefiles</a>
   <ul>
   <li><a href="#the-toolkit" id="toc-the-toolkit" class="nav-link" data-scroll-target="#the-toolkit">The Toolkit</a></li>
-  <li><a href="#a-worked-session-the-target-that-always-rebuilds" id="toc-a-worked-session-the-target-that-always-rebuilds" class="nav-link" data-scroll-target="#a-worked-session-the-target-that-always-rebuilds">A Worked Session: The Target That Always Rebuilds</a>
+  <li><a href="#a-worked-session" id="toc-a-worked-session" class="nav-link" data-scroll-target="#a-worked-session">A Worked Session</a>
   <ul class="collapse">
   <li><a href="#the-other-causes" id="toc-the-other-causes" class="nav-link" data-scroll-target="#the-other-causes">The Other Causes</a></li>
   </ul></li>
@@ -575,7 +575,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 29, 2026</p>
+      <p class="date">September 23, 2026</p>
     </div>
   </div>
   
@@ -933,8 +933,8 @@ Makefile:1: warning: ignoring old recipe for target 'app'</code></pre>
 <p><strong>Two pattern rules match: specificity decides.</strong> That is a separate resolution procedure, described in full in <a href="#how-make-chooses-among-candidates">How Make Chooses Among Candidates</a>. Briefly: a rule whose prerequisites can actually be satisfied wins first, then the shortest stem, then file order.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 38%">
-<col style="width: 54%">
+<col style="width: 35%">
+<col style="width: 56%">
 <col style="width: 7%">
 </colgroup>
 <thead>
@@ -2150,10 +2150,6 @@ Makefile:1: warning: ignoring old recipe for target 'app'</code></pre>
 <span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a><span class="cf">endif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The four openers, with <code>else</code> and <code>endif</code> closing them:</p>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 30%">
-<col style="width: 69%">
-</colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Directive</th>
@@ -2316,8 +2312,11 @@ Makefile:1: warning: ignoring old recipe for target 'app'</code></pre>
 <p>The idiom that makes a C build actually correct</p>
 </div>
 <p>This is the most practically important section in the chapter. Nearly every makefile that “works but needs <code>make clean</code> sometimes” is missing exactly this.</p>
-<section id="the-problem-your-prerequisites-are-a-lie" class="level4">
-<h4 class="anchored" data-anchor-id="the-problem-your-prerequisites-are-a-lie">The Problem: Your Prerequisites Are a Lie</h4>
+<section id="the-problem" class="level4">
+<h4 class="anchored" data-anchor-id="the-problem">The Problem</h4>
+<div class="subheading">
+<p>Your Prerequisites Are a Lie</p>
+</div>
 <p>Consider the honest-looking rule:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb105"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb105-1"><a href="#cb105-1" aria-hidden="true" tabindex="-1"></a><span class="dv">main.o:</span><span class="dt"> main.c</span></span>
 <span id="cb105-2"><a href="#cb105-2" aria-hidden="true" tabindex="-1"></a><span class="er">   </span><span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> <span class="ch">$(</span><span class="dt">CFLAGS</span><span class="ch">)</span> -c <span class="ch">$&lt;</span> -o <span class="ch">$@</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -2330,8 +2329,11 @@ Makefile:1: warning: ignoring old recipe for target 'app'</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb107"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb107-1"><a href="#cb107-1" aria-hidden="true" tabindex="-1"></a><span class="dv">main.o:</span><span class="dt"> main.c config.h util.h</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This is correct today. It drifts tomorrow. Headers include other headers, so the true list is the <em>transitive</em> closure of the include graph, and it changes every time anyone adds an <code>#include</code> anywhere. Maintaining it by hand across a hundred files is not merely tedious, it is a task nobody actually performs, which is why the lists in old makefiles are always subtly wrong.</p>
 </section>
-<section id="the-solution-ask-the-compiler" class="level4">
-<h4 class="anchored" data-anchor-id="the-solution-ask-the-compiler">The Solution: Ask the Compiler</h4>
+<section id="the-solution" class="level4">
+<h4 class="anchored" data-anchor-id="the-solution">The Solution</h4>
+<div class="subheading">
+<p>Ask the Compiler</p>
+</div>
 <p>The compiler resolves every <code>#include</code> as part of its normal work, so it already knows the exact transitive list. GCC and Clang will write it out in makefile syntax.</p>
 <p><code>-MMD</code> compiles as usual and additionally emits a <code>.d</code> file beside the object:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb108"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> gcc <span class="at">-MMD</span> <span class="at">-c</span> main.c <span class="at">-o</span> build/main.o</span>
@@ -2352,10 +2354,6 @@ Makefile:1: warning: ignoring old recipe for target 'app'</code></pre>
 <section id="what-the-flags-mean" class="level4">
 <h4 class="anchored" data-anchor-id="what-the-flags-mean">What the Flags Mean</h4>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 9%">
-<col style="width: 90%">
-</colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Flag</th>
@@ -3020,8 +3018,8 @@ Makefile:1: warning: ignoring old recipe for target 'app'</code></pre>
 <h3 class="anchored" data-anchor-id="the-toolkit">The Toolkit</h3>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 28%">
-<col style="width: 71%">
+<col style="width: 29%">
+<col style="width: 70%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -3073,8 +3071,11 @@ Makefile:1: warning: ignoring old recipe for target 'app'</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb142"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb142-1"><a href="#cb142-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-p</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-A2</span> <span class="st">'^CFLAGS'</span></span>
 <span id="cb142-2"><a href="#cb142-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> <span class="at">-p</span> <span class="at">-f</span> /dev/null <span class="kw">|</span> <span class="fu">less</span>     <span class="co"># built-in rules with no makefile at all</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="a-worked-session-the-target-that-always-rebuilds" class="level3">
-<h3 class="anchored" data-anchor-id="a-worked-session-the-target-that-always-rebuilds">A Worked Session: The Target That Always Rebuilds</h3>
+<section id="a-worked-session" class="level3">
+<h3 class="anchored" data-anchor-id="a-worked-session">A Worked Session</h3>
+<div class="subheading">
+<p>The Target That Always Rebuilds</p>
+</div>
 <p>This is the most common real complaint about a makefile, and it has a small number of causes. Here is a build that relinks on every invocation despite nothing changing:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb143"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb143-1"><a href="#cb143-1" aria-hidden="true" tabindex="-1"></a><span class="dt">CC</span> <span class="ch">:=</span><span class="st"> gcc</span></span>
 <span id="cb143-2"><a href="#cb143-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -3169,8 +3170,8 @@ Makefile:1: warning: ignoring old recipe for target 'app'</code></pre>
 <p>Everything that goes wrong in a makefile is collected here, stated as symptom, cause, and fix. What makes the list worth reading straight through is that these are not nine unrelated quirks. Almost every one is a <a href="#the-three-languages-in-one-file">boundary error between the three languages</a> or a <a href="#two-phase-evaluation">phase confusion</a>, and the last column of the table below says which:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 50%">
-<col style="width: 49%">
+<col style="width: 44%">
+<col style="width: 55%">
 </colgroup>
 <thead>
 <tr class="header">

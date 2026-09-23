@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-08-29">
+<meta name="dcterms.date" content="2026-09-23">
 
 <title>The C Language – Computer Language Notebook</title>
 <style>
@@ -653,7 +653,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">August 29, 2026</p>
+      <p class="date">September 23, 2026</p>
     </div>
   </div>
   
@@ -2297,12 +2297,11 @@ window.Quarto = {
 <div class="subheading">
 <p><code>&lt;stdlib.h&gt;</code></p>
 </div>
-<ul>
-<li><strong><code>malloc(size)</code></strong>: allocates uninitialized memory; contents are garbage.</li>
-<li><strong><code>calloc(n, size)</code></strong>: allocates <code>n * size</code> bytes and zeroes them.</li>
-<li><strong><code>realloc(ptr, size)</code></strong>: resizes an allocation, possibly moving it.</li>
-<li><strong><code>free(ptr)</code></strong>: releases an allocation. <code>free(NULL)</code> is safe and does nothing.</li>
-</ul>
+<section id="mallocsize" class="level5">
+<h5 class="anchored" data-anchor-id="mallocsize"><code>malloc(size)</code></h5>
+<p>The term <code>malloc</code> stands for memory allocation and that’s just what he does. He allocates uninitialized memory and returns a <code>void*</code> that points to it. The <code>size</code> argument specifies the size of the buffer you want in bytes. <code>sizeof()</code> is your friend when allocating via <code>malloc</code>.</p>
+<p>Because <code>malloc</code> does not initialize memory, there is a small performance improvement over <code>calloc</code>. But there is risk as well because if use it without preparing it, you can expect the unexpected.</p>
+<div class="example">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb75"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int16_t</span> <span class="op">*</span>samples <span class="op">=</span> malloc<span class="op">(</span>count <span class="op">*</span> <span class="kw">sizeof</span> <span class="op">*</span>samples<span class="op">);</span></span>
 <span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>samples <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
 <span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span><span class="dv">1</span><span class="op">;</span>              <span class="co">// allocation can fail; check every time</span></span>
@@ -2311,20 +2310,25 @@ window.Quarto = {
 <span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>free<span class="op">(</span>samples<span class="op">);</span></span>
 <span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> NULL<span class="op">;</span>             <span class="co">// avoids an accidental use-after-free</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Two habits in that snippet are worth adopting. <code>sizeof *samples</code> rather than <code>sizeof(int16_t)</code> stays correct if the type ever changes. And the <code>malloc</code> result is not cast: in C the <code>void*</code> converts implicitly, and an explicit cast can mask a missing <code>&lt;stdlib.h&gt;</code> include. (This is one of the places C and C++ genuinely differ; C++ requires the cast, which is a hint that you should be using <code>new</code> or a container instead.)</p>
-<div class="callout callout-style-default callout-warning callout-titled" title="`realloc` can leak if you are careless">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
 </div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Warning</span><code>realloc</code> can leak if you are careless
+</section>
+<section id="callocn-size" class="level5">
+<h5 class="anchored" data-anchor-id="callocn-size"><code>calloc(n, size)</code></h5>
+<p>The term <code>calloc</code> is short for contiguous allocation. Similar to the <code>malloc()</code> function, <code>calloc()</code> is also used to dynamically allocate memory. But unlike <code>malloc</code>, the <code>calloc()</code> function initializes the allocated memory to zero.</p>
+<div class="explanation" data-label="Why two Arguments?">
+<p>Let’s make sure we understand the fellas: <code>n</code> denotes the number of elements and <code>size</code> indicates the size in bytes of each element. Why not pull a <code>malloc</code> and use one argument? Frankly, I don’t know. Maybe people hated do multiplication in the 70s. Maybe computers didn’t exist in the 70s. Maybe they didn’t have fiber in their diets. I don’t know. But I do know that I don’t like the inconsistency. You can’t simply swap one for the other. Rant over.</p>
 </div>
-</div>
-<div class="callout-body-container callout-body">
-<p><code>realloc</code> returns <code>NULL</code> on failure <em>without</em> freeing the original block. Writing <code>p = realloc(p, n);</code> therefore leaks the original allocation whenever it fails. Assign to a temporary, check it, and only then overwrite <code>p</code>.</p>
-</div>
-</div>
+</section>
+<section id="reallocptr-size" class="level5">
+<h5 class="anchored" data-anchor-id="reallocptr-size"><code>realloc(ptr, size)</code></h5>
+<p>It resizes an allocation and if the memory manager deems it necessary, it will move it.</p>
+<p><code>realloc</code> can leak if you are careless. <code>realloc</code> returns <code>NULL</code> on failure <em>without</em> freeing the original block. Writing <code>p = realloc(p, n);</code> therefore leaks the original allocation whenever it fails. Assign to a temporary, check it, and only then overwrite <code>p</code>.</p>
+</section>
+<section id="freeptr" class="level5">
+<h5 class="anchored" data-anchor-id="freeptr"><code>free(ptr)</code></h5>
+<p>It releases an allocation. <code>free(NULL)</code> is safe and does nothing.</p>
 <p>The failure modes to know by name: <strong>use-after-free</strong> (dereferencing a freed pointer), <strong>double free</strong> (freeing twice), <strong>memory leak</strong> (never freeing), and <strong>buffer overrun</strong> (writing past the end). None are diagnosed by the language, all are undefined behavior, and all are what tools like AddressSanitizer and Valgrind exist to catch. Run them.</p>
+</section>
 </section>
 <section id="how-the-allocator-works" class="level4">
 <h4 class="anchored" data-anchor-id="how-the-allocator-works">How the Allocator Works</h4>

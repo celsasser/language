@@ -1311,7 +1311,10 @@ Both constructors are now honest about what they actually do. The second one say
 
 **The initializer list wins.** When a member has both a default member initializer and an entry in a constructor's initializer list, the constructor's value is used and the in-class one is ignored. In the example above, `Widget w{5}` gives `count` the value 5, not 10. Read the default as "the value when nobody says otherwise."
 
-##### Where This Really Pays: Structs
+##### Where This Really Pays
+::: {.subheading}
+Structs
+:::
 
 The pattern's natural home is the plain data struct, where it has become the standard way to express configuration and options:
 
@@ -1765,7 +1768,7 @@ class Circle : public Shape {
                                      // quietly call the base version
 ```
 
-That silent failure, a subtly mismatched signature creating an unrelated function instead of an override, was one of the classic C++ bugs before `override` existed. Its counterpart `final` closes a class or function to further overriding.
+That silent failure, a subtly mismatched signature creating an unrelated function instead of an override, was one of the classic C++ bugs before `override` existed. Its counterpart `final` closes a class or function to further overriding, covered under [Closing the Hierarchy](#final).
 
 ### How It Works
 ::: {.subheading}
@@ -1837,6 +1840,77 @@ public:
 ```
 
 This is Stroustrup's *abstract type*: the interface is completely decoupled from the representation. Callers depend only on `Drawable`, and implementations can be added, changed, or loaded from a plugin without recompiling any of them.
+
+### Closing the Hierarchy {#final}
+::: {.subheading}
+`final`
+:::
+
+Virtual functions are an invitation: any class below yours may replace this behavior. Sometimes that invitation is a mistake. A middle class in a hierarchy implements a pure virtual, that implementation upholds an invariant the rest of the class depends on, and further overriding would break it. `final` (C++11) revokes the invitation:
+
+```cpp
+struct Base {
+    virtual void process() = 0;         // pure virtual: must be implemented
+    virtual ~Base() = default;
+};
+
+struct Middle : Base {
+    void process() override final;      // implements it, and closes the door
+};
+
+struct Derived : Middle {
+    void process() override;            // ERROR: overriding final function
+};
+```
+
+`Middle::process` still overrides `Base::process`, so a call through a `Base*` still dispatches to it correctly. What `final` forbids is any class below `Middle` overriding it again. `final` may also be applied to a whole class, which forbids deriving from it at all:
+
+```cpp
+struct Leaf final : Middle { };         // nothing may inherit from Leaf
+struct Bad : Leaf { };                  // ERROR: cannot derive from final class
+```
+
+Note the ordering: `override final`, both after the signature. They are not keywords in the usual sense but **contextual identifiers**, meaningful only in this position, which is how C++11 added them without invalidating every existing program that used `final` as a variable name.
+
+::: {.callout-warning title="`final` does not remove virtualness"}
+This is the point that trips people up, so it is worth stating flatly. Once a function is declared `virtual` in a base class, it is virtual in every descendant, permanently. There is no syntax to un-virtual it, and `final` does not try. `Middle::process` still occupies a vtable slot, and a call through a base pointer is still an indirect call:
+
+```cpp
+Base* obj = get_something();
+obj->process();          // still dynamic dispatch: the compiler cannot know
+                         // the dynamic type, so the vtable is unavoidable
+```
+
+`final` constrains the *type system*, not the object layout. What it removes is the possibility of further overriding, not the machinery of dispatch.
+:::
+
+#### What `final` Buys You
+Even though the vtable slot remains, `final` gives the optimizer something it cannot otherwise prove, and this recovers the most expensive item in the [cost table above](#how-it-works): the lost inlining.
+
+```cpp
+Middle* obj = get_middle();
+obj->process();          // static type is Middle; Middle::process is final,
+                         // so no override can exist below it. The target is
+                         // known: direct call, and inlinable.
+```
+
+This is **devirtualization**. The compiler reasons that because no override may exist below `Middle`, the static type alone determines the target, so the vptr load and indirect call collapse into an ordinary direct call that can then be inlined. Marking the *class* `final` unlocks the same reasoning more broadly, since it proves the dynamic type cannot be anything more derived. The vtable slot still exists; what disappears is the indirection through it, wherever the static type is specific enough to settle the question.
+
+The practical guidance is narrower than it may sound. Do not sprinkle `final` everywhere in hope of speed: the optimization only fires when the static type at the call site is already the final class, and in the polymorphic code that motivates virtual functions in the first place, it usually isn't. Reach for `final` when you mean the design statement ("this behavior is settled, do not override it"), and treat the codegen as a bonus that occasionally matters in a hot loop.
+
+::: {.callout-note title="`final` blocks overriding, not hiding"}
+A derived class cannot override a `final` function, but it can still **hide** the name with a different signature:
+
+```cpp
+struct Derived : Middle {
+    void process(int);      // fine: different signature, so it hides rather
+                            // than overrides. Unqualified `d.process()` on a
+                            // Derived now fails to compile: the name is shadowed.
+};
+```
+
+The same-signature case is caught as an error; this one is not. If a derived class needs both, `using Middle::process;` pulls the base name back into scope. This is ordinary name hiding, the rule that a name declared in a derived class shadows every base-class overload of that name, rather than anything specific to `final`. But it is the one gap left in "nobody downstream may change this."
+:::
 
 ### Slicing
 One trap has no analogue in Java or Rust and catches C++ programmers regularly. Because C++ objects are values, assigning a derived object to a base *variable* copies only the base part and discards the rest:
@@ -1922,7 +1996,6 @@ max<double>(3, 7.5);    // explicit: forces T = double, converting 3 to 3.0
 Deduction is a pattern match, not a conversion, and this is where it surprises people. `max(3, 7.5)` does *not* compile: the first argument says `T` is `int`, the second says `T` is `double`, and the compiler will not pick a winner. It reports a deduction conflict rather than quietly promoting the `int`, which is consistent with C++'s preference for explicitness over convenience. Naming the type yourself, as in the third line above, resolves it.
 
 ##### Deduction Matches Types, Not Names {#deduction-matches-types}
-
 The `max(3, 7.5)` failure is easy to accept because `int` and `double` are obviously different. The confusing version of the same rule appears when two types are *not* obviously different, and it is worth being precise about what deduction actually compares.
 
 Deduction compares **types**, and only types. It never looks at how a type was spelled. An alias introduced by `using` or `typedef` is a second name for an existing type, not a new type, so it is transparent by the time deduction runs:
@@ -2073,7 +2146,6 @@ An ordinary function can be declared in a header and defined in a `.cpp`. The co
 So template definitions go in headers. This is why so much of the C++ ecosystem, and the whole standard library, ships as **header-only libraries**: there is often no other option. The cost is paid at build time. Every translation unit that includes the header re-parses the full template body and re-instantiates whatever it uses, so the same code is compiled repeatedly across your project and the linker discards the duplicates afterward. Heavy template use is the main reason C++ builds are notoriously slow, and C++20 **modules** exist in large part to break this cycle by letting a compiled interface be imported rather than textually re-included. See [Compilation and the Build](#compilation-and-the-build) for how the pieces fit together.
 
 ##### `.ipp` and the Split-Header Convention {#split-header-convention}
-
 Forcing definitions into the header costs you something beyond build time: readability. A class template of any size ends up as a wall of code in which the interface, the part a reader actually wants, is buried among the bodies. C++ offers no language mechanism to fix this, so the ecosystem settled on a convention instead.
 
 The implementation is moved to a separate file, and the header includes it **at the bottom**:
@@ -2703,13 +2775,13 @@ The rule is the same one that governs [`std::string_view`](#containers) and [vie
 #### Choosing Among Them
 The family has grown enough that a table earns its place. All four are in `<functional>`.
 
-| Type                              | Since  | Owns the callable? | Allocates?      | Use it for                                       |
-|:----------------------------------|:-------|:-------------------|:----------------|:-------------------------------------------------|
-| Function pointer `R(*)(Args...)`  | C      | n/a                | No              | C interop; stateless callbacks only              |
-| `std::function<R(Args...)>`       | C++11  | Yes (copyable)     | Often           | Stored callbacks; the general default            |
-| `std::move_only_function<...>`    | C++23  | Yes (move-only)    | Often           | Stored callbacks that capture a `unique_ptr`     |
-| `std::copyable_function<...>`     | C++26  | Yes (copyable)     | Often           | `std::function` with the `const`-correctness fixed |
-| `std::function_ref<R(Args...)>`   | C++26  | **No**             | **Never**       | Callback *parameters*, the common case           |
+| Type                             | Since | Owns the callable? | Allocates? | Use it for                                         |
+|:---------------------------------|:------|:-------------------|:-----------|:---------------------------------------------------|
+| Function pointer `R(*)(Args...)` | C     | n/a                | No         | C interop; stateless callbacks only                |
+| `std::function<R(Args...)>`      | C++11 | Yes (copyable)     | Often      | Stored callbacks; the general default              |
+| `std::move_only_function<...>`   | C++23 | Yes (move-only)    | Often      | Stored callbacks that capture a `unique_ptr`       |
+| `std::copyable_function<...>`    | C++26 | Yes (copyable)     | Often      | `std::function` with the `const`-correctness fixed |
+| `std::function_ref<R(Args...)>`  | C++26 | **No**             | **Never**  | Callback *parameters*, the common case             |
 
 Two of those rows deserve a sentence. `std::move_only_function` exists because `std::function` requires its target to be copyable, so a lambda that captured a `std::unique_ptr` will not fit in one, a limitation that surprises people regularly. `std::copyable_function` is the C++26 repair of `std::function`'s `const` correctness, which was specified before the committee fully understood the problem; the two are otherwise interchangeable, and `std::function` is not going anywhere.
 

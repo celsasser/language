@@ -42,9 +42,9 @@ Tim Peters wrote nineteen aphorisms that capture Python's design philosophy. You
 import sys
 
 try:
-    del sys.modules["this"]
+   del sys.modules["this"]
 except:
-    pass
+   pass
 
 import this
 ```
@@ -66,7 +66,7 @@ Every `.py` file is a module. Its name is the filename without the extension. Yo
 ```python
 # math_utils.py
 def add(a, b):
-    return a + b
+   return a + b
 
 
 # main.py
@@ -144,11 +144,11 @@ count: int = 0
 
 
 def add(a: int, b: int) -> int:
-    return a + b
+   return a + b
 
 
 def greet(name: str) -> None:  # None means the function returns nothing
-    print(f"hello, {name}")
+   print(f"hello, {name}")
 ```
 
 #### Container Types
@@ -156,11 +156,11 @@ Built-in containers are generic as of Python 3.9. Use lowercase directly:
 
 ```python
 def total(numbers: list[int]) -> int:
-    return sum(numbers)
+   return sum(numbers)
 
 
 def lookup(data: dict[str, int], key: str) -> int:
-    return data[key]
+   return data[key]
 
 
 coords: tuple[float, float] = (3.0, 4.0)
@@ -174,9 +174,9 @@ Before Python 3.9 the same types came from the `typing` module: `List[int]`, `Di
 
 ```python
 def find_user(user_id: int) -> str | None:
-    if user_id == 1:
-        return "alice"
-    return None
+   if user_id == 1:
+      return "alice"
+   return None
 ```
 
 Older code uses `Optional[str]` from the `typing` module, which means exactly the same thing. The `|` syntax is available from Python 3.10 onward.
@@ -186,7 +186,7 @@ Older code uses `Optional[str]` from the `typing` module, which means exactly th
 
 ```python
 def process(value: int | str) -> str:
-    return str(value)
+   return str(value)
 ```
 
 Older code writes `Union[int, str]` from `typing`. Same meaning.
@@ -199,7 +199,7 @@ from typing import Any
 
 
 def log(value: Any) -> None:
-    print(value)
+   print(value)
 ```
 
 Overusing `Any` defeats the purpose of annotations. Treat it like `unsafe` in Rust: reach for it when necessary, not by default.
@@ -212,7 +212,7 @@ from typing import Callable
 
 
 def apply(func: Callable[[int], int], value: int) -> int:
-    return func(value)
+   return func(value)
 
 
 apply(lambda x: x * 2, 5)  # 10
@@ -230,7 +230,7 @@ T = TypeVar("T")
 
 
 def first(items: list[T]) -> T:
-    return items[0]
+   return items[0]
 
 
 first([1, 2, 3])  # return type inferred as int
@@ -251,21 +251,21 @@ from typing import Protocol
 
 
 class Drawable(Protocol):
-    def draw(self) -> None: ...
+   def draw(self) -> None: ...
 
 
 class Circle:
-    def draw(self) -> None:
-        print("drawing circle")
+   def draw(self) -> None:
+      print("drawing circle")
 
 
 class Square:
-    def draw(self) -> None:
-        print("drawing square")
+   def draw(self) -> None:
+      print("drawing square")
 
 
 def render(shape: Drawable) -> None:  # accepts anything with a draw() method
-    shape.draw()
+   shape.draw()
 
 
 render(Circle())  # fine
@@ -302,11 +302,11 @@ None of this affects execution. If you pass the wrong type at runtime, Python wi
 ### Functions
 ```python
 def greet(name):
-    print(f"Hello, {name}!")  # f-string: embed expressions in strings
+   print(f"Hello, {name}!")  # f-string: embed expressions in strings
 
 
 def add(a, b):
-    return a + b
+   return a + b
 
 
 # default arguments
@@ -315,7 +315,7 @@ def connect(host, port=8080, timeout=30): ...
 
 # variable positional arguments
 def total(*numbers):
-    return sum(numbers)
+   return sum(numbers)
 
 
 total(1, 2, 3, 4)  # 10
@@ -323,7 +323,7 @@ total(1, 2, 3, 4)  # 10
 
 # variable keyword arguments
 def create_user(**fields):
-    print(fields)  # {'name': 'alice', 'role': 'admin'}
+   print(fields)  # {'name': 'alice', 'role': 'admin'}
 
 
 create_user(name="alice", role="admin")
@@ -335,25 +335,25 @@ Functions are first-class objects. They can be stored in variables, passed as ar
 ```python
 # if / elif / else
 if x > 0:
-    print("positive")
+   print("positive")
 elif x == 0:
-    print("zero")
+   print("zero")
 else:
-    print("negative")
+   print("negative")
 
 # for iterates over any iterable
 for item in [1, 2, 3]:
-    print(item)
+   print(item)
 
 for i in range(10):  # 0 to 9
-    print(i)
+   print(i)
 
 for i, item in enumerate(["a", "b", "c"]):
-    print(i, item)  # 0 a, 1 b, 2 c
+   print(i, item)  # 0 a, 1 b, 2 c
 
 # while
 while x > 0:
-    x -= 1
+   x -= 1
 ```
 
 `for` in Python iterates over any **iterable**: lists, strings, dicts, files, generators, database cursors. There is no index-based loop by default; use `enumerate` when you need the index.
@@ -446,8 +446,8 @@ Read left to right: "for each row in matrix, for each n in row, yield n." The or
 ```python
 flat = []
 for row in matrix:
-    for n in row:
-        flat.append(n)
+   for n in row:
+      flat.append(n)
 ```
 
 More than two `for` clauses becomes hard to read quickly. A regular loop is usually clearer beyond that point.
@@ -513,7 +513,7 @@ Any iterable of sequences can be unpacked directly in the loop variable:
 pairs = [(1, "one"), (2, "two"), (3, "three")]
 
 for number, word in pairs:
-    print(number, word)
+   print(number, word)
 ```
 
 Dict `.items()` is the most common real-world case:
@@ -522,17 +522,17 @@ Dict `.items()` is the most common real-world case:
 data = {"a": 1, "b": 2}
 
 for key, value in data.items():
-    print(key, value)
+   print(key, value)
 ```
 
 This is also why `enumerate` and `zip` feel so natural — their output is a sequence of tuples, designed to be unpacked:
 
 ```python
 for i, item in enumerate(["a", "b", "c"]):
-    print(i, item)  # 0 a, 1 b, 2 c
+   print(i, item)  # 0 a, 1 b, 2 c
 
 for left, right in zip([1, 2, 3], ["x", "y", "z"]):
-    print(left, right)  # 1 x, 2 y, 3 z
+   print(left, right)  # 1 x, 2 y, 3 z
 ```
 
 #### Nested Unpacking
@@ -544,7 +544,7 @@ Unpacking mirrors the shape of the data, however deeply nested:
 segments = [((0, 0), (1, 1)), ((2, 2), (3, 3))]
 
 for (x1, y1), (x2, y2) in segments:
-    print(x1, y1, "->", x2, y2)
+   print(x1, y1, "->", x2, y2)
 ```
 
 #### Unpacking into Function Calls
@@ -552,7 +552,7 @@ for (x1, y1), (x2, y2) in segments:
 
 ```python
 def add(a, b, c):
-    return a + b + c
+   return a + b + c
 
 
 args = [1, 2, 3]
@@ -580,12 +580,12 @@ The walrus operator assigns a value and simultaneously returns it as an expressi
 # without walrus: the readline call must be duplicated
 line = file.readline()
 while line:
-    process(line)
-    line = file.readline()
+   process(line)
+   line = file.readline()
 
 # with walrus: assign and test in one expression
 while line := file.readline():
-    process(line)
+   process(line)
 ```
 
 In comprehensions it avoids computing an expensive value twice:
@@ -719,11 +719,11 @@ import sys
 a = []
 prev_size = 0
 for i in range(20):
-    a.append(i)
-    size = sys.getsizeof(a)
-    if size != prev_size:
-        print(f"len={len(a):2d}  buffer size: {size} bytes")
-        prev_size = size
+   a.append(i)
+   size = sys.getsizeof(a)
+   if size != prev_size:
+      print(f"len={len(a):2d}  buffer size: {size} bytes")
+      prev_size = size
 ```
 
 The buffer grows in steps, not on every append. You pay for reallocation infrequently. If you know the final size in advance, a list comprehension avoids all intermediate reallocations by building the list in one pass:
@@ -732,7 +732,7 @@ The buffer grows in steps, not on every append. You pay for reallocation infrequ
 # repeated append: may reallocate several times
 result = []
 for i in range(10000):
-    result.append(compute(i))
+   result.append(compute(i))
 
 # comprehension: single allocation, then fill
 result = [compute(i) for i in range(10000)]
@@ -763,7 +763,7 @@ The practical implication of reference counting: CPython's memory release is mor
 
 ```python
 with open("data.txt") as f:
-    content = f.read()
+   content = f.read()
 # file is closed here, immediately, when the block exits
 ```
 
@@ -794,12 +794,12 @@ big_gen = (x * 2 for x in range(10_000_000))
 
 # generator function: same behavior, more control
 def doubled(n):
-    for i in range(n):
-        yield i * 2  # suspends here, resumes on next iteration
+   for i in range(n):
+      yield i * 2  # suspends here, resumes on next iteration
 
 
 for value in doubled(10_000_000):
-    process(value)  # only one integer in memory at a time
+   process(value)  # only one integer in memory at a time
 ```
 
 The `yield` keyword turns a function into a generator. Its local state is suspended between calls and resumed on the next iteration. Generators are the idiomatic way to handle large data streams, infinite sequences, and processing pipelines without holding everything in memory.
@@ -850,7 +850,7 @@ d["new_key"] = 42  # insert or update
 del d["age"]
 
 for key, value in d.items():
-    print(key, value)
+   print(key, value)
 ```
 
 ### set
@@ -889,7 +889,7 @@ Strings are immutable. Concatenating in a loop (`s += x`) allocates a new string
 ```python
 parts = []
 for item in data:
-    parts.append(str(item))
+   parts.append(str(item))
 result = ", ".join(parts)  # one allocation
 ```
 
@@ -899,11 +899,11 @@ Functions are objects. They can be passed, returned, and stored:
 
 ```python
 def apply(func, value):
-    return func(value)
+   return func(value)
 
 
 def double(x):
-    return x * 2
+   return x * 2
 
 
 apply(double, 5)  # 10
@@ -915,10 +915,10 @@ A nested function can capture variables from its enclosing scope:
 
 ```python
 def make_multiplier(n):
-    def multiply(x):
-        return x * n  # captures n from the enclosing scope
+   def multiply(x):
+      return x * n  # captures n from the enclosing scope
 
-    return multiply
+   return multiply
 
 
 triple = make_multiplier(3)
@@ -932,16 +932,16 @@ A decorator is a function that wraps another function. The `@` syntax is shortha
 
 ```python
 def log_calls(func):
-    def wrapper(*args, **kwargs):
-        print(f"calling {func.__name__}")
-        return func(*args, **kwargs)
+   def wrapper(*args, **kwargs):
+      print(f"calling {func.__name__}")
+      return func(*args, **kwargs)
 
-    return wrapper
+   return wrapper
 
 
 @log_calls
 def add(a, b):
-    return a + b
+   return a + b
 
 
 # equivalent to: add = log_calls(add)
@@ -953,18 +953,18 @@ Decorators are used throughout web frameworks, testing libraries, and the [stand
 ## Classes and Objects
 ```python
 class Point:
-    def __init__(self, x, y):  # constructor
-        self.x = x  # instance attributes
-        self.y = y
+   def __init__(self, x, y):  # constructor
+      self.x = x  # instance attributes
+      self.y = y
 
-    def distance_from_origin(self):
-        return (self.x**2 + self.y**2) ** 0.5
+   def distance_from_origin(self):
+      return (self.x**2 + self.y**2) ** 0.5
 
-    def __repr__(self):  # string representation for debugging
-        return f"Point({self.x}, {self.y})"
+   def __repr__(self):  # string representation for debugging
+      return f"Point({self.x}, {self.y})"
 
-    def __eq__(self, other):  # equality operator
-        return self.x == other.x and self.y == other.y
+   def __eq__(self, other):  # equality operator
+      return self.x == other.x and self.y == other.y
 
 
 p = Point(3, 4)
@@ -993,15 +993,15 @@ Two dunders control how an object is displayed:
 
 ```python
 class Point:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+   def __init__(self, x, y):
+      self.x = x
+      self.y = y
 
-    def __repr__(self):
-        return f"Point({self.x}, {self.y})"  # looks like a constructor call
+   def __repr__(self):
+      return f"Point({self.x}, {self.y})"  # looks like a constructor call
 
-    def __str__(self):
-        return f"({self.x}, {self.y})"  # friendlier display
+   def __str__(self):
+      return f"({self.x}, {self.y})"  # friendlier display
 
 
 p = Point(3, 4)
@@ -1016,24 +1016,24 @@ Arithmetic and comparison operators map directly to dunders:
 
 ```python
 class Vector:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+   def __init__(self, x, y):
+      self.x = x
+      self.y = y
 
-    def __add__(self, other):
-        return Vector(self.x + other.x, self.y + other.y)
+   def __add__(self, other):
+      return Vector(self.x + other.x, self.y + other.y)
 
-    def __mul__(self, scalar):
-        return Vector(self.x * scalar, self.y * scalar)
+   def __mul__(self, scalar):
+      return Vector(self.x * scalar, self.y * scalar)
 
-    def __rmul__(self, scalar):
-        return self.__mul__(scalar)  # makes 3 * v work, not just v * 3
+   def __rmul__(self, scalar):
+      return self.__mul__(scalar)  # makes 3 * v work, not just v * 3
 
-    def __eq__(self, other):
-        return self.x == other.x and self.y == other.y
+   def __eq__(self, other):
+      return self.x == other.x and self.y == other.y
 
-    def __repr__(self):
-        return f"Vector({self.x}, {self.y})"
+   def __repr__(self):
+      return f"Vector({self.x}, {self.y})"
 
 
 v = Vector(1, 2)
@@ -1068,17 +1068,17 @@ Implement these to make an object behave like a sequence or mapping:
 
 ```python
 class Countdown:
-    def __init__(self, start):
-        self.data = list(range(start, -1, -1))
+   def __init__(self, start):
+      self.data = list(range(start, -1, -1))
 
-    def __len__(self):
-        return len(self.data)  # len(obj)
+   def __len__(self):
+      return len(self.data)  # len(obj)
 
-    def __getitem__(self, index):
-        return self.data[index]  # obj[i] and slicing
+   def __getitem__(self, index):
+      return self.data[index]  # obj[i] and slicing
 
-    def __contains__(self, value):
-        return value in self.data  # `in` operator
+   def __contains__(self, value):
+      return value in self.data  # `in` operator
 
 
 c = Countdown(5)
@@ -1096,19 +1096,19 @@ If you implement `__getitem__` with integer indices starting at 0, Python will a
 
 ```python
 class CountUp:
-    def __init__(self, limit):
-        self.limit = limit
-        self.current = 0
+   def __init__(self, limit):
+      self.limit = limit
+      self.current = 0
 
-    def __iter__(self):
-        return self
+   def __iter__(self):
+      return self
 
-    def __next__(self):
-        if self.current >= self.limit:
-            raise StopIteration
-        value = self.current
-        self.current += 1
-        return value
+   def __next__(self):
+      if self.current >= self.limit:
+         raise StopIteration
+      value = self.current
+      self.current += 1
+      return value
 
 
 list(CountUp(4))  # [0, 1, 2, 3]
@@ -1120,24 +1120,24 @@ The downside: iterating the same object twice picks up where the first left off.
 
 ```python
 class NumberRange:
-    def __init__(self, start, stop):
-        self.start = start
-        self.stop = stop
+   def __init__(self, start, stop):
+      self.start = start
+      self.stop = stop
 
-    def __iter__(self):
-        return iter(range(self.start, self.stop))  # fresh iterator each time
+   def __iter__(self):
+      return iter(range(self.start, self.stop))  # fresh iterator each time
 ```
 
 For complex iteration logic, a generator inside `__iter__` is the most readable approach:
 
 ```python
 class EvenNumbers:
-    def __init__(self, limit):
-        self.limit = limit
+   def __init__(self, limit):
+      self.limit = limit
 
-    def __iter__(self):
-        for n in range(0, self.limit, 2):
-            yield n  # __iter__ becomes a generator; no __next__ needed
+   def __iter__(self):
+      for n in range(0, self.limit, 2):
+         yield n  # __iter__ becomes a generator; no __next__ needed
 ```
 
 #### `__call__`
@@ -1145,11 +1145,11 @@ class EvenNumbers:
 
 ```python
 class Multiplier:
-    def __init__(self, factor):
-        self.factor = factor
+   def __init__(self, factor):
+      self.factor = factor
 
-    def __call__(self, x):
-        return x * self.factor
+   def __call__(self, x):
+      return x * self.factor
 
 
 triple = Multiplier(3)
@@ -1161,15 +1161,15 @@ triple(7)  # 21 — called like a function
 
 ```python
 class Bag:
-    def __init__(self, items):
-        self.items = items
+   def __init__(self, items):
+      self.items = items
 
-    def __len__(self):
-        return len(self.items)
+   def __len__(self):
+      return len(self.items)
 
 
 if not Bag([]):
-    print("empty")  # prints: empty
+   print("empty")  # prints: empty
 ```
 
 #### Context Managers from the Inside
@@ -1180,18 +1180,18 @@ import time
 
 
 class Timer:
-    def __enter__(self):
-        self.start = time.perf_counter()
-        return self  # this is what `as t` receives
+   def __enter__(self):
+      self.start = time.perf_counter()
+      return self  # this is what `as t` receives
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        elapsed = time.perf_counter() - self.start
-        print(f"elapsed: {elapsed:.4f}s")
-        return False  # False: let exceptions propagate
+   def __exit__(self, exc_type, exc_val, exc_tb):
+      elapsed = time.perf_counter() - self.start
+      print(f"elapsed: {elapsed:.4f}s")
+      return False  # False: let exceptions propagate
 
 
 with Timer():
-    sum(range(1_000_000))
+   sum(range(1_000_000))
 # elapsed: 0.0187s
 ```
 
@@ -1205,13 +1205,13 @@ from contextlib import contextmanager
 
 @contextmanager
 def timer():
-    start = time.perf_counter()
-    yield  # body of the with block runs here
-    print(f"elapsed: {time.perf_counter() - start:.4f}s")
+   start = time.perf_counter()
+   yield  # body of the with block runs here
+   print(f"elapsed: {time.perf_counter() - start:.4f}s")
 
 
 with timer():
-    sum(range(1_000_000))
+   sum(range(1_000_000))
 ```
 
 #### Quick Reference
@@ -1243,12 +1243,12 @@ import math
 
 
 class Circle:
-    def __init__(self, radius):
-        self.radius = radius
+   def __init__(self, radius):
+      self.radius = radius
 
-    @property
-    def area(self):
-        return math.pi * self.radius**2
+   @property
+   def area(self):
+      return math.pi * self.radius**2
 
 
 c = Circle(5)
@@ -1261,22 +1261,22 @@ To allow setting and deleting, add a setter with the same name:
 
 ```python
 class Temperature:
-    def __init__(self, celsius):
-        self._celsius = celsius  # _celsius is the private backing attribute
+   def __init__(self, celsius):
+      self._celsius = celsius  # _celsius is the private backing attribute
 
-    @property
-    def celsius(self):
-        return self._celsius
+   @property
+   def celsius(self):
+      return self._celsius
 
-    @celsius.setter
-    def celsius(self, value):
-        if value < -273.15:
-            raise ValueError("temperature below absolute zero")
-        self._celsius = value
+   @celsius.setter
+   def celsius(self, value):
+      if value < -273.15:
+         raise ValueError("temperature below absolute zero")
+      self._celsius = value
 
-    @property
-    def fahrenheit(self):  # read-only: no setter defined
-        return self._celsius * 9 / 5 + 32
+   @property
+   def fahrenheit(self):  # read-only: no setter defined
+      return self._celsius * 9 / 5 + 32
 
 
 t = Temperature(25)
@@ -1293,22 +1293,20 @@ A class method receives the **class** as its first argument (`cls`) instead of t
 
 ```python
 class Point:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+   def __init__(self, x, y):
+      self.x = x
+      self.y = y
 
-    @classmethod
-    def from_tuple(cls, t):
-        return cls(
-            t[0], t[1]
-        )  # cls(...) instead of Point(...) — important for subclasses
+   @classmethod
+   def from_tuple(cls, t):
+      return cls(t[0], t[1])  # cls(...) instead of Point(...) — important for subclasses
 
-    @classmethod
-    def origin(cls):
-        return cls(0, 0)
+   @classmethod
+   def origin(cls):
+      return cls(0, 0)
 
-    def __repr__(self):
-        return f"Point({self.x}, {self.y})"
+   def __repr__(self):
+      return f"Point({self.x}, {self.y})"
 
 
 p1 = Point.from_tuple((3, 4))  # Point(3, 4)
@@ -1322,9 +1320,9 @@ A static method has no implicit first argument — no `self`, no `cls`. It is an
 
 ```python
 class MathUtils:
-    @staticmethod
-    def clamp(value, lo, hi):
-        return max(lo, min(hi, value))
+   @staticmethod
+   def clamp(value, lo, hi):
+      return max(lo, min(hi, value))
 
 
 MathUtils.clamp(15, 0, 10)  # 10
@@ -1343,18 +1341,18 @@ A static method could equally be a module-level function. You put it in the clas
 ### Inheritance
 ```python
 class Shape:
-    def area(self):
-        raise NotImplementedError
+   def area(self):
+      raise NotImplementedError
 
 
 class Circle(Shape):
-    def __init__(self, radius):
-        self.radius = radius
+   def __init__(self, radius):
+      self.radius = radius
 
-    def area(self):
-        import math
+   def area(self):
+      import math
 
-        return math.pi * self.radius**2
+      return math.pi * self.radius**2
 ```
 
 Python supports multiple inheritance. Unlike C++, there is no `virtual` keyword: all method calls are dynamically dispatched by default.
@@ -1365,20 +1363,20 @@ Python supports multiple inheritance. Unlike C++, there is no `virtual` keyword:
 
 ```python
 class Animal:
-    def __init__(self, name):
-        self.name = name
+   def __init__(self, name):
+      self.name = name
 
-    def describe(self):
-        return f"I am {self.name}"
+   def describe(self):
+      return f"I am {self.name}"
 
 
 class Dog(Animal):
-    def __init__(self, name, breed):
-        super().__init__(name)  # run Animal.__init__ first
-        self.breed = breed  # then add Dog-specific state
+   def __init__(self, name, breed):
+      super().__init__(name)  # run Animal.__init__ first
+      self.breed = breed  # then add Dog-specific state
 
-    def describe(self):
-        return f"{super().describe()}, a {self.breed}"
+   def describe(self):
+      return f"{super().describe()}, a {self.breed}"
 
 
 d = Dog("Rex", "Labrador")
@@ -1408,23 +1406,23 @@ Multiple inheritance means a class can list more than one parent:
 
 ```python
 class A:
-    def greet(self):
-        return "A"
+   def greet(self):
+      return "A"
 
 
 class B(A):
-    def greet(self):
-        return f"B, {super().greet()}"
+   def greet(self):
+      return f"B, {super().greet()}"
 
 
 class C(A):
-    def greet(self):
-        return f"C, {super().greet()}"
+   def greet(self):
+      return f"C, {super().greet()}"
 
 
 class D(B, C):
-    def greet(self):
-        return f"D, {super().greet()}"
+   def greet(self):
+      return f"D, {super().greet()}"
 ```
 
 This is the classic **diamond problem**: `D` inherits from `B` and `C`, which both inherit from `A`. Without careful ordering, `A.greet()` could be called twice.
@@ -1450,13 +1448,13 @@ For `super()` to work correctly across the full MRO, every class in the chain mu
 
 ```python
 class LoggingMixin:
-    def __init__(self, *args, **kwargs):
-        print(f"creating {self.__class__.__name__}")
-        super().__init__(*args, **kwargs)  # pass everything up the chain
+   def __init__(self, *args, **kwargs):
+      print(f"creating {self.__class__.__name__}")
+      super().__init__(*args, **kwargs)  # pass everything up the chain
 
 
 class TrackedDog(LoggingMixin, Dog):
-    pass
+   pass
 
 
 d = TrackedDog("Spot", "Beagle")
@@ -1475,9 +1473,9 @@ Python has no `private` or `protected` keywords. Convention uses a leading under
 
 ```python
 class Cache:
-    def __init__(self):
-        self._data = {}  # by convention, internal
-        self.__secret = "x"  # name-mangled to _Cache__secret: harder to reach
+   def __init__(self):
+      self._data = {}  # by convention, internal
+      self.__secret = "x"  # name-mangled to _Cache__secret: harder to reach
 ```
 
 The language does not enforce these conventions. "We are all adults here" is the cultural attitude.
@@ -1491,8 +1489,8 @@ from dataclasses import dataclass
 
 @dataclass
 class Point:
-    x: float
-    y: float
+   x: float
+   y: float
 
 
 p = Point(3.0, 4.0)
@@ -1506,30 +1504,30 @@ Python uses exceptions. Errors are raised with `raise` and caught with `try / ex
 
 ```python
 def divide(a, b):
-    if b == 0:
-        raise ValueError("cannot divide by zero")
-    return a / b
+   if b == 0:
+      raise ValueError("cannot divide by zero")
+   return a / b
 
 
 try:
-    result = divide(10, 0)
+   result = divide(10, 0)
 except ValueError as e:
-    print(f"error: {e}")
+   print(f"error: {e}")
 except ZeroDivisionError:
-    print("division by zero")
+   print("division by zero")
 else:
-    print(f"result: {result}")  # runs only if no exception was raised
+   print(f"result: {result}")  # runs only if no exception was raised
 finally:
-    print("always runs")  # cleanup: always executes, exception or not
+   print("always runs")  # cleanup: always executes, exception or not
 ```
 
 Exceptions are classes. The [standard library](https://docs.python.org/3/library/index.html){target="_blank" rel="noopener noreferrer"} defines a hierarchy; catching a base class catches all its subclasses:
 
 ```python
 try:
-    f = open("data.txt")
+   f = open("data.txt")
 except OSError as e:  # catches FileNotFoundError, PermissionError, etc.
-    print(e)
+   print(e)
 ```
 
 ### Context Managers
@@ -1537,12 +1535,12 @@ The `with` statement ensures cleanup happens even if an exception is raised. It 
 
 ```python
 with open("data.txt") as f:
-    content = f.read()
+   content = f.read()
 # file is closed here, regardless of whether an exception occurred
 
 # multiple resources in one statement
 with open("input.txt") as src, open("output.txt", "w") as dst:
-    dst.write(src.read())
+   dst.write(src.read())
 ```
 
 Any object implementing `__enter__` and `__exit__` can be used as a context manager. The [standard library](https://docs.python.org/3/library/index.html){target="_blank" rel="noopener noreferrer"} provides them for files, locks, database connections, and more.
@@ -1579,15 +1577,15 @@ import asyncio
 
 
 async def fetch_data(name: str) -> str:
-    print(f"starting: {name}")
-    await asyncio.sleep(1)  # simulates a network call; suspends here
-    print(f"finished: {name}")
-    return f"data from {name}"
+   print(f"starting: {name}")
+   await asyncio.sleep(1)  # simulates a network call; suspends here
+   print(f"finished: {name}")
+   return f"data from {name}"
 
 
 async def main():
-    result = await fetch_data("example")
-    print(result)
+   result = await fetch_data("example")
+   print(result)
 
 
 asyncio.run(main())  # creates the event loop, runs main, closes loop
@@ -1603,18 +1601,18 @@ import asyncio
 
 
 async def fetch(name: str, delay: float) -> str:
-    await asyncio.sleep(delay)
-    return f"{name} done"
+   await asyncio.sleep(delay)
+   return f"{name} done"
 
 
 async def main():
-    # all three run concurrently: total time ~2s, not ~4s
-    results = await asyncio.gather(
-        fetch("a", 2.0),
-        fetch("b", 1.5),
-        fetch("c", 0.5),
-    )
-    print(results)  # ['a done', 'b done', 'c done']
+   # all three run concurrently: total time ~2s, not ~4s
+   results = await asyncio.gather(
+      fetch("a", 2.0),
+      fetch("b", 1.5),
+      fetch("c", 0.5),
+   )
+   print(results)  # ['a done', 'b done', 'c done']
 
 
 asyncio.run(main())
@@ -1627,14 +1625,14 @@ asyncio.run(main())
 
 ```python
 async def main():
-    task = asyncio.create_task(fetch("background", 2.0))
+   task = asyncio.create_task(fetch("background", 2.0))
 
-    # event loop runs the task in the background while we do other work
-    await asyncio.sleep(0.5)
-    print("did other work")
+   # event loop runs the task in the background while we do other work
+   await asyncio.sleep(0.5)
+   print("did other work")
 
-    result = await task  # now wait for the background task to finish
-    print(result)
+   result = await task  # now wait for the background task to finish
+   print(result)
 ```
 
 The distinction from `gather`: `create_task` gives you a handle to one coroutine so you can await it on your own schedule. `gather` groups coroutines and waits for all of them together.
@@ -1645,12 +1643,12 @@ Context managers and iterators can also be async, allowing I/O to happen inside 
 ```python
 # async context manager: resources that require async setup or teardown
 async with aiohttp.ClientSession() as session:
-    async with session.get("http://example.com") as response:
-        text = await response.text()
+   async with session.get("http://example.com") as response:
+      text = await response.text()
 
 # async for: consuming an async source line by line
 async for line in async_stream:
-    process(line)
+   process(line)
 ```
 
 Any class implementing `__aenter__` and `__aexit__` is an async context manager. Any class implementing `__aiter__` and `__anext__` is an async iterable. These mirror the synchronous dunder methods exactly.
@@ -1660,11 +1658,11 @@ You cannot `await` inside a regular (non-async) function. Async calls can only c
 
 ```python
 def regular():
-    await something()  # SyntaxError
+   await something()  # SyntaxError
 
 
 async def async_fn():
-    await something()  # fine
+   await something()  # fine
 ```
 
 This creates a hard boundary: once you use `async` in one part of a program, it tends to propagate upward through every caller. Plan for this before adopting async in a large codebase.
@@ -1682,16 +1680,16 @@ import requests
 
 
 def fetch(url):
-    response = requests.get(url)  # blocking — fine in a thread
-    print(response.status_code)
+   response = requests.get(url)  # blocking — fine in a thread
+   print(response.status_code)
 
 
 urls = ["http://example.com", "http://example.org", "http://example.net"]
 threads = [threading.Thread(target=fetch, args=(url,)) for url in urls]
 for t in threads:
-    t.start()
+   t.start()
 for t in threads:
-    t.join()  # wait for all to complete
+   t.join()  # wait for all to complete
 ```
 
 Threads share memory, so shared mutable state requires locks (`threading.Lock`). This is the classic hazard: threads are easy to start and easy to get wrong.
@@ -1704,11 +1702,11 @@ from multiprocessing import Pool
 
 
 def compute(x):
-    return x * x
+   return x * x
 
 
 with Pool(processes=4) as pool:
-    results = pool.map(compute, range(100))  # distributed across 4 processes
+   results = pool.map(compute, range(100))  # distributed across 4 processes
 ```
 
 `Pool.map` distributes work across processes and collects results. The overhead of spawning processes and serializing data between them is real. This pays off only when the per-item computation is substantial.
@@ -1788,9 +1786,9 @@ import numpy as np
 
 
 def double_elements(my_list: list[float]) -> np.ndarray:
-    """Vectorized doubling of list elements."""
-    arr: np.ndarray = np.array(my_list)
-    return arr * 2
+   """Vectorized doubling of list elements."""
+   arr: np.ndarray = np.array(my_list)
+   return arr * 2
 ```
 
 Vectorized operations apply a single instruction to multiple data points (**SIMD**) at the C level, bypassing the Python interpreter entirely for the bulk of the work.
@@ -1866,8 +1864,8 @@ For large files or line-by-line work, use `p.open()`:
 
 ```python
 with p.open(encoding="utf-8") as f:
-    for line in f:
-        process(line)
+   for line in f:
+      process(line)
 ```
 
 `p.open(...)` is equivalent to `open(str(p), ...)` but keeps the path as a `Path` object throughout rather than converting to a string.
@@ -1886,13 +1884,13 @@ Path("output/results/data.csv").touch()  # create empty file or update timestamp
 src = Path("src")
 
 for item in src.iterdir():  # immediate contents
-    print(item)
+   print(item)
 
 for f in src.glob("*.py"):  # pattern match in this directory
-    print(f)
+   print(f)
 
 for f in src.rglob("*.py"):  # recursive: all .py files in the entire tree
-    print(f)
+   print(f)
 ```
 
 #### Modifying and Resolving Paths
@@ -1960,7 +1958,7 @@ from collections import defaultdict
 groups = defaultdict(list)  # factory is any zero-argument callable
 
 for word in ["apple", "banana", "avocado", "blueberry", "apricot"]:
-    groups[word[0]].append(word)  # no KeyError on first access for a new key
+   groups[word[0]].append(word)  # no KeyError on first access for a new key
 
 # {'a': ['apple', 'avocado', 'apricot'], 'b': ['banana', 'blueberry']}
 ```
@@ -2017,7 +2015,7 @@ d.rotate(-1)  # shift left by 1:  [1, 2, 3]
 ```python
 recent = deque(maxlen=5)
 for event in stream:
-    recent.append(event)  # always holds the last 5 events
+   recent.append(event)  # always holds the last 5 events
 ```
 
 Rust equivalent: `std::collections::VecDeque<T>`.
@@ -2038,9 +2036,9 @@ from functools import lru_cache
 
 @lru_cache(maxsize=128)
 def fibonacci(n):
-    if n < 2:
-        return n
-    return fibonacci(n - 1) + fibonacci(n - 2)
+   if n < 2:
+      return n
+   return fibonacci(n - 1) + fibonacci(n - 2)
 
 
 fibonacci(35)  # fast: each subproblem is computed only once
@@ -2056,7 +2054,7 @@ from functools import cache
 
 @cache
 def factorial(n):
-    return 1 if n == 0 else n * factorial(n - 1)
+   return 1 if n == 0 else n * factorial(n - 1)
 ```
 
 Both require that all arguments be **hashable**. Lists and dicts cannot be passed to a cached function because they cannot be used as dict keys.
@@ -2069,7 +2067,7 @@ from functools import partial
 
 
 def power(base, exponent):
-    return base**exponent
+   return base**exponent
 
 
 square = partial(power, exponent=2)
@@ -2127,15 +2125,15 @@ from functools import total_ordering
 
 @total_ordering
 class Version:
-    def __init__(self, major, minor):
-        self.major = major
-        self.minor = minor
+   def __init__(self, major, minor):
+      self.major = major
+      self.minor = minor
 
-    def __eq__(self, other):
-        return (self.major, self.minor) == (other.major, other.minor)
+   def __eq__(self, other):
+      return (self.major, self.minor) == (other.major, other.minor)
 
-    def __lt__(self, other):
-        return (self.major, self.minor) < (other.major, other.minor)
+   def __lt__(self, other):
+      return (self.major, self.minor) < (other.major, other.minor)
 
 
 v1 = Version(1, 9)
@@ -2157,18 +2155,18 @@ from functools import wraps
 
 
 def log_calls(func):
-    @wraps(func)  # copies __name__, __doc__, __module__, etc.
-    def wrapper(*args, **kwargs):
-        print(f"calling {func.__name__}")
-        return func(*args, **kwargs)
+   @wraps(func)  # copies __name__, __doc__, __module__, etc.
+   def wrapper(*args, **kwargs):
+      print(f"calling {func.__name__}")
+      return func(*args, **kwargs)
 
-    return wrapper
+   return wrapper
 
 
 @log_calls
 def add(a, b):
-    """Add two numbers."""
-    return a + b
+   """Add two numbers."""
+   return a + b
 
 
 add.__name__  # "add"              — correct, thanks to @wraps

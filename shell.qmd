@@ -553,11 +553,11 @@ These are totally cool, and sorely needed. They are small functions that extract
 
 The name to know is **modifier**, not "filename expansion." Modifiers come from history expansion, where `!$:h` means "last argument of the previous command, minus its final component," and zsh made them available in two more places. That history is why the reference below has a "works in" column: a few modifiers only ever made sense in the history context and were never wired up for parameters.
 
-| Context               | Form                | Example              |
-|-----------------------|---------------------|----------------------|
-| History expansion     | `!<event>:<mod>`    | `!$:h`               |
-| Parameter expansion   | `${name:<mod>}`     | `${f:h}`             |
-| Filename generation   | `*.c(:<mod>)`       | `*.c(:r)`            |
+| Context             | Form             | Example   |
+|---------------------|------------------|-----------|
+| History expansion   | `!<event>:<mod>` | `!$:h`    |
+| Parameter expansion | `${name:<mod>}`  | `${f:h}`  |
+| Filename generation | `*.c(:<mod>)`    | `*.c(:r)` |
 
 ::: {.callout-warning title="Parameter expansion requires the braces"}
 Bare `$f:h` does **not** apply the modifier. It expands `$f` and then leaves the literal characters `:h` sitting on the command line. Modifiers attach without braces only to a history reference. For a variable, always write `${f:h}`.
@@ -570,12 +570,12 @@ Bare `$f:h` does **not** apply the modifier. It expands `$f` and then leaves the
 
 These four are the ones you will actually reach for. They split a path at the last `/` or the last `.`:
 
-| Modifier | Keeps                         | Analogous to |
-|----------|-------------------------------|--------------|
-| `h`      | the **head**: drop last component | `dirname`    |
+| Modifier | Keeps                                     | Analogous to |
+|----------|-------------------------------------------|--------------|
+| `h`      | the **head**: drop last component         | `dirname`    |
 | `t`      | the **tail**: drop all leading components | `basename`   |
-| `r`      | the **root**: drop the extension  | |
-| `e`      | the **extension** alone           | |
+| `r`      | the **root**: drop the extension          |              |
+| `e`      | the **extension** alone                   |              |
 
 ```zsh
 f=/usr/local/bin/report.txt
@@ -750,27 +750,27 @@ Two modifiers in the manual's list cannot be used in `${...}` at all:
 - **`x`** is like `q` but breaks into words at whitespace. In a parameter expansion it is not merely a no-op, it is a hard error: `${f:x}` aborts with `unrecognized modifier 'x'`.
 
 #### Quick Reference
-| Modifier    | Effect                                        | Works in           |
-|-------------|-----------------------------------------------|--------------------|
-| `a`         | absolute path, resolving `.` and `..`         | all                |
-| `A`         | as `a`, and resolve symlinks                  | all                |
-| `c`         | resolve a command name via `$PATH`            | all                |
-| `e`         | the extension alone                           | all                |
-| `h`         | the head, like `dirname`                      | all                |
-| `l`         | lowercase                                     | all                |
-| `q`         | add quoting                                   | all                |
-| `Q`         | strip one level of quoting                    | all                |
-| `r`         | the root, extension removed                   | all                |
-| `s/l/r/`    | substitute first match (`gs/l/r/` for all)    | all                |
-| `&`         | repeat the previous `s`                       | all                |
-| `t`         | the tail, like `basename`                     | all                |
-| `u`         | uppercase                                     | all                |
-| `f`         | repeat next modifier to a fixed point         | parameter, glob    |
-| `F:n:`      | repeat next modifier at most `n` times        | parameter, glob    |
-| `w`         | apply next modifier per whitespace word       | parameter, glob    |
-| `W:sep:`    | apply next modifier per `sep`-separated field | parameter, glob    |
-| `p`         | print without executing                       | history only       |
-| `x`         | as `q`, splitting at whitespace               | history only       |
+| Modifier | Effect                                        | Works in        |
+|----------|-----------------------------------------------|-----------------|
+| `a`      | absolute path, resolving `.` and `..`         | all             |
+| `A`      | as `a`, and resolve symlinks                  | all             |
+| `c`      | resolve a command name via `$PATH`            | all             |
+| `e`      | the extension alone                           | all             |
+| `h`      | the head, like `dirname`                      | all             |
+| `l`      | lowercase                                     | all             |
+| `q`      | add quoting                                   | all             |
+| `Q`      | strip one level of quoting                    | all             |
+| `r`      | the root, extension removed                   | all             |
+| `s/l/r/` | substitute first match (`gs/l/r/` for all)    | all             |
+| `&`      | repeat the previous `s`                       | all             |
+| `t`      | the tail, like `basename`                     | all             |
+| `u`      | uppercase                                     | all             |
+| `f`      | repeat next modifier to a fixed point         | parameter, glob |
+| `F:n:`   | repeat next modifier at most `n` times        | parameter, glob |
+| `w`      | apply next modifier per whitespace word       | parameter, glob |
+| `W:sep:` | apply next modifier per `sep`-separated field | parameter, glob |
+| `p`      | print without executing                       | history only    |
+| `x`      | as `q`, splitting at whitespace               | history only    |
 
 ### Parameter Expansion
 ::: {.subheading}

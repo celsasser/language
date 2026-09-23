@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-09-05">
+<meta name="dcterms.date" content="2026-09-23">
 
 <title>Git Reference Manual – Computer Language Notebook</title>
 <style>
@@ -474,7 +474,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 5, 2026</p>
+      <p class="date">September 23, 2026</p>
     </div>
   </div>
   
@@ -919,13 +919,15 @@ Note
 </div>
 <p>When a standard <code>git blame</code> shows a generic “Refactor formatting” commit instead of the actual author of the logic, the file’s ancestry must be traced backwards.</p>
 <ol type="1">
-<li><strong>Locate the line range</strong> of interest in your file (e.g., lines 45 through 60 in <code>analysis.qmd</code>).</li>
-<li><strong>Execute the line-log search</strong> to filter the DAG down to only modifications affecting those lines: <code>bash  git log -L 45,60:analysis.qmd --oneline</code></li>
-<li><strong>Identify the root commit</strong> at the bottom of this generated log.</li>
-<li>If the code was introduced from another file entirely, run a <strong>pickaxe search</strong> using a signature keyword or definition from that snippet across the whole history: <code>bash  git log -S "void calculate_weights" -p --raw</code></li>
+<li><p><strong>Locate the line range</strong> of interest in your file (e.g., lines 45 through 60 in <code>analysis.qmd</code>).</p></li>
+<li><p><strong>Execute the line-log search</strong> to filter the DAG down to only modifications affecting those lines:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> log <span class="at">-L</span> 45,60:analysis.qmd <span class="at">--oneline</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Identify the root commit</strong> at the bottom of this generated log.</p></li>
+<li><p>If the code was introduced from another file entirely, run a <strong>pickaxe search</strong> using a signature keyword or definition from that snippet across the whole history:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> log <span class="at">-S</span> <span class="st">"void calculate_weights"</span> <span class="at">-p</span> <span class="at">--raw</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ol>
 <p>If <code>git blame</code> keeps stopping at the same formatting commit, blame its parent instead to step past the noise and find the commit that actually wrote the logic:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> blame <span class="op">&lt;</span>formatting_commit<span class="op">&gt;</span>^ <span class="at">--</span> analysis.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> blame <span class="op">&lt;</span>formatting_commit<span class="op">&gt;</span>^ <span class="at">--</span> analysis.qmd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="managing-diverged-branches" class="level2">
@@ -951,12 +953,12 @@ Note
 <p>The fork in the road</p>
 </div>
 <p>Before you can integrate divergent branches, it helps to answer a prior question: <em>where did they split?</em> That commit, their most recent common ancestor (commit <code>A</code> in the diagrams above), is what <code>git merge-base</code> finds.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> merge-base main feature      <span class="co"># the commit where the two diverged</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> merge-base main feature      <span class="co"># the commit where the two diverged</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>From there, two cousins answer “what’s different?”:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 32%">
-<col style="width: 67%">
+<col style="width: 36%">
+<col style="width: 63%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1043,16 +1045,20 @@ Note
 </div>
 <p>When your local branch cannot be pushed because the remote tracking branch has new work, use a rebase-driven alignment to avoid creating unnecessary merge loops.</p>
 <ol type="1">
-<li><strong>Fetch current upstream state</strong> without shifting your HEAD pointer: <code>bash  git fetch origin</code></li>
-<li><strong>Initiate the rebase</strong> on top of the updated remote branch (e.g., <code>main</code>): <code>bash  git rebase origin/main</code></li>
-<li><strong>Handle Conflicts Immediately:</strong> If Git pauses due to conflicting edits, it will leave the markers (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>) directly in your source files.
+<li><p><strong>Fetch current upstream state</strong> without shifting your HEAD pointer:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> fetch origin</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Initiate the rebase</strong> on top of the updated remote branch (e.g., <code>main</code>):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rebase origin/main</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Handle Conflicts Immediately:</strong> If Git pauses due to conflicting edits, it will leave the markers (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>) directly in your source files.</p>
 <ul>
 <li>Open the affected file.</li>
 <li>The top block (between <code>HEAD</code> and <code>=======</code>) represents the upstream state from <code>main</code>.</li>
 <li>The bottom block (between <code>=======</code> and your commit hash) represents your local changes.</li>
 <li>Edit the file to unify the logic, removing all conflict markers.</li>
 </ul></li>
-<li><strong>Stage and Progress:</strong> Do <em>not</em> run a new commit command. Stage the resolved assets and instruct the rebase engine to proceed to your next commit: <code>bash  git add path/to/resolved_file.qmd  git rebase --continue</code></li>
+<li><p><strong>Stage and Progress:</strong> Do <em>not</em> run a new commit command. Stage the resolved assets and instruct the rebase engine to proceed to your next commit:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add path/to/resolved_file.qmd</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rebase <span class="at">--continue</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ol>
 </section>
 </section>
@@ -1121,10 +1127,19 @@ Note
 </div>
 <p>Assume you have made 4 commits locally, but the middle two are intermediate fixes that clutter the project log.</p>
 <ol type="1">
-<li><strong>Launch the interactive editor</strong> targeting the last 4 commits on your current branch: <code>bash  git rebase -i HEAD~4</code></li>
-<li><strong>Analyze the instruction list:</strong> An editor window will open showing your commits chronologically from top to bottom (the reverse of <code>git log</code>). <code>text  pick a1b2c3d Initial data ingestion script  pick e5f6g7h Fix broken file path handling  pick i9j0k1l Typo correction in headers  pick m3n4o5p Complete visualization pipeline</code></li>
-<li><strong>Modify the operations:</strong> Change the instructions to consolidate the intermediate commits into the primary ingestion script. <code>text  pick a1b2c3d Initial data ingestion script  fixup e5f6g7h Fix broken file path handling  fixup i9j0k1l Typo correction in headers  pick m3n4o5p Complete visualization pipeline</code></li>
-<li><strong>Save and Close</strong> the editor. Git will sequentially apply <code>a1b2c3d</code>, merge the structural changes of the next two commits directly into it without changing its intent, and then apply <code>m3n4o5p</code>. Your history is now condensed into two pristine commits.</li>
+<li><p><strong>Launch the interactive editor</strong> targeting the last 4 commits on your current branch:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rebase <span class="at">-i</span> HEAD~4</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Analyze the instruction list:</strong> An editor window will open showing your commits chronologically from top to bottom (the reverse of <code>git log</code>).</p>
+<pre class="text"><code>pick a1b2c3d Initial data ingestion script
+pick e5f6g7h Fix broken file path handling
+pick i9j0k1l Typo correction in headers
+pick m3n4o5p Complete visualization pipeline</code></pre></li>
+<li><p><strong>Modify the operations:</strong> Change the instructions to consolidate the intermediate commits into the primary ingestion script.</p>
+<pre class="text"><code>pick a1b2c3d Initial data ingestion script
+fixup e5f6g7h Fix broken file path handling
+fixup i9j0k1l Typo correction in headers
+pick m3n4o5p Complete visualization pipeline</code></pre></li>
+<li><p><strong>Save and Close</strong> the editor. Git will sequentially apply <code>a1b2c3d</code>, merge the structural changes of the next two commits directly into it without changing its intent, and then apply <code>m3n4o5p</code>. Your history is now condensed into two pristine commits.</p></li>
 </ol>
 </section>
 </section>
@@ -1184,10 +1199,12 @@ Note
 </div>
 <p>A common point of failure occurs when a collaborator updates a submodule reference on a remote branch, and your local workspace falls out of sync after a pull, resulting in modified dirty working directories.</p>
 <ol type="1">
-<li><strong>Pull the latest parent commits:</strong> <code>bash  git pull origin main</code></li>
-<li>Running <code>git status</code> may show the submodule directory as modified or untracked because your local pointer has moved in history, but the physical files in that directory haven’t shifted yet.</li>
-<li><strong>Synchronize the physical files</strong> to match the precise commit hash expected by the parent project: <code>bash  git submodule update --init --recursive</code></li>
-<li><strong>Making edits inside a submodule:</strong> If you need to make changes to the submodule library itself:
+<li><p><strong>Pull the latest parent commits:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull origin main</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>Running <code>git status</code> may show the submodule directory as modified or untracked because your local pointer has moved in history, but the physical files in that directory haven’t shifted yet.</p></li>
+<li><p><strong>Synchronize the physical files</strong> to match the precise commit hash expected by the parent project:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> submodule update <span class="at">--init</span> <span class="at">--recursive</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Making edits inside a submodule:</strong> If you need to make changes to the submodule library itself:</p>
 <ul>
 <li>Change into the submodule directory: <code>cd path/to/submodule</code>.</li>
 <li>Check out an active branch (submodules default to a “detached HEAD” state): <code>git checkout main</code>.</li>
@@ -1249,9 +1266,9 @@ Warning
 <p><code>git clean</code> is deliberately hard to fire by accident. It refuses to do anything without <code>-f</code>, because unlike almost every other Git command it cannot be undone. Two of its flags account for most of the confusion, and they differ only in case. Lowercase <code>-x</code> <em>adds</em> ignored files to the normal sweep, so <code>-fdx</code> takes untracked files and build artifacts together. Uppercase <code>-X</code> <em>restricts</em> the sweep to only ignored files, leaving anything untracked-but-not-ignored alone. For a Quarto project, <code>-fdX</code> is the gentle one: it clears <code>_site/</code> and <code>.quarto/</code> while your un-added draft survives.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 22%">
-<col style="width: 18%">
-<col style="width: 58%">
+<col style="width: 24%">
+<col style="width: 23%">
+<col style="width: 52%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1313,8 +1330,8 @@ Warning
 <table class="caption-top table">
 <colgroup>
 <col style="width: 22%">
-<col style="width: 30%">
-<col style="width: 46%">
+<col style="width: 28%">
+<col style="width: 50%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1368,8 +1385,8 @@ Warning
 <col style="width: 25%">
 <col style="width: 32%">
 <col style="width: 8%">
-<col style="width: 12%">
-<col style="width: 21%">
+<col style="width: 13%">
+<col style="width: 20%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1408,9 +1425,9 @@ Warning
 <p><code>git revert &lt;hash&gt;</code> is the non-destructive counterpart. Rather than moving the branch pointer backwards, it computes the inverse of a commit and applies it as a <em>new</em> commit on top. History grows instead of shrinking, and no existing hash changes. The rule for choosing between them is about audience, not preference: <code>reset</code> for commits that live only on your machine, <code>revert</code> for anything you have already pushed. Rewriting shared history invalidates everyone else’s hashes, the same hazard spelled out under <a href="#interactive-rebasing">Interactive Rebasing</a>.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 23%">
-<col style="width: 23%">
-<col style="width: 53%">
+<col style="width: 25%">
+<col style="width: 26%">
+<col style="width: 48%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1466,9 +1483,9 @@ Warning
 <p>Branches are cheap to make and easy to forget, so a working repository accumulates them. There are two distinct piles: local branches you created, and remote-tracking refs like <code>origin/feature-x</code> that linger in your repository after the branch was deleted on the server. <code>git fetch --prune</code> handles the second pile; only you can decide about the first.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 20%">
-<col style="width: 23%">
-<col style="width: 55%">
+<col style="width: 21%">
+<col style="width: 26%">
+<col style="width: 51%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1544,7 +1561,7 @@ Note
 <colgroup>
 <col style="width: 21%">
 <col style="width: 24%">
-<col style="width: 53%">
+<col style="width: 54%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1620,9 +1637,9 @@ Note
 <p>This last category is about disk, not content. Every operation you perform writes loose objects into <code>.git/objects</code>, and an active repository accumulates thousands of them along with reflog entries for every pointer movement. Git runs <code>gc</code> automatically when the clutter crosses a threshold, so manual invocation is rarely necessary. It is worth knowing about mostly so you understand what the automatic version is doing to your safety net.</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 22%">
-<col style="width: 26%">
-<col style="width: 51%">
+<col style="width: 21%">
+<col style="width: 29%">
+<col style="width: 48%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1682,27 +1699,44 @@ Warning
 <p>An experiment went sideways. There are edits scattered across a handful of tracked files, some scratch files you created and never added, a <code>_site/</code> directory full of build output, and two local commits that turned out to be a dead end. You want a clean tree, and you want to be sure that nothing worth keeping goes down the drain with the rest.</p>
 <p>The order below matters more than any individual command. <strong>Survey, preserve, then destroy.</strong> Every step that deletes something comes after a step that showed you what would be deleted, because half of these operations have no undo.</p>
 <ol type="1">
-<li><p><strong>Survey before touching anything.</strong> Get the whole picture in one screen: <code>bash  git status --short  git stash list</code> The short format uses two columns. The left column is the index, the right is the working tree, so <code>M</code> means staged, <code>M</code> means modified but unstaged, <code>MM</code> means both, and <code>??</code> means Git has never seen this file. Those <code>??</code> entries are the ones <code>git clean</code> will take. Checking <code>git stash list</code> first is a habit worth having, because it is easy to forget you shelved something last week and then bury it under a new stash.</p></li>
-<li><p><strong>Preview the untracked sweep.</strong> Never run <code>git clean</code> without looking first: <code>bash  git clean -nd  git clean -ndx</code> The first shows what an ordinary sweep takes. The second adds ignored files, so you can see whether <code>_site/</code> and friends are in scope. This is the step that catches the <code>.env</code> file you never committed, or the draft you wrote at midnight and forgot to <code>git add</code>. Read the output properly; it is the only warning you get.</p></li>
-<li><p><strong>Preserve anything ambiguous.</strong> If the dry run surfaced files you are not sure about, or if the tracked edits might be worth revisiting, shelve everything in one move: <code>bash  git stash push -u -m "sideways experiment"</code> The <code>-u</code> is what makes this work as a cleanup tool: it sweeps untracked files into the stash along with your tracked edits. Your working tree comes out clean, but nothing is actually gone. Quite often this single command is the entire cleanup, and steps 4 and 5 become unnecessary.</p></li>
-<li><p><strong>Discard the tracked edits</strong> you are certain about: <code>bash  git restore .</code> Every tracked file goes back to its committed state. When only some of your changes are garbage, <code>git restore -p &lt;path&gt;</code> walks you through hunk by hunk so you can keep the good parts.</p></li>
-<li><p><strong>Sweep the untracked files</strong>, now that you have read the dry run: <code>bash  git clean -fd</code> Or <code>git clean -fdX</code> if you only want build artifacts gone and would rather keep your un-added scratch files. This is the point of no return; the dry run in step 2 was the whole reason it is safe.</p></li>
-<li><p><strong>Drop the unwanted commits.</strong> Two dead-end commits, and nothing has been pushed: <code>bash  git reset --soft HEAD~2</code> <code>--soft</code> uncommits while leaving the content staged, which is the right choice if you suspect there was one good idea buried in those two commits and you want to reshape it into a single clean one. If the whole detour was worthless, <code>git reset --hard HEAD~2</code> discards it outright. Unlike steps 4 and 5, this one is reversible: the commits are still in the database and the reflog knows where they were.</p></li>
-<li><p><strong>Verify.</strong> Confirm the tree and history both landed where you intended: <code>bash  git status  git log --oneline -5</code> <code>git status</code> should report a clean working tree with nothing to commit, and the log should show your branch tip where you expect it.</p></li>
+<li><p><strong>Survey before touching anything.</strong> Get the whole picture in one screen:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> status <span class="at">--short</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> stash list</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The short format uses two columns. The left column is the index, the right is the working tree, so <code>M</code> means staged, <code>M</code> means modified but unstaged, <code>MM</code> means both, and <code>??</code> means Git has never seen this file. Those <code>??</code> entries are the ones <code>git clean</code> will take. Checking <code>git stash list</code> first is a habit worth having, because it is easy to forget you shelved something last week and then bury it under a new stash.</p></li>
+<li><p><strong>Preview the untracked sweep.</strong> Never run <code>git clean</code> without looking first:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clean <span class="at">-nd</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clean <span class="at">-ndx</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The first shows what an ordinary sweep takes. The second adds ignored files, so you can see whether <code>_site/</code> and friends are in scope. This is the step that catches the <code>.env</code> file you never committed, or the draft you wrote at midnight and forgot to <code>git add</code>. Read the output properly; it is the only warning you get.</p></li>
+<li><p><strong>Preserve anything ambiguous.</strong> If the dry run surfaced files you are not sure about, or if the tracked edits might be worth revisiting, shelve everything in one move:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> stash push <span class="at">-u</span> <span class="at">-m</span> <span class="st">"sideways experiment"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>-u</code> is what makes this work as a cleanup tool: it sweeps untracked files into the stash along with your tracked edits. Your working tree comes out clean, but nothing is actually gone. Quite often this single command is the entire cleanup, and steps 4 and 5 become unnecessary.</p></li>
+<li><p><strong>Discard the tracked edits</strong> you are certain about:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> restore .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Every tracked file goes back to its committed state. When only some of your changes are garbage, <code>git restore -p &lt;path&gt;</code> walks you through hunk by hunk so you can keep the good parts.</p></li>
+<li><p><strong>Sweep the untracked files</strong>, now that you have read the dry run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clean <span class="at">-fd</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Or <code>git clean -fdX</code> if you only want build artifacts gone and would rather keep your un-added scratch files. This is the point of no return; the dry run in step 2 was the whole reason it is safe.</p></li>
+<li><p><strong>Drop the unwanted commits.</strong> Two dead-end commits, and nothing has been pushed:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> reset <span class="at">--soft</span> HEAD~2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>--soft</code> uncommits while leaving the content staged, which is the right choice if you suspect there was one good idea buried in those two commits and you want to reshape it into a single clean one. If the whole detour was worthless, <code>git reset --hard HEAD~2</code> discards it outright. Unlike steps 4 and 5, this one is reversible: the commits are still in the database and the reflog knows where they were.</p></li>
+<li><p><strong>Verify.</strong> Confirm the tree and history both landed where you intended:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> status</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> log <span class="at">--oneline</span> <span class="at">-5</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>git status</code> should report a clean working tree with nothing to commit, and the log should show your branch tip where you expect it.</p></li>
 </ol>
 <section id="if-you-cleaned-too-much" class="level4">
 <h4 class="anchored" data-anchor-id="if-you-cleaned-too-much">If You Cleaned Too Much</h4>
 <p>For anything that was ever committed, relax: <code>git reflog</code> will show you where your branch pointer used to be, and <code>git reset --hard HEAD@{n}</code> puts it back. That recovery is worked through in full in Emergency Recovery Options below. A stash you dropped by accident is also usually salvageable, since stashes are commit objects like any other:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> fsck <span class="at">--unreachable</span> <span class="kw">|</span> <span class="fu">grep</span> commit</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> fsck <span class="at">--unreachable</span> <span class="kw">|</span> <span class="fu">grep</span> commit</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Inspect the candidates with <code>git show &lt;hash&gt;</code> until you find yours, then <code>git stash apply &lt;hash&gt;</code>.</p>
 <p>Files removed by <code>git clean</code> are the exception, and it is worth being blunt about it: they were never in the object database, no blob was ever written for them, and no amount of reflog spelunking will bring them back. Your editor’s local history or a Time Machine backup are the only remaining options. That asymmetry is the entire reason step 2 exists.</p>
 </section>
 <section id="the-clean-slate" class="level4">
 <h4 class="anchored" data-anchor-id="the-clean-slate">The Clean Slate</h4>
 <p>Once you know exactly what you want and the surveying is second nature, the whole routine collapses into three lines:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> stash push <span class="at">-u</span> <span class="at">-m</span> <span class="st">"just in case"</span>   <span class="co"># safety net, costs nothing</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> reset <span class="at">--hard</span> HEAD                 <span class="co"># tracked files back to last commit</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clean <span class="at">-fdx</span>                        <span class="co"># everything untracked and ignored, gone</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> stash push <span class="at">-u</span> <span class="at">-m</span> <span class="st">"just in case"</span>   <span class="co"># safety net, costs nothing</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> reset <span class="at">--hard</span> HEAD                 <span class="co"># tracked files back to last commit</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clean <span class="at">-fdx</span>                        <span class="co"># everything untracked and ignored, gone</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The stash on the first line is what makes the other two comfortable to run. Delete it later with <code>git stash drop</code> once you are confident, or leave it; a forgotten stash costs a few kilobytes and nothing else.</p>
 </section>
 </section>
@@ -1759,10 +1793,16 @@ Warning
 </div>
 <p>If you run a rebase that goes completely wrong, corrupts your code, or deletes crucial commits, you can use the reflog to time-travel back to the moment before the rebase started.</p>
 <ol type="1">
-<li><strong>Query the local reference log:</strong> <code>bash  git reflog</code></li>
-<li><strong>Analyze the output log</strong> from top to bottom (most recent actions are at the top): <code>text  7a8b9c0 HEAD@{0}: rebase (continue): Finished rebase onto origin/main  3d4e5f6 HEAD@{1}: rebase (step): Applied commit "Fixed typo"  1a2b3c4 HEAD@{2}: rebase (start): checkout origin/main  987f65e HEAD@{3}: commit: Ready for production architecture</code></li>
-<li><strong>Locate the entry</strong> right before the rebase mechanics began. In this case, <code>HEAD@{3}</code> represents your pristine local state before the rebase started.</li>
-<li><strong>Hard-reset your branch</strong> back to that safe coordinate: <code>bash  git reset --hard HEAD@{3}</code></li>
+<li><p><strong>Query the local reference log:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> reflog</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p><strong>Analyze the output log</strong> from top to bottom (most recent actions are at the top):</p>
+<pre class="text"><code>7a8b9c0 HEAD@{0}: rebase (continue): Finished rebase onto origin/main
+3d4e5f6 HEAD@{1}: rebase (step): Applied commit "Fixed typo"
+1a2b3c4 HEAD@{2}: rebase (start): checkout origin/main
+987f65e HEAD@{3}: commit: Ready for production architecture</code></pre></li>
+<li><p><strong>Locate the entry</strong> right before the rebase mechanics began. In this case, <code>HEAD@{3}</code> represents your pristine local state before the rebase started.</p></li>
+<li><p><strong>Hard-reset your branch</strong> back to that safe coordinate:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> reset <span class="at">--hard</span> HEAD@{3}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
 </ol>
 <p>Your working directory and commit history are now restored exactly as they existed before the operation.</p>
 

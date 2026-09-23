@@ -4,6 +4,7 @@ title: "Rust: Hands-On"
 
 ## The Basics
 ![](images/rust-00.png){width=2.25in style="float: left; padding: 0 1em"}
+
 A super-partial and brief recap of what we saw in the last chapter.
 
 ### Operators
@@ -100,8 +101,8 @@ let p3 = p1 + p2;  // uses our Add implementation
 
 In the following table we include some of A listers and indicate the operator, the trait (in `std::ops`) and the method signature. For a complete list, see [`std::ops`](https://doc.rust-lang.org/std/ops/index.html#traits){target="_blank" rel="noopener noreferrer"}.
 
-| Operator             | Trait                                                                                    | Method                                                             |
-|----------------------|------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
+| Operator             | Trait                                                                                                              | Method                                                             |
+|----------------------|--------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
 | `+`                  | [`Add`](https://doc.rust-lang.org/std/ops/trait.Add.html){target="_blank" rel="noopener noreferrer"}               | `add(self, rhs: Rhs) -> Self`                                      |
 | `-`                  | [`Sub`](https://doc.rust-lang.org/std/ops/trait.Sub.html){target="_blank" rel="noopener noreferrer"}               | `sub(self, rhs: Rhs) -> Self`                                      |
 | `*`                  | [`Mul`](https://doc.rust-lang.org/std/ops/trait.Mul.html){target="_blank" rel="noopener noreferrer"}               | `mul(self, rhs: Rhs) -> Self`                                      |
@@ -181,8 +182,8 @@ println!("Length: {}", arr.len());  // 5
 
 Rust has two string types. The distinction maps directly onto [owned](#ownership) vs. [borrowed](#borrowing):
 
-| Type                                                                                 | Owned? | Mutable? | Lives on | Analogy                   |
-|--------------------------------------------------------------------------------------|--------|----------|----------|---------------------------|
+| Type                                                                                                           | Owned? | Mutable? | Lives on | Analogy                   |
+|----------------------------------------------------------------------------------------------------------------|--------|----------|----------|---------------------------|
 | [`String`](https://doc.rust-lang.org/std/string/struct.String.html){target="_blank" rel="noopener noreferrer"} | Yes    | Yes      | Heap     | `std::string` in C++      |
 | [`&str`](https://doc.rust-lang.org/std/primitive.str.html){target="_blank" rel="noopener noreferrer"}          | No     | No       | Anywhere | `std::string_view` in C++ |
 
@@ -238,7 +239,6 @@ A slice is a reference to a contiguous subsequence of an array or string. It is 
 | `[a..=b]` | From index `a` through `b` (inclusive)   |
 | `[a..]`   | From index `a` to the end                |
 | `[..b]`   | From the start up to (not including) `b` |
-
 
 Reference elements:
 
@@ -1036,13 +1036,13 @@ These are all flags altering the behavior of the formatter.
 - `-`: Currently not used
 
 - `#`: This flag indicates that the “alternate” form of printing should be used. The alternate forms are:
-	- `#?`: pretty-print the Debug formatting (adds linebreaks and indentation)
-	- `#x`: precedes the argument with a `0x`
-	- `#X`: precedes the argument with a `0x`
-	- `#b`: precedes the argument with a `0b`
-	- `#o`: precedes the argument with a `0o`
+   - `#?`: pretty-print the Debug formatting (adds linebreaks and indentation)
+   - `#x`: precedes the argument with a `0x`
+   - `#X`: precedes the argument with a `0x`
+   - `#b`: precedes the argument with a `0b`
+   - `#o`: precedes the argument with a `0o`
 
-	See  [Formatting traits](https://doc.rust-lang.org/std/fmt/#formatting-traits){target="_blank" rel="noopener noreferrer"} for a description of what the `?`, `x`, `X`, `b`, and `o` flags do.
+   See  [Formatting traits](https://doc.rust-lang.org/std/fmt/#formatting-traits){target="_blank" rel="noopener noreferrer"} for a description of what the `?`, `x`, `X`, `b`, and `o` flags do.
 
 - `0` - This is used to indicate for integer formats that the padding to width should both be done with a 0 character as well as be sign-aware. A format like `{:08}` would yield `00000001` for the integer `1`, while the same format would yield `-0000001` for the integer `-1`. Notice that the negative version has one fewer zero than the positive version. Note that padding zeros are always placed after the sign (if any) and before the digits. When used together with the `#` flag, a similar rule applies: padding zeros are inserted after the prefix but before the digits. The prefix is included in the total width. This flag overrides the fill character and alignment flag.
 
@@ -1056,9 +1056,9 @@ There are three possible ways to specify the desired precision:
 1. An integer `.N`: the integer `N` itself is the precision.
 2. An integer or name followed by dollar sign `.N$`: use the value of format argument `N` (which must be a usize) as the precision. An integer refers to a positional argument, and a name refers to a named argument.
 3. An asterisk
-	- `.*`: `.*` means that this `{...}` is associated with two format inputs rather than one:
-		- If a format string in the fashion of `{:<spec>.*}` is used, then the first input holds the usize precision, and the second holds the value to print.
-		- If a format string in the fashion of `{<arg>:<spec>.*}` is used, then the `<arg>` part refers to the value to print, and the precision is taken like it was specified with an omitted positional parameter (`{}` instead of `{<arg>:}`).
+   - `.*`: `.*` means that this `{...}` is associated with two format inputs rather than one:
+      - If a format string in the fashion of `{:<spec>.*}` is used, then the first input holds the usize precision, and the second holds the value to print.
+      - If a format string in the fashion of `{<arg>:<spec>.*}` is used, then the `<arg>` part refers to the value to print, and the precision is taken like it was specified with an omitted positional parameter (`{}` instead of `{<arg>:}`).
 
 For example, the following calls all print the same thing `Hello x is 0.01000`:
 
@@ -1179,11 +1179,11 @@ Enforced at compile time
 :::
 
 1. You can have *either* one mutable reference *or* any number of immutable references — never both at the same time. The following spells it out:
-	- We can create a single mutable reference to it: `let s = String::from("🙂"); let rm1 = &mut s`.
-	- We cannot create two mutable references to it: `let s = String::from("😡"); let rm1 = &mut s; let rm2 = &mut s;` ❌. Will fail with compilation error.
-	- We cannot create a single mutable reference and an immutable reference: `let s = String::from("😡"); let rm1 = &mut s; let ri1 = &mut s;` ❌. Will fail with compilation error.
-	- We can create one or more immutable references: `let s = String::from("🙂"); let ri1 = &s; let ri2 = &s; let ri3 = &s;`
-	- Note: reference tracking transcends function boundaries; meaning, it doesn't matter that two references exist to the same object in different functions. It's still two references to the same object.
+   - We can create a single mutable reference to it: `let s = String::from("🙂"); let rm1 = &mut s`.
+   - We cannot create two mutable references to it: `let s = String::from("😡"); let rm1 = &mut s; let rm2 = &mut s;` ❌. Will fail with compilation error.
+   - We cannot create a single mutable reference and an immutable reference: `let s = String::from("😡"); let rm1 = &mut s; let ri1 = &mut s;` ❌. Will fail with compilation error.
+   - We can create one or more immutable references: `let s = String::from("🙂"); let ri1 = &s; let ri2 = &s; let ri3 = &s;`
+   - Note: reference tracking transcends function boundaries; meaning, it doesn't matter that two references exist to the same object in different functions. It's still two references to the same object.
 2. References must always be valid (no dangling references).
 
 ```rust
@@ -1575,8 +1575,7 @@ To heap-allocate the entire struct, use `Box::new()`:
 let config = Box::new(Config::default());  // config is a Box<Config> on heap
 ```
 
-**What About Fields That Contain Heap Data?**
-
+##### What About Fields That Contain Heap Data?
 Here's the key insight that trips up C/C++ programmers:
 
 ```rust
@@ -2741,26 +2740,26 @@ The `?` operator can only be used in functions whose return type is compatible w
 1. **Exact error type match.** The simplest case: both the caller and callee use the same error type, so no conversion is needed.
 
 2. **`From` trait conversion.** The caller's error type `E1` does not have to match the callee's error type `E2` exactly. It only needs `E1: From<E2>`. When that impl exists, `?` automatically calls `E1::from(e2)` before performing the early return. This is why you can mix calls to different libraries inside one function as long as you use an error type (like a custom enum or `Box<dyn Error>`) that knows how to absorb all of them.
-	```rust
-	use std::num::ParseIntError;
-	use std::fmt;
+   ```rust
+   use std::num::ParseIntError;
+   use std::fmt;
 
-	#[derive(Debug)]
-	enum AppError {
-	Parse(ParseIntError),
-	TooBig,
-	}
+   #[derive(Debug)]
+   enum AppError {
+   Parse(ParseIntError),
+   TooBig,
+   }
 
-	impl From<ParseIntError> for AppError {
-	fn from(e: ParseIntError) -> Self { AppError::Parse(e) }
-	}
+   impl From<ParseIntError> for AppError {
+   fn from(e: ParseIntError) -> Self { AppError::Parse(e) }
+   }
 
-	fn parse_and_check(s: &str) -> Result<i32, AppError> {
-	let n: i32 = s.parse()?;   // ParseIntError → AppError via From, automatically
-	if n > 100 { return Err(AppError::TooBig); }
-	Ok(n)
-	}
-	```
+   fn parse_and_check(s: &str) -> Result<i32, AppError> {
+   let n: i32 = s.parse()?;   // ParseIntError → AppError via From, automatically
+   if n > 100 { return Err(AppError::TooBig); }
+   Ok(n)
+   }
+   ```
 
 3. **`Option` in a function returning `Option`.** `?` is not limited to `Result`. Inside a function that returns `Option<T>`, you can use `?` on any `Option` value. It returns `None` immediately if the value is `None`, otherwise it unwraps and continues. You cannot mix the two: `?` on an `Option` inside a function returning `Result` is a compile error.
 :::

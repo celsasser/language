@@ -32,8 +32,8 @@ The comparator has two analog inputs ($V_+$ and $V_-$) and one binary digital ou
 $$
 V_{out} =
 \begin{cases}
-	V_{High} & \text{if } V_+ > V_- \\
-	V_{Low} & \text{if } V_+ < V_-
+   V_{High} & \text{if } V_+ > V_- \\
+   V_{Low} & \text{if } V_+ < V_-
 \end{cases}
 $$
 
@@ -228,40 +228,32 @@ import matplotlib.patches as patches
 fig, ax = plt.subplots(figsize=(10, 3))
 
 # Draw Main Box
-rect_total = patches.Rectangle(
-    (0, 0), 32, 1, facecolor="none", edgecolor="black", linewidth=2
-)
+rect_total = patches.Rectangle((0, 0), 32, 1, facecolor="none", edgecolor="black", linewidth=2)
 ax.add_patch(rect_total)
 
 # Sign Bit (1 bit)
-rect_sign = patches.Rectangle(
-    (31, 0), 1, 1, facecolor="tab:red", alpha=0.5, edgecolor="black"
-)
+rect_sign = patches.Rectangle((31, 0), 1, 1, facecolor="tab:red", alpha=0.5, edgecolor="black")
 ax.add_patch(rect_sign)
 ax.text(31.5, 0.5, "S", ha="center", va="center", fontweight="bold", fontsize=12)
 ax.text(31.5, 1.2, "Sign\n(1 bit)", ha="center", va="bottom", fontsize=9)
 
 # Exponent (8 bits)
-rect_exp = patches.Rectangle(
-    (23, 0), 8, 1, facecolor="tab:green", alpha=0.5, edgecolor="black"
-)
+rect_exp = patches.Rectangle((23, 0), 8, 1, facecolor="tab:green", alpha=0.5, edgecolor="black")
 ax.add_patch(rect_exp)
 ax.text(27, 0.5, "Exponent", ha="center", va="center", fontweight="bold", fontsize=12)
 ax.text(27, 1.2, "Exponent\n(8 bits)", ha="center", va="bottom", fontsize=9)
 
 # Mantissa (23 bits)
-rect_mant = patches.Rectangle(
-    (0, 0), 23, 1, facecolor="tab:blue", alpha=0.5, edgecolor="black"
-)
+rect_mant = patches.Rectangle((0, 0), 23, 1, facecolor="tab:blue", alpha=0.5, edgecolor="black")
 ax.add_patch(rect_mant)
 ax.text(
-    11.5,
-    0.5,
-    "Mantissa / Fraction",
-    ha="center",
-    va="center",
-    fontweight="bold",
-    fontsize=12,
+   11.5,
+   0.5,
+   "Mantissa / Fraction",
+   ha="center",
+   va="center",
+   fontweight="bold",
+   fontsize=12,
 )
 ax.text(11.5, 1.2, "Mantissa\n(23 bits)", ha="center", va="bottom", fontsize=9)
 
@@ -276,8 +268,8 @@ plt.show()
 ##### Key Properties
 - **Dynamic Range**: Can represent extremely large ($~10^{38}$) and extremely small ($~10^{-38}$) numbers, which is impossible for a 32-bit fixed-point number.
 - **Variable Precision**: The absolute precision depends on the magnitude.
-	- Small numbers have very fine precision (bits are close together).
-	- Large numbers have coarse precision (gaps between representable numbers are large).
+   - Small numbers have very fine precision (bits are close together).
+   - Large numbers have coarse precision (gaps between representable numbers are large).
 - **Complexity**: Arithmetic operations are significantly more complex than integer/fixed-point math. They typically require a dedicated Floating Point Unit (FPU) or slow software emulation.
 - **Not Associative**: Due to rounding errors, $(a + b) + c$ does not always equal $a + (b + c)$.
 
@@ -315,23 +307,17 @@ import matplotlib.patches as patches
 fig, ax = plt.subplots(figsize=(9, 3))
 
 # Multiplier Box
-mult = patches.Rectangle(
-    (1, 2), 1.5, 1, facecolor="tab:blue", alpha=0.3, edgecolor="black"
-)
+mult = patches.Rectangle((1, 2), 1.5, 1, facecolor="tab:blue", alpha=0.3, edgecolor="black")
 ax.add_patch(mult)
 ax.text(1.75, 2.5, "Multiplier\n($B \\times C$)", ha="center", va="center")
 
 # Adder Box
-adder = patches.Rectangle(
-    (4, 2), 1.5, 1, facecolor="tab:red", alpha=0.3, edgecolor="black"
-)
+adder = patches.Rectangle((4, 2), 1.5, 1, facecolor="tab:red", alpha=0.3, edgecolor="black")
 ax.add_patch(adder)
 ax.text(4.75, 2.5, "Adder\n(+)", ha="center", va="center")
 
 # Accumulator Box (Register)
-acc = patches.Rectangle(
-    (7, 2), 1.6, 1, facecolor="tab:green", alpha=0.3, edgecolor="black"
-)
+acc = patches.Rectangle((7, 2), 1.6, 1, facecolor="tab:green", alpha=0.3, edgecolor="black")
 ax.add_patch(acc)
 ax.text(7.75, 2.5, "Accumulator\nRegister (A)", ha="center", va="center")
 
@@ -348,17 +334,15 @@ ax.annotate("", xy=(7, 2.5), xytext=(5.5, 2.5), arrowprops=dict(arrowstyle="->")
 
 # Feedback loop (Accumulator to Adder)
 ax.annotate(
-    "",
-    xy=(4.75, 3),
-    xytext=(7.75, 3),
-    arrowprops=dict(arrowstyle="->", connectionstyle="bar,fraction=0.2", color="gray"),
+   "",
+   xy=(4.75, 3),
+   xytext=(7.75, 3),
+   arrowprops=dict(arrowstyle="->", connectionstyle="bar,fraction=0.2", color="gray"),
 )
 ax.text(6.25, 3.725, "Feedback (Previous Sum)", ha="center", color="gray")
 
 # Output
-ax.annotate(
-    "Result", xy=(8.6, 2.5), xytext=(9.2, 2.465), arrowprops=dict(arrowstyle="<-")
-)
+ax.annotate("Result", xy=(8.6, 2.5), xytext=(9.2, 2.465), arrowprops=dict(arrowstyle="<-"))
 
 ax.set_xlim(-0.5, 10)
 ax.set_ylim(1, 5)
@@ -370,9 +354,9 @@ plt.show()
 ##### Key Properties
 - **Efficiency**: In a general-purpose CPU, a MAC operation might take several cycles (Fetch, Mult, Add, Store). A DSP (like the dsPIC33) can perform a 16x16-bit MAC in a **single cycle**.
 - **Algorithm Foundation**: MAC is the "workhorse" of DSP. It is the core operation for:
-	- **Digital Filters (FIR/IIR)**: Computing the weighted sum of samples.
-	- **Correlation/Convolution**: Sliding dot products.
-	- **FFT**: Butterfly computations.
+   - **Digital Filters (FIR/IIR)**: Computing the weighted sum of samples.
+   - **Correlation/Convolution**: Sliding dot products.
+   - **FFT**: Butterfly computations.
 - **Precision (Guard Bits)**: To prevent overflow during repeated additions, MAC accumulators are usually wider than the input data. For example, a 16-bit DSP might have 40-bit accumulators (16*16=32 bits, plus 8 "guard bits" to allow 256 additions without overflow).
 
 ### Multiplexer
@@ -450,10 +434,10 @@ axes[2].grid(True, alpha=0.3)
 
 # Add background shading for selector state
 for i in range(0, len(t) - 1, 10):  # Sparse shading for performance
-    if selector[i] > 0:
-        axes[2].axvspan(t[i], t[min(i + 10, len(t) - 1)], color="tab:green", alpha=0.1)
-    else:
-        axes[2].axvspan(t[i], t[min(i + 10, len(t) - 1)], color="tab:blue", alpha=0.1)
+   if selector[i] > 0:
+      axes[2].axvspan(t[i], t[min(i + 10, len(t) - 1)], color="tab:green", alpha=0.1)
+   else:
+      axes[2].axvspan(t[i], t[min(i + 10, len(t) - 1)], color="tab:blue", alpha=0.1)
 
 plt.tight_layout()
 plt.show()
@@ -577,9 +561,9 @@ With saturation enabled, overflow is handled by clamping to the boundary:
 $$
 \text{saturate}(x) =
 \begin{cases}
-	\text{MAX} & \text{if } x > \text{MAX} \\
-	\text{MIN} & \text{if } x < \text{MIN} \\
-	x & \text{otherwise}
+   \text{MAX} & \text{if } x > \text{MAX} \\
+   \text{MIN} & \text{if } x < \text{MIN} \\
+   x & \text{otherwise}
 \end{cases}
 $$
 
@@ -677,8 +661,7 @@ The exact emphasis shifts by context, but the relationship above holds in every 
 
 2. **Asynchronous Programming and Reactive Streams** Here a sink is a *type*, the write half of a stream. Rust's `futures::Sink` is the mirror of `Stream`: where `Stream` yields values over time, `Sink` accepts them over time, with backpressure so a slow consumer can make a fast producer wait. `Rx` and Akka Streams use the term the same way. The distinguishing feature is that acceptance is asynchronous and may be refused for now, which a plain function call cannot express.
 
-3. **Security and Static Analysis (Taint Analysis)** This usage is worth reading carefully, because it inverts the intuition that a sink is a resting place. A source is any input an attacker may control (a request parameter, a filename, an environment variable), and a sink is a **sensitive operation** where untrusted data becomes dangerous: `eval`, `exec`, a raw SQL query, a shell invocation, an HTML template. The analyzer's job is to decide whether tainted data reaches a sink without passing through validation or escaping on the way.
-	So a taint sink is not where data is *stored*, it is where data is *acted upon*. It qualifies as a sink because the flow being modeled is the flow of untrusted influence, and that flow terminates the moment the data is interpreted rather than merely moved.
+3. **Security and Static Analysis (Taint Analysis)** This usage is worth reading carefully, because it inverts the intuition that a sink is a resting place. A source is any input an attacker may control (a request parameter, a filename, an environment variable), and a sink is a **sensitive operation** where untrusted data becomes dangerous: `eval`, `exec`, a raw SQL query, a shell invocation, an HTML template. The analyzer's job is to decide whether tainted data reaches a sink without passing through validation or escaping on the way. So a taint sink is not where data is *stored*, it is where data is *acted upon*. It qualifies as a sink because the flow being modeled is the flow of untrusted influence, and that flow terminates the moment the data is interpreted rather than merely moved.
 
 4. **Graph Theory and Flow Networks** The formal case, and the one the others are informally quoting. In a directed graph a **sink** is a vertex with in-degree $> 0$ and out-degree $= 0$; a **source** has in-degree $= 0$. Topological sorting, dead-code analysis, and max-flow algorithms all lean on the distinction. Note that a graph may have many sinks, or none at all: a cycle has no vertex of out-degree zero, which is exactly why a dependency graph with a cycle cannot be topologically sorted.
 
@@ -727,16 +710,16 @@ import matplotlib.pyplot as plt
 data = [1, 0, 0, 0, 0, 0, 1, 0]
 frame = [0] + data + [1]  # Start(0), Data, Stop(1)
 bit_labels = [
-    "Start",
-    "D0\n(LSB)",
-    "D1",
-    "D2",
-    "D3",
-    "D4",
-    "D5",
-    "D6",
-    "D7\n(MSB)",
-    "Stop",
+   "Start",
+   "D0\n(LSB)",
+   "D1",
+   "D2",
+   "D3",
+   "D4",
+   "D5",
+   "D6",
+   "D7\n(MSB)",
+   "Stop",
 ]
 
 # Prepare signal for plotting (Idle High -> Frame -> Idle High)
@@ -748,16 +731,16 @@ plt.step(t, bits, where="post", color="tab:blue", linewidth=2)
 
 # Annotate Bits
 for i in range(1, len(bits) - 1):
-    plt.text(
-        i + 0.5,
-        0.5,
-        bit_labels[i - 1],
-        ha="center",
-        va="center",
-        fontsize=9,
-        fontweight="bold",
-    )
-    plt.axvline(i, color="gray", linestyle="--", alpha=0.3)
+   plt.text(
+      i + 0.5,
+      0.5,
+      bit_labels[i - 1],
+      ha="center",
+      va="center",
+      fontsize=9,
+      fontweight="bold",
+   )
+   plt.axvline(i, color="gray", linestyle="--", alpha=0.3)
 
 plt.axvline(len(bits) - 1, color="gray", linestyle="--", alpha=0.3)
 

@@ -142,8 +142,8 @@ The following list is a top 30 crates capture from [Most popular Rust Libraries]
 
 > To whoever is reading this, the date is 4/8/2026. We drank too much Orange Crush and not enough Tang and we died. Follows is a list of the top 30 most popular Rust crates. I have also left some Tang in the capsule. Live long and prosper.
 
-| Library                                                                         | Description                                                                                                                                                                                                             |
-|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Library                                                                                                   | Description                                                                                                                                                                                                             |
+|-----------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [serde](https://lib.rs/crates/serde){target="_blank" rel="noopener noreferrer"}                           | A generic serialization/deserialization framework                                                                                                                                                                       |
 | [thiserror](https://lib.rs/crates/thiserror){target="_blank" rel="noopener noreferrer"}                   | derive(Error)                                                                                                                                                                                                           |
 | [serde_json](https://lib.rs/crates/serde_json){target="_blank" rel="noopener noreferrer"}                 | A JSON serialization file format                                                                                                                                                                                        |
@@ -493,53 +493,47 @@ use network::http::client;
 Finally, follows are some of the superpowers and conveniences built into `use`:
 
 - You can rename with `as`:
+   ```rust
+   use A::B::C::something as do_the_thing;
+   do_the_thing()
 
-    ```rust
-    use A::B::C::something as do_the_thing;
-    do_the_thing()
-    ```
+   ```
 
 - You can pull in multiple items from the same path with braces:
-
-	```rust
-	use A::B::C::{something, another_thing};
-	```
+   ```rust
+   use A::B::C::{something, another_thing};
+   ```
 
 - You can combine both of the above:
-
-	```rust
-	use A::B::C::{something, another_thing as other};
-	```
+   ```rust
+   use A::B::C::{something, another_thing as other};
+   ```
 
 - You can use `self` inside braces to bring in the module itself alongside its children:
-
-	```rust
-	use A::B::{self, C};  // binds both B and B::C
-	```
+   ```rust
+   use A::B::{self, C};  // binds both B and B::C
+   ```
 
 - You can glob-import everything public from a path:
-
-	```rust
-	use A::B::C::*;  // everything public in C lands in the current scope
-	```
+   ```rust
+   use A::B::C::*;  // everything public in C lands in the current scope
+   ```
 
 - Simultaneously binding a list of paths with a common prefix, using the brace syntax:
-
-	```rust
-	use a::b::{c, d, e::f, g::h::i};
-	```
+   ```rust
+   use a::b::{c, d, e::f, g::h::i};
+   ```
 
 - Rebinding the target name as a new local name, using the syntax
+   ```rust
+   use p::q::r as x;
+   ```
 
-	```rust
-	use p::q::r as x;
-	```
+   This can also be used with the last two features:
 
-	This can also be used with the last two features:
-
-	```rust
-	use a::b::{self as ab, c as abc}
-	```
+   ```rust
+   use a::b::{self as ab, c as abc}
+   ```
 
 ::: {.see-more}
 See [Use declarations](https://doc.rust-lang.org/reference/items/use-declarations.html){target="_blank" rel="noopener noreferrer"} in *The Rust Reference* for more information.
@@ -661,8 +655,8 @@ let p3 = p1 + p2;  // uses our Add implementation
 
 In the following table we include some of A listers and indicate the operator, the trait (in `std::ops`) and the method signature. For a complete list, see [`std::ops`](https://doc.rust-lang.org/std/ops/index.html#traits){target="_blank" rel="noopener noreferrer"}.
 
-| Operator             | Trait                                                                                    | Method                                                             |
-|----------------------|------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
+| Operator             | Trait                                                                                                              | Method                                                             |
+|----------------------|--------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
 | `+`                  | [`Add`](https://doc.rust-lang.org/std/ops/trait.Add.html){target="_blank" rel="noopener noreferrer"}               | `add(self, rhs: Rhs) -> Self`                                      |
 | `-`                  | [`Sub`](https://doc.rust-lang.org/std/ops/trait.Sub.html){target="_blank" rel="noopener noreferrer"}               | `sub(self, rhs: Rhs) -> Self`                                      |
 | `*`                  | [`Mul`](https://doc.rust-lang.org/std/ops/trait.Mul.html){target="_blank" rel="noopener noreferrer"}               | `mul(self, rhs: Rhs) -> Self`                                      |
@@ -858,8 +852,8 @@ fn sum(arr: &[i32; 5]) -> i32 {
 
 Rust has two string types. The distinction maps directly onto [owned](rust-ho.qmd#ownership) vs. [borrowed](rust-ho.qmd#borrowing):
 
-| Type                                                                                 | Owned? | Mutable? | Lives on | Analogy                   |
-|--------------------------------------------------------------------------------------|--------|----------|----------|---------------------------|
+| Type                                                                                                           | Owned? | Mutable? | Lives on | Analogy                   |
+|----------------------------------------------------------------------------------------------------------------|--------|----------|----------|---------------------------|
 | [`String`](https://doc.rust-lang.org/std/string/struct.String.html){target="_blank" rel="noopener noreferrer"} | Yes    | Yes      | Heap     | `std::string` in C++      |
 | [`&str`](https://doc.rust-lang.org/std/primitive.str.html){target="_blank" rel="noopener noreferrer"}          | No     | No       | Anywhere | `std::string_view` in C++ |
 
@@ -902,23 +896,23 @@ let t: &str = &a[0..3];             // slice of an existing String
 ##### Common methods
 Most string methods are defined on `&str` and are therefore available on both `String` and `&str`. Methods that produce a new owned string return `String`; methods that just inspect or slice return `&str` or a primitive.
 
-| Method                | Returns                | What it does                                         |
-|-----------------------|------------------------|------------------------------------------------------|
-| `.len()`              | `usize`                | Byte length which is not the same as character count |
-| `.is_empty()`         | `bool`                 | True if length = zero bytes                          |
-| `.contains(pat)`      | `bool`                 | True if pattern is present                           |
-| `.starts_with(pat)`   | `bool`                 | Prefix check                                         |
-| `.ends_with(pat)`     | `bool`                 | Suffix check                                         |
-| `.find(pat)`          | `Option<usize>`        | Byte offset of first match                           |
-| `.trim()`             | `&str`                 | Strip leading and trailing whitespace                |
-| `.to_lowercase()`     | `String`               | New lowercased string                                |
-| `.to_uppercase()`     | `String`               | New uppercased string                                |
-| `.replace(from, to)`  | `String`               | Replace all occurrences                              |
+| Method                | Returns                           | What it does                                         |
+|-----------------------|-----------------------------------|------------------------------------------------------|
+| `.len()`              | `usize`                           | Byte length which is not the same as character count |
+| `.is_empty()`         | `bool`                            | True if length = zero bytes                          |
+| `.contains(pat)`      | `bool`                            | True if pattern is present                           |
+| `.starts_with(pat)`   | `bool`                            | Prefix check                                         |
+| `.ends_with(pat)`     | `bool`                            | Suffix check                                         |
+| `.find(pat)`          | `Option<usize>`                   | Byte offset of first match                           |
+| `.trim()`             | `&str`                            | Strip leading and trailing whitespace                |
+| `.to_lowercase()`     | `String`                          | New lowercased string                                |
+| `.to_uppercase()`     | `String`                          | New uppercased string                                |
+| `.replace(from, to)`  | `String`                          | Replace all occurrences                              |
 | `.split(pat)`         | [iterator](rust-ho.qmd#iterators) | Split on pattern                                     |
 | `.split_whitespace()` | [iterator](rust-ho.qmd#iterators) | Split on any whitespace, skipping empties            |
 | `.lines()`            | [iterator](rust-ho.qmd#iterators) | Split on line endings                                |
 | `.chars()`            | [iterator](rust-ho.qmd#iterators) | Unicode scalar values (not bytes)                    |
-| `.repeat(n)`          | `String`               | Concatenate `n` copies                               |
+| `.repeat(n)`          | `String`                          | Concatenate `n` copies                               |
 
 ```rust
 let s = String::from("  Hello, World!  ");
@@ -1163,14 +1157,14 @@ fn parse<F: FromStr>(&self) -> Result<F, F::Err>
 The `F` is a generic parameter. Rust needs to know what type F is before it can do anything. There are two ways to tell it:
 
 1. Turbofish on the method:
-	```rust
-	"3.14".parse::<f32>()
-	```
+   ```rust
+   "3.14".parse::<f32>()
+   ```
 
 2. Type annotation on the binding:
-	```rust
-	let seconds: f32 = seconds_text.parse()...
-	```
+   ```rust
+   let seconds: f32 = seconds_text.parse()...
+   ```
 
 In your code, both are present at the same time, which is why removing the *turbofish* is fine. The `: f32` annotation on seconds gives the compiler enough information to infer `F = f32` without being told explicitly on the `.parse()` call. The *turbofish* becomes necessary when there is no annotation for the compiler to infer from, or when the inference is ambiguous. For example:
 
@@ -1259,13 +1253,13 @@ A for loop calls `.into_iter()` on whatever you give it. If you write `for line 
 Two traits are at play:
 
 1. `IntoIterator`
-	- `IntoIterator` is the trait that for loops depend on. A for loop is syntactic sugar for calling `.into_iter()` and then repeatedly calling `.next()` on the result. Any type that implements `IntoIterator` can appear in a for loop.
-	- `Vec<T>` implements `IntoIterator` three ways:
-		- `for x in vec` (consumes the vector, yields `T`)
-		- `for x in &vec` (borrows the vector, yields `&T`)
-		- `for x in &mut vec` (mutably borrows the vector, yields `&mut T`)
+   - `IntoIterator` is the trait that for loops depend on. A for loop is syntactic sugar for calling `.into_iter()` and then repeatedly calling `.next()` on the result. Any type that implements `IntoIterator` can appear in a for loop.
+   - `Vec<T>` implements `IntoIterator` three ways:
+      - `for x in vec` (consumes the vector, yields `T`)
+      - `for x in &vec` (borrows the vector, yields `&T`)
+      - `for x in &mut vec` (mutably borrows the vector, yields `&mut T`)
 2. `Iterator`
-	- This trait defines the actual sequence and the logic for traversing the items. It requires defining an Item type and implementing the `.next()` method, which returns `Some(item)` until the iteration is complete, at which point it returns `None.`
+   - This trait defines the actual sequence and the logic for traversing the items. It requires defining an Item type and implementing the `.next()` method, which returns `Some(item)` until the iteration is complete, at which point it returns `None.`
 
 The `&Vec<T>` case works because the standard library implements `IntoIterator` for `&Vec<T>`, which delegates to `Vec::iter()` under the hood and produces an iterator over `&T` values. So for line in `&body_lines` is exactly equivalent to `for line in body_lines.iter()`. The `&` form is just more concise and is what you will see in idiomatic Rust.
 

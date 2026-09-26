@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2026-09-26">
+
+<title>The Quarto Language – Computer Language Notebook</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./shell.html" rel="next">
+<link href="./matlab.html" rel="prev">
+<link href="././favicon.png" rel="icon" type="image/png">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f876f781226a33a7a2f77a56c5ae090f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": true,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Computer Language Notebook</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Languages</a></li><li class="breadcrumb-item"><a href="./quarto.html">The Quarto Language</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="./index.html" class="sidebar-logo-link">
+      <img src="././images/logo.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="././images/logo.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Languages</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./assembly.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./c.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The C Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">The C++ Language</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cpp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cpp-GL.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Guidelines</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Build Systems</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./make.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Makefile Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cmake.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CMake Language</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">The Rust Language</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-in.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-ho.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Hands On</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-cc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cargo and Crates</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-out.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Places You’ll Go</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./python.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Python Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./matlab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The MATLAB Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./quarto.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">The Quarto Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shell.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Shell Scripting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./css.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CSS Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./latex.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LaTeX Reference</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text">The Ecosystem</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./ecosystem.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./git.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Git Version Control</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">Briefs</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./b-pyperf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Python Performance Analysis</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false">
+ <span class="menu-text">Reference</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/assembly-pc.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PC Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-general.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Web Guide</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-selectors.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Selector Guide</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="false">
+ <span class="menu-text">Appendix</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossary</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a>
+  <ul>
+  <li><a href="#a-short-history" id="toc-a-short-history" class="nav-link" data-scroll-target="#a-short-history">A Short History</a></li>
+  <li><a href="#the-quarto-philosophy" id="toc-the-quarto-philosophy" class="nav-link" data-scroll-target="#the-quarto-philosophy">The Quarto Philosophy</a></li>
+  <li><a href="#the-render-pipeline" id="toc-the-render-pipeline" class="nav-link" data-scroll-target="#the-render-pipeline">The Render Pipeline</a></li>
+  </ul></li>
+  <li><a href="#verbatim" id="toc-verbatim" class="nav-link" data-scroll-target="#verbatim">Writing About Quarto in Quarto</a>
+  <ul>
+  <li><a href="#why-code-blocks-are-not-safe" id="toc-why-code-blocks-are-not-safe" class="nav-link" data-scroll-target="#why-code-blocks-are-not-safe">Why Code Blocks Are Not Safe</a></li>
+  <li><a href="#escaping-shortcodes" id="toc-escaping-shortcodes" class="nav-link" data-scroll-target="#escaping-shortcodes">Escaping Shortcodes</a></li>
+  <li><a href="#showing-an-executable-cell" id="toc-showing-an-executable-cell" class="nav-link" data-scroll-target="#showing-an-executable-cell">Showing an Executable Cell</a></li>
+  <li><a href="#showing-a-cell-and-its-output" id="toc-showing-a-cell-and-its-output" class="nav-link" data-scroll-target="#showing-a-cell-and-its-output">Showing a Cell and Its Output</a></li>
+  <li><a href="#nesting-code-fences" id="toc-nesting-code-fences" class="nav-link" data-scroll-target="#nesting-code-fences">Nesting Code Fences</a></li>
+  <li><a href="#quick-reference" id="toc-quick-reference" class="nav-link" data-scroll-target="#quick-reference">Quick Reference</a></li>
+  </ul></li>
+  <li><a href="#documents-and-front-matter" id="toc-documents-and-front-matter" class="nav-link" data-scroll-target="#documents-and-front-matter">Documents and Front Matter</a></li>
+  <li><a href="#markdown-essentials" id="toc-markdown-essentials" class="nav-link" data-scroll-target="#markdown-essentials">Markdown Essentials</a></li>
+  <li><a href="#divs-spans-and-attributes" id="toc-divs-spans-and-attributes" class="nav-link" data-scroll-target="#divs-spans-and-attributes">Divs, Spans, and Attributes</a></li>
+  <li><a href="#callouts" id="toc-callouts" class="nav-link" data-scroll-target="#callouts">Callouts</a></li>
+  <li><a href="#figures-tables-and-cross-references" id="toc-figures-tables-and-cross-references" class="nav-link" data-scroll-target="#figures-tables-and-cross-references">Figures, Tables, and Cross-References</a></li>
+  <li><a href="#code-blocks-and-code-cells" id="toc-code-blocks-and-code-cells" class="nav-link" data-scroll-target="#code-blocks-and-code-cells">Code Blocks and Code Cells</a></li>
+  <li><a href="#diagrams" id="toc-diagrams" class="nav-link" data-scroll-target="#diagrams">Diagrams</a></li>
+  <li><a href="#includes" id="toc-includes" class="nav-link" data-scroll-target="#includes">Includes and Embeds</a>
+  <ul>
+  <li><a href="#include-shortcode" id="toc-include-shortcode" class="nav-link" data-scroll-target="#include-shortcode">The <code>include</code> Shortcode</a>
+  <ul class="collapse">
+  <li><a href="#how-it-works" id="toc-how-it-works" class="nav-link" data-scroll-target="#how-it-works">How It Works</a></li>
+  <li><a href="#paths" id="toc-paths" class="nav-link" data-scroll-target="#paths">Paths</a></li>
+  <li><a href="#the-underscore-convention" id="toc-the-underscore-convention" class="nav-link" data-scroll-target="#the-underscore-convention">The Underscore Convention</a></li>
+  <li><a href="#a-live-example" id="toc-a-live-example" class="nav-link" data-scroll-target="#a-live-example">A Live Example</a></li>
+  <li><a href="#include-pitfalls" id="toc-include-pitfalls" class="nav-link" data-scroll-target="#include-pitfalls">Pitfalls</a></li>
+  </ul></li>
+  <li><a href="#embed" id="toc-embed" class="nav-link" data-scroll-target="#embed">Embedding Notebook Output: <code>embed</code></a></li>
+  <li><a href="#include-in-header" id="toc-include-in-header" class="nav-link" data-scroll-target="#include-in-header">Header and Body Includes</a></li>
+  <li><a href="#choosing-a-mechanism" id="toc-choosing-a-mechanism" class="nav-link" data-scroll-target="#choosing-a-mechanism">Choosing a Mechanism</a></li>
+  </ul></li>
+  <li><a href="#shortcodes" id="toc-shortcodes" class="nav-link" data-scroll-target="#shortcodes">Shortcodes</a></li>
+  <li><a href="#projects" id="toc-projects" class="nav-link" data-scroll-target="#projects">Projects</a></li>
+  <li><a href="#websites" id="toc-websites" class="nav-link" data-scroll-target="#websites">Websites</a></li>
+  <li><a href="#page-layout" id="toc-page-layout" class="nav-link" data-scroll-target="#page-layout">Page Layout</a></li>
+  <li><a href="#styling-and-themes" id="toc-styling-and-themes" class="nav-link" data-scroll-target="#styling-and-themes">Styling and Themes</a></li>
+  <li><a href="#beyond-html" id="toc-beyond-html" class="nav-link" data-scroll-target="#beyond-html">Beyond HTML</a></li>
+  <li><a href="#extending-quarto" id="toc-extending-quarto" class="nav-link" data-scroll-target="#extending-quarto">Extending Quarto</a></li>
+  <li><a href="#the-command-line" id="toc-the-command-line" class="nav-link" data-scroll-target="#the-command-line">The Command Line</a></li>
+  <li><a href="#common-pitfalls" id="toc-common-pitfalls" class="nav-link" data-scroll-target="#common-pitfalls">Common Pitfalls</a></li>
+  <li><a href="#key-differences-from-r-markdown-and-jupyter" id="toc-key-differences-from-r-markdown-and-jupyter" class="nav-link" data-scroll-target="#key-differences-from-r-markdown-and-jupyter">Key Differences from R Markdown and Jupyter</a></li>
+  <li><a href="#where-to-go-next" id="toc-where-to-go-next" class="nav-link" data-scroll-target="#where-to-go-next">Where to Go Next</a></li>
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further Reading</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Languages</a></li><li class="breadcrumb-item"><a href="./quarto.html">The Quarto Language</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">The Quarto Language</h1>
+<p class="subtitle lead">Markdown with a compiler behind it</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 26, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!--
+Dialect: Quarto 1.9 (installed 1.9.38; 1.10 is current). HTML website projects are the primary target; PDF and other formats get one section on what changes.
+-->
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p><img src="images/quarto-00.png" class="img-fluid" style="float: left; padding: 0 2em 0 1em;width:2in" alt="Quarto logo"></p>
+<p><br><strong>Quarto</strong> is an open-source publishing system built on top of <a href="https://pandoc.org" target="_blank" rel="noopener noreferrer">Pandoc</a>. You write plain text in a <code>.qmd</code> file, a dialect of Markdown with a YAML header and optional executable code, and Quarto turns it into a web page, a PDF, a slide deck, a book, or a whole website. This notebook is itself a Quarto website, so every page you are reading is a working example.</p>
+<p>Calling Quarto “Markdown” undersells it, and the gap is where most of the confusion lives. Markdown is a syntax. Quarto is a <em>build system</em>: it runs code cells through a computational engine (Jupyter, knitr, or Julia), splices in included files, expands shortcodes, hands the result to Pandoc, runs a stack of Lua filters over Pandoc’s syntax tree to implement cross-references, callouts, and layout, and finally applies a theme. Each of those stages has its own syntax and its own rules about what it can see. When something renders strangely, the question is almost always <em>which stage handled it</em>, and much of this chapter is organized to make that question answerable.</p>
+<div style="clear: both">
+
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Quarto is not just Markdown">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Quarto is not just Markdown
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The comparison to a C compiler is closer than it looks. A <code>.qmd</code> file goes through something like a preprocessor (includes and shortcodes, which operate on raw text), a code-generation step (the engine executes cells and writes their output back as Markdown), a parser (Pandoc), a set of transformation passes (Lua filters over the syntax tree), and a back end (the HTML, LaTeX, or Typst writer). As with C, the preprocessor knows nothing about the language it is preprocessing, and that turns out to matter: see <a href="#verbatim">Writing About Quarto in Quarto</a>.</p>
+</div>
+</div>
+<section id="a-short-history" class="level3">
+<h3 class="anchored" data-anchor-id="a-short-history">A Short History</h3>
+<p>Quarto is the latest link in a chain that starts with Donald Knuth. In 1984 Knuth proposed <strong>literate programming</strong>: a program should be written as an essay for humans, with the code woven in, and tools should extract both the typeset document and the compilable source from the same file. His WEB system did exactly that for Pascal and TeX. The idea found its most durable home not in systems programming but in statistics, where the document <em>is</em> the product and the code exists to produce its numbers and figures.</p>
+<p>Sweave (Friedrich Leisch, 2002) brought literate programming to R by embedding R chunks in LaTeX. Yihui Xie’s <strong>knitr</strong> (2012) generalized Sweave and, crucially, worked with Markdown rather than only LaTeX. Around the same time, John MacFarlane’s <strong>Pandoc</strong> (first released in 2006, written in Haskell) had quietly become the universal document converter: it parses Markdown, HTML, LaTeX, Word, and dozens of other formats into one abstract syntax tree and writes any of them back out. RStudio combined the two into <strong>R Markdown</strong>, whose second-generation <code>rmarkdown</code> package (2014) ran knitr for execution and Pandoc for everything else. That pairing was enormously successful and entirely R-centric; meanwhile the Python world had converged on Jupyter notebooks, a different format with a different toolchain.</p>
+<p>Quarto, led by J.J. Allaire at RStudio, is the attempt to unify those worlds. It keeps the R Markdown architecture (an engine for execution, Pandoc for conversion) but makes the engine pluggable, so the same document format drives Jupyter kernels, knitr, or Julia. It moves the tool out of R entirely: the <code>quarto</code> command line is a standalone program written in TypeScript on the Deno runtime, bundling its own Pandoc, Dart Sass, and (since 1.4) Typst. Quarto 1.0 was announced in July 2022 at rstudio::conf, the same conference at which RStudio renamed itself <strong>Posit</strong> to signal that it was no longer an R-only company. The rename and the tool were the same strategic statement.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 86%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Version</th>
+<th style="text-align: center;">Released</th>
+<th style="text-align: left;">Headline additions</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1.0</td>
+<td style="text-align: center;">Jul 2022</td>
+<td style="text-align: left;">First stable release. Multi-engine execution, websites, books, cross-references, callouts, and Reveal.js slides.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1.3</td>
+<td style="text-align: center;">Apr 2023</td>
+<td style="text-align: left;">Code annotation, the <code>embed</code> shortcode for notebook output, links to other formats from HTML pages, Confluence publishing.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1.4</td>
+<td style="text-align: center;">Jan 2024</td>
+<td style="text-align: left;">Typst and dashboard formats, the manuscript project type, a cross-reference overhaul, Shiny for Python.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1.5</td>
+<td style="text-align: center;">Jul 2024</td>
+<td style="text-align: left;">Typst improvements, website drafts and announcement bars, a native Julia engine, placeholder shortcodes.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1.6</td>
+<td style="text-align: center;">Nov 2024</td>
+<td style="text-align: left;"><code>brand.yml</code> for unified branding across formats, Reveal.js updates, a landscape page block.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1.7</td>
+<td style="text-align: center;">Apr 2025</td>
+<td style="text-align: left;">Dark mode improvements, the <code>version</code> shortcode, Typst and Pandoc updates.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1.8</td>
+<td style="text-align: center;">Oct 2025</td>
+<td style="text-align: left;">Brand extensions, HTML accessibility checks, access to the execution context from code.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1.9</td>
+<td style="text-align: center;">Mar 2026</td>
+<td style="text-align: left;">Posit Connect Cloud publishing, LLM-friendly website output, list tables, experimental PDF accessibility standards.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1.10</td>
+<td style="text-align: center;">Aug 2026</td>
+<td style="text-align: left;">Offline accessibility checks targeting a WCAG conformance level, localized strings for custom templates.</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled" title="Check your version">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Check your version
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Features arrive quickly, and the documentation at quarto.org always describes the latest release. Run <code>quarto --version</code> before assuming a feature exists, and <code>quarto check</code> to see which engines, Pandoc, and TeX installation Quarto has found.</p>
+</div>
+</div>
+</section>
+<section id="the-quarto-philosophy" class="level3">
+<h3 class="anchored" data-anchor-id="the-quarto-philosophy">The Quarto Philosophy</h3>
+<div class="subheading">
+<p>One source, many outputs</p>
+</div>
+<p>Quarto’s design follows from a few commitments, most of them inherited from Pandoc and R Markdown.</p>
+<p><strong>The source is plain text.</strong> A <code>.qmd</code> file diffs cleanly, merges in Git, and opens in any editor. This is a deliberate rejection of the Jupyter <code>.ipynb</code> model, where the source is JSON that embeds its own outputs and makes every diff noisy. Quarto can render notebooks, but its native format is text.</p>
+<p><strong>One source, many outputs.</strong> Authors describe <em>structure</em> (a heading, a figure, a callout, a cross-reference) and the output format decides <em>presentation</em>. The same <code>.qmd</code> becomes an HTML page with a clickable callout or a PDF with a boxed one. The price is that anything format-specific, such as raw HTML or a LaTeX command, is a leak in the abstraction, and Quarto gives you explicit tools to fence those leaks off.</p>
+<p><strong>Computation is part of the document.</strong> Figures and numbers are produced by code at render time rather than pasted in, so the document cannot silently drift from the analysis behind it. This is the literate programming inheritance, and it is why Quarto has engines, caching, and <code>freeze</code>.</p>
+<p><strong>Pandoc’s syntax tree is the contract.</strong> Everything Quarto adds on top of Markdown is expressed as ordinary Pandoc constructs (divs, spans, attributes, code blocks) that Lua filters then interpret. This is why a callout is written as a fenced div with a class rather than with new syntax, and why the extension mechanism is “write a Lua filter” rather than “fork the parser.”</p>
+</section>
+<section id="the-render-pipeline" class="level3">
+<h3 class="anchored" data-anchor-id="the-render-pipeline">The Render Pipeline</h3>
+<!--
+Mermaid flowchart of a render: .qmd -> include and shortcode expansion (raw text) -> engine execution (jupyter/knitr/julia) -> intermediate .md -> Pandoc parse to AST -> Quarto and user Lua filters -> writer (HTML/LaTeX/Typst) -> theme and post-processing -> output. Then what each stage can and cannot see, the keep-md option for inspecting the intermediate file, and why an error message names a stage.
+-->
+</section>
+</section>
+<section id="verbatim" class="level2">
+<h2 class="anchored" data-anchor-id="verbatim">Writing About Quarto in Quarto</h2>
+<div class="subheading">
+<p>Code blocks do not protect you</p>
+</div>
+<p>Documenting Quarto in Quarto, as this chapter does, runs straight into a problem that has no analogue in most languages: the markup you want to <em>show</em> is markup that Quarto will <em>execute</em>. The instinct from every other language is to put it in a code block. In Quarto that is not enough, and understanding why is the key to everything in this section.</p>
+<section id="why-code-blocks-are-not-safe" class="level3">
+<h3 class="anchored" data-anchor-id="why-code-blocks-are-not-safe">Why Code Blocks Are Not Safe</h3>
+<p>Shortcodes (anything written between double braces with angle brackets) and includes are expanded <em>before</em> Pandoc parses the document. At that stage the text has not yet been recognized as Markdown, so a code fence is just three backticks and carries no meaning. A shortcode inside a code block is expanded exactly as it would be in a paragraph. Write this in a <code>.qmd</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="in">```markdown</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>{{&lt; include _notes.qmd &gt;}}</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>and the rendered code block does not contain the include line. It contains the <em>entire text</em> of <code>_notes.qmd</code>, front matter and all, displayed as code. Executable cells have a similar problem from the other direction: a fence written as <code>```{python}</code> is a cell, and the engine will run it wherever it appears.</p>
+<p>The same rule reaches into HTML comments. A shortcode inside <code>&lt;!-- ... --&gt;</code> is still expanded, which can mangle the comment and leak text onto the page. Commenting out an include is not the way to disable it.</p>
+</section>
+<section id="escaping-shortcodes" class="level3">
+<h3 class="anchored" data-anchor-id="escaping-shortcodes">Escaping Shortcodes</h3>
+<p>Quarto provides two escapes. Either one suppresses expansion and displays the shortcode literally, whether it appears in a code block, in inline code, or in prose.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 52%">
+<col style="width: 47%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">You write</th>
+<th style="text-align: left;">The page shows</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>{{{&lt; include _notes.qmd &gt;}}}</code></td>
+<td style="text-align: left;"><code>{{&lt; include _notes.qmd &gt;}}</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>{{&lt;/* include _notes.qmd */&gt;}}</code></td>
+<td style="text-align: left;"><code>{{&lt; include _notes.qmd &gt;}}</code></td>
+</tr>
+</tbody>
+</table>
+<p>The triple-brace form is the easier one to type. The comment form reads more clearly in source, because it looks like what it is. Both nest: adding one more brace, or one more <code>/*</code> and <code>*/</code> pair, shows the previous level of escape, which is how the table above displays the escapes themselves.</p>
+</section>
+<section id="showing-an-executable-cell" class="level3">
+<h3 class="anchored" data-anchor-id="showing-an-executable-cell">Showing an Executable Cell</h3>
+<p>To display a cell without running it, double the braces around the engine name. The block is highlighted as code, and the braces render single, so the reader sees exactly what they would type. The unescaping applies in inline code as well, so writing about the escape itself takes one more brace, just as it does for shortcodes:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="in">````markdown</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="in">```{{python}}</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="in">#| label: fig-waveform</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="in">import numpy as np</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="in">````</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>renders as</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: fig-waveform</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This works for any engine (<code>{{r}}</code>, <code>{{julia}}</code>, <code>{{mermaid}}</code>) and is the right choice for teaching cell syntax: the reader sees the fence and its <code>#|</code> options, and nothing executes.</p>
+</section>
+<section id="showing-a-cell-and-its-output" class="level3">
+<h3 class="anchored" data-anchor-id="showing-a-cell-and-its-output">Showing a Cell and Its Output</h3>
+<p>Sometimes you want both: the cell’s source <em>including its fence</em>, and the output of actually running it. That is <code>echo: fenced</code>. The cell below runs, and Quarto displays its fence and options above the output:</p>
+<div id="60f8c8eb" class="cell" data-execution_count="1">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#| output: true</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> [<span class="fl">0.0</span>, <span class="fl">0.7071</span>, <span class="fl">1.0</span>, <span class="fl">0.7071</span>, <span class="fl">0.0</span>]</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"peak = </span><span class="sc">{</span><span class="bu">max</span>(samples)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>peak = 1.0</code></pre>
+</div>
+</div>
+<p>Quarto omits the <code>echo: fenced</code> line itself from the display but keeps every other option. The default <code>echo: true</code> shows only the code inside the fence, which is usually what readers of a technical document want; <code>echo: fenced</code> is for readers who are learning Quarto.</p>
+</section>
+<section id="nesting-code-fences" class="level3">
+<h3 class="anchored" data-anchor-id="nesting-code-fences">Nesting Code Fences</h3>
+<p>A code block that contains a code block needs an outer fence that is <em>longer</em> than any fence inside it. A fence closes only on a run of backticks at least as long as the one that opened it, so four backticks can safely enclose three:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="in">````markdown</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>Here is some C:</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="in">```c</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span> <span class="op">}</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="in">````</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Each level of nesting adds a backtick. The example you just read needed five for its outermost fence. Tildes (<code>~~~</code>) are also legal fence characters and do not close backtick fences, which is sometimes easier to read than counting.</p>
+</section>
+<section id="quick-reference" class="level3">
+<h3 class="anchored" data-anchor-id="quick-reference">Quick Reference</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 54%">
+<col style="width: 45%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Goal</th>
+<th style="text-align: left;">Technique</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Show a shortcode or include literally</td>
+<td style="text-align: left;"><code>{{{&lt; ... &gt;}}}</code> or <code>{{&lt;/* ... */&gt;}}</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Show a cell’s fence and options without running it</td>
+<td style="text-align: left;">Double the braces: <code>```{{python}}</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Run a cell and show its fence, options, and output</td>
+<td style="text-align: left;"><code>#| echo: fenced</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Run a cell and show only its code and output</td>
+<td style="text-align: left;"><code>#| echo: true</code> (the default)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Show Markdown that itself contains code blocks</td>
+<td style="text-align: left;">An outer fence with more backticks, or <code>~~~</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Disable an include temporarily</td>
+<td style="text-align: left;">Escape it; an HTML comment does not work</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="documents-and-front-matter" class="level2">
+<h2 class="anchored" data-anchor-id="documents-and-front-matter">Documents and Front Matter</h2>
+<!--
+The YAML header: title, subtitle, author, date, format and per-format options. How options cascade: _quarto.yml, then directory-level _metadata.yml, then document front matter, then per-cell #| options; which wins and how lists and maps merge. Common document options (toc, number-sections, code-fold, page-layout).
+-->
+</section>
+<section id="markdown-essentials" class="level2">
+<h2 class="anchored" data-anchor-id="markdown-essentials">Markdown Essentials</h2>
+<!--
+Pandoc Markdown as Quarto uses it, focused on what differs from CommonMark/GitHub Markdown. Emphasis, headings, lists (including the blank-line rules), links and images with attributes, footnotes, definition lists, line blocks. Tables: pipe, grid, and list tables (1.9), column alignment and widths. Math with $ and $$. Raw blocks (```{=html}). Quick-reference table.
+-->
+</section>
+<section id="divs-spans-and-attributes" class="level2">
+<h2 class="anchored" data-anchor-id="divs-spans-and-attributes">Divs, Spans, and Attributes</h2>
+<!--
+The attribute syntax {#id .class key=value} and where it attaches (headings, images, links, code, divs, spans). Fenced divs with ::: and nesting by colon count. Bracketed spans []{}. How classes map to CSS; the custom classes this project uses (.subheading, .see-more, .hl-*, .stdout) as worked examples. Inline style attributes and when to prefer a class.
+-->
+</section>
+<section id="callouts" class="level2">
+<h2 class="anchored" data-anchor-id="callouts">Callouts</h2>
+<!--
+The five types (note, tip, warning, important, caution), title, collapse, appearance (default, simple, minimal), icon. Cross-referenceable callouts. Project-wide defaults (callout-appearance in _quarto.yml). When a callout is decoration versus signal.
+-->
+</section>
+<section id="figures-tables-and-cross-references" class="level2">
+<h2 class="anchored" data-anchor-id="figures-tables-and-cross-references">Figures, Tables, and Cross-References</h2>
+<!--
+Figure and table captions, the fig-, tbl-, sec-, eq-, lst- label prefixes, and @ref syntax. Subfigures and layout-ncol. Section anchors: how Pandoc slugs heading text, why code spans with punctuation slug unexpectedly, explicit {#id} headings, and verifying links (broken internal links render silently).
+-->
+</section>
+<section id="code-blocks-and-code-cells" class="level2">
+<h2 class="anchored" data-anchor-id="code-blocks-and-code-cells">Code Blocks and Code Cells</h2>
+<!--
+Static code blocks: language highlighting, filename attribute, line numbers, code-fold, code annotation (1.3+). Executable cells: engines (jupyter, knitr, julia) and how Quarto picks one; #| cell options (label, echo, eval, output, include, warning, fig-cap); execute options at document and project level; caching, freeze (auto vs true) and the _freeze directory; inline code.
+-->
+</section>
+<section id="diagrams" class="level2">
+<h2 class="anchored" data-anchor-id="diagrams">Diagrams</h2>
+<!--
+Mermaid and Graphviz cells, the mermaid theme option, sizing and captions, cross-referencing a diagram as a figure. When to use a diagram cell versus an image.
+-->
+</section>
+<section id="includes" class="level2">
+<h2 class="anchored" data-anchor-id="includes">Includes and Embeds</h2>
+<div class="subheading">
+<p>Composing one document from several files</p>
+</div>
+<p>Quarto has three ways to pull outside content into a page, and they are easy to confuse because they share a vocabulary. They differ in <em>what</em> they insert and <em>when</em> in the pipeline they insert it, and once you know those two things, the behavior of each follows.</p>
+<section id="include-shortcode" class="level3">
+<h3 class="anchored" data-anchor-id="include-shortcode">The <code>include</code> Shortcode</h3>
+<p>The <code>include</code> shortcode splices the contents of another file into the current document:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>{{&lt; include _setup.qmd &gt;}}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The shortcode must sit on a line by itself, surrounded by blank lines. It is a block-level operation; written in the middle of a paragraph it fails with “Shortcode ‘include’ not found.”</p>
+<section id="how-it-works" class="level4">
+<h4 class="anchored" data-anchor-id="how-it-works">How It Works</h4>
+<p>Include is a <strong>textual splice</strong>, performed on the raw source before the engine runs and before Pandoc parses anything. It is <code>#include</code> from the C preprocessor, with the same virtues and the same blindness. The fragment’s text replaces the shortcode line, and from then on Quarto sees one document. Every consequence follows from that:</p>
+<ul>
+<li><strong>Headings join the host’s structure.</strong> A <code>###</code> in the fragment is a <code>###</code> in the host, appears in the host’s table of contents, and gets an anchor in the host’s namespace. Choose heading levels in the fragment to suit the place it will be included.</li>
+<li><strong>Cross-references work in both directions.</strong> The fragment can link to the host’s anchors and the host to the fragment’s, because after the splice there is no boundary between them.</li>
+<li><strong>Code cells run in the host’s engine.</strong> A Python cell in a fragment executes in the host’s kernel, sees variables the host defined earlier, and can define variables the host uses later.</li>
+<li><strong>Styling comes from the host.</strong> The fragment has no format, theme, or options of its own; it is rendered with whatever the host document uses.</li>
+<li><strong>Nothing is protected.</strong> As <a href="#verbatim">the previous section</a> explains, the splice happens inside code blocks and HTML comments too.</li>
+</ul>
+</section>
+<section id="paths" class="level4">
+<h4 class="anchored" data-anchor-id="paths">Paths</h4>
+<p>Relative paths resolve against the <strong>document being rendered</strong>, not the file that contains the shortcode. This matters only for nested includes, but there it matters a great deal. If <code>chapter.qmd</code> includes <code>parts/_intro.qmd</code>, and <code>_intro.qmd</code> includes <code>_note.qmd</code>, Quarto looks for <code>_note.qmd</code> next to <code>chapter.qmd</code>, not next to <code>_intro.qmd</code>. This is the opposite of C’s quoted <code>#include</code>, which searches the including file’s directory first.</p>
+<p>To avoid the ambiguity entirely, use a path beginning with <code>/</code>, which resolves from the project root:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>{{&lt; include /parts/_note.qmd &gt;}}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A project-rooted path means the same thing from every file, at every level of nesting, which makes it the better habit for any fragment that is itself included.</p>
+</section>
+<section id="the-underscore-convention" class="level4">
+<h4 class="anchored" data-anchor-id="the-underscore-convention">The Underscore Convention</h4>
+<p>Quarto skips any file or directory whose name begins with <code>_</code> (or <code>.</code>) when it renders a project. This holds even when <code>_quarto.yml</code> lists a glob such as <code>render: ["*.qmd"]</code>, as this notebook’s does. The underscore is what separates a fragment from a page: without it, <code>setup.qmd</code> would render as a standalone page of its own, probably broken, and show up in site search. The same rule is why <code>_quarto.yml</code>, <code>_metadata.yml</code>, <code>_freeze/</code>, and <code>_extensions/</code> never become pages.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="A fragment is not a document">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>A fragment is not a document
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Do not give a fragment YAML front matter. Because include is a textual splice, the fragment’s <code>---</code> block lands in the middle of the host, and Pandoc merges it into the host’s metadata. A <code>title:</code> in the fragment <em>replaces the host page’s title</em>. If a fragment needs a comment describing what it is for, put it in the including document instead.</p>
+</div>
+</div>
+</section>
+<section id="a-live-example" class="level4">
+<h4 class="anchored" data-anchor-id="a-live-example">A Live Example</h4>
+<p>This notebook ships a fragment named <code>_quarto-include-demo.qmd</code>. The line below, escaped so you can see it, is followed by the real thing:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>{{&lt; include _quarto-include-demo.qmd &gt;}}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="include-demo" class="level5">
+<h5 class="anchored" data-anchor-id="include-demo">Hello from <code>_quarto-include-demo.qmd</code></h5>
+<p>This heading and paragraph live in a separate file. By the time Pandoc sees the document, though, they are simply part of <code>quarto.qmd</code>: the heading has an anchor in this page’s namespace (it is a level-5 heading, so it sits below this site’s <code>toc-depth</code> of 4 and stays out of the sidebar table of contents), and a link such as <a href="#include-shortcode">back to the include shortcode</a> resolves against the host’s anchors, because there is only one document.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Rendered by the host">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Rendered by the host
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This callout was written in the fragment and styled by the host page. The fragment has no front matter, no format, and no theme of its own.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="include-pitfalls" class="level4">
+<h4 class="anchored" data-anchor-id="include-pitfalls">Pitfalls</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 41%">
+<col style="width: 58%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Symptom</th>
+<th style="text-align: left;">Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">The page title changed to something unexpected</td>
+<td style="text-align: left;">The fragment has front matter; its <code>title:</code> was merged into the host’s metadata.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">“Shortcode ‘include’ not found”</td>
+<td style="text-align: left;">The shortcode is inline in a paragraph rather than on its own line.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">A nested include cannot find its file</td>
+<td style="text-align: left;">The relative path was resolved from the host document; use a <code>/</code>-rooted path.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A fragment appears as its own page, or in search results</td>
+<td style="text-align: left;">Its name does not start with <code>_</code>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">A code block shows a whole file instead of the include line</td>
+<td style="text-align: left;">The shortcode was not escaped; code blocks do not stop expansion.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A link to a heading in a twice-included fragment goes to the first copy</td>
+<td style="text-align: left;">Pandoc deduplicates repeated IDs by suffixing <code>-1</code>, <code>-2</code>, and so on, so the second copy’s anchors differ. Give each inclusion unique headings or link by the suffixed ID.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="embed" class="level3">
+<h3 class="anchored" data-anchor-id="embed">Embedding Notebook Output: <code>embed</code></h3>
+<p>Where <code>include</code> copies <em>source</em>, <code>embed</code> copies <em>results</em>. It inserts the output of a cell from another notebook, typically a figure or table produced by a separate analysis:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>{{&lt; embed analysis.ipynb#fig-spectrum &gt;}}</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>{{&lt; embed analysis.ipynb#tbl-summary echo=true &gt;}}</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>{{&lt; embed analysis.ipynb &gt;}}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The part after <code>#</code> identifies the cell: its <code>label</code> for a <code>.qmd</code> source; for a Jupyter notebook, the cell’s <code>id</code>, then its <code>label</code>, then its <code>tags</code>. Omit it to embed every cell. Output only is the default, and <code>echo=true</code> adds the cell’s code. The source can be an <code>.ipynb</code> or a <code>.qmd</code>.</p>
+<p>The important difference is <em>who executes the code</em>. Included cells run in the host’s engine as part of the host’s render. An embedded cell runs in its own notebook, which Quarto renders separately, and the host receives only the result. That makes <code>embed</code> the right tool for keeping a heavy analysis in a notebook while presenting its figures in an article. Quarto also renders an HTML preview of the source notebook and, by default, adds a link to it beneath each embedded output; the <code>notebook-links</code> option (<code>true</code>, <code>false</code>, <code>inline</code>, <code>global</code>) controls that. Added in Quarto 1.3.</p>
+</section>
+<section id="include-in-header" class="level3">
+<h3 class="anchored" data-anchor-id="include-in-header">Header and Body Includes</h3>
+<p>The third mechanism works at the other end of the pipeline. The <code>include-in-header</code>, <code>include-before-body</code>, and <code>include-after-body</code> options insert content <strong>verbatim into the output file</strong>, after Pandoc has finished. The content is raw HTML for HTML output (or raw LaTeX for PDF), not Markdown; nothing processes it.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 32%">
+<col style="width: 47%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Where the content lands (HTML)</th>
+<th style="text-align: left;">Typical use</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>include-in-header</code></td>
+<td style="text-align: left;">End of <code>&lt;head&gt;</code></td>
+<td style="text-align: left;">Analytics scripts, fonts, <code>&lt;meta&gt;</code> tags, extra CSS</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>include-before-body</code></td>
+<td style="text-align: left;">Immediately after <code>&lt;body&gt;</code></td>
+<td style="text-align: left;">A site banner or skip link</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>include-after-body</code></td>
+<td style="text-align: left;">Immediately before <code>&lt;/body&gt;</code></td>
+<td style="text-align: left;">Scripts that need the DOM, comment widgets</td>
+</tr>
+</tbody>
+</table>
+<p>Each option takes a file, a list of files, or inline text:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">format</span><span class="kw">:</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">html</span><span class="kw">:</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">include-in-header</span><span class="kw">:</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="kw">      - </span><span class="fu">text</span><span class="kw">:</span><span class="at"> </span><span class="ch">|</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>          &lt;script src="https://example.org/demo.js"&gt;&lt;/script&gt;</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">file</span><span class="kw">:</span><span class="at"> analytics.html</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> comments.html</span><span class="co">              # a bare string is a file</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">include-before-body</span><span class="kw">:</span><span class="at"> banner.html</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Set in <code>_quarto.yml</code>, these apply to every page of a site; set in front matter, to one page. For PDF output the same options place content in the LaTeX preamble and just after <code>\begin{document}</code> or before <code>\end{document}</code>.</p>
+</section>
+<section id="choosing-a-mechanism" class="level3">
+<h3 class="anchored" data-anchor-id="choosing-a-mechanism">Choosing a Mechanism</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 22%">
+<col style="width: 20%">
+<col style="width: 36%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Mechanism</th>
+<th style="text-align: left;">Inserts</th>
+<th style="text-align: left;">When it happens</th>
+<th style="text-align: left;">Use it for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>include</code> shortcode</td>
+<td style="text-align: left;">Quarto source, which is then processed</td>
+<td style="text-align: left;">Before execution and Pandoc</td>
+<td style="text-align: left;">Shared text, reusable sections, splitting a long document</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>embed</code> shortcode</td>
+<td style="text-align: left;">The output of a cell in another notebook</td>
+<td style="text-align: left;">After that notebook renders separately</td>
+<td style="text-align: left;">Figures and tables from an analysis kept in its own notebook</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>include-in-header</code> and friends</td>
+<td style="text-align: left;">Raw HTML or LaTeX, untouched</td>
+<td style="text-align: left;">After Pandoc writes the output</td>
+<td style="text-align: left;">Scripts, styles, and markup that Markdown cannot express</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="shortcodes" class="level2">
+<h2 class="anchored" data-anchor-id="shortcodes">Shortcodes</h2>
+<!--
+What shortcodes are and when they expand (raw text, before Pandoc). Built-ins: var (with _variables.yml), meta, env, pagebreak, kbd, video, lipsum, placeholder, version, contents. Positional and keyword arguments. Custom shortcodes point forward to Extending Quarto.
+-->
+</section>
+<section id="projects" class="level2">
+<h2 class="anchored" data-anchor-id="projects">Projects</h2>
+<!--
+_quarto.yml and what makes a directory a project. Project types (default, website, book, manuscript). The render list and ignore rules, output-dir, resources. _metadata.yml for directory-level options. Freeze and the _freeze directory in detail. Profiles (quarto render --profile) for variant builds.
+-->
+</section>
+<section id="websites" class="level2">
+<h2 class="anchored" data-anchor-id="websites">Websites</h2>
+<!--
+Site structure in _quarto.yml: navbar, sidebar (sections, collapse-level, docked vs floating), page-navigation, search, site-url. Listings for blogs and indexes. Drafts. Publishing a docs/ directory to GitHub Pages as this notebook does.
+-->
+</section>
+<section id="page-layout" class="level2">
+<h2 class="anchored" data-anchor-id="page-layout">Page Layout</h2>
+<!--
+page-layout (article, full, custom), the grid options (body-width, margin-width, sidebar-width, gutter-width), .column-* classes (body-outset, page, screen, margin), margin content and asides, figure placement in margins, table of contents placement.
+-->
+</section>
+<section id="styling-and-themes" class="level2">
+<h2 class="anchored" data-anchor-id="styling-and-themes">Styling and Themes</h2>
+<!--
+Bootstrap themes (cosmo and friends), the css option versus SCSS theme files and their layers (defaults, rules), Sass variables worth knowing, light and dark themes, brand.yml (1.6+). How this project's styles.css hooks into the theme.
+-->
+</section>
+<section id="beyond-html" class="level2">
+<h2 class="anchored" data-anchor-id="beyond-html">Beyond HTML</h2>
+<!--
+What is format-independent (content, cross-references, callouts) and what is not (layout, styling, raw content). PDF via LaTeX versus Typst, and the TeX install question. Reveal.js slides briefly. Conditional content with .content-visible / .content-hidden when-format, and per-format options in front matter.
+-->
+</section>
+<section id="extending-quarto" class="level2">
+<h2 class="anchored" data-anchor-id="extending-quarto">Extending Quarto</h2>
+<!--
+Extensions: quarto add, the _extensions directory, filters, shortcodes, formats, and project templates. Writing a Lua filter against the Pandoc AST. Writing a custom shortcode. When an extension is worth it versus a CSS class.
+-->
+</section>
+<section id="the-command-line" class="level2">
+<h2 class="anchored" data-anchor-id="the-command-line">The Command Line</h2>
+<!--
+quarto render (single file vs project, --to, --profile), quarto preview and its live reload, quarto check, quarto convert between .ipynb and .qmd, quarto publish targets, quarto add/update/remove for extensions. Useful flags and environment variables.
+-->
+</section>
+<section id="common-pitfalls" class="level2">
+<h2 class="anchored" data-anchor-id="common-pitfalls">Common Pitfalls</h2>
+<!--
+The recurring surprises collected in one place: blank lines required around lists, divs, and shortcodes; shortcodes expanding inside code and comments; heading slugs; YAML indentation and quoting; stale freeze output; relative paths in nested includes; images outside the project not being copied.
+-->
+</section>
+<section id="key-differences-from-r-markdown-and-jupyter" class="level2">
+<h2 class="anchored" data-anchor-id="key-differences-from-r-markdown-and-jupyter">Key Differences from R Markdown and Jupyter</h2>
+<!--
+Table-driven comparison. From R Markdown: chunk options move from the chunk header to #| comments, the CLI replaces rmarkdown::render, formats and projects are unified, bookdown/blogdown/distill become project types. From Jupyter: text source instead of JSON with embedded outputs, execution at render time, what quarto convert does, and when to keep an .ipynb and render it directly.
+-->
+</section>
+<section id="where-to-go-next" class="level2">
+<h2 class="anchored" data-anchor-id="where-to-go-next">Where to Go Next</h2>
+<!--
+Annotated and subsectioned like cpp.qmd and rust-out.qmd: Documentation (the quarto.org guide and reference, Pandoc's manual), Tooling (the VS Code and Positron extensions, quarto check), Examples (the Quarto gallery, source of well-known Quarto sites), Practice.
+-->
+</section>
+<section id="further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="further-reading">Further Reading</h2>
+<!--
+Plain citation list: the Quarto documentation, Pandoc User's Guide, Knuth's "Literate Programming" (1984), Xie's "Dynamic Documents with R and knitr", the Quarto 1.0 announcement.
+-->
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation column-body">
+  <div class="nav-page nav-page-previous">
+      <a href="./matlab.html" class="pagination-link" aria-label="The MATLAB Language">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">The MATLAB Language</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./shell.html" class="pagination-link" aria-label="Shell Scripting">
+        <span class="nav-page-text">Shell Scripting</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

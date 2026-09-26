@@ -1,0 +1,359 @@
+---
+title: "The Quarto Language"
+subtitle: "Markdown with a compiler behind it"
+---
+
+<!--
+Dialect: Quarto 1.9 (installed 1.9.38; 1.10 is current). HTML website projects are the primary target; PDF and other formats get one section on what changes.
+-->
+## Overview
+![](images/quarto-00.png){fig-alt="Quarto logo" width=2in style="float: left; padding: 0 2em 0 1em"}
+
+<br/>**Quarto** is an open-source publishing system built on top of [Pandoc](https://pandoc.org){target="_blank" rel="noopener noreferrer"}. You write plain text in a `.qmd` file, a dialect of Markdown with a YAML header and optional executable code, and Quarto turns it into a web page, a PDF, a slide deck, a book, or a whole website. This notebook is itself a Quarto website, so every page you are reading is a working example.
+
+Calling Quarto "Markdown" undersells it, and the gap is where most of the confusion lives. Markdown is a syntax. Quarto is a *build system*: it runs code cells through a computational engine (Jupyter, knitr, or Julia), splices in included files, expands shortcodes, hands the result to Pandoc, runs a stack of Lua filters over Pandoc's syntax tree to implement cross-references, callouts, and layout, and finally applies a theme. Each of those stages has its own syntax and its own rules about what it can see. When something renders strangely, the question is almost always *which stage handled it*, and much of this chapter is organized to make that question answerable.
+
+::: {style="clear: both"}
+
+:::
+
+::: {.callout-note title="Quarto is not just Markdown"}
+The comparison to a C compiler is closer than it looks. A `.qmd` file goes through something like a preprocessor (includes and shortcodes, which operate on raw text), a code-generation step (the engine executes cells and writes their output back as Markdown), a parser (Pandoc), a set of transformation passes (Lua filters over the syntax tree), and a back end (the HTML, LaTeX, or Typst writer). As with C, the preprocessor knows nothing about the language it is preprocessing, and that turns out to matter: see [Writing About Quarto in Quarto](#verbatim).
+:::
+
+### A Short History
+Quarto is the latest link in a chain that starts with Donald Knuth. In 1984 Knuth proposed **literate programming**: a program should be written as an essay for humans, with the code woven in, and tools should extract both the typeset document and the compilable source from the same file. His WEB system did exactly that for Pascal and TeX. The idea found its most durable home not in systems programming but in statistics, where the document *is* the product and the code exists to produce its numbers and figures.
+
+Sweave (Friedrich Leisch, 2002) brought literate programming to R by embedding R chunks in LaTeX. Yihui Xie's **knitr** (2012) generalized Sweave and, crucially, worked with Markdown rather than only LaTeX. Around the same time, John MacFarlane's **Pandoc** (first released in 2006, written in Haskell) had quietly become the universal document converter: it parses Markdown, HTML, LaTeX, Word, and dozens of other formats into one abstract syntax tree and writes any of them back out. RStudio combined the two into **R Markdown**, whose second-generation `rmarkdown` package (2014) ran knitr for execution and Pandoc for everything else. That pairing was enormously successful and entirely R-centric; meanwhile the Python world had converged on Jupyter notebooks, a different format with a different toolchain.
+
+Quarto, led by J.J. Allaire at RStudio, is the attempt to unify those worlds. It keeps the R Markdown architecture (an engine for execution, Pandoc for conversion) but makes the engine pluggable, so the same document format drives Jupyter kernels, knitr, or Julia. It moves the tool out of R entirely: the `quarto` command line is a standalone program written in TypeScript on the Deno runtime, bundling its own Pandoc, Dart Sass, and (since 1.4) Typst. Quarto 1.0 was announced in July 2022 at rstudio::conf, the same conference at which RStudio renamed itself **Posit** to signal that it was no longer an R-only company. The rename and the tool were the same strategic statement.
+
+| Version | Released | Headline additions                                                                                                         |
+|:--------|:--------:|:---------------------------------------------------------------------------------------------------------------------------|
+| 1.0     | Jul 2022 | First stable release. Multi-engine execution, websites, books, cross-references, callouts, and Reveal.js slides.           |
+| 1.3     | Apr 2023 | Code annotation, the `embed` shortcode for notebook output, links to other formats from HTML pages, Confluence publishing. |
+| 1.4     | Jan 2024 | Typst and dashboard formats, the manuscript project type, a cross-reference overhaul, Shiny for Python.                    |
+| 1.5     | Jul 2024 | Typst improvements, website drafts and announcement bars, a native Julia engine, placeholder shortcodes.                    |
+| 1.6     | Nov 2024 | `brand.yml` for unified branding across formats, Reveal.js updates, a landscape page block.                                 |
+| 1.7     | Apr 2025 | Dark mode improvements, the `version` shortcode, Typst and Pandoc updates.                                                 |
+| 1.8     | Oct 2025 | Brand extensions, HTML accessibility checks, access to the execution context from code.                                    |
+| 1.9     | Mar 2026 | Posit Connect Cloud publishing, LLM-friendly website output, list tables, experimental PDF accessibility standards.        |
+| 1.10    | Aug 2026 | Offline accessibility checks targeting a WCAG conformance level, localized strings for custom templates.                   |
+
+::: {.callout-note title="Check your version"}
+Features arrive quickly, and the documentation at quarto.org always describes the latest release. Run `quarto --version` before assuming a feature exists, and `quarto check` to see which engines, Pandoc, and TeX installation Quarto has found.
+:::
+
+### The Quarto Philosophy
+::: {.subheading}
+One source, many outputs
+:::
+
+Quarto's design follows from a few commitments, most of them inherited from Pandoc and R Markdown.
+
+**The source is plain text.** A `.qmd` file diffs cleanly, merges in Git, and opens in any editor. This is a deliberate rejection of the Jupyter `.ipynb` model, where the source is JSON that embeds its own outputs and makes every diff noisy. Quarto can render notebooks, but its native format is text.
+
+**One source, many outputs.** Authors describe *structure* (a heading, a figure, a callout, a cross-reference) and the output format decides *presentation*. The same `.qmd` becomes an HTML page with a clickable callout or a PDF with a boxed one. The price is that anything format-specific, such as raw HTML or a LaTeX command, is a leak in the abstraction, and Quarto gives you explicit tools to fence those leaks off.
+
+**Computation is part of the document.** Figures and numbers are produced by code at render time rather than pasted in, so the document cannot silently drift from the analysis behind it. This is the literate programming inheritance, and it is why Quarto has engines, caching, and `freeze`.
+
+**Pandoc's syntax tree is the contract.** Everything Quarto adds on top of Markdown is expressed as ordinary Pandoc constructs (divs, spans, attributes, code blocks) that Lua filters then interpret. This is why a callout is written as a fenced div with a class rather than with new syntax, and why the extension mechanism is "write a Lua filter" rather than "fork the parser."
+
+### The Render Pipeline
+<!--
+Mermaid flowchart of a render: .qmd -> include and shortcode expansion (raw text) -> engine execution (jupyter/knitr/julia) -> intermediate .md -> Pandoc parse to AST -> Quarto and user Lua filters -> writer (HTML/LaTeX/Typst) -> theme and post-processing -> output. Then what each stage can and cannot see, the keep-md option for inspecting the intermediate file, and why an error message names a stage.
+-->
+
+## Writing About Quarto in Quarto {#verbatim}
+::: {.subheading}
+Code blocks do not protect you
+:::
+
+Documenting Quarto in Quarto, as this chapter does, runs straight into a problem that has no analogue in most languages: the markup you want to *show* is markup that Quarto will *execute*. The instinct from every other language is to put it in a code block. In Quarto that is not enough, and understanding why is the key to everything in this section.
+
+### Why Code Blocks Are Not Safe
+Shortcodes (anything written between double braces with angle brackets) and includes are expanded *before* Pandoc parses the document. At that stage the text has not yet been recognized as Markdown, so a code fence is just three backticks and carries no meaning. A shortcode inside a code block is expanded exactly as it would be in a paragraph. Write this in a `.qmd`:
+
+````markdown
+```markdown
+{{{< include _notes.qmd >}}}
+```
+````
+
+and the rendered code block does not contain the include line. It contains the *entire text* of `_notes.qmd`, front matter and all, displayed as code. Executable cells have a similar problem from the other direction: a fence written as ```` ```{python} ```` is a cell, and the engine will run it wherever it appears.
+
+The same rule reaches into HTML comments. A shortcode inside `<!-- ... -->` is still expanded, which can mangle the comment and leak text onto the page. Commenting out an include is not the way to disable it.
+
+### Escaping Shortcodes
+Quarto provides two escapes. Either one suppresses expansion and displays the shortcode literally, whether it appears in a code block, in inline code, or in prose.
+
+| You write                              | The page shows                     |
+|:---------------------------------------|:-----------------------------------|
+| `{{{{< include _notes.qmd >}}}}`       | `{{{< include _notes.qmd >}}}`     |
+| `{{</*/* include _notes.qmd */*/>}}`   | `{{</* include _notes.qmd */>}}`   |
+
+The triple-brace form is the easier one to type. The comment form reads more clearly in source, because it looks like what it is. Both nest: adding one more brace, or one more `/*` and `*/` pair, shows the previous level of escape, which is how the table above displays the escapes themselves.
+
+### Showing an Executable Cell
+To display a cell without running it, double the braces around the engine name. The block is highlighted as code, and the braces render single, so the reader sees exactly what they would type. The unescaping applies in inline code as well, so writing about the escape itself takes one more brace, just as it does for shortcodes:
+
+`````markdown
+````markdown
+```{{{python}}}
+#| label: fig-waveform
+import numpy as np
+```
+````
+`````
+
+renders as
+
+````markdown
+```{{python}}
+#| label: fig-waveform
+import numpy as np
+```
+````
+
+This works for any engine (`{{{r}}}`, `{{{julia}}}`, `{{{mermaid}}}`) and is the right choice for teaching cell syntax: the reader sees the fence and its `#|` options, and nothing executes.
+
+### Showing a Cell and Its Output
+Sometimes you want both: the cell's source *including its fence*, and the output of actually running it. That is `echo: fenced`. The cell below runs, and Quarto displays its fence and options above the output:
+
+```{python}
+#| echo: fenced
+#| output: true
+samples = [0.0, 0.7071, 1.0, 0.7071, 0.0]
+print(f"peak = {max(samples)}")
+```
+
+Quarto omits the `echo: fenced` line itself from the display but keeps every other option. The default `echo: true` shows only the code inside the fence, which is usually what readers of a technical document want; `echo: fenced` is for readers who are learning Quarto.
+
+### Nesting Code Fences
+A code block that contains a code block needs an outer fence that is *longer* than any fence inside it. A fence closes only on a run of backticks at least as long as the one that opened it, so four backticks can safely enclose three:
+
+`````markdown
+````markdown
+Here is some C:
+
+```c
+int main(void) { return 0; }
+```
+````
+`````
+
+Each level of nesting adds a backtick. The example you just read needed five for its outermost fence. Tildes (`~~~`) are also legal fence characters and do not close backtick fences, which is sometimes easier to read than counting.
+
+### Quick Reference
+
+| Goal                                                     | Technique                                      |
+|:---------------------------------------------------------|:-----------------------------------------------|
+| Show a shortcode or include literally                    | `{{{{< ... >}}}}` or `{{</*/* ... */*/>}}`     |
+| Show a cell's fence and options without running it       | Double the braces: ```` ```{{{python}}} ````   |
+| Run a cell and show its fence, options, and output       | `#| echo: fenced`                              |
+| Run a cell and show only its code and output             | `#| echo: true` (the default)                  |
+| Show Markdown that itself contains code blocks           | An outer fence with more backticks, or `~~~`   |
+| Disable an include temporarily                           | Escape it; an HTML comment does not work       |
+
+## Documents and Front Matter
+<!--
+The YAML header: title, subtitle, author, date, format and per-format options. How options cascade: _quarto.yml, then directory-level _metadata.yml, then document front matter, then per-cell #| options; which wins and how lists and maps merge. Common document options (toc, number-sections, code-fold, page-layout).
+-->
+
+## Markdown Essentials
+<!--
+Pandoc Markdown as Quarto uses it, focused on what differs from CommonMark/GitHub Markdown. Emphasis, headings, lists (including the blank-line rules), links and images with attributes, footnotes, definition lists, line blocks. Tables: pipe, grid, and list tables (1.9), column alignment and widths. Math with $ and $$. Raw blocks (```{=html}). Quick-reference table.
+-->
+
+## Divs, Spans, and Attributes
+<!--
+The attribute syntax {#id .class key=value} and where it attaches (headings, images, links, code, divs, spans). Fenced divs with ::: and nesting by colon count. Bracketed spans []{}. How classes map to CSS; the custom classes this project uses (.subheading, .see-more, .hl-*, .stdout) as worked examples. Inline style attributes and when to prefer a class.
+-->
+
+## Callouts
+<!--
+The five types (note, tip, warning, important, caution), title, collapse, appearance (default, simple, minimal), icon. Cross-referenceable callouts. Project-wide defaults (callout-appearance in _quarto.yml). When a callout is decoration versus signal.
+-->
+
+## Figures, Tables, and Cross-References
+<!--
+Figure and table captions, the fig-, tbl-, sec-, eq-, lst- label prefixes, and @ref syntax. Subfigures and layout-ncol. Section anchors: how Pandoc slugs heading text, why code spans with punctuation slug unexpectedly, explicit {#id} headings, and verifying links (broken internal links render silently).
+-->
+
+## Code Blocks and Code Cells
+<!--
+Static code blocks: language highlighting, filename attribute, line numbers, code-fold, code annotation (1.3+). Executable cells: engines (jupyter, knitr, julia) and how Quarto picks one; #| cell options (label, echo, eval, output, include, warning, fig-cap); execute options at document and project level; caching, freeze (auto vs true) and the _freeze directory; inline code.
+-->
+
+## Diagrams
+<!--
+Mermaid and Graphviz cells, the mermaid theme option, sizing and captions, cross-referencing a diagram as a figure. When to use a diagram cell versus an image.
+-->
+
+## Includes and Embeds {#includes}
+::: {.subheading}
+Composing one document from several files
+:::
+
+Quarto has three ways to pull outside content into a page, and they are easy to confuse because they share a vocabulary. They differ in *what* they insert and *when* in the pipeline they insert it, and once you know those two things, the behavior of each follows.
+
+### The `include` Shortcode {#include-shortcode}
+The `include` shortcode splices the contents of another file into the current document:
+
+```markdown
+{{{< include _setup.qmd >}}}
+```
+
+The shortcode must sit on a line by itself, surrounded by blank lines. It is a block-level operation; written in the middle of a paragraph it fails with "Shortcode 'include' not found."
+
+#### How It Works
+Include is a **textual splice**, performed on the raw source before the engine runs and before Pandoc parses anything. It is `#include` from the C preprocessor, with the same virtues and the same blindness. The fragment's text replaces the shortcode line, and from then on Quarto sees one document. Every consequence follows from that:
+
+- **Headings join the host's structure.** A `###` in the fragment is a `###` in the host, appears in the host's table of contents, and gets an anchor in the host's namespace. Choose heading levels in the fragment to suit the place it will be included.
+- **Cross-references work in both directions.** The fragment can link to the host's anchors and the host to the fragment's, because after the splice there is no boundary between them.
+- **Code cells run in the host's engine.** A Python cell in a fragment executes in the host's kernel, sees variables the host defined earlier, and can define variables the host uses later.
+- **Styling comes from the host.** The fragment has no format, theme, or options of its own; it is rendered with whatever the host document uses.
+- **Nothing is protected.** As [the previous section](#verbatim) explains, the splice happens inside code blocks and HTML comments too.
+
+#### Paths
+Relative paths resolve against the **document being rendered**, not the file that contains the shortcode. This matters only for nested includes, but there it matters a great deal. If `chapter.qmd` includes `parts/_intro.qmd`, and `_intro.qmd` includes `_note.qmd`, Quarto looks for `_note.qmd` next to `chapter.qmd`, not next to `_intro.qmd`. This is the opposite of C's quoted `#include`, which searches the including file's directory first.
+
+To avoid the ambiguity entirely, use a path beginning with `/`, which resolves from the project root:
+
+```markdown
+{{{< include /parts/_note.qmd >}}}
+```
+
+A project-rooted path means the same thing from every file, at every level of nesting, which makes it the better habit for any fragment that is itself included.
+
+#### The Underscore Convention
+Quarto skips any file or directory whose name begins with `_` (or `.`) when it renders a project. This holds even when `_quarto.yml` lists a glob such as `render: ["*.qmd"]`, as this notebook's does. The underscore is what separates a fragment from a page: without it, `setup.qmd` would render as a standalone page of its own, probably broken, and show up in site search. The same rule is why `_quarto.yml`, `_metadata.yml`, `_freeze/`, and `_extensions/` never become pages.
+
+::: {.callout-warning title="A fragment is not a document"}
+Do not give a fragment YAML front matter. Because include is a textual splice, the fragment's `---` block lands in the middle of the host, and Pandoc merges it into the host's metadata. A `title:` in the fragment *replaces the host page's title*. If a fragment needs a comment describing what it is for, put it in the including document instead.
+:::
+
+#### A Live Example
+This notebook ships a fragment named `_quarto-include-demo.qmd`. The line below, escaped so you can see it, is followed by the real thing:
+
+```markdown
+{{{< include _quarto-include-demo.qmd >}}}
+```
+
+{{< include _quarto-include-demo.qmd >}}
+
+#### Pitfalls {#include-pitfalls}
+
+| Symptom                                                        | Cause                                                                                   |
+|:---------------------------------------------------------------|:----------------------------------------------------------------------------------------|
+| The page title changed to something unexpected                 | The fragment has front matter; its `title:` was merged into the host's metadata.        |
+| "Shortcode 'include' not found"                                | The shortcode is inline in a paragraph rather than on its own line.                     |
+| A nested include cannot find its file                          | The relative path was resolved from the host document; use a `/`-rooted path.           |
+| A fragment appears as its own page, or in search results       | Its name does not start with `_`.                                                       |
+| A code block shows a whole file instead of the include line    | The shortcode was not escaped; code blocks do not stop expansion.                       |
+| A link to a heading in a twice-included fragment goes to the first copy | Pandoc deduplicates repeated IDs by suffixing `-1`, `-2`, and so on, so the second copy's anchors differ. Give each inclusion unique headings or link by the suffixed ID. |
+
+### Embedding Notebook Output: `embed` {#embed}
+Where `include` copies *source*, `embed` copies *results*. It inserts the output of a cell from another notebook, typically a figure or table produced by a separate analysis:
+
+```markdown
+{{{< embed analysis.ipynb#fig-spectrum >}}}
+{{{< embed analysis.ipynb#tbl-summary echo=true >}}}
+{{{< embed analysis.ipynb >}}}
+```
+
+The part after `#` identifies the cell: its `label` for a `.qmd` source; for a Jupyter notebook, the cell's `id`, then its `label`, then its `tags`. Omit it to embed every cell. Output only is the default, and `echo=true` adds the cell's code. The source can be an `.ipynb` or a `.qmd`.
+
+The important difference is *who executes the code*. Included cells run in the host's engine as part of the host's render. An embedded cell runs in its own notebook, which Quarto renders separately, and the host receives only the result. That makes `embed` the right tool for keeping a heavy analysis in a notebook while presenting its figures in an article. Quarto also renders an HTML preview of the source notebook and, by default, adds a link to it beneath each embedded output; the `notebook-links` option (`true`, `false`, `inline`, `global`) controls that. Added in Quarto 1.3.
+
+### Header and Body Includes {#include-in-header}
+The third mechanism works at the other end of the pipeline. The `include-in-header`, `include-before-body`, and `include-after-body` options insert content **verbatim into the output file**, after Pandoc has finished. The content is raw HTML for HTML output (or raw LaTeX for PDF), not Markdown; nothing processes it.
+
+| Option                | Where the content lands (HTML)       | Typical use                                            |
+|:----------------------|:-------------------------------------|:-------------------------------------------------------|
+| `include-in-header`   | End of `<head>`                      | Analytics scripts, fonts, `<meta>` tags, extra CSS     |
+| `include-before-body` | Immediately after `<body>`           | A site banner or skip link                             |
+| `include-after-body`  | Immediately before `</body>`         | Scripts that need the DOM, comment widgets             |
+
+Each option takes a file, a list of files, or inline text:
+
+```yaml
+format:
+  html:
+    include-in-header:
+      - text: |
+          <script src="https://example.org/demo.js"></script>
+      - file: analytics.html
+      - comments.html              # a bare string is a file
+    include-before-body: banner.html
+```
+
+Set in `_quarto.yml`, these apply to every page of a site; set in front matter, to one page. For PDF output the same options place content in the LaTeX preamble and just after `\begin{document}` or before `\end{document}`.
+
+### Choosing a Mechanism
+
+| Mechanism                            | Inserts                                   | When it happens                       | Use it for                                                         |
+|:-------------------------------------|:------------------------------------------|:--------------------------------------|:-------------------------------------------------------------------|
+| `include` shortcode                  | Quarto source, which is then processed     | Before execution and Pandoc           | Shared text, reusable sections, splitting a long document          |
+| `embed` shortcode                    | The output of a cell in another notebook  | After that notebook renders separately | Figures and tables from an analysis kept in its own notebook       |
+| `include-in-header` and friends      | Raw HTML or LaTeX, untouched              | After Pandoc writes the output        | Scripts, styles, and markup that Markdown cannot express            |
+
+## Shortcodes
+<!--
+What shortcodes are and when they expand (raw text, before Pandoc). Built-ins: var (with _variables.yml), meta, env, pagebreak, kbd, video, lipsum, placeholder, version, contents. Positional and keyword arguments. Custom shortcodes point forward to Extending Quarto.
+-->
+
+## Projects
+<!--
+_quarto.yml and what makes a directory a project. Project types (default, website, book, manuscript). The render list and ignore rules, output-dir, resources. _metadata.yml for directory-level options. Freeze and the _freeze directory in detail. Profiles (quarto render --profile) for variant builds.
+-->
+
+## Websites
+<!--
+Site structure in _quarto.yml: navbar, sidebar (sections, collapse-level, docked vs floating), page-navigation, search, site-url. Listings for blogs and indexes. Drafts. Publishing a docs/ directory to GitHub Pages as this notebook does.
+-->
+
+## Page Layout
+<!--
+page-layout (article, full, custom), the grid options (body-width, margin-width, sidebar-width, gutter-width), .column-* classes (body-outset, page, screen, margin), margin content and asides, figure placement in margins, table of contents placement.
+-->
+
+## Styling and Themes
+<!--
+Bootstrap themes (cosmo and friends), the css option versus SCSS theme files and their layers (defaults, rules), Sass variables worth knowing, light and dark themes, brand.yml (1.6+). How this project's styles.css hooks into the theme.
+-->
+
+## Beyond HTML
+<!--
+What is format-independent (content, cross-references, callouts) and what is not (layout, styling, raw content). PDF via LaTeX versus Typst, and the TeX install question. Reveal.js slides briefly. Conditional content with .content-visible / .content-hidden when-format, and per-format options in front matter.
+-->
+
+## Extending Quarto
+<!--
+Extensions: quarto add, the _extensions directory, filters, shortcodes, formats, and project templates. Writing a Lua filter against the Pandoc AST. Writing a custom shortcode. When an extension is worth it versus a CSS class.
+-->
+
+## The Command Line
+<!--
+quarto render (single file vs project, --to, --profile), quarto preview and its live reload, quarto check, quarto convert between .ipynb and .qmd, quarto publish targets, quarto add/update/remove for extensions. Useful flags and environment variables.
+-->
+
+## Common Pitfalls
+<!--
+The recurring surprises collected in one place: blank lines required around lists, divs, and shortcodes; shortcodes expanding inside code and comments; heading slugs; YAML indentation and quoting; stale freeze output; relative paths in nested includes; images outside the project not being copied.
+-->
+
+## Key Differences from R Markdown and Jupyter
+<!--
+Table-driven comparison. From R Markdown: chunk options move from the chunk header to #| comments, the CLI replaces rmarkdown::render, formats and projects are unified, bookdown/blogdown/distill become project types. From Jupyter: text source instead of JSON with embedded outputs, execution at render time, what quarto convert does, and when to keep an .ipynb and render it directly.
+-->
+
+## Where to Go Next
+<!--
+Annotated and subsectioned like cpp.qmd and rust-out.qmd: Documentation (the quarto.org guide and reference, Pandoc's manual), Tooling (the VS Code and Positron extensions, quarto check), Examples (the Quarto gallery, source of well-known Quarto sites), Practice.
+-->
+
+## Further Reading
+<!--
+Plain citation list: the Quarto documentation, Pandoc User's Guide, Knuth's "Literate Programming" (1984), Xie's "Dynamic Documents with R and knitr", the Quarto 1.0 announcement.
+-->

@@ -385,7 +385,7 @@ clap = { version = "4", features = ["derive"] }
 ```
 
 #### The Derive API
-The [derive](#derive(parser)) API lets you describe your CLI as a struct. Clap reads the struct and its attributes at compile time and generates the parser automatically. This is the approach you will use in almost all real projects.
+The [derive](#derive-parser) API lets you describe your CLI as a struct. Clap reads the struct and its attributes at compile time and generates the parser automatically. This is the approach you will use in almost all real projects.
 
 ```rust
 use clap::Parser;
@@ -428,7 +428,7 @@ Options:
 
 `Cli::parse()` reads `std::env::args()`, validates the input, and returns a populated `Cli`. If parsing fails, it prints an error and exits — no `Result` to unwrap.
 
-#### `#[derive(Parser)]`
+#### `#[derive(Parser)]` {#derive-parser}
 `Parser` is the [trait](rust-ho.qmd#traits) that drives everything. Applying `#[derive(Parser)]` to a struct generates an implementation of that trait, including the `parse()` and `try_parse()` associated functions. Without it, none of the other clap attributes do anything.
 
 ```rust
@@ -679,7 +679,7 @@ fn main() {
 3. The dispatcher enum matches it to a variant and populates that variant's fields.
 :::
 
-```{bash}
+```bash
 $ tool --help
 Usage: tool [OPTIONS] <COMMAND>
 

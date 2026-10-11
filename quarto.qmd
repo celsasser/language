@@ -578,10 +578,275 @@ What is format-independent (content, cross-references, callouts) and what is not
 Extensions: quarto add, the _extensions directory, filters, shortcodes, formats, and project templates. Writing a Lua filter against the Pandoc AST. Writing a custom shortcode. When an extension is worth it versus a CSS class.
 -->
 
-## The Command Line
-<!--
-quarto render (single file vs project, --to, --profile), quarto preview and its live reload, quarto check, quarto convert between .ipynb and .qmd, quarto publish targets, quarto add/update/remove for extensions. Useful flags and environment variables.
--->
+## The Command Line {#cli}
+::: {.subheading}
+One binary, many verbs
+:::
+
+Everything Quarto does goes through a single program, `quarto`. It is a TypeScript application running on Deno, and the installation carries its own copies of every tool it drives: Pandoc, Dart Sass, esbuild, and Typst. A Pandoc you installed yourself is never used, which is a deliberate choice. Quarto's Lua filters are written against one exact Pandoc version, and a different Pandoc on the `PATH` would be a different compiler. When you need Pandoc directly, run `quarto pandoc`, which is the bundled one (Pandoc 3.8 in Quarto 1.9).
+
+The command line is organized as verbs, in the style of `git`:
+
+| Command                         | Does                                                                                     |
+|:--------------------------------|:-----------------------------------------------------------------------------------------|
+| `quarto render`                 | Builds a file or a whole project. The compiler.                                          |
+| `quarto preview`                | Renders, serves the result locally, and re-renders on every save                         |
+| `quarto check`                  | Verifies the installation and finds the engines (Python, Jupyter, R, TeX)                |
+| `quarto inspect`                | Prints the fully resolved configuration of a file or project as JSON                     |
+| `quarto convert`                | Converts between `.ipynb` and `.qmd`                                                     |
+| `quarto pandoc`, `quarto typst` | Runs the bundled tool with whatever arguments you give it                                |
+| `quarto add`, `update`, `remove`| Manages extensions in `_extensions/` (see [Extending Quarto](#extending-quarto))         |
+| `quarto create`, `quarto use`   | Scaffolds a new project or extension, or applies a template to the current one           |
+| `quarto publish`                | Renders and deploys to GitHub Pages, Netlify, Posit Connect, and others                  |
+| `quarto install`, `quarto tools`| Installs and lists optional dependencies: TinyTeX, headless Chrome, veraPDF              |
+
+Every verb accepts `--help`, and the help text is accurate and current, which is not always true of the website. When the documentation and `quarto render --help` disagree, believe the binary.
+
+### `quarto render` {#cli-render}
+`render` is the command you will run most, and what it does depends on what you point it at.
+
+| Invocation                      | What renders                                   | Notes                                                                                   |
+|:--------------------------------|:-----------------------------------------------|:----------------------------------------------------------------------------------------|
+| `quarto render`                 | The whole project in the current directory     | Everything in the `render:` list, minus `_` files. Output goes to `output-dir`.          |
+| `quarto render chapter.qmd`     | One file, *within* its project                 | `_quarto.yml` still applies and output still lands in `output-dir`. Always executes cells. |
+| `quarto render subdir/`         | Every renderable file under a directory        | A middle ground for a large site                                                         |
+| `quarto render notes.qmd` outside any project | One standalone document          | Output is written next to the source                                                     |
+
+The single-file form is the edit loop, and the full render is the build. The difference matters because some things only happen in a full render. Navigation, search, and listings are computed across the site, the output directory is cleaned first (unless you pass `--no-clean`), and [freeze](#freeze) applies only to project renders: a single file always re-executes its cells. A single-file render that looks right is good evidence the page is right, but only a full render shows you the site.
+
+#### Flags Worth Knowing
+
+| Flag                            | Effect                                                                                                   |
+|:--------------------------------|:---------------------------------------------------------------------------------------------------------|
+| `--to html`, `--to pdf`, `--to all` | Choose the output format(s). Without it, the first format in front matter or `_quarto.yml` is used.  |
+| `-M key:value`                  | Override a metadata value for this run: `-M code-fold:false`, `-M toc:false`                             |
+| `-P key:value`                  | Set an execution parameter, for parameterized reports                                                     |
+| `--output -`                    | Write the result to standard output rather than a file                                                   |
+| `--output-dir dir`              | Write somewhere other than the configured output directory                                                |
+| `--no-execute`                  | Do not run cells. Pages render with no cell output, which is fast and useful for checking prose          |
+| `--cache-refresh`               | Discard the execution cache and rerun                                                                     |
+| `--execute-daemon`              | Keep the Jupyter kernel alive between renders, so `import numpy` is paid once rather than on every save   |
+| `--profile name`                | Activate `_quarto-name.yml` on top of `_quarto.yml`, for variant builds (see [Projects](#projects))      |
+| `--debug`                       | Leave intermediate files in place (see [Turning Up the Volume](#diagnostics-volume))                      |
+| `--quiet`                       | Suppress console output, errors included                                                                  |
+
+#### Pandoc Arguments Pass Through
+Any argument `render` does not recognize is handed to Pandoc unchanged. That is what the `[args...]` in `quarto render [input] [args...]` means, and it makes the whole of Pandoc's command line available:
+
+```bash
+quarto render quarto.qmd --toc-depth 2              # a Pandoc option, overriding toc-depth
+quarto render quarto.qmd --lua-filter lint.lua      # run an extra filter for this render only
+quarto render --fail-if-warnings                    # make warnings fatal (see below)
+```
+
+The relationship is the same as `gcc` and `ld`: the driver handles what it understands and forwards the rest. Unlike `gcc -Wl,`, there is no prefix marking an argument as forwarded, so a misspelled Quarto flag does not produce "unknown option." It goes to Pandoc, which may accept it as something else or fail with a message that never mentions Quarto.
+
+### `quarto preview` {#cli-preview}
+`preview` starts a local web server, opens a browser, and watches the source. Save a file and Quarto re-renders it and reloads the page. For writing, this is the right loop: the browser always shows the current state of the page you are editing.
+
+```bash
+quarto preview                      # the whole site, starting at index
+quarto preview quarto.qmd           # start at one page
+quarto preview --no-browser         # serve, but let me open the browser myself
+quarto preview --port 4444          # a fixed port, so a bookmark keeps working
+quarto preview --render all         # do a full render first, then preview
+```
+
+What preview does *not* do is rebuild the site. By default (`--render none`) it renders only the files you open and change, and serves whatever is already in the output directory for everything else. That is why it is fast, and also why a renamed heading can leave stale links on other pages, or search can return a section that no longer exists. Preview is for editing a page; `quarto render` is for producing the site. Preview also accepts the same `render` flags, so `quarto preview quarto.qmd --no-execute` gives a fast loop for prose on a page with slow cells.
+
+### Inspecting the Installation and the Project {#cli-inspect}
+Two commands answer "what does Quarto think is going on?"
+
+`quarto check` reports the installation: the Quarto and Pandoc versions, whether Python and Jupyter were found (and which Python, which matters when you work in a virtual environment), whether R and knitr are present, and whether a TeX distribution exists. `quarto check jupyter` narrows to one engine. When a cell will not run, `check` is the first stop, because the most common cause is that Quarto found a different Python than the one you installed your packages into.
+
+`quarto inspect` reports the *configuration*, after every layer has been merged. Pointed at a file, it prints the engine Quarto chose, every format option with its resolved value, and the resources the page depends on:
+
+```bash
+quarto inspect quarto.qmd | less
+```
+
+```text
+{
+  "quarto": { "version": "1.9.38" },
+  "engines": [ "jupyter" ],
+  "formats": {
+    "html": {
+      "execute": {
+        "freeze": false,
+        "echo": true,
+        "engine": "jupyter",
+        ...
+```
+
+This is the tool for the question "which setting won?" when `_quarto.yml`, `_metadata.yml`, front matter, and the command line all have opinions. It is the equivalent of `make -p` or `cmake -LA`: rather than reasoning about the precedence rules, ask the program for its conclusion.
+
+### The Other Verbs
+The remaining commands are used occasionally rather than daily.
+
+**`quarto convert`** turns a notebook into a `.qmd` and back. `quarto convert analysis.ipynb` writes `analysis.qmd`, with Markdown cells as prose and code cells as `{{python}}` cells. Outputs are dropped: the `.qmd` is source, and outputs are regenerated by rendering. The reverse direction produces a notebook with no outputs, ready to open in Jupyter.
+
+**`quarto publish`** renders and deploys in one step: `quarto publish gh-pages` builds the site and pushes it to a `gh-pages` branch; `netlify`, `connect`, `posit-connect-cloud`, and `huggingface` are other targets. It records the destination in a `_publish.yml` so the next publish needs no arguments. This notebook does not use it: it renders into `docs/` and lets GitHub Pages serve that directory from the main branch, which needs no credentials and no extra branch.
+
+**`quarto add`, `update`, and `remove`** manage extensions: `quarto add quarto-ext/fontawesome` downloads into `_extensions/`, which you commit. **`quarto create project website`** scaffolds a new project. **`quarto install tinytex`** fetches a small TeX distribution for PDF output, and `quarto tools` lists which of these optional dependencies are present.
+
+## Warnings and Errors {#diagnostics}
+::: {.subheading}
+What the compiler reports, and what it does not
+:::
+
+Render this notebook and you will see very little output beyond file names. That quiet is not a clean bill of health. Quarto has no `-Wall`, and most of the mistakes a careful author makes (a link to an anchor that does not exist, a table that is not a table, a fence with the wrong braces) pass through without a word. To understand why, and what can be done about it, you need to know who is doing the reporting and what each of them can see.
+
+### Markdown Has No Syntax Errors {#diagnostics-no-syntax-errors}
+The root cause is a design decision inherited from Markdown itself. John Gruber designed Markdown in 2004 so that any plain text is a valid document. There is no input the parser rejects. Characters that do not form a recognized construct are simply text. Pandoc keeps that promise: it will parse anything, and when your intent does not match the grammar, it finds *some* reading of what you wrote and produces it.
+
+Here is a pipe table missing its separator row:
+
+```markdown
+| a | b |
+| 1 | 2 |
+```
+
+A C compiler, given a malformed declaration, stops and tells you. Pandoc cannot, because this is valid Markdown. It is a **line block**, Pandoc's syntax for verse and addresses, in which each line begins with `|` and line breaks are preserved. You can see the reading Pandoc chose by asking it for its syntax tree:
+
+```bash
+printf '| a | b |\n| 1 | 2 |\n' | quarto pandoc -f markdown -t native
+```
+
+```text
+[ LineBlock
+    [ [ Str "a" , Space , Str "|" , Space , Str "b" , Space , Str "|" ]
+    , [ Str "1" , Space , Str "|" , Space , Str "2" , Space , Str "|" ]
+    ]
+]
+```
+
+The page shows two lines of text with stray bars in them, and nothing anywhere says "table." The same reasoning covers most silent failures. A link to `#nope` is a perfectly good link; whether an element with that ID exists is a fact about the finished page, not about the syntax. A fence written ```` ```{html} ```` is a perfectly good cell in a language called `html`. An unknown callout type is a perfectly good div with a class no stylesheet styles. Each is a correct program that does the wrong thing, which is the class of bug no parser can catch.
+
+::: {.callout-tip title="`-t native` is your debugger"}
+When a construct renders strangely, pipe the smallest piece of source that reproduces it through `quarto pandoc -f markdown -t native`. The syntax tree shows exactly how Pandoc read it, which is usually the whole answer. It skips Quarto's own stages (shortcodes, engines, and filters), so it isolates the parsing question from everything else.
+:::
+
+### Who Is Speaking {#diagnostics-voices}
+Messages come from different [stages of the pipeline](#the-render-pipeline), and each stage has its own format. Learning to recognize them tells you where to look. These are real messages from rendering a page with deliberate mistakes:
+
+```text
+ERROR: Validation of YAML front matter failed.
+ERROR: In file index.qmd
+(line 3, columns 6--10) Field "toc" has value maybe, which must instead be `true` or `false`
+
+[WARNING] Div at line 30 column 1 unclosed at line 54 column 1, closing implicitly.
+WARNING (/Applications/quarto/share/filters/main.lua:22009) Shortcode 'nosuch' not found
+WARNING (/Applications/quarto/share/filters/main.lua:14920) Unable to resolve crossref @fig-missing
+WARN: Unable to resolve link target: missing.qmd
+```
+
+| Prefix                                  | Speaker                                    | When                                          | What it means                                                                                                              |
+|:----------------------------------------|:-------------------------------------------|:----------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------|
+| `ERROR: Validation of YAML ...`         | Quarto's schema validator                  | Before anything runs                          | An option has the wrong type or value. Fatal, with an exact line and column in *your* file.                                 |
+| A Python or R traceback                 | The engine                                 | During execution                              | A cell raised. Fatal unless the cell sets `error: true`.                                                                   |
+| `[WARNING]`                             | Pandoc                                     | Parsing and writing                           | Something structural, such as an unclosed div or a resource it could not fetch.                                             |
+| `WARNING (.../main.lua:NNNN)`           | Quarto's Lua filters                       | After parsing                                 | Unknown shortcodes, unresolved `@` cross-references. The path is the *filter's* source line, not yours.                    |
+| `WARN:`                                 | Quarto's website post-processor            | After all pages are written                   | A link to a `.qmd` that does not exist. Projects only.                                                                     |
+| `(W)`                                   | A filter calling `quarto.log.warning`      | After parsing                                 | Typically an extension or your own filter                                                                                  |
+
+Two details here are traps. First, only the YAML validator reports positions in your source. Pandoc's line numbers refer to the text Quarto handed it, after front matter was split off and shortcodes and cells were processed, so they drift from your file: the unclosed div above was reported at line 30 of a file that had fewer than 40 lines, "unclosed at line 54." Search for the construct rather than jumping to the line. Second, the `main.lua:NNNN` in a filter warning is Quarto's own code; it tells you which filter noticed, not where your mistake is.
+
+### What Gets Checked {#diagnostics-coverage}
+The following table is the result of rendering a page containing one of each mistake, under Quarto 1.9 with default settings.
+
+| Mistake                                                     | Reported?                    | What you get instead                                                              |
+|:------------------------------------------------------------|:-----------------------------|:----------------------------------------------------------------------------------|
+| A YAML option with the wrong type (`toc: maybe`)            | **Error**                    |                                                                                   |
+| A misspelled YAML option (`toc-dept: 3`)                    | No                           | The option is stored as metadata and ignored                                      |
+| An exception in a cell                                       | **Error**                    |                                                                                   |
+| An unclosed `:::` div                                        | Warning                      | The div is closed at the end of the document                                      |
+| An unknown shortcode                                         | Warning                      | The shortcode appears literally on the page                                       |
+| An unresolved `@fig-` or `@sec-` cross-reference             | Warning                      | The page shows `?@fig-missing`                                                    |
+| A link to a `.qmd` that does not exist                       | Warning (projects only)      | A dead link                                                                       |
+| A link to a missing `#anchor` on the same page               | No                           | A link that goes nowhere                                                          |
+| A link to a missing anchor on another page (`other.qmd#x`)   | No                           | A link to the top of that page                                                    |
+| A missing image                                               | No (Pandoc warns only with `embed-resources: true`) | A broken image icon                                                |
+| A table missing its separator row                            | No                           | A line block                                                                      |
+| A table row with an extra cell                               | No                           | The extra cell is dropped                                                         |
+| An unknown highlight language (```` ```foo ````)             | No                           | Unhighlighted monospace                                                           |
+| A bare word in braces (```` ```{html} ````)                  | No                           | An unhighlighted block, and a Jupyter kernel started for nothing                  |
+| An unknown callout type (`.callout-bogus`)                   | No                           | A plain div                                                                       |
+| Two headings with the same text                              | No                           | The second gets the ID `real-heading-1`, and links to it hit the first             |
+
+The pattern is clear once laid out. Quarto checks what it owns: its own option schema, its own shortcodes and cross-reference syntax, and the files in its own project. It does not check what Markdown allows, and it does not check `#anchor` links at all, because to Pandoc a link target is an opaque string. A broken anchor is invisible until a reader clicks it.
+
+### Turning Up the Volume {#diagnostics-volume}
+None of the following makes Quarto detect anything new; they change what happens to the warnings it already produces.
+
+**Make warnings fatal.** `--fail-if-warnings` is a Pandoc flag, passed through. With it, a Pandoc warning stops the render and `quarto render` exits with status 1 instead of 0:
+
+```bash
+quarto render --fail-if-warnings || echo "build has warnings"
+```
+
+This is the `-Werror` of the toolchain, but with a large hole in it: it counts only warnings that went through *Pandoc's* logger, the `[WARNING]` lines. Quarto's own filter warnings, the `WARNING (.../main.lua)` lines for unresolved cross-references and unknown shortcodes, are printed by a different mechanism and do not count, and neither does the `WARN:` for a missing `.qmd` link. A page with a dangling `@fig-` reference renders with exit status 0 even under `--fail-if-warnings`. The flag also works only on the command line; putting it in `_quarto.yml` under `pandoc-args:` has no effect in 1.9. It is still worth using in a CI job or a pre-commit hook, and the [lint filter below](#diagnostics-filter) is written to feed it.
+
+**Keep a log.** `--log build.log` writes everything to a file, and `--log-format json-stream` makes it one JSON object per line:
+
+```text
+{"msg":"Unable to resolve link target: missing.qmd","level":30,"levelName":"WARN","loggerName":"default"}
+{"msg":"\u001b[33mWARNING (/Applications/quarto/share/filters/main.lua:14920) Unable to resolve crossref @fig-missing\n\u001b[39m","level":20,"levelName":"INFO","loggerName":"default"}
+```
+
+Look closely at the second record. Quarto runs Pandoc as a child process and logs its standard error as ordinary output, so a Pandoc or filter warning arrives with level `INFO`, wrapped in terminal color codes, and sometimes split across records mid-word. Only Quarto's own messages, like the first record, carry a real `WARN` level. Search the `msg` text, not the level.
+
+::: {.callout-warning title="`--log-level warning` hides most warnings"}
+That same mislabeling makes the obvious way to quiet a render a trap. `--log-level warning` (or the environment variable `QUARTO_LOG_LEVEL=warning`) suppresses everything below `WARN`, which includes every Pandoc warning and every filter warning. In testing, it reduced the page above from five warnings to one: the missing `.qmd` link. Use `--quiet` if you want silence, and the default level if you want to know.
+:::
+
+**Keep the intermediates.** `--debug` leaves the engine's output in place as `chapter.html.md`, the Markdown after cells have run and before Pandoc parses it. Setting `keep-md: true` under `execute:` does the same for every render. When a cell's output is not appearing as you expect, this file shows exactly what the engine produced.
+
+**Hear Pandoc think.** `--verbose` passes through to Pandoc, which then reports each template and resource it loads. It is noisy and rarely needed, but it settles questions like "is it finding my stylesheet?"
+
+**Check accessibility.** Since 1.8, `axe: true` under `format: html:` runs the axe-core accessibility checker on each page. In 1.9 the check runs in the browser when the page loads, reporting to the JavaScript console by default; `axe: {output: document}` draws the violations on the page itself. It catches problems such as missing alt text and low-contrast colors, which are real defects even though nothing fails. Quarto 1.10 adds offline checks that run during the render and target a WCAG conformance level.
+
+### Filling the Gaps with a Lua Filter {#diagnostics-filter}
+What Quarto does not check, you can. A Lua filter receives the same syntax tree that `-t native` prints, after Pandoc has parsed it and before it is written out, and can walk it looking for anything you consider a mistake. This is the extension mechanism the [philosophy](#the-quarto-philosophy) promised: Quarto's own cross-reference checking is itself a filter, and yours runs alongside it.
+
+The filter below catches three of the silent failures from the table: same-page links to missing anchors, tables that became line blocks, and fences with a bare word in braces. It is not an example written for this page. It is this notebook's own `lint.lua`, registered in `_quarto.yml` and run on every chapter, and the block below is the real file pulled in with the [`include` shortcode](#include-shortcode), so the code you read is the code that runs.
+
+```{.lua filename="lint.lua"}
+{{< include /lint.lua >}}
+```
+
+A filter is a table of functions keyed by AST element type, and Pandoc calls each one for every matching element. Defining `Pandoc` instead receives the whole document at once, which this filter needs: a link can point *forward* to a heading that has not been visited yet, so every ID must be collected before any link can be judged. `document:walk(collector)` does the collecting in one pass, and the loop afterward does the judging. The filter returns nothing, so the document passes through unchanged; it only observes. A page can opt out with `lint: false` in its front matter, which the filter reads from `document.meta`. Any front matter key that Quarto does not recognize is passed through as metadata, so a filter can define its own options this way. This notebook uses it for its imported copy of the C++ Core Guidelines, whose broken links come from the upstream text.
+
+Every warning goes through `warning_report`, for two reasons. The first is the choice of `pandoc.log.warn` over Quarto's `quarto.log.warning`. Both print a warning, but only Pandoc's logger counts toward `--fail-if-warnings`. A filter using `quarto.log.warning` prints `(W)` lines and still lets the build exit with 0, so a CI job would pass with every warning ignored. The second is that neither logger says which document it was rendering. Pandoc reports the *filter's* file and line, which is always the same line of `lint.lua`, so a full render produces a wall of warnings with no way to tell which chapter they came from. `quarto.doc.input_file`, part of Quarto's Lua API, supplies the source file's path, and the helper puts its name first:
+
+```text
+[WARNING] Scripting warning at lint.lua line 6 column 1: rust-cc.qmd: Link target #derive(parser) does not exist in this document
+```
+
+That line is real. The first full render with this filter found a link in the Cargo chapter that had pointed at nothing since it was written. The heading was `` #### `#[derive(Parser)]` ``, a code span full of punctuation, and its slug was not the `derive(parser)` the author guessed. The fix was an explicit `{#derive-parser}` on the heading, which is the standard remedy for any heading with punctuation in a code span. The same render found a ```` ```{bash} ```` fence that should have been ```` ```bash ````.
+
+and `--fail-if-warnings` fails the build.
+
+Run it once from the command line, or register it in `_quarto.yml` for every render:
+
+```bash
+quarto render quarto.qmd --lua-filter lint.lua --fail-if-warnings
+```
+
+```yaml
+filters:
+  - quarto
+  - lint.lua
+```
+
+The `quarto` entry in that list is not a file. It stands for Quarto's own filter stack, and its position decides when yours runs, which decides what yours can see. A filter listed alone runs *before* Quarto's filters, on the tree as Pandoc parsed it. At that point a figure's ID is still an attribute on an image or a cell option, not an element ID, so the lint filter would report a link to `#fig-plot` as broken when it is fine. Listed after `quarto`, it runs on the finished tree, where every figure, table, and section has its final ID. A filter passed with `--lua-filter` on the command line also runs after Quarto's. The same knowledge cuts the other way: a filter that wants to see `@fig-` references as raw citations must run *before* Quarto, because afterward they have been replaced with links.
+
+The filter sees one document at a time, and that is its limit. It cannot know whether `cpp.qmd#unique-ptr` exists, because `cpp.qmd` is a different render. Cross-page anchors are a property of the finished site, so they are checked against the finished site: a link checker such as [lychee](https://lychee.cli.rs){target="_blank" rel="noopener noreferrer"}, run over the output directory, follows every link, including fragments, without a network connection:
+
+```bash
+lychee --offline --include-fragments docs/
+```
+
+Between them, the schema validator, `--fail-if-warnings`, a lint filter, and a link checker over the output cover most of what a C programmer would expect a compiler to catch. None of it is on by default, which is the cost of building on a language designed never to reject its input.
 
 ## Common Pitfalls
 <!--

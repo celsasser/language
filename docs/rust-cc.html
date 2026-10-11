@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-09-23">
+<meta name="dcterms.date" content="2026-10-11">
 
 <title>Rust: Cargo and Crates – Computer Language Notebook</title>
 <style>
@@ -422,7 +422,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#clap" id="toc-clap" class="nav-link" data-scroll-target="#clap"><code>clap</code></a>
   <ul class="collapse">
   <li><a href="#the-derive-api" id="toc-the-derive-api" class="nav-link" data-scroll-target="#the-derive-api">The Derive API</a></li>
-  <li><a href="#deriveparser" id="toc-deriveparser" class="nav-link" data-scroll-target="#deriveparser"><code>#[derive(Parser)]</code></a></li>
+  <li><a href="#derive-parser" id="toc-derive-parser" class="nav-link" data-scroll-target="#derive-parser"><code>#[derive(Parser)]</code></a></li>
   <li><a href="#command...-attributes" id="toc-command...-attributes" class="nav-link" data-scroll-target="#command...-attributes"><code>#[command(...)]</code> Attributes</a></li>
   <li><a href="#arg...-attributes" id="toc-arg...-attributes" class="nav-link" data-scroll-target="#arg...-attributes"><code>#[arg(...)]</code> Attributes</a></li>
   <li><a href="#multiple-values" id="toc-multiple-values" class="nav-link" data-scroll-target="#multiple-values">Multiple Values</a></li>
@@ -460,7 +460,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 23, 2026</p>
+      <p class="date">October 11, 2026</p>
     </div>
   </div>
   
@@ -1061,7 +1061,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="dt">clap</span> <span class="op">=</span> <span class="op">{ </span><span class="dt">version</span><span class="op"> =</span> <span class="st">"4"</span><span class="op">, </span><span class="dt">features</span><span class="op"> =</span> <span class="op">[</span><span class="st">"derive"</span><span class="op">] }</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <section id="the-derive-api" class="level4">
 <h4 class="anchored" data-anchor-id="the-derive-api">The Derive API</h4>
-<p>The <a href="#derive(parser)">derive</a> API lets you describe your CLI as a struct. Clap reads the struct and its attributes at compile time and generates the parser automatically. This is the approach you will use in almost all real projects.</p>
+<p>The <a href="#derive-parser">derive</a> API lets you describe your CLI as a struct. Clap reads the struct and its attributes at compile time and generates the parser automatically. This is the approach you will use in almost all real projects.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">use</span> <span class="pp">clap::</span>Parser<span class="op">;</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span></span>
@@ -1096,8 +1096,8 @@ Options:
   -V, --version        Print version</code></pre>
 <p><code>Cli::parse()</code> reads <code>std::env::args()</code>, validates the input, and returns a populated <code>Cli</code>. If parsing fails, it prints an error and exits — no <code>Result</code> to unwrap.</p>
 </section>
-<section id="deriveparser" class="level4">
-<h4 class="anchored" data-anchor-id="deriveparser"><code>#[derive(Parser)]</code></h4>
+<section id="derive-parser" class="level4">
+<h4 class="anchored" data-anchor-id="derive-parser"><code>#[derive(Parser)]</code></h4>
 <p><code>Parser</code> is the <a href="./rust-ho.html#traits">trait</a> that drives everything. Applying <code>#[derive(Parser)]</code> to a struct generates an implementation of that trait, including the <code>parse()</code> and <code>try_parse()</code> associated functions. Without it, none of the other clap attributes do anything.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="at">#[</span>derive<span class="at">(</span>Parser<span class="at">)]</span>          <span class="co">// generates Cli::parse(), Cli::try_parse(), etc.</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Cli <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -1427,31 +1427,31 @@ pexs24 0.3.1</code></pre>
 </ol>
 </section>
 </div>
-<pre class="{bash}"><code>$ tool --help
-Usage: tool [OPTIONS] &lt;COMMAND&gt;
-
-Commands:
-  compress  Compress a file
-  formats   List available formats
-  help      Print this message or the help of a subcommand
-
-Options:
-      --config &lt;FILE&gt;  [default: tool.toml]
-  -v, --verbose
-  -h, --help           Print help
-
-$ tool compress --help
-Compress a file
-
-Usage: tool compress [OPTIONS] &lt;FILE&gt;
-
-Arguments:
-  &lt;FILE&gt;
-
-Options:
-  -o, --output &lt;FILE&gt;
-  -v, --verbose
-  -h, --help           Print help</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> tool <span class="at">--help</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Usage:</span> tool <span class="pp">[</span><span class="ss">OPTIONS</span><span class="pp">]</span> <span class="op">&lt;</span>COMMAND<span class="op">&gt;</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="ex">Commands:</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">compress</span>  Compress a file</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="ex">formats</span>   List available formats</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="bu">help</span>      Print this message or the help of a subcommand</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="ex">Options:</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>      <span class="ex">--config</span> <span class="op">&lt;</span>FILE<span class="op">&gt;</span>  [default: tool.toml]</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-v,</span> <span class="at">--verbose</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-h,</span> <span class="at">--help</span>           Print help</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> tool compress <span class="at">--help</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a><span class="ex">Compress</span> a file</span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a><span class="ex">Usage:</span> tool compress <span class="pp">[</span><span class="ss">OPTIONS</span><span class="pp">]</span> <span class="op">&lt;</span>FILE<span class="op">&gt;</span></span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a><span class="ex">Arguments:</span></span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;</span>FILE<span class="op">&gt;</span></span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a><span class="ex">Options:</span></span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-o,</span> <span class="at">--output</span> <span class="op">&lt;</span>FILE<span class="op">&gt;</span></span>
+<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-v,</span> <span class="at">--verbose</span></span>
+<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-h,</span> <span class="at">--help</span>           Print help</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Each subcommand gets its own <code>--help</code> page automatically.</p>
 <section id="optional-subcommands" class="level5">
 <h5 class="anchored" data-anchor-id="optional-subcommands">Optional Subcommands</h5>

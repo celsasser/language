@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-10-02">
+<meta name="dcterms.date" content="2026-10-11">
 
 <title>The Quarto Language – Computer Language Notebook</title>
 <style>
@@ -459,7 +459,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#styling-and-themes" id="toc-styling-and-themes" class="nav-link" data-scroll-target="#styling-and-themes">Styling and Themes</a></li>
   <li><a href="#beyond-html" id="toc-beyond-html" class="nav-link" data-scroll-target="#beyond-html">Beyond HTML</a></li>
   <li><a href="#extending-quarto" id="toc-extending-quarto" class="nav-link" data-scroll-target="#extending-quarto">Extending Quarto</a></li>
-  <li><a href="#the-command-line" id="toc-the-command-line" class="nav-link" data-scroll-target="#the-command-line">The Command Line</a></li>
+  <li><a href="#cli" id="toc-cli" class="nav-link" data-scroll-target="#cli">The Command Line</a>
+  <ul>
+  <li><a href="#cli-render" id="toc-cli-render" class="nav-link" data-scroll-target="#cli-render"><code>quarto render</code></a>
+  <ul class="collapse">
+  <li><a href="#flags-worth-knowing" id="toc-flags-worth-knowing" class="nav-link" data-scroll-target="#flags-worth-knowing">Flags Worth Knowing</a></li>
+  <li><a href="#pandoc-arguments-pass-through" id="toc-pandoc-arguments-pass-through" class="nav-link" data-scroll-target="#pandoc-arguments-pass-through">Pandoc Arguments Pass Through</a></li>
+  </ul></li>
+  <li><a href="#cli-preview" id="toc-cli-preview" class="nav-link" data-scroll-target="#cli-preview"><code>quarto preview</code></a></li>
+  <li><a href="#cli-inspect" id="toc-cli-inspect" class="nav-link" data-scroll-target="#cli-inspect">Inspecting the Installation and the Project</a></li>
+  <li><a href="#the-other-verbs" id="toc-the-other-verbs" class="nav-link" data-scroll-target="#the-other-verbs">The Other Verbs</a></li>
+  </ul></li>
+  <li><a href="#diagnostics" id="toc-diagnostics" class="nav-link" data-scroll-target="#diagnostics">Warnings and Errors</a>
+  <ul>
+  <li><a href="#diagnostics-no-syntax-errors" id="toc-diagnostics-no-syntax-errors" class="nav-link" data-scroll-target="#diagnostics-no-syntax-errors">Markdown Has No Syntax Errors</a></li>
+  <li><a href="#diagnostics-voices" id="toc-diagnostics-voices" class="nav-link" data-scroll-target="#diagnostics-voices">Who Is Speaking</a></li>
+  <li><a href="#diagnostics-coverage" id="toc-diagnostics-coverage" class="nav-link" data-scroll-target="#diagnostics-coverage">What Gets Checked</a></li>
+  <li><a href="#diagnostics-volume" id="toc-diagnostics-volume" class="nav-link" data-scroll-target="#diagnostics-volume">Turning Up the Volume</a></li>
+  <li><a href="#diagnostics-filter" id="toc-diagnostics-filter" class="nav-link" data-scroll-target="#diagnostics-filter">Filling the Gaps with a Lua Filter</a></li>
+  </ul></li>
   <li><a href="#common-pitfalls" id="toc-common-pitfalls" class="nav-link" data-scroll-target="#common-pitfalls">Common Pitfalls</a></li>
   <li><a href="#key-differences-from-r-markdown-and-jupyter" id="toc-key-differences-from-r-markdown-and-jupyter" class="nav-link" data-scroll-target="#key-differences-from-r-markdown-and-jupyter">Key Differences from R Markdown and Jupyter</a></li>
   <li><a href="#where-to-go-next" id="toc-where-to-go-next" class="nav-link" data-scroll-target="#where-to-go-next">Where to Go Next</a></li>
@@ -484,7 +502,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">October 2, 2026</p>
+      <p class="date">October 11, 2026</p>
     </div>
   </div>
   
@@ -679,7 +697,7 @@ Mermaid flowchart of a render: .qmd -> include and shortcode expansion (raw text
 <section id="showing-a-cell-and-its-output" class="level3">
 <h3 class="anchored" data-anchor-id="showing-a-cell-and-its-output">Showing a Cell and Its Output</h3>
 <p>Sometimes you want both: the cell’s source <em>including its fence</em>, and the output of actually running it. That is <code>echo: fenced</code>. The cell below runs, and Quarto displays its fence and options above the output:</p>
-<div id="27aad91c" class="cell" data-execution_count="1">
+<div id="1d92c25f" class="cell" data-execution_count="1">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
@@ -1562,11 +1580,523 @@ What is format-independent (content, cross-references, callouts) and what is not
 Extensions: quarto add, the _extensions directory, filters, shortcodes, formats, and project templates. Writing a Lua filter against the Pandoc AST. Writing a custom shortcode. When an extension is worth it versus a CSS class.
 -->
 </section>
-<section id="the-command-line" class="level2">
-<h2 class="anchored" data-anchor-id="the-command-line">The Command Line</h2>
-<!--
-quarto render (single file vs project, --to, --profile), quarto preview and its live reload, quarto check, quarto convert between .ipynb and .qmd, quarto publish targets, quarto add/update/remove for extensions. Useful flags and environment variables.
--->
+<section id="cli" class="level2">
+<h2 class="anchored" data-anchor-id="cli">The Command Line</h2>
+<div class="subheading">
+<p>One binary, many verbs</p>
+</div>
+<p>Everything Quarto does goes through a single program, <code>quarto</code>. It is a TypeScript application running on Deno, and the installation carries its own copies of every tool it drives: Pandoc, Dart Sass, esbuild, and Typst. A Pandoc you installed yourself is never used, which is a deliberate choice. Quarto’s Lua filters are written against one exact Pandoc version, and a different Pandoc on the <code>PATH</code> would be a different compiler. When you need Pandoc directly, run <code>quarto pandoc</code>, which is the bundled one (Pandoc 3.8 in Quarto 1.9).</p>
+<p>The command line is organized as verbs, in the style of <code>git</code>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Command</th>
+<th style="text-align: left;">Does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>quarto render</code></td>
+<td style="text-align: left;">Builds a file or a whole project. The compiler.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>quarto preview</code></td>
+<td style="text-align: left;">Renders, serves the result locally, and re-renders on every save</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>quarto check</code></td>
+<td style="text-align: left;">Verifies the installation and finds the engines (Python, Jupyter, R, TeX)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>quarto inspect</code></td>
+<td style="text-align: left;">Prints the fully resolved configuration of a file or project as JSON</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>quarto convert</code></td>
+<td style="text-align: left;">Converts between <code>.ipynb</code> and <code>.qmd</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>quarto pandoc</code>, <code>quarto typst</code></td>
+<td style="text-align: left;">Runs the bundled tool with whatever arguments you give it</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>quarto add</code>, <code>update</code>, <code>remove</code></td>
+<td style="text-align: left;">Manages extensions in <code>_extensions/</code> (see <a href="#extending-quarto">Extending Quarto</a>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>quarto create</code>, <code>quarto use</code></td>
+<td style="text-align: left;">Scaffolds a new project or extension, or applies a template to the current one</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>quarto publish</code></td>
+<td style="text-align: left;">Renders and deploys to GitHub Pages, Netlify, Posit Connect, and others</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>quarto install</code>, <code>quarto tools</code></td>
+<td style="text-align: left;">Installs and lists optional dependencies: TinyTeX, headless Chrome, veraPDF</td>
+</tr>
+</tbody>
+</table>
+<p>Every verb accepts <code>--help</code>, and the help text is accurate and current, which is not always true of the website. When the documentation and <code>quarto render --help</code> disagree, believe the binary.</p>
+<section id="cli-render" class="level3">
+<h3 class="anchored" data-anchor-id="cli-render"><code>quarto render</code></h3>
+<p><code>render</code> is the command you will run most, and what it does depends on what you point it at.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 19%">
+<col style="width: 28%">
+<col style="width: 52%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Invocation</th>
+<th style="text-align: left;">What renders</th>
+<th style="text-align: left;">Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>quarto render</code></td>
+<td style="text-align: left;">The whole project in the current directory</td>
+<td style="text-align: left;">Everything in the <code>render:</code> list, minus <code>_</code> files. Output goes to <code>output-dir</code>.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>quarto render chapter.qmd</code></td>
+<td style="text-align: left;">One file, <em>within</em> its project</td>
+<td style="text-align: left;"><code>_quarto.yml</code> still applies and output still lands in <code>output-dir</code>. Always executes cells.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>quarto render subdir/</code></td>
+<td style="text-align: left;">Every renderable file under a directory</td>
+<td style="text-align: left;">A middle ground for a large site</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>quarto render notes.qmd</code> outside any project</td>
+<td style="text-align: left;">One standalone document</td>
+<td style="text-align: left;">Output is written next to the source</td>
+</tr>
+</tbody>
+</table>
+<p>The single-file form is the edit loop, and the full render is the build. The difference matters because some things only happen in a full render. Navigation, search, and listings are computed across the site, the output directory is cleaned first (unless you pass <code>--no-clean</code>), and <a href="#freeze">freeze</a> applies only to project renders: a single file always re-executes its cells. A single-file render that looks right is good evidence the page is right, but only a full render shows you the site.</p>
+<section id="flags-worth-knowing" class="level4">
+<h4 class="anchored" data-anchor-id="flags-worth-knowing">Flags Worth Knowing</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Flag</th>
+<th style="text-align: left;">Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>--to html</code>, <code>--to pdf</code>, <code>--to all</code></td>
+<td style="text-align: left;">Choose the output format(s). Without it, the first format in front matter or <code>_quarto.yml</code> is used.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>-M key:value</code></td>
+<td style="text-align: left;">Override a metadata value for this run: <code>-M code-fold:false</code>, <code>-M toc:false</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>-P key:value</code></td>
+<td style="text-align: left;">Set an execution parameter, for parameterized reports</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>--output -</code></td>
+<td style="text-align: left;">Write the result to standard output rather than a file</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>--output-dir dir</code></td>
+<td style="text-align: left;">Write somewhere other than the configured output directory</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>--no-execute</code></td>
+<td style="text-align: left;">Do not run cells. Pages render with no cell output, which is fast and useful for checking prose</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>--cache-refresh</code></td>
+<td style="text-align: left;">Discard the execution cache and rerun</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>--execute-daemon</code></td>
+<td style="text-align: left;">Keep the Jupyter kernel alive between renders, so <code>import numpy</code> is paid once rather than on every save</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>--profile name</code></td>
+<td style="text-align: left;">Activate <code>_quarto-name.yml</code> on top of <code>_quarto.yml</code>, for variant builds (see <a href="#projects">Projects</a>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>--debug</code></td>
+<td style="text-align: left;">Leave intermediate files in place (see <a href="#diagnostics-volume">Turning Up the Volume</a>)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>--quiet</code></td>
+<td style="text-align: left;">Suppress console output, errors included</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="pandoc-arguments-pass-through" class="level4">
+<h4 class="anchored" data-anchor-id="pandoc-arguments-pass-through">Pandoc Arguments Pass Through</h4>
+<p>Any argument <code>render</code> does not recognize is handed to Pandoc unchanged. That is what the <code>[args...]</code> in <code>quarto render [input] [args...]</code> means, and it makes the whole of Pandoc’s command line available:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render quarto.qmd <span class="at">--toc-depth</span> 2              <span class="co"># a Pandoc option, overriding toc-depth</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render quarto.qmd <span class="at">--lua-filter</span> lint.lua      <span class="co"># run an extra filter for this render only</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render <span class="at">--fail-if-warnings</span>                    <span class="co"># make warnings fatal (see below)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The relationship is the same as <code>gcc</code> and <code>ld</code>: the driver handles what it understands and forwards the rest. Unlike <code>gcc -Wl,</code>, there is no prefix marking an argument as forwarded, so a misspelled Quarto flag does not produce “unknown option.” It goes to Pandoc, which may accept it as something else or fail with a message that never mentions Quarto.</p>
+</section>
+</section>
+<section id="cli-preview" class="level3">
+<h3 class="anchored" data-anchor-id="cli-preview"><code>quarto preview</code></h3>
+<p><code>preview</code> starts a local web server, opens a browser, and watches the source. Save a file and Quarto re-renders it and reloads the page. For writing, this is the right loop: the browser always shows the current state of the page you are editing.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview                      <span class="co"># the whole site, starting at index</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview quarto.qmd           <span class="co"># start at one page</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview <span class="at">--no-browser</span>         <span class="co"># serve, but let me open the browser myself</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview <span class="at">--port</span> 4444          <span class="co"># a fixed port, so a bookmark keeps working</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview <span class="at">--render</span> all         <span class="co"># do a full render first, then preview</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>What preview does <em>not</em> do is rebuild the site. By default (<code>--render none</code>) it renders only the files you open and change, and serves whatever is already in the output directory for everything else. That is why it is fast, and also why a renamed heading can leave stale links on other pages, or search can return a section that no longer exists. Preview is for editing a page; <code>quarto render</code> is for producing the site. Preview also accepts the same <code>render</code> flags, so <code>quarto preview quarto.qmd --no-execute</code> gives a fast loop for prose on a page with slow cells.</p>
+</section>
+<section id="cli-inspect" class="level3">
+<h3 class="anchored" data-anchor-id="cli-inspect">Inspecting the Installation and the Project</h3>
+<p>Two commands answer “what does Quarto think is going on?”</p>
+<p><code>quarto check</code> reports the installation: the Quarto and Pandoc versions, whether Python and Jupyter were found (and which Python, which matters when you work in a virtual environment), whether R and knitr are present, and whether a TeX distribution exists. <code>quarto check jupyter</code> narrows to one engine. When a cell will not run, <code>check</code> is the first stop, because the most common cause is that Quarto found a different Python than the one you installed your packages into.</p>
+<p><code>quarto inspect</code> reports the <em>configuration</em>, after every layer has been merged. Pointed at a file, it prints the engine Quarto chose, every format option with its resolved value, and the resources the page depends on:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> inspect quarto.qmd <span class="kw">|</span> <span class="fu">less</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<pre class="text"><code>{
+  "quarto": { "version": "1.9.38" },
+  "engines": [ "jupyter" ],
+  "formats": {
+    "html": {
+      "execute": {
+        "freeze": false,
+        "echo": true,
+        "engine": "jupyter",
+        ...</code></pre>
+<p>This is the tool for the question “which setting won?” when <code>_quarto.yml</code>, <code>_metadata.yml</code>, front matter, and the command line all have opinions. It is the equivalent of <code>make -p</code> or <code>cmake -LA</code>: rather than reasoning about the precedence rules, ask the program for its conclusion.</p>
+</section>
+<section id="the-other-verbs" class="level3">
+<h3 class="anchored" data-anchor-id="the-other-verbs">The Other Verbs</h3>
+<p>The remaining commands are used occasionally rather than daily.</p>
+<p><strong><code>quarto convert</code></strong> turns a notebook into a <code>.qmd</code> and back. <code>quarto convert analysis.ipynb</code> writes <code>analysis.qmd</code>, with Markdown cells as prose and code cells as <code>{python}</code> cells. Outputs are dropped: the <code>.qmd</code> is source, and outputs are regenerated by rendering. The reverse direction produces a notebook with no outputs, ready to open in Jupyter.</p>
+<p><strong><code>quarto publish</code></strong> renders and deploys in one step: <code>quarto publish gh-pages</code> builds the site and pushes it to a <code>gh-pages</code> branch; <code>netlify</code>, <code>connect</code>, <code>posit-connect-cloud</code>, and <code>huggingface</code> are other targets. It records the destination in a <code>_publish.yml</code> so the next publish needs no arguments. This notebook does not use it: it renders into <code>docs/</code> and lets GitHub Pages serve that directory from the main branch, which needs no credentials and no extra branch.</p>
+<p><strong><code>quarto add</code>, <code>update</code>, and <code>remove</code></strong> manage extensions: <code>quarto add quarto-ext/fontawesome</code> downloads into <code>_extensions/</code>, which you commit. <strong><code>quarto create project website</code></strong> scaffolds a new project. <strong><code>quarto install tinytex</code></strong> fetches a small TeX distribution for PDF output, and <code>quarto tools</code> lists which of these optional dependencies are present.</p>
+</section>
+</section>
+<section id="diagnostics" class="level2">
+<h2 class="anchored" data-anchor-id="diagnostics">Warnings and Errors</h2>
+<div class="subheading">
+<p>What the compiler reports, and what it does not</p>
+</div>
+<p>Render this notebook and you will see very little output beyond file names. That quiet is not a clean bill of health. Quarto has no <code>-Wall</code>, and most of the mistakes a careful author makes (a link to an anchor that does not exist, a table that is not a table, a fence with the wrong braces) pass through without a word. To understand why, and what can be done about it, you need to know who is doing the reporting and what each of them can see.</p>
+<section id="diagnostics-no-syntax-errors" class="level3">
+<h3 class="anchored" data-anchor-id="diagnostics-no-syntax-errors">Markdown Has No Syntax Errors</h3>
+<p>The root cause is a design decision inherited from Markdown itself. John Gruber designed Markdown in 2004 so that any plain text is a valid document. There is no input the parser rejects. Characters that do not form a recognized construct are simply text. Pandoc keeps that promise: it will parse anything, and when your intent does not match the grammar, it finds <em>some</em> reading of what you wrote and produces it.</p>
+<p>Here is a pipe table missing its separator row:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> a <span class="pp">|</span> b <span class="pp">|</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 1 <span class="pp">|</span> 2 <span class="pp">|</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A C compiler, given a malformed declaration, stops and tells you. Pandoc cannot, because this is valid Markdown. It is a <strong>line block</strong>, Pandoc’s syntax for verse and addresses, in which each line begins with <code>|</code> and line breaks are preserved. You can see the reading Pandoc chose by asking it for its syntax tree:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">'| a | b |\n| 1 | 2 |\n'</span> <span class="kw">|</span> <span class="ex">quarto</span> pandoc <span class="at">-f</span> markdown <span class="at">-t</span> native</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<pre class="text"><code>[ LineBlock
+    [ [ Str "a" , Space , Str "|" , Space , Str "b" , Space , Str "|" ]
+    , [ Str "1" , Space , Str "|" , Space , Str "2" , Space , Str "|" ]
+    ]
+]</code></pre>
+<p>The page shows two lines of text with stray bars in them, and nothing anywhere says “table.” The same reasoning covers most silent failures. A link to <code>#nope</code> is a perfectly good link; whether an element with that ID exists is a fact about the finished page, not about the syntax. A fence written <code>```{html}</code> is a perfectly good cell in a language called <code>html</code>. An unknown callout type is a perfectly good div with a class no stylesheet styles. Each is a correct program that does the wrong thing, which is the class of bug no parser can catch.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="`-t native` is your debugger">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span><code>-t native</code> is your debugger
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>When a construct renders strangely, pipe the smallest piece of source that reproduces it through <code>quarto pandoc -f markdown -t native</code>. The syntax tree shows exactly how Pandoc read it, which is usually the whole answer. It skips Quarto’s own stages (shortcodes, engines, and filters), so it isolates the parsing question from everything else.</p>
+</div>
+</div>
+</section>
+<section id="diagnostics-voices" class="level3">
+<h3 class="anchored" data-anchor-id="diagnostics-voices">Who Is Speaking</h3>
+<p>Messages come from different <a href="#the-render-pipeline">stages of the pipeline</a>, and each stage has its own format. Learning to recognize them tells you where to look. These are real messages from rendering a page with deliberate mistakes:</p>
+<pre class="text"><code>ERROR: Validation of YAML front matter failed.
+ERROR: In file index.qmd
+(line 3, columns 6--10) Field "toc" has value maybe, which must instead be `true` or `false`
+
+[WARNING] Div at line 30 column 1 unclosed at line 54 column 1, closing implicitly.
+WARNING (/Applications/quarto/share/filters/main.lua:22009) Shortcode 'nosuch' not found
+WARNING (/Applications/quarto/share/filters/main.lua:14920) Unable to resolve crossref @fig-missing
+WARN: Unable to resolve link target: missing.qmd</code></pre>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 17%">
+<col style="width: 18%">
+<col style="width: 48%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Prefix</th>
+<th style="text-align: left;">Speaker</th>
+<th style="text-align: left;">When</th>
+<th style="text-align: left;">What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>ERROR: Validation of YAML ...</code></td>
+<td style="text-align: left;">Quarto’s schema validator</td>
+<td style="text-align: left;">Before anything runs</td>
+<td style="text-align: left;">An option has the wrong type or value. Fatal, with an exact line and column in <em>your</em> file.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A Python or R traceback</td>
+<td style="text-align: left;">The engine</td>
+<td style="text-align: left;">During execution</td>
+<td style="text-align: left;">A cell raised. Fatal unless the cell sets <code>error: true</code>.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>[WARNING]</code></td>
+<td style="text-align: left;">Pandoc</td>
+<td style="text-align: left;">Parsing and writing</td>
+<td style="text-align: left;">Something structural, such as an unclosed div or a resource it could not fetch.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>WARNING (.../main.lua:NNNN)</code></td>
+<td style="text-align: left;">Quarto’s Lua filters</td>
+<td style="text-align: left;">After parsing</td>
+<td style="text-align: left;">Unknown shortcodes, unresolved <code>@</code> cross-references. The path is the <em>filter’s</em> source line, not yours.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>WARN:</code></td>
+<td style="text-align: left;">Quarto’s website post-processor</td>
+<td style="text-align: left;">After all pages are written</td>
+<td style="text-align: left;">A link to a <code>.qmd</code> that does not exist. Projects only.</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>(W)</code></td>
+<td style="text-align: left;">A filter calling <code>quarto.log.warning</code></td>
+<td style="text-align: left;">After parsing</td>
+<td style="text-align: left;">Typically an extension or your own filter</td>
+</tr>
+</tbody>
+</table>
+<p>Two details here are traps. First, only the YAML validator reports positions in your source. Pandoc’s line numbers refer to the text Quarto handed it, after front matter was split off and shortcodes and cells were processed, so they drift from your file: the unclosed div above was reported at line 30 of a file that had fewer than 40 lines, “unclosed at line 54.” Search for the construct rather than jumping to the line. Second, the <code>main.lua:NNNN</code> in a filter warning is Quarto’s own code; it tells you which filter noticed, not where your mistake is.</p>
+</section>
+<section id="diagnostics-coverage" class="level3">
+<h3 class="anchored" data-anchor-id="diagnostics-coverage">What Gets Checked</h3>
+<p>The following table is the result of rendering a page containing one of each mistake, under Quarto 1.9 with default settings.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 35%">
+<col style="width: 17%">
+<col style="width: 47%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Mistake</th>
+<th style="text-align: left;">Reported?</th>
+<th style="text-align: left;">What you get instead</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">A YAML option with the wrong type (<code>toc: maybe</code>)</td>
+<td style="text-align: left;"><strong>Error</strong></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A misspelled YAML option (<code>toc-dept: 3</code>)</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">The option is stored as metadata and ignored</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">An exception in a cell</td>
+<td style="text-align: left;"><strong>Error</strong></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">An unclosed <code>:::</code> div</td>
+<td style="text-align: left;">Warning</td>
+<td style="text-align: left;">The div is closed at the end of the document</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">An unknown shortcode</td>
+<td style="text-align: left;">Warning</td>
+<td style="text-align: left;">The shortcode appears literally on the page</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">An unresolved <code>@fig-</code> or <code>@sec-</code> cross-reference</td>
+<td style="text-align: left;">Warning</td>
+<td style="text-align: left;">The page shows <code>?@fig-missing</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">A link to a <code>.qmd</code> that does not exist</td>
+<td style="text-align: left;">Warning (projects only)</td>
+<td style="text-align: left;">A dead link</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A link to a missing <code>#anchor</code> on the same page</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">A link that goes nowhere</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">A link to a missing anchor on another page (<code>other.qmd#x</code>)</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">A link to the top of that page</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A missing image</td>
+<td style="text-align: left;">No (Pandoc warns only with <code>embed-resources: true</code>)</td>
+<td style="text-align: left;">A broken image icon</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">A table missing its separator row</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">A line block</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A table row with an extra cell</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">The extra cell is dropped</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">An unknown highlight language (<code>```foo</code>)</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">Unhighlighted monospace</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">A bare word in braces (<code>```{html}</code>)</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">An unhighlighted block, and a Jupyter kernel started for nothing</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">An unknown callout type (<code>.callout-bogus</code>)</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">A plain div</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Two headings with the same text</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">The second gets the ID <code>real-heading-1</code>, and links to it hit the first</td>
+</tr>
+</tbody>
+</table>
+<p>The pattern is clear once laid out. Quarto checks what it owns: its own option schema, its own shortcodes and cross-reference syntax, and the files in its own project. It does not check what Markdown allows, and it does not check <code>#anchor</code> links at all, because to Pandoc a link target is an opaque string. A broken anchor is invisible until a reader clicks it.</p>
+</section>
+<section id="diagnostics-volume" class="level3">
+<h3 class="anchored" data-anchor-id="diagnostics-volume">Turning Up the Volume</h3>
+<p>None of the following makes Quarto detect anything new; they change what happens to the warnings it already produces.</p>
+<p><strong>Make warnings fatal.</strong> <code>--fail-if-warnings</code> is a Pandoc flag, passed through. With it, a Pandoc warning stops the render and <code>quarto render</code> exits with status 1 instead of 0:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render <span class="at">--fail-if-warnings</span> <span class="kw">||</span> <span class="bu">echo</span> <span class="st">"build has warnings"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is the <code>-Werror</code> of the toolchain, but with a large hole in it: it counts only warnings that went through <em>Pandoc’s</em> logger, the <code>[WARNING]</code> lines. Quarto’s own filter warnings, the <code>WARNING (.../main.lua)</code> lines for unresolved cross-references and unknown shortcodes, are printed by a different mechanism and do not count, and neither does the <code>WARN:</code> for a missing <code>.qmd</code> link. A page with a dangling <code>@fig-</code> reference renders with exit status 0 even under <code>--fail-if-warnings</code>. The flag also works only on the command line; putting it in <code>_quarto.yml</code> under <code>pandoc-args:</code> has no effect in 1.9. It is still worth using in a CI job or a pre-commit hook, and the <a href="#diagnostics-filter">lint filter below</a> is written to feed it.</p>
+<p><strong>Keep a log.</strong> <code>--log build.log</code> writes everything to a file, and <code>--log-format json-stream</code> makes it one JSON object per line:</p>
+<pre class="text"><code>{"msg":"Unable to resolve link target: missing.qmd","level":30,"levelName":"WARN","loggerName":"default"}
+{"msg":"\u001b[33mWARNING (/Applications/quarto/share/filters/main.lua:14920) Unable to resolve crossref @fig-missing\n\u001b[39m","level":20,"levelName":"INFO","loggerName":"default"}</code></pre>
+<p>Look closely at the second record. Quarto runs Pandoc as a child process and logs its standard error as ordinary output, so a Pandoc or filter warning arrives with level <code>INFO</code>, wrapped in terminal color codes, and sometimes split across records mid-word. Only Quarto’s own messages, like the first record, carry a real <code>WARN</code> level. Search the <code>msg</code> text, not the level.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="`--log-level warning` hides most warnings">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>--log-level warning</code> hides most warnings
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>That same mislabeling makes the obvious way to quiet a render a trap. <code>--log-level warning</code> (or the environment variable <code>QUARTO_LOG_LEVEL=warning</code>) suppresses everything below <code>WARN</code>, which includes every Pandoc warning and every filter warning. In testing, it reduced the page above from five warnings to one: the missing <code>.qmd</code> link. Use <code>--quiet</code> if you want silence, and the default level if you want to know.</p>
+</div>
+</div>
+<p><strong>Keep the intermediates.</strong> <code>--debug</code> leaves the engine’s output in place as <code>chapter.html.md</code>, the Markdown after cells have run and before Pandoc parses it. Setting <code>keep-md: true</code> under <code>execute:</code> does the same for every render. When a cell’s output is not appearing as you expect, this file shows exactly what the engine produced.</p>
+<p><strong>Hear Pandoc think.</strong> <code>--verbose</code> passes through to Pandoc, which then reports each template and resource it loads. It is noisy and rarely needed, but it settles questions like “is it finding my stylesheet?”</p>
+<p><strong>Check accessibility.</strong> Since 1.8, <code>axe: true</code> under <code>format: html:</code> runs the axe-core accessibility checker on each page. In 1.9 the check runs in the browser when the page loads, reporting to the JavaScript console by default; <code>axe: {output: document}</code> draws the violations on the page itself. It catches problems such as missing alt text and low-contrast colors, which are real defects even though nothing fails. Quarto 1.10 adds offline checks that run during the render and target a WCAG conformance level.</p>
+</section>
+<section id="diagnostics-filter" class="level3">
+<h3 class="anchored" data-anchor-id="diagnostics-filter">Filling the Gaps with a Lua Filter</h3>
+<p>What Quarto does not check, you can. A Lua filter receives the same syntax tree that <code>-t native</code> prints, after Pandoc has parsed it and before it is written out, and can walk it looking for anything you consider a mistake. This is the extension mechanism the <a href="#the-quarto-philosophy">philosophy</a> promised: Quarto’s own cross-reference checking is itself a filter, and yours runs alongside it.</p>
+<p>The filter below catches three of the silent failures from the table: same-page links to missing anchors, tables that became line blocks, and fences with a bare word in braces. It is not an example written for this page. It is this notebook’s own <code>lint.lua</code>, registered in <code>_quarto.yml</code> and run on every chapter, and the block below is the real file pulled in with the <a href="#include-shortcode"><code>include</code> shortcode</a>, so the code you read is the code that runs.</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>lint.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31" data-filename="lint.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">identifiers_known</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">anchors_linked</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> warning_report<span class="op">(</span><span class="va">message</span><span class="op">)</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">local</span> <span class="va">file_name</span> <span class="op">=</span> <span class="va">pandoc</span><span class="op">.</span><span class="va">path</span><span class="op">.</span>filename<span class="op">(</span><span class="va">quarto</span><span class="op">.</span><span class="va">doc</span><span class="op">.</span><span class="va">input_file</span><span class="op">)</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">pandoc</span><span class="op">.</span><span class="va">log</span><span class="op">.</span>warn<span class="op">(</span><span class="va">file_name</span> <span class="op">..</span> <span class="st">": "</span> <span class="op">..</span> <span class="va">message</span><span class="op">)</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> identifier_record<span class="op">(</span><span class="va">element</span><span class="op">)</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="va">element</span><span class="op">.</span><span class="va">identifier</span> <span class="op">~=</span> <span class="st">""</span> <span class="cf">then</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">identifiers_known</span><span class="op">[</span><span class="va">element</span><span class="op">.</span><span class="va">identifier</span><span class="op">]</span> <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">end</span></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> line_block_resembles_table<span class="op">(</span><span class="va">line_block</span><span class="op">)</span></span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">line</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="va">line_block</span><span class="op">.</span><span class="va">content</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">pandoc</span><span class="op">.</span><span class="va">utils</span><span class="op">.</span>stringify<span class="op">(</span><span class="va">line</span><span class="op">):</span><span class="fu">find</span><span class="op">(</span><span class="st">"|"</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="kw">true</span><span class="op">)</span> <span class="cf">then</span></span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> <span class="kw">true</span></span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">end</span></span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="kw">false</span></span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> code_block_class_is_braced<span class="op">(</span><span class="va">code_block</span><span class="op">)</span></span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>  <span class="kw">local</span> <span class="va">class_first</span> <span class="op">=</span> <span class="va">code_block</span><span class="op">.</span><span class="va">classes</span><span class="op">[</span><span class="dv">1</span><span class="op">]</span></span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="va">class_first</span> <span class="op">~=</span> <span class="kw">nil</span> <span class="kw">and</span> <span class="va">class_first</span><span class="op">:</span><span class="fu">sub</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">)</span> <span class="op">==</span> <span class="st">"{"</span></span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">collector</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>  <span class="va">Header</span> <span class="op">=</span> <span class="va">identifier_record</span><span class="op">,</span></span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>  <span class="va">Div</span> <span class="op">=</span> <span class="va">identifier_record</span><span class="op">,</span></span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>  <span class="va">Span</span> <span class="op">=</span> <span class="va">identifier_record</span><span class="op">,</span></span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>  <span class="va">Figure</span> <span class="op">=</span> <span class="va">identifier_record</span><span class="op">,</span></span>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>  <span class="va">Table</span> <span class="op">=</span> <span class="va">identifier_record</span><span class="op">,</span></span>
+<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>  <span class="va">CodeBlock</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">code_block</span><span class="op">)</span></span>
+<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>    identifier_record<span class="op">(</span><span class="va">code_block</span><span class="op">)</span></span>
+<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> code_block_class_is_braced<span class="op">(</span><span class="va">code_block</span><span class="op">)</span> <span class="cf">then</span></span>
+<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a>      warning_report<span class="op">(</span><span class="st">"Code block class "</span> <span class="op">..</span> <span class="va">code_block</span><span class="op">.</span><span class="va">classes</span><span class="op">[</span><span class="dv">1</span><span class="op">]</span> <span class="op">..</span> <span class="st">" is neither a cell, a class, nor a raw block"</span><span class="op">)</span></span>
+<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb31-40"><a href="#cb31-40" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb31-41"><a href="#cb31-41" aria-hidden="true" tabindex="-1"></a>  <span class="va">LineBlock</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">line_block</span><span class="op">)</span></span>
+<span id="cb31-42"><a href="#cb31-42" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> line_block_resembles_table<span class="op">(</span><span class="va">line_block</span><span class="op">)</span> <span class="cf">then</span></span>
+<span id="cb31-43"><a href="#cb31-43" aria-hidden="true" tabindex="-1"></a>      warning_report<span class="op">(</span><span class="st">"Line block containing '|' is probably a table missing its separator row"</span><span class="op">)</span></span>
+<span id="cb31-44"><a href="#cb31-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb31-45"><a href="#cb31-45" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb31-46"><a href="#cb31-46" aria-hidden="true" tabindex="-1"></a>  <span class="va">Link</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">link</span><span class="op">)</span></span>
+<span id="cb31-47"><a href="#cb31-47" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">anchor</span> <span class="op">=</span> <span class="va">link</span><span class="op">.</span><span class="va">target</span><span class="op">:</span><span class="fu">match</span><span class="op">(</span><span class="st">"^#(.+)$"</span><span class="op">)</span></span>
+<span id="cb31-48"><a href="#cb31-48" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">anchor</span> <span class="cf">then</span></span>
+<span id="cb31-49"><a href="#cb31-49" aria-hidden="true" tabindex="-1"></a>      <span class="fu">table.insert</span><span class="op">(</span><span class="va">anchors_linked</span><span class="op">,</span> <span class="va">anchor</span><span class="op">)</span></span>
+<span id="cb31-50"><a href="#cb31-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb31-51"><a href="#cb31-51" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb31-52"><a href="#cb31-52" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb31-53"><a href="#cb31-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-54"><a href="#cb31-54" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> Pandoc<span class="op">(</span><span class="va">document</span><span class="op">)</span></span>
+<span id="cb31-55"><a href="#cb31-55" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="va">document</span><span class="op">.</span><span class="va">meta</span><span class="op">.</span><span class="va">lint</span> <span class="op">==</span> <span class="kw">false</span> <span class="cf">then</span></span>
+<span id="cb31-56"><a href="#cb31-56" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb31-57"><a href="#cb31-57" aria-hidden="true" tabindex="-1"></a>  <span class="cf">end</span></span>
+<span id="cb31-58"><a href="#cb31-58" aria-hidden="true" tabindex="-1"></a>  <span class="va">document</span><span class="op">:</span>walk<span class="op">(</span><span class="va">collector</span><span class="op">)</span></span>
+<span id="cb31-59"><a href="#cb31-59" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">anchor</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="va">anchors_linked</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="cb31-60"><a href="#cb31-60" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">identifiers_known</span><span class="op">[</span><span class="va">anchor</span><span class="op">]</span> <span class="cf">then</span></span>
+<span id="cb31-61"><a href="#cb31-61" aria-hidden="true" tabindex="-1"></a>      warning_report<span class="op">(</span><span class="st">"Link target #"</span> <span class="op">..</span> <span class="va">anchor</span> <span class="op">..</span> <span class="st">" does not exist in this document"</span><span class="op">)</span></span>
+<span id="cb31-62"><a href="#cb31-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb31-63"><a href="#cb31-63" aria-hidden="true" tabindex="-1"></a>  <span class="cf">end</span></span>
+<span id="cb31-64"><a href="#cb31-64" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A filter is a table of functions keyed by AST element type, and Pandoc calls each one for every matching element. Defining <code>Pandoc</code> instead receives the whole document at once, which this filter needs: a link can point <em>forward</em> to a heading that has not been visited yet, so every ID must be collected before any link can be judged. <code>document:walk(collector)</code> does the collecting in one pass, and the loop afterward does the judging. The filter returns nothing, so the document passes through unchanged; it only observes. A page can opt out with <code>lint: false</code> in its front matter, which the filter reads from <code>document.meta</code>. Any front matter key that Quarto does not recognize is passed through as metadata, so a filter can define its own options this way. This notebook uses it for its imported copy of the C++ Core Guidelines, whose broken links come from the upstream text.</p>
+<p>Every warning goes through <code>warning_report</code>, for two reasons. The first is the choice of <code>pandoc.log.warn</code> over Quarto’s <code>quarto.log.warning</code>. Both print a warning, but only Pandoc’s logger counts toward <code>--fail-if-warnings</code>. A filter using <code>quarto.log.warning</code> prints <code>(W)</code> lines and still lets the build exit with 0, so a CI job would pass with every warning ignored. The second is that neither logger says which document it was rendering. Pandoc reports the <em>filter’s</em> file and line, which is always the same line of <code>lint.lua</code>, so a full render produces a wall of warnings with no way to tell which chapter they came from. <code>quarto.doc.input_file</code>, part of Quarto’s Lua API, supplies the source file’s path, and the helper puts its name first:</p>
+<pre class="text"><code>[WARNING] Scripting warning at lint.lua line 6 column 1: rust-cc.qmd: Link target #derive(parser) does not exist in this document</code></pre>
+<p>That line is real. The first full render with this filter found a link in the Cargo chapter that had pointed at nothing since it was written. The heading was <code>#### `#[derive(Parser)]`</code>, a code span full of punctuation, and its slug was not the <code>derive(parser)</code> the author guessed. The fix was an explicit <code>{#derive-parser}</code> on the heading, which is the standard remedy for any heading with punctuation in a code span. The same render found a <code>```{bash}</code> fence that should have been <code>```bash</code>.</p>
+<p>and <code>--fail-if-warnings</code> fails the build.</p>
+<p>Run it once from the command line, or register it in <code>_quarto.yml</code> for every render:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render quarto.qmd <span class="at">--lua-filter</span> lint.lua <span class="at">--fail-if-warnings</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">filters</span><span class="kw">:</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> quarto</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> lint.lua</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>quarto</code> entry in that list is not a file. It stands for Quarto’s own filter stack, and its position decides when yours runs, which decides what yours can see. A filter listed alone runs <em>before</em> Quarto’s filters, on the tree as Pandoc parsed it. At that point a figure’s ID is still an attribute on an image or a cell option, not an element ID, so the lint filter would report a link to <code>#fig-plot</code> as broken when it is fine. Listed after <code>quarto</code>, it runs on the finished tree, where every figure, table, and section has its final ID. A filter passed with <code>--lua-filter</code> on the command line also runs after Quarto’s. The same knowledge cuts the other way: a filter that wants to see <code>@fig-</code> references as raw citations must run <em>before</em> Quarto, because afterward they have been replaced with links.</p>
+<p>The filter sees one document at a time, and that is its limit. It cannot know whether <code>cpp.qmd#unique-ptr</code> exists, because <code>cpp.qmd</code> is a different render. Cross-page anchors are a property of the finished site, so they are checked against the finished site: a link checker such as <a href="https://lychee.cli.rs" target="_blank" rel="noopener noreferrer">lychee</a>, run over the output directory, follows every link, including fragments, without a network connection:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="ex">lychee</span> <span class="at">--offline</span> <span class="at">--include-fragments</span> docs/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Between them, the schema validator, <code>--fail-if-warnings</code>, a lint filter, and a link checker over the output cover most of what a C programmer would expect a compiler to catch. None of it is on by default, which is the cost of building on a language designed never to reject its input.</p>
+</section>
 </section>
 <section id="common-pitfalls" class="level2">
 <h2 class="anchored" data-anchor-id="common-pitfalls">Common Pitfalls</h2>

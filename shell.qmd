@@ -248,11 +248,11 @@ done
 ```
 
 ::: {.callout-warning title="`\"$@\"` vs `$@` vs `$*`"}
-Always quote it: `"$@"` is the only form that preserves arguments exactly, each as a separate word even when it contains spaces. Bare `$@` and `$*` word-split, and unquoted `$*` collapses everything into one string. This is the same quoting hazard from the [Quoting](#quoting-and-expansion) section, now applied to a script's own inputs.
+Always quote it: `"$@"` is the only form that preserves arguments exactly, each as a separate word even when it contains spaces. Bare `$@` and `$*` word-split, and unquoted `$*` collapses everything into one string. This is the same quoting hazard from the [Quoting](#quoting) section, now applied to a script's own inputs.
 :::
 
 ### Arrays
-A shell variable holds text. An **array** holds an ordered list of values, which matters because the alternative, jamming a list into one string and splitting it later, is exactly the practice the [quoting](#quoting-and-expansion) section warns against. A path with a space in it survives an array intact and does not survive a space-separated string.
+A shell variable holds text. An **array** holds an ordered list of values, which matters because the alternative, jamming a list into one string and splitting it later, is exactly the practice the [quoting](#quoting) section warns against. A path with a space in it survives an array intact and does not survive a space-separated string.
 
 Assignment looks the same in both shells. Reading the values back does not, so the expansions below are written twice:
 
@@ -404,9 +404,9 @@ Changing either one updates the other, which is what "tied" means.
 
 This is much pleasanter than the `export PATH="$PATH:/opt/bin"` string surgery from earlier, and it is why zsh users often manipulate `$path` instead. The pairing is called a **tied parameter**, created with `typeset -T`, and you can make your own. `$PATH` stays a colon-separated string because that is what the environment must contain for child processes to read it; `$path` is the same data in a form the shell can index.
 
-## Running Commands and Capturing Output
+## Running Commands
 ::: {.subheading}
-Every command hands back two separate things, and confusing them is the root of most "why didn't that work?" moments.
+Commands hand back two things. Confusing them causes head scratching.
 :::
 
 When a command finishes, it gives you two distinct things: a *stream of text* (its output) and a single *integer* (its exit status). These travel on different channels and serve different jobs. The text is the *data* the command produced; the integer is a *verdict* on whether it succeeded. The whole secret to this section is keeping them apart in your head.
@@ -422,11 +422,14 @@ Every command is born with three streams already wired up. The rest of this sect
 | **stdout** | `1`    | terminal | where the program writes normal output          |
 | **stderr** | `2`    | terminal | where the program writes errors and diagnostics |
 
+The old I and O. If it weren't for them we wouldn't have IO. We shall kick off the discussion with output, because we have already started it and it dominates shell IO. So much so that it should be called iO.
+
+### Capturing Output
 The separation of `stdout` from `stderr` is deliberate and important: it lets you capture a program's *results* while still seeing its *errors* on screen (or route them somewhere else entirely). A program that mixes errors into stdout is considered poorly behaved precisely because it pollutes the data stream that the next program in the pipe is trying to read.
 
 The two channels a command hands back map onto this picture cleanly: the text you can capture is *stdout* (stream 1), and the integer verdict is the exit status (not a stream at all, a separate value we get to below).
 
-### Capturing stdout
+#### Capturing stdout
 ::: {.subheading}
 Command Substitution
 :::
@@ -484,6 +487,21 @@ One small surprise for C programmers expecting raw bytes: command substitution *
 That `2>&1` idiom is covered under [Redirection](#redirection).
 :::
 
+#### A Look-alike
+::: {.subheading}
+Arithmetic Substitution `$(( ))`
+:::
+
+One construct looks almost identical to command substitution but does something entirely different. `$(( ... ))`, with *doubled* parentheses, is **arithmetic substitution**: it evaluates a math expression and substitutes the numeric result. It does not run a command.
+
+```bash
+count=$(( count + 1 ))    # increment count
+area=$(( width * height ))
+echo "$(( 7 % 3 ))"       # 1
+```
+
+It is worth pointing out only because `$(cmd)` and `$(( expr ))` are one keystroke apart on the page and easy to confuse. The single-paren form runs a command and captures its stdout; the double-paren form does arithmetic. Different jobs, similar costume.
+
 ### Exit Status
 ::: {.subheading}
 the Other Return Value
@@ -512,30 +530,203 @@ status=$?                # capture the verdict, before any other command runs
 
 The "before any other command runs" matters: `$?` is overwritten by the *next* command, so read it immediately.
 
-### A Look-alike
+### Capturing Input
 ::: {.subheading}
-Arithmetic Substitution `$(( ))`
+`read`, and the streams that feed it
 :::
 
-One construct looks almost identical to command substitution but does something entirely different. `$(( ... ))`, with *doubled* parentheses, is **arithmetic substitution**: it evaluates a math expression and substitutes the numeric result. It does not run a command.
+A C program has three doors that input can come through: the arguments in `argv`, the environment in `envp` (or `getenv`), and whatever arrives on file descriptor 0. A shell script has exactly the same three, because it *is* a Unix process like any other. Arguments arrive as `$1`, `$2`, `$@` (see [Argument Parsing](#argument-parsing)), and the environment arrives as ordinary variables (see [Variables and the Environment](#variables-and-the-environment)). This section is about the third door, stdin.
+
+There are two sides to it, and they mirror the output story exactly:
+
+- **Feeding** a command's stdin from somewhere other than the keyboard: a pipe, a file, a heredoc. These are the rewiring tools covered in [Pipes and Redirection](#pipes-and-redirection), and the command on the receiving end cannot tell them apart.
+- **Consuming** stdin into shell variables, so the script itself can act on it. That is the job of the `read` builtin, and it is the counterpart of command substitution: `var=$(cmd)` pulls a command's *stdout* into a variable, `read var` pulls the shell's *stdin* into a variable.
+
+#### `read`: One Line Into Variables
+`read` consumes one line from stdin, splits it into words on `IFS`, ...you don't know what `IFS` is??? Oh my god, he doesn't know what `IFS` is! You must have been born on the moon, moon child. International Freak Station, that's what it means.
+
+::: {.definition}
+`IFS` stands for Internal Field Separator. It is a special environment variable that determines how the shell recognizes word boundaries and splits strings into distinct tokens during text processing. By default, the shell treats spaces, tabs, and newline characters as delimiters. You can "visualize" these default characters with night goggles, or by piping `IFS` into `xxd`: `cat $IFC | xxd`.
+:::
+
+It assigns the words to the names you give it. The last name gets whatever is left over, so no input is ever dropped:
 
 ```bash
-count=$(( count + 1 ))    # increment count
-area=$(( width * height ))
-echo "$(( 7 % 3 ))"       # 1
+read first rest <<< "one two three"
+echo "$first"    # one
+echo "$rest"     # two three
 ```
 
-It is worth pointing out only because `$(cmd)` and `$(( expr ))` are one keystroke apart on the page and easy to confuse. The single-paren form runs a command and captures its stdout; the double-paren form does arithmetic. Different jobs, similar costume.
+With no name at all, the line lands in the special variable `REPLY`. With one name, the whole line lands there (minus leading and trailing whitespace, a side effect of the splitting). That makes the everyday form simply:
+
+```bash
+read -r line     # read one line of stdin into $line
+```
+
+`read` is a builtin rather than a program under `/usr/bin`, and it has to be: an external program runs in a child process and cannot set variables in the shell that launched it. This is the same reason `cd` and `export` are builtins.
+
+Two habits carry over from the [line-reading loop](#while-and-until) and apply to every use of `read`:
+
+- **`-r`** (raw) stops `read` from treating backslash as an escape character. Without it, `C:\temp` arrives as `C:temp`. There is almost never a reason to omit `-r`; linters flag its absence.
+- **`IFS=`** (empty, for this one command) stops the whitespace trimming, so a line with leading spaces arrives intact. Use it whenever you are reading whole lines and want them byte-for-byte; leave it off when you *want* the line split into fields.
+
+Like every command, `read` also returns an exit status: `0` when it read a line, non-zero at end of input. That is what lets it drive a `while` loop, and it has one wart worth knowing. If the final line of input has no trailing newline, `read` fills the variable *and* returns non-zero, so a plain `while read` loop silently drops that last line. The defensive form checks the variable too:
+
+```bash
+while IFS= read -r line || [ -n "$line" ]; do
+    echo "got: $line"
+done < input.txt
+```
+
+#### Prompting the User
+::: {.subheading}
+Where bash and zsh part ways
+:::
+
+When stdin is the keyboard, `read` becomes the shell's `scanf`: it blocks until the user presses Enter. You will usually want a prompt first, and this is where the two shells diverge sharply:
+
+```bash
+# bash
+read -r -p "Project name: " name
+
+# zsh: the prompt rides along on the variable name, after a ?
+read -r "name?Project name: "
+```
+
+::: {.callout-warning title="In zsh, `-p` does not mean prompt"}
+zsh's `read -p` means "read from the **coprocess**," a zsh (and ksh) feature for talking to a background command over a pipe. Paste a bash prompt into a zsh script and you get `read: -p: no coprocess`, and the variable stays empty. The `?` syntax comes from ksh, which zsh follows here; bash invented its own `-p` flag instead.
+:::
+
+If a script must run under both shells, or under plain `sh`, skip both forms and print the prompt yourself:
+
+```bash
+printf 'Project name: ' >&2
+read -r name
+```
+
+The prompt goes to **stderr**, which is also where bash's `-p` and zsh's `?` send theirs. The reason is the same one that justifies stderr's existence: someone might run `result=$(./setup.sh)` to capture the script's output, and a prompt written to stdout would disappear into `$result` while the user sits staring at a blank terminal.
+
+Password entry adds `-s` (silent: do not echo keystrokes), which both shells support. Follow it with a bare `echo`, since the user's Enter was not echoed either and the cursor is still on the prompt line:
+
+```bash
+read -rs -p "Password: " pw; echo    # bash
+read -rs "pw?Password: "; echo       # zsh
+```
+
+#### The Flags, Side by Side
+Beyond `-r` and `-s`, the two shells agree on surprisingly little. The common operations:
+
+| Goal                               | bash                    | zsh                                 |
+|------------------------------------|-------------------------|-------------------------------------|
+| Raw, no backslash escapes          | `-r`                    | `-r`                                |
+| Silent, no echo                    | `-s`                    | `-s`                                |
+| Prompt                             | `-p "text: "`           | `"var?text: "`                      |
+| Give up after N seconds            | `-t N`                  | `-t N`                              |
+| Read exactly N characters          | `-n N`                  | `-k N` (from the terminal; add `-u 0` for stdin) |
+| Split words into an array          | `-a arr`                | `-A arr`                            |
+| Stop at a delimiter other than `\n` | `-d delim` (`-d ''` = NUL) | `-d delim` (`-d ''` = NUL)       |
+| Read from file descriptor N        | `-u N`                  | `-u N`                              |
+| Single-key yes/no                  | `-n 1`, then test `y`   | `-q` (sets `y` or `n`, status 0 for yes) |
+| Pre-filled, editable input         | `-e -i "default"`       | `vared var` (a separate builtin)    |
+
+The array row is the other trap: zsh rejects `read -a` with `bad option: -a`, and bash's `-A` does not exist. POSIX specifies only `-r`, so portable scripts use nothing else.
+
+#### Reading a Whole Stream
+`read` works a line at a time. When you want *everything* on stdin at once, there are better tools than a loop:
+
+```bash
+all=$(cat)             # slurp all of stdin into one string
+all=$(< file.txt)      # slurp a file, no cat process (bash and zsh)
+```
+
+`$(< file)` is a special case both shells recognize: the shell reads the file itself rather than forking `cat`. Like all command substitution it strips trailing newlines.
+
+To get one array element per line, bash and zsh again go their separate ways:
+
+```bash
+# bash 4+ (macOS ships bash 3.2, which lacks it)
+mapfile -t lines < file.txt
+
+# zsh: split the slurped text on newlines with the (f) flag
+lines=("${(@f)$(< file.txt)}")
+```
+
+#### Piping Into `read`
+::: {.subheading}
+The same line, two different answers
+:::
+
+This is the single most confusing difference between the shells, and it is worth running both to see it:
+
+```bash
+echo "alpha beta" | read x y
+echo "x=[$x]"
+# bash: x=[]
+# zsh:  x=[alpha]
+```
+
+Every stage of a pipeline runs concurrently, so the shell must put most of them in child processes. The question is which stage, if any, gets to stay in the current shell. POSIX deliberately leaves that unspecified. bash forks *every* stage, so `read` runs in a subshell, sets `x` there, and the subshell exits, taking `x` with it. zsh (following ksh) runs the *last* stage in the current shell, so the variable survives. It is the same trap as the [`find` loop's subshell](#a-subtlety), just in its smallest possible form.
+
+In bash, the fix is to not use a pipe for the last hop. Either of the stdin redirections from [Pipes and Redirection](#pipes-and-redirection) keeps `read` in the current shell:
+
+```bash
+read -r x y <<< "$(some-command)"    # herestring
+read -r x y < <(some-command)        # process substitution
+```
+
+bash 4.2+ also offers `shopt -s lastpipe`, which adopts the zsh behavior, but only when job control is off (the default in scripts, not at an interactive prompt). Code that relies on zsh's behavior is not portable to bash or `sh`, so the redirection forms are the safe habit in both shells.
+
+#### Is Anyone There?
+A script cannot tell whether its stdin is a pipe or a file, and does not need to. It *can* tell whether stdin is a **terminal**, which is the difference between "a person is typing" and "data is arriving." The test is `-t 0` (is file descriptor 0 a terminal?), the shell's version of C's `isatty(0)`:
+
+```bash
+if [ -t 0 ]; then
+    echo "Type some lines, then Ctrl-D:" >&2
+fi
+count=$(wc -l)
+echo "$count lines"
+```
+
+Run it bare and it prompts; run it as `ls | ./count.sh` and it quietly counts. Ctrl-D is not a character that gets sent; typed at the start of a line, it tells the terminal driver to complete the pending `read()` with zero bytes, which the program sees as end of file.
+
+Many tools also accept the filename `-` to mean "stdin," and on macOS and Linux the path `/dev/stdin` names the same thing for programs that insist on a filename. Both let you slot stdin into a command that only takes file arguments.
+
+::: {.callout-warning title="The loop body shares stdin"}
+In a `while read` loop, every command *inside* the body inherits the same stdin the loop is reading. Most commands ignore it, but anything that reads stdin (`ssh`, `ffmpeg`, another `read`) will quietly swallow the rest of your input, and the loop ends after one pass:
+
+```bash
+while IFS= read -r host; do
+    ssh "$host" uptime       # ssh eats the remaining hostnames
+done < hosts.txt
+```
+
+Either cut the inner command off from stdin (`ssh -n`, or `< /dev/null`), or read the loop from a different file descriptor so stdin is left alone:
+
+```bash
+while IFS= read -r host <&3; do
+    ssh "$host" uptime
+done 3< hosts.txt
+```
+
+`3< hosts.txt` opens the file on descriptor 3 for the whole loop, and `<&3` points `read` at it. This is also the fix when a loop over a file needs to prompt the user, since the prompt's `read` can then use the real stdin.
+:::
 
 ### Quick Reference
-| Goal                                | Syntax                |
-|-------------------------------------|-----------------------|
-| Capture a command's stdout          | `var=$(command)`      |
-| Same, legacy form (avoid)           | `` var=`command` ``   |
-| Capture stdout *and* stderr         | `var=$(command 2>&1)` |
-| Read the last command's exit status | `$?`                  |
-| Capture output and status together  | `out=$(cmd); st=$?`   |
-| Evaluate arithmetic                 | `$(( expression ))`   |
+| Goal                                | Syntax                         |
+|-------------------------------------|--------------------------------|
+| Capture a command's stdout          | `var=$(command)`               |
+| Same, legacy form (avoid)           | `` var=`command` ``            |
+| Capture stdout *and* stderr         | `var=$(command 2>&1)`          |
+| Read the last command's exit status | `$?`                           |
+| Capture output and status together  | `out=$(cmd); st=$?`            |
+| Evaluate arithmetic                 | `$(( expression ))`            |
+| Read one line of stdin              | `read -r line`                 |
+| Read stdin line by line             | `while IFS= read -r line; do`  |
+| Prompt, bash                        | `read -r -p "Name: " name`     |
+| Prompt, zsh                         | `read -r "name?Name: "`        |
+| Prompt, portable                    | `printf 'Name: ' >&2; read -r name` |
+| Slurp all of stdin                  | `all=$(cat)`                   |
+| Is stdin a terminal?                | `[ -t 0 ]`                     |
 
 ## Expansion
 ::: {.see-more}

@@ -9,28 +9,512 @@ The Build System
 
 ![](images/rust-00.png){width=2.25in style="float: left; padding: 0 1em"}
 
-Cargo is Rust's build tool, package manager, and test runner. You'll use it for everything.
+Cargo is Rust's build tool, package manager, and test runner. You'll use it for everything. For a complete list of all subcommands that are installed in an environment, use `cargo --list`. Follows are the subcommands that are installed on my machine at 9:18 PM on 10/13/2026:
+
+::: {style="clear: both"}
+
+:::
 
 ```bash
-cargo new my_project    # create new project
+add                  # Add dependencies to a Cargo.toml manifest file
+b                    # alias: build
+bench                # Execute all benchmarks of a local package
+build                # Compile a local package and all of its dependencies
+bundle
+c                    # alias: check
+check                # Check a local package and all of its dependencies for errors
+clean                # Remove artifacts that cargo has generated in the past
+clippy               # Checks a package to catch common mistakes and improve your Rust code.
+config               # Inspect configuration values
+d                    # alias: doc
+doc                  # Build a package's documentation
+fetch                # Fetch dependencies of a package from the network
+fix                  # Automatically fix lint warnings reported by rustc
+fmt                  # Formats all bin and lib files of the current crate using rustfmt.
+generate-lockfile    # Generate the lockfile for a package
+help                 # Displays help for a cargo subcommand
+info                 # Display information about a package
+init                 # Create a new cargo package in an existing directory
+install              # Install a Rust binary
+locate-project       # Print a JSON representation of a Cargo.toml file's location
+login                # Log in to a registry.
+logout               # Remove an API token from the registry locally
+metadata             # Output the resolved dependencies of a package, the concrete used versions
+                     # including overrides, in machine-readable format
+miri
+new                  # Create a new cargo package at <path>
+owner                # Manage the owners of a crate on the registry
+package              # Assemble the local package into a distributable tarball
+pkgid                # Print a fully qualified package specification
+publish              # Upload a package to the registry
+r                    # alias: run
+remove               # Remove dependencies from a Cargo.toml manifest file
+report               # Generate and display various kinds of reports
+rm                   # alias: remove
+run                  # Run a binary or example of the local package
+rustc                # Compile a package, and pass extra options to the compiler
+rustdoc              # Build a package's documentation, using specified custom flags.
+search               # Search packages in the registry. Default registry is crates.io
+t                    # alias: test
+test                 # Execute all unit and integration tests and build examples of a local package
+tree                 # Display a tree visualization of a dependency graph
+uninstall            # Remove a Rust binary
+update               # Update dependencies as recorded in the local lock file
+vendor               # Vendor all dependencies for a project locally
+version              # Show version information
+yank                 # Remove a pushed crate from the index
+```
+
+To get help on commands in your installation, use `cargo help <command>`. The handful of commands that I use regularly are:
+
+```bash
 cargo build             # debug build
 cargo build --release   # optimized build
-cargo run               # build and run
-cargo test              # run all tests
 cargo check             # fast type-check without building
 cargo clippy            # linter
 cargo fmt               # formatter
+cargo install --path .  # install current application to `~/.cargo/bin`
+cargo new my_project    # create new project
+cargo run               # build and run
+cargo test              # run all tests
 ```
 
-Dependencies go in `Cargo.toml`:
+### Commands in Detail
+::: {.subheading}
+What each command is for, and when to reach for it
+:::
+
+The commands below are the ones that deserve more than their one-line summary. Two conventions apply to nearly all of them:
+
+- **Aliases.** Single-letter commands such as `b`, `c`, `r`, and `t` are built-in aliases. You can define your own under `[alias]` in `.cargo/config.toml`, for example `lint = "clippy --all-targets -- -D warnings"`.
+- **The `--` separator.** A bare `--` ends Cargo's own options. Everything after it goes to the program Cargo launches: your binary for `run`, the test harness for `test` and `bench`, and the lint driver for `clippy`.
+
+#### `cargo add`
+`cargo add` edits `Cargo.toml` for you. It looks up the newest version on the registry, writes the entry into the right table, and updates `Cargo.lock`. It preserves the manifest's existing formatting and comments, so it is safe to use on a hand-maintained file. Its counterpart, `cargo remove` (alias `rm`), deletes an entry.
+
+```bash
+cargo add serde --features derive   # [dependencies], with a feature enabled
+cargo add serde_json@1.0            # an explicit version requirement
+cargo add --dev pretty_assertions   # [dev-dependencies]
+cargo add --build cc                # [build-dependencies]
+cargo add rand --optional           # optional, gated behind a feature
+cargo add my_lib --path ../my_lib   # a local crate on disk
+cargo remove serde_json
+```
+
+Running `cargo add serde --features derive`, `cargo add serde_json`, and `cargo add --dev pretty_assertions` in a fresh project produces:
 
 ```toml
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
-regex = "1.10"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"
 ```
 
-`cargo add serde` adds a dependency from the command line. The ecosystem (crates.io) is large and high quality.
+Notice that it writes the full current version, `"1.0.229"`, rather than `"1"`. Under the [caret rule](#dependency-version-constraints) that means `>=1.0.229, <2.0.0`: Cargo can still move forward within 1.x, but it will never resolve to anything older than what you tested against when you added it. As it runs, `cargo add` also prints the crate's feature list, marking enabled features with `+` and available ones with `-`.
+
+#### `cargo bench`
+`cargo bench` compiles with the `bench` profile (which inherits from `release`) and runs the benchmarks in `benches/`. Rust's built-in `#[bench]` attribute still requires nightly, so on stable the convention is [Criterion](https://docs.rs/criterion/latest/criterion/){target="_blank" rel="noopener noreferrer"}, a statistics-driven harness that warms up, samples many iterations, and reports confidence intervals along with the change since the previous run. Setting `harness = false` tells Cargo not to wrap the file in the default test harness, so Criterion's `main` takes over.
+
+```toml
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name    = "fir"      # benches/fir.rs
+harness = false
+```
+
+```rust
+// benches/fir.rs
+use criterion::{criterion_group, criterion_main, Criterion};
+use my_dsp::fir_filter;
+use std::hint::black_box;
+
+fn bench_fir(criterion: &mut Criterion) {
+    let samples = vec![0.5_f32; 4096];
+    let taps = vec![0.1_f32; 64];
+    criterion.bench_function("fir 4096x64", |bencher| {
+        bencher.iter(|| fir_filter(black_box(&samples), black_box(&taps)))
+    });
+}
+
+criterion_group!(benches, bench_fir);
+criterion_main!(benches);
+```
+
+```bash
+cargo bench          # run every benchmark
+cargo bench fir      # only benchmarks whose names contain "fir"
+```
+
+Two details matter. A benchmark is compiled as a separate crate, like an integration test, so it can only reach your library's `pub` items; code that lives only in `main.rs` has to move into `lib.rs` before it can be benchmarked. And `black_box` hides values from the optimizer. Without it, the compiler can notice that the result is never used and delete the work you meant to time, which is the same trap as timing a C loop at `-O2` whose result is never read.
+
+#### `cargo build`
+`cargo build` compiles the package and all of its dependencies. Output lands in `target/debug/` or `target/release/`, according to the [profile](#build-profiles).
+
+```bash
+cargo build                                  # dev profile, target/debug/
+cargo build --release                        # release profile, target/release/
+cargo build --target thumbv7em-none-eabihf   # cross-compile, target/<triple>/
+cargo build --bin server                     # one binary in a multi-binary package
+cargo build --timings                        # HTML report of where build time went
+```
+
+Cross-compiling needs the target's standard library first: `rustup target add thumbv7em-none-eabihf`. Unlike a C toolchain, there is no separate cross compiler to install, because `rustc` is built on LLVM and ships with the code generators for every target it supports.
+
+#### `cargo check`
+`cargo check` runs the compiler through parsing, type checking, and borrow checking, then stops before generating code. Since code generation and optimization are where most of the compile time goes, `check` is several times faster than `build`, and it is the right command for the edit-compile loop. rust-analyzer runs it in the background every time you save.
+
+The catch is that anything which only fails during code generation or linking (a missing native library, an undefined symbol from a `build.rs` link directive) will not show up. Run a real `build` before trusting a clean `check`.
+
+#### `cargo clippy`
+[Clippy](https://rust-lang.github.io/rust-clippy/master/index.html){target="_blank" rel="noopener noreferrer"} is Rust's official linter, with several hundred lints that go beyond the compiler's own warnings. It installs with the default `rustup` profile and runs exactly like `check`, with extra analysis on top. Given this loop, written the way a C programmer naturally would:
+
+```rust
+let samples = [0.25_f32, 0.5, 0.75];
+let mut total = 0.0;
+for i in 0..samples.len() {
+    total += samples[i];
+}
+```
+
+Clippy responds:
+
+```
+warning: the loop variable `i` is only used to index `samples`
+ --> src/main.rs:4:14
+  |
+4 |     for i in 0..samples.len() {
+  |              ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(clippy::needless_range_loop)]` on by default
+help: consider using an iterator
+  |
+4 -     for i in 0..samples.len() {
+4 +     for <item> in &samples {
+```
+
+The iterator form is not just style: it cannot go out of bounds, so there is no per-element bounds check for the optimizer to prove away and no off-by-one to make. Lints are organized into groups:
+
+| Group         | Default | Catches                                                       |
+|---------------|---------|---------------------------------------------------------------|
+| `correctness` | deny    | Code that is outright wrong                                   |
+| `suspicious`  | warn    | Code that is very likely wrong                                |
+| `style`       | warn    | Unidiomatic code                                              |
+| `complexity`  | warn    | Simple things done in a complicated way                       |
+| `perf`        | warn    | Code that could easily be faster                              |
+| `pedantic`    | allow   | Stricter lints with occasional false positives                |
+| `nursery`     | allow   | New lints still under development                             |
+| `restriction` | allow   | Lints that forbid language features; enable them individually |
+| `cargo`       | allow   | Problems in `Cargo.toml`                                      |
+
+Lint levels can be set per project in `Cargo.toml`. A group needs `priority = -1` so that the individual lints listed after it override it:
+
+```toml
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+cast_precision_loss = "allow"
+```
+
+```bash
+cargo clippy                                               # lint the package
+cargo clippy --all-targets --all-features -- -D warnings   # CI: lint tests too, fail on any warning
+cargo clippy --fix                                         # apply the suggestions that are safe to automate
+```
+
+`--fix` applies only *machine-applicable* suggestions. The loop above does not qualify, because the suggestion contains a placeholder (`<item>`) that a human has to name.
+
+#### `cargo doc`
+`cargo doc` runs `rustdoc` over your crate and every dependency, producing the same HTML you see on [docs.rs](https://docs.rs){target="_blank" rel="noopener noreferrer"}.
+
+```bash
+cargo doc --open                     # build and open in a browser
+cargo doc --no-deps                  # only your own crate
+cargo doc --document-private-items   # include non-pub items (useful for binaries)
+```
+
+The underrated benefit is precision: the generated docs describe exactly the versions pinned in your `Cargo.lock`, and they work offline. docs.rs defaults to the latest release, which may not be the version you are using.
+
+#### `cargo fix`
+`cargo fix` applies the compiler's machine-applicable suggestions to your source. Given `let mut count = samples.len();` where `count` is never mutated, `rustc` warns "variable does not need to be mutable", and `cargo fix` makes the change:
+
+```diff
+-    let mut count = samples.len();
++    let count = samples.len();
+```
+
+```bash
+cargo fix                 # apply compiler suggestions
+cargo fix --edition       # migrate code to the next edition
+cargo fix --allow-dirty   # run even with uncommitted changes
+```
+
+Because it rewrites files in place, `cargo fix` refuses to run on a working tree with uncommitted changes unless you pass `--allow-dirty`. That way the fixes always appear as a reviewable diff. Its most important use is the [edition migration](#editions). `cargo clippy --fix` is the same mechanism applied to Clippy's lints.
+
+#### `cargo fmt`
+`cargo fmt` runs `rustfmt` over every file in the package. The stable configuration surface is deliberately small, and most of rustfmt's options are nightly-only. That is by design: the goal is for all Rust code to look the same, which settles the brace-and-indent debate that C codebases fight one project at a time.
+
+```bash
+cargo fmt           # format in place
+cargo fmt --check   # CI: exit non-zero if anything would change
+```
+
+```toml
+# rustfmt.toml, at the package root
+max_width = 120     # default is 100
+```
+
+#### `cargo info`
+`cargo info` (added in Cargo 1.82) shows a crate's registry metadata without leaving the terminal: description, license, minimum Rust version, links, and its feature table.
+
+```
+$ cargo info serde
+serde #serde #serialization #no_std
+A generic serialization/deserialization framework
+version: 1.0.229
+license: MIT OR Apache-2.0
+rust-version: 1.56
+documentation: https://docs.rs/serde
+homepage: https://serde.rs
+repository: https://github.com/serde-rs/serde
+crates.io: https://crates.io/crates/serde/1.0.229
+features:
+ +default      = [std]
+  std          = [serde_core/std]
+  alloc        = [serde_core/alloc]
+  derive       = [serde_derive]
+  rc           = [serde_core/rc]
+  serde_derive = [dep:serde_derive]
+  unstable     = [serde_core/unstable]
+```
+
+The feature table is the main reason to use it: it tells you the feature names to pass to `cargo add --features`, and `+` marks what is on by default. Append a version (`cargo info serde@1.0.200`) to inspect an older release. Run inside a project that already depends on the crate, it describes the version in your lockfile.
+
+#### `cargo install`
+`cargo install` builds a *binary* crate from source, in release mode, and puts the executable in `~/.cargo/bin`.
+
+```bash
+cargo install ripgrep            # build rg from crates.io
+cargo install --locked ripgrep   # use the crate's own Cargo.lock
+cargo install --path .           # install the current project
+cargo install --list             # what is installed
+cargo uninstall ripgrep
+```
+
+Use `--locked` by habit. Without it, `install` ignores the published lockfile and resolves dependencies fresh, so a new release of some transitive dependency can break the build of a tool that compiled fine yesterday.
+
+::: {.callout-warning title="Not a library installer"}
+Coming from `pip install` or `npm install -g`, it is natural to try `cargo install serde`. That fails, because `serde` has no binary. Rust has no global library directory: libraries are per-project dependencies, added with [`cargo add`](#cargo-add) and compiled into each project that uses them.
+:::
+
+`install` is also how Cargo grows. Any executable on your `PATH` named `cargo-<name>` runs as `cargo <name>`. That is why `bundle` and `miri` appear in the command list above without descriptions: they are not part of Cargo. `cargo install cargo-bundle` provided the first, and `rustup component add miri` the second.
+
+#### `cargo metadata`
+`cargo metadata` prints the package's manifest data and its fully resolved dependency graph as JSON. It is the stable, machine-readable interface for tools: editor plugins, build scripts, and anything that needs to know about a project without parsing `Cargo.toml` and reimplementing Cargo's resolver. Always pass `--format-version 1`; Cargo warns if you omit it, since the output format is versioned so that tools do not break.
+
+```bash
+cargo metadata --format-version 1 --no-deps | jq -r '.target_directory'
+# /Users/me/demo/target
+
+cargo metadata --format-version 1 | jq -r '.packages[] | "\(.name) \(.version)"'
+# every package in the resolved graph, with its exact version
+```
+
+`cargo tree` answers the same questions for a person; `cargo metadata` answers them for a program. Rust tools usually consume it through the [`cargo_metadata`](https://docs.rs/cargo_metadata/latest/cargo_metadata/){target="_blank" rel="noopener noreferrer"} crate rather than parsing the JSON by hand.
+
+#### `cargo new`
+`cargo new` creates a package in a new directory, and `cargo init` does the same in the current one.
+
+```bash
+cargo new demo         # binary package: src/main.rs
+cargo new --lib dsp    # library package: src/lib.rs
+cargo init             # turn the current directory into a package
+```
+
+```
+demo/
+├── .gitignore
+├── Cargo.toml
+└── src/
+    └── main.rs
+```
+
+It also initializes a git repository, unless the directory is already inside one (pass `--vcs none` to skip it). The `edition` field defaults to the newest edition your toolchain supports.
+
+#### `cargo package`
+`cargo package` builds the `.crate` file that `publish` would upload: a gzipped tarball written to `target/package/<name>-<version>.crate`. You will rarely run it for its own sake, but `--list` is the best way to see exactly what you are about to ship:
+
+```
+$ cargo package --list
+.cargo_vcs_info.json
+.gitignore
+Cargo.lock
+Cargo.toml
+Cargo.toml.orig
+src/main.rs
+```
+
+`Cargo.toml.orig` is your manifest as written. `Cargo.toml` is a normalized rewrite, with `path` dependencies replaced by registry versions and workspace inheritance flattened, so the crate builds on its own. `.cargo_vcs_info.json` records the git commit it came from.
+
+The valuable step is verification. After assembling the tarball, Cargo unpacks it and builds it in isolation. That catches the classic "works on my machine" failure, where a file the build depends on (a `build.rs` input, a file read by `include_str!`) exists in your checkout but was left out of the package. Control what goes in with `include` or `exclude` under `[package]`.
+
+#### `cargo publish`
+`cargo publish` packages, verifies, and uploads to crates.io. The one-time setup is a crates.io account (sign-in is through GitHub) and an API token.
+
+```bash
+cargo login               # paste a token from crates.io's account settings
+cargo publish --dry-run   # package and verify, upload nothing
+cargo publish
+```
+
+crates.io rejects a crate without a `description` and a `license` (or `license-file`). Every dependency must also be resolvable from the registry: a `path` dependency needs a `version` alongside it (the path is used locally, the version once published), and `git` dependencies are not allowed.
+
+::: {.callout-warning title="Publishing is permanent"}
+A published version cannot be overwritten, and its version number can never be reused. The source remains downloadable indefinitely; [yanking](#cargo-yank) does not remove it. If a secret ends up in a published crate, rotate the secret. Crate names are also global and first-come, first-served, since crates.io has no namespaces.
+:::
+
+#### `cargo report`
+Cargo normally suppresses warnings from dependencies, since you cannot fix them anyway. That creates a blind spot: a dependency may rely on behavior the compiler has announced it will reject in a future release, and you would only find out when your build breaks. When that happens, Cargo prints a short notice at the end of the build, and `cargo report` shows the details. On stable Cargo it offers exactly one report:
+
+```bash
+cargo report future-incompatibilities          # the most recent report
+cargo report future-incompatibilities --id 1   # a specific report, by the id in the notice
+```
+
+The usual fix is a `cargo update` of the named crate, since the maintainers have often already released a fix.
+
+#### `cargo run`
+`cargo run` builds if needed, then runs the binary.
+
+```bash
+cargo run                            # the package's only binary
+cargo run -- --input data.csv -v     # arguments after -- go to your program
+cargo run --release
+cargo run --bin server               # choose among several binaries
+cargo run --example plot             # run examples/plot.rs
+```
+
+#### `cargo search`
+`cargo search` queries the registry by name and description:
+
+```
+$ cargo search serde --limit 3
+serde = "1.0.229"         # A generic serialization/deserialization framework
+serde-saphyr = "2.0.0"    # YAML (de)serializer for Serde, emphasizing panic-free parsing, fast builds and good error reporting. …
+clickhouse = "0.15.3"     # Official Rust client for ClickHouse DB
+... and 23351 crates more (use --limit N to see more)
+```
+
+Each line is formatted as a ready-to-paste `Cargo.toml` entry. The results include no download counts or maintenance signals, so for choosing *between* crates, [crates.io](https://crates.io){target="_blank" rel="noopener noreferrer"} or [lib.rs](https://lib.rs){target="_blank" rel="noopener noreferrer"} are better. Once you have a candidate, [`cargo info`](#cargo-info) shows the details.
+
+#### `cargo test`
+`cargo test` builds and runs three kinds of tests:
+
+- **Unit tests** live in a `#[cfg(test)]` module beside the code they test, so they can reach private items.
+- **Integration tests** live in `tests/`. Each file is compiled as a separate crate that sees only your public API.
+- **Doctests** are code examples inside `///` doc comments, compiled and run so the documentation cannot drift out of date.
+
+```rust
+pub fn mean(samples: &[f32]) -> f32 {
+    samples.iter().sum::<f32>() / samples.len() as f32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mean_of_constant_signal() {
+        assert_eq!(mean(&[0.5, 0.5, 0.5]), 0.5);
+    }
+}
+```
+
+```bash
+cargo test                       # everything
+cargo test mean                  # only tests whose names contain "mean"
+cargo test --test parsing        # only tests/parsing.rs
+cargo test --doc                 # only doctests
+cargo test -- --nocapture        # show println! output from passing tests
+cargo test -- --test-threads=1   # run tests one at a time
+```
+
+The last flag exists because tests run in parallel threads by default. Tests that share a file, an environment variable, or a global will interfere with each other, and the failures will be intermittent.
+
+#### `cargo tree`
+`cargo tree` prints the resolved dependency graph:
+
+```
+$ cargo tree
+demo v0.1.0 (/Users/me/demo)
+├── serde v1.0.229
+│   ├── serde_core v1.0.229
+│   └── serde_derive v1.0.229 (proc-macro)
+│       ├── proc-macro2 v1.0.107
+│       │   └── unicode-ident v1.0.27
+│       ├── quote v1.0.47
+│       │   └── proc-macro2 v1.0.107 (*)
+│       └── syn v3.0.9
+│           ├── proc-macro2 v1.0.107 (*)
+│           ├── quote v1.0.47 (*)
+│           └── unicode-ident v1.0.27
+└── serde_json v1.0.154
+    ├── itoa v1.0.18
+    ├── memchr v2.8.3
+    ├── serde_core v1.0.229
+    └── zmij v1.0.23
+[dev-dependencies]
+└── pretty_assertions v1.4.1
+    ├── diff v0.1.13
+    └── yansi v1.0.1
+```
+
+`(*)` marks a subtree that has already been printed. The flags are what make it a diagnostic tool:
+
+```bash
+cargo tree --invert itoa    # who pulls this crate in?
+cargo tree --duplicates     # crates present in more than one version
+cargo tree -e features      # which features are enabled, and by whom
+cargo tree --depth 1        # direct dependencies only
+```
+
+```
+$ cargo tree --invert itoa
+itoa v1.0.18
+└── serde_json v1.0.154
+    └── demo v0.1.0 (/Users/me/demo)
+```
+
+`--duplicates` deserves an explanation. Unlike a C linker, which would reject two copies of the same library as duplicate symbols, Cargo happily links semver-incompatible versions of one crate into a single binary, because each version's symbols are mangled with a distinct hash. The costs are compile time, binary size, and a confusing class of type error: a `Value` from version 1 of a crate is a different type from a `Value` in version 2, even though the compiler prints them with the same name.
+
+#### `cargo update`
+`cargo update` moves `Cargo.lock` forward to the newest versions that `Cargo.toml` allows.
+
+```bash
+cargo update                           # every dependency
+cargo update serde                     # just one
+cargo update serde --precise 1.0.200   # an exact version (also works for going back)
+cargo update --dry-run                 # show what would change
+```
+
+It rewrites only the lockfile. It never edits `Cargo.toml`, so it never crosses a major version: if the requirement is `"1.0"`, version 2.0 is out of reach. A breaking upgrade means changing the requirement yourself, by hand or with `cargo add serde@2`, and then fixing whatever breaks.
+
+#### `cargo yank`
+`cargo yank` marks a published version as one that should not be chosen for new dependency resolutions.
+
+```bash
+cargo yank my_crate --version 1.0.1          # yank
+cargo yank my_crate --version 1.0.1 --undo   # restore
+```
+
+A yank does not delete anything. Projects whose `Cargo.lock` already pins the yanked version keep building, which is the point: you can withdraw a broken release without breaking everyone downstream who depends on it. Since the code stays downloadable, a yank does nothing for a leaked secret.
+
+::: {.see-more}
+See the [Cargo commands reference](https://doc.rust-lang.org/cargo/commands/index.html){target="_blank" rel="noopener noreferrer"} in *The Cargo Book* for every command and flag.
+:::
 
 ### `Cargo.toml` in Full
 A complete manifest with all common fields looks like this:
@@ -106,7 +590,11 @@ Cargo uses [semantic versioning](https://semver.org){target="_blank" rel="noopen
 
 The caret rule (`^`) is the default and the most common. It reflects semver's promise: a library increment its major version when it makes breaking changes, so `>=1.0, <2.0` is safe to let Cargo update freely within.
 
-`Cargo.lock` records the exact resolved versions. Commit `Cargo.lock` for binaries (so builds are reproducible) and typically do not commit it for libraries (so downstream users get the benefit of patch updates).
+`Cargo.lock` records the exact resolved versions. Commit it, for binaries and libraries alike.
+
+That has been Cargo's official guidance since [August 2023](https://blog.rust-lang.org/2023/08/29/committing-lockfiles.html){target="_blank" rel="noopener noreferrer"}. Before then, the advice was to commit the lockfile for binaries but not for libraries, and you will still see that rule repeated. The key fact behind both versions of the advice is that a library's `Cargo.lock` never reaches its users: when your crate is a dependency, Cargo resolves the whole graph using only the top-level project's lockfile. So committing a library's lockfile cannot hold anyone downstream back. The old worry was the reverse: a committed lockfile means the library's own CI keeps testing against old dependency versions, while a new user who adds the crate gets the latest ones and may hit a break the maintainer never saw.
+
+The current guidance values a reproducible checkout over that concern, since a `git bisect` or a contributor's first build is only meaningful if everyone resolves the same versions. The staleness problem is handled separately: let a bot such as Dependabot or Renovate keep the lockfile current, or add a CI job that runs `cargo update` before testing so it always tests what a new user would get.
 
 ### Dependency Scopes
 Not every dependency is needed in every context:

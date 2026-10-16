@@ -299,7 +299,7 @@ for file in "${files[@]}"; do     # quoted: each element stays one word
 done
 ```
 
-Quoting the expansion matters for the same reason it always does. `"${files[@]}"` yields one word per element regardless of spaces; unquoted, each element is re-split on whitespace and `my notes.md` becomes two arguments.
+Quoting the expansion matters for the same reason it always does. `"${files[@]}"` yields one word per element regardless of spaces; unquoted, each element is re-split on whitespace and `my notes.md` becomes two arguments. The loop itself never sees the array, only the words it expands to; the [`for` section](#what-comes-after-in-is-a-word-list) explains why that matters, and why `for f in ("a", "b")` does not work.
 
 A common source of arrays is a command's output, and here the shells diverge again:
 
@@ -1786,6 +1786,64 @@ done
 ```
 
 The first form is the one you will write most. `for file in *.qmd` reads as "for each file matching `*.qmd`," and because the glob produces a proper list, filenames with spaces survive (unlike iterating over unquoted command output, which word-splits).
+
+#### What Comes After `in` Is a Word List
+The grammar of the for-each form is:
+
+```
+for name in word word word ...; do commands; done
+```
+
+The words after `in` are not a list *value* the way `[1, 2, 3]` is in Python. The shell has no list literal here. They are words, treated exactly like the arguments on a command line: the shell runs its usual [expansions](#the-processing-order) over them (variables, command substitution, globbing, [word splitting](#word-splitting)), and whatever words come out the other end are what the loop walks through, one per pass, assigned to `name`. If you think of a command's `argv`, you have the right model; `for` is a loop over its own `argv`.
+
+```bash
+echo path1 path2                # echo receives two arguments
+for f in path1 path2; do        # the loop receives the same two words
+    echo "$f"
+done
+```
+
+Every form of `for` you meet is therefore just a different way of *producing words*, not special loop syntax:
+
+| After `in`        | Words the shell produces                              |
+|-------------------|-------------------------------------------------------|
+| `path1 path2`     | the literal words, as typed                           |
+| `*.txt`           | one word per matching file ([globbing](#globbing))    |
+| `"${paths[@]}"`   | one word per array element ([arrays](#arrays))        |
+| `$(cat list.txt)` | the command's output, split on whitespace             |
+| `$var` (unquoted) | the variable's value, split on whitespace (risky)     |
+| *(omitted)*       | `"$@"`, the script's own [arguments](#the-special-shell-parameters) |
+
+The array row is the one worth dwelling on. `for` never sees an array. `"${paths[@]}"` is expanded into separate words *before* the loop starts, so the loop receives exactly what it would have if you had typed the elements by hand. That is why the expansion must be quoted: the quotes are what keep `"path with spaces"` one word instead of three.
+
+```bash
+paths=(path1 "path with spaces")
+for f in "${paths[@]}"; do
+    echo "[$f]"
+done
+# [path1]
+# [path with spaces]
+```
+
+::: {.callout-warning title="There is no list literal after `in`"}
+Coming from Python or JavaScript, the natural thing to write is:
+
+```bash
+for f in ("path1", "path2"); do     # wrong in two ways
+```
+
+The parentheses are the first problem. `( ... )` builds an array only on the right side of an assignment, `name=( ... )`, and nowhere else. After `in`, bash rejects the line outright (`syntax error near unexpected token '('`), while zsh tries to read the parentheses as its own syntax and fails with the unhelpful `number expected`.
+
+The commas are the second. The shell separates words with whitespace, so a comma is just a character that ends up *inside* a word. zsh has a short form, `for f ( ... )`, that makes this visible:
+
+```bash
+for f ("path1", "path2"); do echo "[$f]"; done
+# [path1,]
+# [path2]
+```
+
+The fix is to drop both: `for f in path1 path2`, or build an array with `paths=(path1 path2)` and iterate over `"${paths[@]}"`.
+:::
 
 ### `case`
 ::: {.subheading}

@@ -1,0 +1,983 @@
+---
+title: "Propositional Logic"
+subtitle: "The smallest language that can say true things"
+---
+
+## Overview
+Every language in this notebook has three parts: a *syntax* that says which strings are well formed, a *semantics* that says what a well-formed string means, and a set of *rules* for manipulating those strings without changing their meaning. Usually those three parts are buried under decades of practical compromise. C's grammar runs to dozens of pages, its semantics has to account for undefined behavior, and its "rules of manipulation" are scattered between the standard and the optimizer.
+
+Propositional logic is what you get when you strip all of that away and keep only the skeleton. Its syntax fits on an index card. Its semantics is a single recursive function. Its rules of manipulation are complete, meaning every true statement can be proved, and decidable, meaning a machine can always settle whether a statement is true. It is the smallest language that is still a real language, and it is worth studying on those terms: not as a branch of philosophy, but as the formal system underneath every `if`, every logic gate, and, as McCulloch and Pitts showed in 1943, the first mathematical model of a neuron.
+
+The thesis of this chapter:
+
+> **Propositional logic** is a language whose only type is the truth value and whose programs are formulas. Everything else (circuits, conditionals, solvers, neurons) is that language running on different hardware.
+
+::: {.callout-note}
+## Object language and metalanguage
+A theme that runs through this whole notebook is the difference between a language and the language you use to *talk about* it. The Quarto chapter has to escape shortcodes because it writes about Quarto in Quarto. Logic makes the distinction explicit. Formulas such as $p \land q$ belong to the **object language**. Statements about formulas, such as "$p \land q$ is satisfiable" or $\{p, p \to q\} \models q$, belong to the **metalanguage**. The symbols $\models$, $\vdash$, and $\equiv$ never appear inside a formula; they are commentary on formulas, the way a type checker's verdict is not part of the program it checks.
+:::
+
+## A Short History
+Propositional logic was discovered twice, about two thousand years apart, and only became a formal language once mathematicians needed one.
+
+### The Stoics
+Aristotle's logic (4th century BCE) was a logic of *terms*: "all men are mortal" relates the categories *men* and *mortal*. The Stoics, a generation later, built a logic of whole *propositions* connected by "and", "or", and "if". Chrysippus (c. 279 to 206 BCE) set out five "indemonstrable" argument forms, including the ones we still call *modus ponens* and *modus tollens*. Philo of Megara had already proposed that a conditional is false only when its antecedent is true and its consequent false, which is exactly the modern **material conditional**. The question was hotly contested: the skeptic Sextus Empiricus reports the poet Callimachus joking that even the crows on the rooftops were cawing about which conditionals are true. They still are; see [The Conditional](#the-conditional).
+
+### Leibniz, Boole, and Frege
+The Stoic work was largely lost, and logic stayed Aristotelian for most of two millennia. Leibniz dreamed of a *calculus ratiocinator* in which disputes would be settled by calculation, but never built it. George Boole did, in *The Laws of Thought* (1854): propositions became algebraic variables, "and" became multiplication, and truth and falsity became 1 and 0. Boole's algebra had quirks (his "or" was exclusive and he leaned on division), and it took Jevons, Peirce, and others to tidy it into what we now call Boolean algebra.
+
+Gottlob Frege's *Begriffsschrift* (1879) is where logic becomes a formal language in the modern sense: a precise syntax, explicit inference rules, and proofs that can be checked mechanically. Frege's notation was two-dimensional and never caught on, but his program, carried forward by Russell and Whitehead's *Principia Mathematica* (1910 to 1913), set the agenda.
+
+### Truth Tables, Completeness, and a Single Connective
+In 1913 Henry Sheffer showed that a single connective, now called the **Sheffer stroke** or NAND, can express every other. Charles Peirce had found the same thing around 1880 but never published it. In 1921 Emil Post (and, independently, Ludwig Wittgenstein in the *Tractatus*) introduced **truth tables** as a decision procedure, and Post used them to prove that the propositional part of *Principia* is complete: every tautology is provable.
+
+### Shannon and the Switch
+Claude Shannon's master's thesis, *A Symbolic Analysis of Relay and Switching Circuits* (written 1937, published 1938), noticed that a network of relays obeys Boolean algebra. Switches in series behave like one connective and switches in parallel like another, so circuit design reduces to algebraic simplification. This may be the most consequential master's thesis ever written: it turned logic into engineering. See [Logic in Hardware](#logic-in-hardware).
+
+### McCulloch and Pitts
+In 1943 Warren McCulloch, a neurophysiologist, and Walter Pitts, a self-taught teenage logician, published *A Logical Calculus of the Ideas Immanent in Nervous Activity*. They modeled the neuron as an all-or-nothing threshold device and proved that networks of such neurons compute exactly the functions of propositional logic (and, with feedback loops, something more). Von Neumann borrowed their notation for the logic elements in his 1945 EDVAC report, and Kleene's attempt to characterize what their looped networks can recognize gave us **regular expressions**. See [The McCulloch-Pitts Neuron](#mcculloch-pitts).
+
+### Cook and Satisfiability
+In 1971 Stephen Cook proved (and Leonid Levin independently) that deciding whether a propositional formula can be made true, the **SAT** problem, is NP-complete. The humblest logic turned out to sit at the center of computational complexity theory. See [SAT](#sat).
+
+| Year | Who | Contribution |
+|---|---|---|
+| c. 250 BCE | Chrysippus, Philo | Propositional connectives, material conditional, inference schemata |
+| 1854 | Boole | Logic as algebra over 0 and 1 |
+| 1879 | Frege | Logic as a formal language with mechanical proof |
+| 1913 | Sheffer | NAND alone is sufficient |
+| 1921 | Post, Wittgenstein | Truth tables; completeness of propositional calculus |
+| 1938 | Shannon | Switching circuits are Boolean algebra |
+| 1943 | McCulloch, Pitts | Neurons as logic gates |
+| 1956 | Kleene | Regular expressions, from analyzing McCulloch-Pitts nets |
+| 1962 | Davis, Logemann, Loveland | DPLL, the ancestor of every modern SAT solver |
+| 1971 | Cook, Levin | SAT is NP-complete |
+
+## Syntax
+::: {.subheading}
+What counts as a formula
+:::
+
+### Atoms and Connectives
+The building blocks are **atoms** (also called propositional variables): $p$, $q$, $r$, and so on. An atom stands for a statement that is either true or false, such as "the buffer is full" or "the interrupt flag is set". The logic does not care what the statement says; it cares only how statements combine. Two constants, $\top$ (true) and $\bot$ (false), are often included.
+
+Atoms combine through **connectives**:
+
+| Connective | Symbol | Read as | C operator | Python | Rust |
+|---|---|---|---|---|---|
+| Negation | $\lnot p$ | not $p$ | `!p` | `not p` | `!p` |
+| Conjunction | $p \land q$ | $p$ and $q$ | `p && q` | `p and q` | `p && q` |
+| Disjunction | $p \lor q$ | $p$ or $q$ | <code>p &#124;&#124; q</code> | `p or q` | <code>p &#124;&#124; q</code> |
+| Exclusive or | $p \oplus q$ | $p$ xor $q$ | `!p != !q` | `p != q` | `p ^ q` |
+| Conditional | $p \to q$ | if $p$ then $q$ | <code>!p &#124;&#124; q</code> | `not p or q` | <code>!p &#124;&#124; q</code> |
+| Biconditional | $p \leftrightarrow q$ | $p$ if and only if $q$ | `!p == !q` | `p == q` | `p == q` |
+
+Notice that no mainstream programming language has an operator for $\to$, even though it is arguably the most important connective in logic. Programmers express it as control flow (`if`) instead. C also lacks a logical XOR; the `!p != !q` idiom normalizes both operands to 0 or 1 first, because `p != q` on raw integers would treat 2 and 3 as "different truths."
+
+### The Grammar
+Here is the complete grammar in BNF. Compare it to the C grammar in Annex A of the standard.
+
+```
+formula  ::= atom
+           | "⊤" | "⊥"
+           | "¬" formula
+           | "(" formula connective formula ")"
+connective ::= "∧" | "∨" | "→" | "↔"
+atom     ::= "p" | "q" | "r" | ...
+```
+
+The fully parenthesized form guarantees **unique readability**: every formula has exactly one parse tree, so there is never a question of what a formula means structurally. This is the property C lacks in the dangling-`else` problem, and the property the precedence table exists to restore.
+
+### Precedence and Associativity
+Nobody writes all those parentheses. The standard convention, from tightest to loosest:
+
+$$
+\lnot \quad > \quad \land \quad > \quad \lor \quad > \quad \to \quad > \quad \leftrightarrow
+$$
+
+and $\to$ is **right associative**: $p \to q \to r$ means $p \to (q \to r)$. Right associativity is chosen because $p \to (q \to r)$ is equivalent to $(p \land q) \to r$, so a chain of conditionals reads as "given all of these, conclude that." (This is the same reason function types in Haskell and Rust's `Fn(A) -> Fn(B) -> C` currying associate to the right.)
+
+C agrees for the operators it has: `!` binds tighter than `&&`, which binds tighter than `||`. So `!a && b || c` parses as `((!a) && b) || c`, exactly as $\lnot a \land b \lor c$ would. The trouble in C is the *bitwise* operators, whose precedence sits below `==` for historical reasons; see [Logical vs. Bitwise](c.qmd#logical-vs.-bitwise) and [Operator Precedence Surprises](c.qmd#operator-precedence-surprises).
+
+### Parse Trees
+A formula is really a tree; the string is just a serialization of it. The formula $\lnot p \lor q \to r$ parses as $((\lnot p) \lor q) \to r$:
+
+```{mermaid}
+flowchart TD
+    implies["→"] --> disjunction["∨"]
+    implies --> r1["r"]
+    disjunction --> negation["¬"]
+    disjunction --> q1["q"]
+    negation --> p1["p"]
+```
+
+The **main connective** is the one at the root, here $\to$. It determines what kind of statement the formula is: this is a conditional, not a disjunction. Identifying the main connective is the first step of every proof and every truth-table evaluation, just as identifying the root of the AST is the first step of every compiler pass.
+
+## Semantics
+::: {.subheading}
+What a formula means
+:::
+
+### Valuations
+A **valuation** (also called an interpretation or truth assignment) is a function from atoms to $\{T, F\}$. It is the logic's equivalent of a program's input. Given a valuation $v$, the truth value of any formula is defined recursively, one clause per production in the grammar:
+
+$$
+\begin{aligned}
+v(\lnot \varphi) &= T \text{ iff } v(\varphi) = F \\
+v(\varphi \land \psi) &= T \text{ iff } v(\varphi) = T \text{ and } v(\psi) = T \\
+v(\varphi \lor \psi) &= T \text{ iff } v(\varphi) = T \text{ or } v(\psi) = T \\
+v(\varphi \to \psi) &= F \text{ iff } v(\varphi) = T \text{ and } v(\psi) = F \\
+v(\varphi \leftrightarrow \psi) &= T \text{ iff } v(\varphi) = v(\psi)
+\end{aligned}
+$$
+
+This is **compositional semantics**: the meaning of a compound is determined entirely by the meanings of its parts and the connective that joins them. It is also, line for line, a tree-walking interpreter. The semantics of propositional logic *is* an `eval` function.
+
+### An Interpreter in Python
+To make that concrete, here is the whole language implemented in Python. Each grammar production becomes a class, and each semantic clause becomes an `evaluate` method. Python's operator overloading lets us write `p & q` instead of `And(p, q)`.
+
+```{python}
+from functools import reduce
+from itertools import product
+
+
+class Formula:
+    def __invert__(self):
+        return Not(self)
+
+    def __and__(self, other):
+        return And(self, other)
+
+    def __or__(self, other):
+        return Or(self, other)
+
+    def __rshift__(self, other):
+        return Implies(self, other)
+
+    def __xor__(self, other):
+        return Xor(self, other)
+
+    def iff(self, other):
+        return Iff(self, other)
+
+    def variables(self) -> set[str]:
+        raise NotImplementedError
+
+    def evaluate(self, valuation: dict[str, bool]) -> bool:
+        raise NotImplementedError
+
+    def models(self) -> list[dict[str, bool]]:
+        return [valuation for valuation in Valuations(self.variables()) if self.evaluate(valuation)]
+
+    def is_satisfiable(self) -> bool:
+        return len(self.models()) > 0
+
+    def is_tautology(self) -> bool:
+        return len(self.models()) == 2 ** len(self.variables())
+
+    def is_equivalent_to(self, other: "Formula") -> bool:
+        return self.iff(other).is_tautology()
+
+
+class Variable(Formula):
+    def __init__(self, name: str):
+        self.name = name
+
+    def variables(self) -> set[str]:
+        return {self.name}
+
+    def evaluate(self, valuation: dict[str, bool]) -> bool:
+        return valuation[self.name]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class Not(Formula):
+    def __init__(self, operand: Formula):
+        self.operand = operand
+
+    def variables(self) -> set[str]:
+        return self.operand.variables()
+
+    def evaluate(self, valuation: dict[str, bool]) -> bool:
+        return not self.operand.evaluate(valuation)
+
+    def __str__(self) -> str:
+        return f"¬{self.operand}"
+
+
+class Binary(Formula):
+    symbol = "?"
+
+    def __init__(self, left: Formula, right: Formula):
+        self.left = left
+        self.right = right
+
+    def variables(self) -> set[str]:
+        return self.left.variables() | self.right.variables()
+
+    def evaluate(self, valuation: dict[str, bool]) -> bool:
+        return self.apply(self.left.evaluate(valuation), self.right.evaluate(valuation))
+
+    def apply(self, left: bool, right: bool) -> bool:
+        raise NotImplementedError
+
+    def __str__(self) -> str:
+        return f"({self.left} {self.symbol} {self.right})"
+
+
+class And(Binary):
+    symbol = "∧"
+
+    def apply(self, left: bool, right: bool) -> bool:
+        return left and right
+
+
+class Or(Binary):
+    symbol = "∨"
+
+    def apply(self, left: bool, right: bool) -> bool:
+        return left or right
+
+
+class Xor(Binary):
+    symbol = "⊕"
+
+    def apply(self, left: bool, right: bool) -> bool:
+        return left != right
+
+
+class Implies(Binary):
+    symbol = "→"
+
+    def apply(self, left: bool, right: bool) -> bool:
+        return (not left) or right
+
+
+class Iff(Binary):
+    symbol = "↔"
+
+    def apply(self, left: bool, right: bool) -> bool:
+        return left == right
+
+
+class Valuations:
+    def __init__(self, variables: set[str]):
+        self.variables = sorted(variables)
+
+    def __iter__(self):
+        for values in product([True, False], repeat=len(self.variables)):
+            yield dict(zip(self.variables, values))
+
+
+class TruthTable:
+    def __init__(self, *formulas: Formula):
+        self.formulas = formulas
+        self.variables = sorted(set().union(*(formula.variables() for formula in formulas)))
+
+    def headers(self) -> list[str]:
+        return self.variables + [str(formula) for formula in self.formulas]
+
+    def rows(self) -> list[list[bool]]:
+        return [
+            [valuation[name] for name in self.variables] + [formula.evaluate(valuation) for formula in self.formulas]
+            for valuation in Valuations(set(self.variables))
+        ]
+
+    def show(self) -> None:
+        headers = self.headers()
+        widths = [len(header) for header in headers]
+        print(" │ ".join(header.center(width) for header, width in zip(headers, widths)))
+        print("─┼─".join("─" * width for width in widths))
+        for row in self.rows():
+            cells = ["T" if value else "F" for value in row]
+            print(" │ ".join(cell.center(width) for cell, width in zip(cells, widths)))
+
+
+def entails(premises: list[Formula], conclusion: Formula) -> bool:
+    return (reduce(And, premises) >> conclusion).is_tautology()
+
+
+p, q, r = Variable("p"), Variable("q"), Variable("r")
+```
+
+That is a complete implementation of the language's syntax and semantics, plus the semantic tests (satisfiability, validity, equivalence, entailment) defined in the next few sections. Here are the basic connectives:
+
+```{python}
+TruthTable(~p, p & q, p | q, p ^ q, p >> q, p.iff(q)).show()
+```
+
+::: {.callout-warning}
+## Borrowed operators keep their own precedence
+Python's `>>` binds *tighter* than `&`, `^`, and `|`, which is the opposite of the logical convention for $\to$. So `p & q >> r` builds $p \land (q \to r)$, not $(p \land q) \to r$. Overloading lets you reuse an operator's spelling, never its precedence. C++ has the same constraint, which is why every C++ DSL built on operator overloading (Boost.Spirit, expression templates, stream insertion) has a precedence wart somewhere. Parenthesize generously.
+:::
+
+```{python}
+print(p & q >> r)
+print((p & q) >> r)
+```
+
+### Tautology, Contradiction, Contingency
+Every formula falls into exactly one of three categories, determined by its truth table's final column:
+
+| Category | Final column | Example | Programming analogue |
+|---|---|---|---|
+| **Tautology** (valid) | All $T$ | $p \lor \lnot p$ | An assertion that can never fire |
+| **Contradiction** (unsatisfiable) | All $F$ | $p \land \lnot p$ | Dead code: a branch no input reaches |
+| **Contingency** | Mixed | $p \to q$ | An ordinary condition |
+
+A formula is **satisfiable** if it is not a contradiction: at least one valuation makes it true. Satisfiability and validity are duals: $\varphi$ is a tautology exactly when $\lnot\varphi$ is unsatisfiable. That duality is how SAT solvers prove theorems; they look for a counterexample to the negation and report success when they fail to find one.
+
+```{python}
+for formula in [p | ~p, p & ~p, p >> q]:
+    print(f"{str(formula):12}  tautology={formula.is_tautology()!s:5}  satisfiable={formula.is_satisfiable()}")
+```
+
+### Logical Consequence
+The central relation of logic is **semantic entailment**. A set of premises $\Gamma$ entails a conclusion $\varphi$, written $\Gamma \models \varphi$, when every valuation that makes all the premises true also makes $\varphi$ true. Equivalently, $\Gamma \models \varphi$ exactly when $(\gamma_1 \land \cdots \land \gamma_n) \to \varphi$ is a tautology, which is how `entails` is implemented above.
+
+```{python}
+print("{p → q, p} ⊨ q :", entails([p >> q, p], q))
+print("{p → q, q} ⊨ p :", entails([p >> q, q], p))
+```
+
+The second line is the fallacy of **affirming the consequent**: "if it rained the street is wet; the street is wet; so it rained." The truth table finds the counterexample (a street cleaner, $p = F$, $q = T$) mechanically.
+
+Two formulas are **logically equivalent**, $\varphi \equiv \psi$, when they entail each other, which is the same as saying $\varphi \leftrightarrow \psi$ is a tautology. Equivalent formulas are interchangeable anywhere, and that is what licenses every refactoring of a boolean expression.
+
+## The Conditional
+::: {.subheading}
+The connective everyone argues about
+:::
+
+The material conditional $p \to q$ is false in exactly one case: $p$ true and $q$ false. Two of its four rows surprise newcomers:
+
+| $p$ | $q$ | $p \to q$ | |
+|---|---|---|---|
+| T | T | T | |
+| T | F | **F** | the only way to break a promise |
+| F | T | T | vacuously true |
+| F | F | T | vacuously true |
+
+Why should "if the moon is cheese, then $2 + 2 = 4$" be true? The best way to see that this is the right design choice is to treat $p \to q$ as a **promise** or a **contract**. "If you pass the final, you pass the course" is broken only by a student who passes the final and still fails. A student who skipped the final has not tested the promise, so it stands. In programming terms, `assert(!p || q)` is the conditional, and an assertion whose guard is false does not fire.
+
+There is a deeper reason too. We want $\to$ to be a connective, a function of truth values alone, and we want modus ponens (from $p$ and $p \to q$, conclude $q$) to be valid. Of the 16 possible binary truth functions, the material conditional is the only one that makes modus ponens valid while also making $p \to p$ a tautology and keeping $p \to q$ distinct from $q \to p$. The oddness of the false-antecedent rows is the price of being truth-functional. Logics that refuse to pay it (relevance logics, strict implication) exist, but they give up the simple semantics.
+
+::: {.callout-tip}
+## Python's `<=` is implication
+Python orders `False < True`, so for booleans `p <= q` is exactly $p \to q$. The same holds in Rust (`bool: Ord`) and in C when operands are normalized to 0 and 1. It is a cute identity, not a recommended idiom: `not p or q` says what you mean.
+:::
+
+### Converse, Inverse, Contrapositive
+A conditional has three relatives, and only one of them is equivalent to it:
+
+| Name | Form | Equivalent to $p \to q$? |
+|---|---|---|
+| Original | $p \to q$ | yes |
+| **Contrapositive** | $\lnot q \to \lnot p$ | **yes** |
+| Converse | $q \to p$ | no |
+| Inverse | $\lnot p \to \lnot q$ | no (but equivalent to the converse) |
+
+```{python}
+for name, formula in [("contrapositive", ~q >> ~p), ("converse", q >> p), ("inverse", ~p >> ~q)]:
+    print(f"{name:15} equivalent to p → q: {formula.is_equivalent_to(p >> q)}")
+```
+
+::: {.callout-warning}
+## Necessary and sufficient
+"$p$ only if $q$" means $p \to q$, not $q \to p$. In $p \to q$, $p$ is **sufficient** for $q$ and $q$ is **necessary** for $p$. A guard clause `if (!q) return;` at the top of a function establishes that $q$ is *necessary* for reaching the rest of the body: reaching the body implies $q$. Confusing a conditional with its converse is the single most common reasoning error in code review ("this only crashes if the pointer is null; the pointer is null; so this is the crash").
+:::
+
+### The Biconditional
+$p \leftrightarrow q$ is true when $p$ and $q$ agree. It is the conjunction of a conditional and its converse, $(p \to q) \land (q \to p)$, and it is the negation of XOR. Mathematicians write "iff". In code it is `==` on booleans, which is why `if (flag == true)` is redundant: it is $p \leftrightarrow \top$, which is equivalent to $p$.
+
+## Laws of Equivalence
+::: {.subheading}
+The algebra you refactor with
+:::
+
+Because equivalent formulas are interchangeable, a list of basic equivalences turns logic into algebra: you can rewrite a formula step by step, the way you simplify a polynomial. Each law below can be checked by truth table.
+
+| Law | $\land$ form | $\lor$ form |
+|---|---|---|
+| Identity | $p \land \top \equiv p$ | $p \lor \bot \equiv p$ |
+| Domination | $p \land \bot \equiv \bot$ | $p \lor \top \equiv \top$ |
+| Idempotence | $p \land p \equiv p$ | $p \lor p \equiv p$ |
+| Complement | $p \land \lnot p \equiv \bot$ | $p \lor \lnot p \equiv \top$ |
+| Commutativity | $p \land q \equiv q \land p$ | $p \lor q \equiv q \lor p$ |
+| Associativity | $(p \land q) \land r \equiv p \land (q \land r)$ | $(p \lor q) \lor r \equiv p \lor (q \lor r)$ |
+| Distributivity | $p \land (q \lor r) \equiv (p \land q) \lor (p \land r)$ | $p \lor (q \land r) \equiv (p \lor q) \land (p \lor r)$ |
+| Absorption | $p \land (p \lor q) \equiv p$ | $p \lor (p \land q) \equiv p$ |
+| **De Morgan** | $\lnot(p \land q) \equiv \lnot p \lor \lnot q$ | $\lnot(p \lor q) \equiv \lnot p \land \lnot q$ |
+
+And the laws that eliminate the other connectives:
+
+| Law | Equivalence |
+|---|---|
+| Double negation | $\lnot\lnot p \equiv p$ |
+| Implication | $p \to q \equiv \lnot p \lor q$ |
+| Contraposition | $p \to q \equiv \lnot q \to \lnot p$ |
+| Exportation | $(p \land q) \to r \equiv p \to (q \to r)$ |
+| Biconditional | $p \leftrightarrow q \equiv (p \to q) \land (q \to p)$ |
+| XOR | $p \oplus q \equiv (p \lor q) \land \lnot(p \land q)$ |
+
+The table has a striking symmetry. Swap $\land$ with $\lor$ and $\top$ with $\bot$ in any law and you get another law. This is the **duality principle**, and it is why the two columns mirror each other. Shannon exploited it directly; see [Logic in Hardware](#logic-in-hardware).
+
+The interpreter confirms all of these mechanically:
+
+```{python}
+laws = {
+    "De Morgan (∧)": (~(p & q), ~p | ~q),
+    "De Morgan (∨)": (~(p | q), ~p & ~q),
+    "Distributivity": (p & (q | r), (p & q) | (p & r)),
+    "Absorption": (p | (p & q), p),
+    "Exportation": ((p & q) >> r, p >> (q >> r)),
+    "XOR": (p ^ q, (p | q) & ~(p & q)),
+}
+for name, (left, right) in laws.items():
+    print(f"{name:15} {left.is_equivalent_to(right)}")
+```
+
+### A Worked Simplification
+Here is a condition of the kind that accumulates in real code as features are bolted on:
+
+```c
+if (!(!ready || error) || (ready && !error && retry)) {
+    transmit();
+}
+```
+
+Let $r$ = `ready`, $e$ = `error`, $t$ = `retry`. The condition is $\lnot(\lnot r \lor e) \lor (r \land \lnot e \land t)$.
+
+$$
+\begin{aligned}
+&\lnot(\lnot r \lor e) \lor (r \land \lnot e \land t) \\
+&\equiv (\lnot\lnot r \land \lnot e) \lor (r \land \lnot e \land t) && \text{De Morgan} \\
+&\equiv (r \land \lnot e) \lor ((r \land \lnot e) \land t) && \text{double negation, associativity} \\
+&\equiv r \land \lnot e && \text{absorption}
+\end{aligned}
+$$
+
+The `retry` term was dead weight all along: `if (ready && !error)`. Absorption is the law that catches this, and it is worth knowing by sight because it is exactly the shape that redundant special cases take.
+
+::: {.callout-warning}
+## Logic is commutative; C is not
+The laws above hold for pure formulas. C's `&&` and `||` **short-circuit**: the right operand is evaluated only if the left does not already settle the answer. That makes them sequencing operators as well as logical ones, and it breaks commutativity whenever an operand has side effects or undefined behavior:
+
+```c
+if (node != NULL && node->value > 0)   /* safe */
+if (node->value > 0 && node != NULL)   /* dereferences NULL first */
+```
+
+Logically $a \land b \equiv b \land a$. Operationally, the left operand of `&&` acts as a *guard* for the right one. When you apply De Morgan or commute terms in real code, check that no operand depends on another having been tested first. The bitwise `&` and `|` do not short-circuit, so they are closer to pure logic, and Rust deliberately allows them on `bool` for exactly that reason.
+:::
+
+## Normal Forms
+::: {.subheading}
+Two canonical shapes for every formula
+:::
+
+A **literal** is an atom or its negation: $p$, $\lnot q$. Every formula is equivalent to one in each of two standard shapes:
+
+- **Disjunctive normal form (DNF)**: an OR of ANDs of literals, such as $(p \land \lnot q) \lor (\lnot p \land q)$. Each AND term describes one way to make the formula true.
+- **Conjunctive normal form (CNF)**: an AND of ORs of literals, such as $(p \lor q) \land (\lnot p \lor \lnot q)$. Each OR term, called a **clause**, is a constraint that must hold.
+
+Both examples are $p \oplus q$.
+
+### Reading DNF Off a Truth Table
+DNF is easy to construct: take each row where the formula is true, write the conjunction of literals that describes that row, and OR them together. For XOR the true rows are $(T, F)$ and $(F, T)$, giving $(p \land \lnot q) \lor (\lnot p \land q)$. This is the **sum of products** form that digital designers use, and its existence is a constructive proof that $\{\lnot, \land, \lor\}$ can express every truth function.
+
+CNF comes from the false rows by duality: each false row contributes a clause that rules it out.
+
+### Converting by Rewriting
+For an arbitrary formula the textbook algorithm has three steps:
+
+1. **Eliminate** $\leftrightarrow$ and $\to$ using the biconditional and implication laws.
+2. **Push negations inward** with De Morgan and double negation until $\lnot$ applies only to atoms. This is *negation normal form*.
+3. **Distribute** $\lor$ over $\land$ (for CNF) or $\land$ over $\lor$ (for DNF).
+
+Example: convert $(p \to q) \to r$ to CNF.
+
+$$
+\begin{aligned}
+(p \to q) \to r &\equiv \lnot(\lnot p \lor q) \lor r && \text{implication, twice} \\
+&\equiv (p \land \lnot q) \lor r && \text{De Morgan, double negation} \\
+&\equiv (p \lor r) \land (\lnot q \lor r) && \text{distribution}
+\end{aligned}
+$$
+
+### Why Solvers Want CNF
+CNF matters because it is the input format of SAT solvers. A clause is a constraint, and a CNF formula is a list of constraints that must all hold, which is a natural way to encode real problems ("at least one of these packages must be installed", "these two cannot both be"). The standard **DIMACS** file format is nothing but a list of clauses with atoms numbered $1, 2, 3, \ldots$ and negation written as a minus sign.
+
+The catch is step 3: distribution can blow up exponentially. $(p_1 \land q_1) \lor (p_2 \land q_2) \lor \cdots \lor (p_n \land q_n)$ has $2^n$ clauses in CNF. The fix, due to Grigori Tseitin (1968), is to introduce a fresh atom for each subformula. The result is not *equivalent* to the original (it has extra atoms), but it is **equisatisfiable** (satisfiable exactly when the original is) and only linearly larger. Every practical solver front end does this.
+
+## Functional Completeness
+::: {.subheading}
+How few connectives do you need?
+:::
+
+With two inputs there are $2^{2^2} = 16$ possible truth functions. Here they all are, with outputs listed for $(p, q) = (T,T), (T,F), (F,T), (F,F)$:
+
+| Output | Formula | Name |
+|---|---|---|
+| FFFF | $\bot$ | contradiction |
+| FFFT | $\lnot(p \lor q)$ | NOR (Peirce arrow) |
+| FFTF | $\lnot p \land q$ | converse nonimplication |
+| FFTT | $\lnot p$ | negation of $p$ |
+| FTFF | $p \land \lnot q$ | nonimplication |
+| FTFT | $\lnot q$ | negation of $q$ |
+| FTTF | $p \oplus q$ | XOR |
+| FTTT | $\lnot(p \land q)$ | NAND (Sheffer stroke) |
+| TFFF | $p \land q$ | AND |
+| TFFT | $p \leftrightarrow q$ | XNOR, biconditional |
+| TFTF | $q$ | projection |
+| TFTT | $p \to q$ | conditional |
+| TTFF | $p$ | projection |
+| TTFT | $q \to p$ | converse conditional |
+| TTTF | $p \lor q$ | OR |
+| TTTT | $\top$ | tautology |
+
+A set of connectives is **functionally complete** if every truth function, of any number of inputs, can be built from it. The DNF construction shows $\{\lnot, \land, \lor\}$ is complete. De Morgan lets you drop one of $\land$ and $\lor$, so $\{\lnot, \land\}$ and $\{\lnot, \lor\}$ are complete too.
+
+The surprise is that a single connective suffices. NAND alone works, because
+
+$$
+\lnot p \equiv p \uparrow p \qquad\qquad p \land q \equiv (p \uparrow q) \uparrow (p \uparrow q)
+$$
+
+where $\uparrow$ is NAND. Since $\{\lnot, \land\}$ is complete, so is $\{\uparrow\}$. NOR works by the dual argument. They are the only two binary connectives with this property.
+
+```{python}
+class Nand(Binary):
+    symbol = "↑"
+
+    def apply(self, left: bool, right: bool) -> bool:
+        return not (left and right)
+
+
+def nand_not(operand: Formula) -> Formula:
+    return Nand(operand, operand)
+
+
+def nand_and(left: Formula, right: Formula) -> Formula:
+    return nand_not(Nand(left, right))
+
+
+def nand_or(left: Formula, right: Formula) -> Formula:
+    return Nand(nand_not(left), nand_not(right))
+
+
+print("¬p    :", nand_not(p).is_equivalent_to(~p))
+print("p ∧ q :", nand_and(p, q).is_equivalent_to(p & q))
+print("p ∨ q :", nand_or(p, q).is_equivalent_to(p | q))
+```
+
+### Post's Criterion
+Which sets are *not* complete, and why? Emil Post answered this completely in 1941. There are five properties that are preserved under composition, so a set of connectives that all share one of them can never escape it:
+
+| Property | Meaning | Example of a trapped set |
+|---|---|---|
+| Preserves $F$ | all-$F$ inputs give $F$ | $\{\land, \lor, \oplus\}$ |
+| Preserves $T$ | all-$T$ inputs give $T$ | $\{\land, \lor, \to\}$ |
+| Monotone | flipping an input from $F$ to $T$ never flips the output from $T$ to $F$ | $\{\land, \lor\}$ |
+| Self-dual | negating all inputs negates the output | $\{\lnot\}$ |
+| Affine | expressible with only $\oplus$ and constants | $\{\oplus, \lnot\}$ |
+
+A set is complete **if and only if** it escapes all five: for each property, it contains at least one connective that lacks it. NAND lacks all five by itself, which is why it is complete alone. $\{\land, \lor\}$ is monotone, so no amount of AND and OR can ever produce NOT; that is a precise version of the intuition that you need inversion somewhere. $\{\to\}$ preserves $T$, so it cannot make $\bot$, but $\{\to, \bot\}$ is complete.
+
+## Inference and Proof
+::: {.subheading}
+Deriving truths without truth tables
+:::
+
+Truth tables decide entailment, but they cost $2^n$ rows for $n$ atoms. Thirty atoms is a billion rows. **Proof** is the alternative: start from premises and apply rules that are known to preserve truth, one step at a time, until the conclusion appears. Proofs are syntactic; they manipulate symbols without ever consulting a valuation.
+
+### Rules of Inference
+
+| Rule | Premises | Conclusion |
+|---|---|---|
+| Modus ponens | $p \to q$, $p$ | $q$ |
+| Modus tollens | $p \to q$, $\lnot q$ | $\lnot p$ |
+| Hypothetical syllogism | $p \to q$, $q \to r$ | $p \to r$ |
+| Disjunctive syllogism | $p \lor q$, $\lnot p$ | $q$ |
+| Conjunction | $p$, $q$ | $p \land q$ |
+| Simplification | $p \land q$ | $p$ |
+| Addition | $p$ | $p \lor q$ |
+| **Resolution** | $p \lor q$, $\lnot p \lor r$ | $q \lor r$ |
+
+Every rule in the table is itself an entailment that a truth table would confirm. Their value is that they compose: a ten-step proof can be checked by eye even when its truth table would have thousands of rows.
+
+### A Worked Proof
+Premises: $p \to q$, $q \to r$, $\lnot r$. Prove $\lnot p$.
+
+| Step | Formula | Justification |
+|---|---|---|
+| 1 | $p \to q$ | premise |
+| 2 | $q \to r$ | premise |
+| 3 | $\lnot r$ | premise |
+| 4 | $p \to r$ | hypothetical syllogism, 1, 2 |
+| 5 | $\lnot p$ | modus tollens, 4, 3 |
+
+In code-review terms: "if the config loads, the driver initializes; if the driver initializes, the LED blinks; the LED is not blinking; therefore the config did not load." Debugging is mostly modus tollens.
+
+### Resolution
+Resolution deserves special mention because it is the one rule a machine needs. Given two clauses that contain an atom and its negation, it produces a clause with that atom removed. To prove $\Gamma \models \varphi$, convert $\Gamma \cup \{\lnot\varphi\}$ to CNF and resolve repeatedly. If you ever derive the **empty clause** (a contradiction), the entailment holds. This procedure is *refutation complete*: for propositional logic it always terminates with the right answer. It is the basis of Prolog's execution model and, in a much refined form, of modern SAT solvers.
+
+### Soundness and Completeness {#soundness-completeness}
+There are now two notions of "follows from":
+
+- $\Gamma \models \varphi$: semantic entailment, defined by truth.
+- $\Gamma \vdash \varphi$: derivability, defined by proof.
+
+A proof system is **sound** if $\Gamma \vdash \varphi$ implies $\Gamma \models \varphi$ (it proves nothing false) and **complete** if $\Gamma \models \varphi$ implies $\Gamma \vdash \varphi$ (it can prove everything true). Standard proof systems for propositional logic are both, as Post showed in 1921. That match between syntax and semantics is the property every type system aspires to and few achieve: Rust's borrow checker, for instance, is sound but deliberately incomplete, rejecting some programs that are actually safe.
+
+Propositional logic is also **decidable**: an algorithm (the truth table) always answers whether $\Gamma \models \varphi$. First-order logic keeps soundness and completeness but loses decidability, which is one of the deepest results of the 1930s and the reason the jump to predicate logic is a jump in kind, not just in expressiveness.
+
+## Logic in Code
+::: {.subheading}
+Where the formulas hide in programs
+:::
+
+Every condition in a program is a propositional formula whose atoms are comparisons. The language-level differences are in how strictly a language separates truth values from everything else.
+
+| | C | C++ | Python | Rust |
+|---|---|---|---|---|
+| Boolean type | `_Bool` / `bool` (C99), but conditions take any scalar | `bool`, with implicit conversion from integers and pointers | `bool`, a subclass of `int` | `bool`, no implicit conversion |
+| What counts as true | nonzero | nonzero, non-null | **truthiness**: nonempty, nonzero, not `None` | only `true` |
+| `&&` / `and` returns | `int` 0 or 1 | `bool` | **one of its operands** | `bool` |
+| Short-circuit | yes | yes (unless overloaded) | yes | yes |
+| Non-short-circuit on bools | `&`, <code>&#124;</code>, `^` | `&`, <code>&#124;</code>, `^` | `&`, <code>&#124;</code>, `^` | `&`, <code>&#124;</code>, `^` |
+
+Two entries deserve comment.
+
+**Python's `and` and `or` return operands.** `x or default` evaluates to `x` if `x` is truthy, else `default`. That is a useful idiom, but it means `and`/`or` are not boolean connectives; they are short-circuiting selection operators that happen to agree with logic when the operands are `bool`. `0 or None` is `None`, not `False`.
+
+**C++ loses short-circuiting when `&&` is overloaded.** A user-defined `operator&&` is an ordinary function call, so both operands are evaluated. This is why Sutter and Alexandrescu's *C++ Coding Standards* (Item 30) says never to overload `&&`, `||`, or `,`.
+
+### De Morgan in Practice
+De Morgan's laws are the refactoring you will use most. Loop conditions are the classic case, because the condition to *continue* is the negation of the condition to *stop*:
+
+```c
+/* stop when the buffer is full or we see the terminator */
+while (!(count == capacity || byte == '\0')) { ... }
+
+/* De Morgan: continue while not full and not terminator */
+while (count != capacity && byte != '\0') { ... }
+```
+
+The second form is easier to read because each negation has been pushed onto an atom, where it disappears into the comparison operator. This is negation normal form applied to source code.
+
+### Guard Clauses as Conditionals
+An early return encodes an implication about the rest of the function:
+
+```rust
+fn transmit(frame: &Frame, link: &Link) -> Result<(), Error> {
+    if !link.is_up() {
+        return Err(Error::LinkDown);
+    }
+    if frame.len() > link.mtu() {
+        return Err(Error::TooLarge);
+    }
+    link.send(frame)
+}
+```
+
+Reaching `link.send` implies $\textit{up} \land \textit{fits}$. Every guard you pass adds a conjunct to what you know, which is the same reasoning a compiler's flow analysis does when it narrows a type after a check (TypeScript's narrowing, Rust's `if let`).
+
+## Logic in Hardware
+::: {.subheading}
+Shannon's insight
+:::
+
+Shannon's thesis observed that a relay contact is a propositional atom: it is either closed or open. Two contacts in **series** conduct only if both are closed, and two in **parallel** conduct if either is. Series is $\land$, parallel is $\lor$, and a normally closed contact is $\lnot$. A circuit is therefore a formula, and the laws of equivalence become a way to remove relays.
+
+Shannon actually used the dual algebra. He measured a circuit's *hindrance*, with 0 for a closed (conducting) path and 1 for an open one, so series became addition and parallel became multiplication. Because of the duality principle the choice does not matter, and the algebra is identical up to swapping $\land$ with $\lor$ and $\top$ with $\bot$. Engineers later settled on the conducting-is-1 convention that we use today.
+
+Transistors replaced relays, but the mapping did not change. In CMOS, the cheapest gates to build are NAND and NOR (four transistors each), while AND and OR are a NAND or NOR followed by an inverter. So hardware designers think in NAND, and the functional completeness of NAND is not a curiosity: it is why a chip can be built from a sea of identical cells.
+
+### A Half Adder
+Adding two one-bit numbers $a$ and $b$ produces a sum bit and a carry bit:
+
+| $a$ | $b$ | carry | sum |
+|---|---|---|---|
+| 0 | 0 | 0 | 0 |
+| 0 | 1 | 0 | 1 |
+| 1 | 0 | 0 | 1 |
+| 1 | 1 | 1 | 0 |
+
+Reading off the columns, $\textit{sum} = a \oplus b$ and $\textit{carry} = a \land b$. Arithmetic, at the bottom, is propositional logic. Chain these into full adders and you have the ALU, which is how Boole's "algebra of thought" ended up running every `+` you have ever compiled.
+
+The [multiplexer](glossary.qmd#multiplexer) in the glossary is another formula in disguise: a 2-to-1 mux with select $s$ computes $(\lnot s \land a) \lor (s \land b)$, which is the hardware form of the ternary operator `s ? b : a`.
+
+## The McCulloch-Pitts Neuron {#mcculloch-pitts}
+::: {.subheading}
+Logic as a model of the brain
+:::
+
+McCulloch and Pitts made five idealizations about neurons, the central ones being that a neuron is **all-or-none** (it fires or it does not), that it fires when the number of active excitatory inputs reaches a fixed **threshold**, and that any active **inhibitory** input absolutely prevents firing. Time advances in discrete steps, and a neuron's output at step $t+1$ depends on its inputs at step $t$.
+
+Under those assumptions a neuron is a boolean function, and the right threshold turns it into a logic gate:
+
+| Gate | Excitatory inputs | Inhibitory inputs | Threshold |
+|---|---|---|---|
+| AND | $a, b$ | none | 2 |
+| OR | $a, b$ | none | 1 |
+| NOT | none | $a$ | 0 |
+| $a \land \lnot b$ | $a$ | $b$ | 1 |
+
+The NOT unit is worth a second look: with threshold 0 it fires spontaneously, and the only thing that stops it is the inhibitory input. Here is the 1943 model in code:
+
+```{python}
+class ThresholdUnit:
+    def __init__(self, excitatory: list[str], inhibitory: list[str], threshold: int):
+        self.excitatory = excitatory
+        self.inhibitory = inhibitory
+        self.threshold = threshold
+
+    def fires(self, inputs: dict[str, bool]) -> bool:
+        if any(inputs[name] for name in self.inhibitory):
+            return False
+        return sum(inputs[name] for name in self.excitatory) >= self.threshold
+
+
+class NeuronTable:
+    def __init__(self, units: dict[str, ThresholdUnit], input_names: list[str]):
+        self.units = units
+        self.input_names = input_names
+
+    def show(self) -> None:
+        print("  ".join(self.input_names + list(self.units)))
+        for values in product([False, True], repeat=len(self.input_names)):
+            inputs = dict(zip(self.input_names, values))
+            outputs = [int(unit.fires(inputs)) for unit in self.units.values()]
+            cells = [str(int(value)) for value in values] + [str(output).center(len(name)) for name, output in zip(self.units, outputs)]
+            print("  ".join(cells))
+
+
+gates = {
+    "AND": ThresholdUnit(["a", "b"], [], 2),
+    "OR": ThresholdUnit(["a", "b"], [], 1),
+    "NOT a": ThresholdUnit([], ["a"], 0),
+    "a∧¬b": ThresholdUnit(["a"], ["b"], 1),
+}
+NeuronTable(gates, ["a", "b"]).show()
+```
+
+Since AND, OR, and NOT are functionally complete, **any** propositional formula can be computed by a network of these units. That was the paper's first main result. The second, that networks with loops ("circles", in their words) can hold state and so behave like finite machines, is the one that led Kleene to regular expressions. The `grep` patterns in the [shell chapter](shell.qmd) are, by direct descent, a notation for what looped McCulloch-Pitts networks can recognize.
+
+### Why XOR Needs a Network
+No single unit computes XOR. The argument is short. If either input is inhibitory, then turning on that input alone silences the unit, but XOR must fire on a single active input. So both inputs are excitatory, and the unit fires when the count reaches the threshold. XOR must fire on a count of 1 and stay silent on a count of 2, and a threshold cannot do that: anything reaching 1 also reaches 2. A brute-force search over every configuration confirms it:
+
+```{python}
+def xor(inputs: dict[str, bool]) -> bool:
+    return inputs["a"] != inputs["b"]
+
+
+def all_input_combinations() -> list[dict[str, bool]]:
+    return [dict(zip(["a", "b"], values)) for values in product([False, True], repeat=2)]
+
+
+def computes(unit: ThresholdUnit, target) -> bool:
+    return all(unit.fires(inputs) == target(inputs) for inputs in all_input_combinations())
+
+
+roles = ["excitatory", "inhibitory", "unused"]
+candidates = [
+    ThresholdUnit(
+        [name for name, role in zip(["a", "b"], assignment) if role == "excitatory"],
+        [name for name, role in zip(["a", "b"], assignment) if role == "inhibitory"],
+        threshold,
+    )
+    for assignment in product(roles, repeat=2)
+    for threshold in range(0, 4)
+]
+print(f"{len(candidates)} single-unit configurations; computing XOR: {sum(computes(unit, xor) for unit in candidates)}")
+```
+
+Two layers solve it, using the equivalence $p \oplus q \equiv (p \land \lnot q) \lor (\lnot p \land q)$:
+
+```{python}
+class TwoLayerNetwork:
+    def __init__(self, hidden: dict[str, ThresholdUnit], output: ThresholdUnit):
+        self.hidden = hidden
+        self.output = output
+
+    def fires(self, inputs: dict[str, bool]) -> bool:
+        hidden_outputs = {name: unit.fires(inputs) for name, unit in self.hidden.items()}
+        return self.output.fires(hidden_outputs)
+
+
+xor_network = TwoLayerNetwork(
+    hidden={"a_only": ThresholdUnit(["a"], ["b"], 1), "b_only": ThresholdUnit(["b"], ["a"], 1)},
+    output=ThresholdUnit(["a_only", "b_only"], [], 1),
+)
+print("two-layer network computes XOR:", computes(xor_network, xor))
+```
+
+This tiny fact has a large history. Rosenblatt's **perceptron** (1958) replaced the fixed thresholds with learnable real-valued weights. In *Perceptrons* (1969), Minsky and Papert proved that a single-layer perceptron can only compute **linearly separable** functions, and XOR is the canonical function that is not. The book is widely blamed (somewhat unfairly, since it said nothing against multilayer networks) for a decade-long collapse in neural network funding. The fix, multilayer networks trained by backpropagation, became practical in the 1980s, and the modern deep learning stack descends from it. The McCulloch-Pitts unit with real weights and a smooth activation function in place of a hard threshold is, structurally, the neuron in every network today.
+
+::: {.callout-note}
+## What the model got right and wrong
+As neuroscience, McCulloch and Pitts were wrong in most details: real neurons are not binary, inhibition is not absolute, and timing is continuous. As computer science they were right in the way that mattered: they showed that a network of simple threshold devices is a universal propositional computer. Von Neumann took that idea, swapped neurons for vacuum tubes, and used their notation in the design of the EDVAC.
+:::
+
+## SAT {#sat}
+::: {.subheading}
+The problem at the center of complexity
+:::
+
+The **Boolean satisfiability problem** asks: given a formula, is there a valuation that makes it true? The truth table answers it in $O(2^n)$ time. Checking a proposed answer, by contrast, takes linear time: plug in the values and evaluate. Problems with that shape (hard to solve, easy to verify) form the class NP, and Cook's theorem says SAT is the hardest of them: every NP problem can be translated into SAT in polynomial time. Nobody knows a polynomial algorithm for SAT, and finding one (or proving none exists) is the P versus NP problem.
+
+In theory, then, SAT is hopeless. In practice it is one of the great success stories of computer science. Modern **CDCL** solvers (conflict-driven clause learning, from GRASP in 1996 and Chaff in 2001) routinely solve industrial instances with millions of variables. Hardness is a worst-case statement, and the formulas that come from real problems have structure that solvers exploit.
+
+### DPLL
+Every modern solver descends from the Davis-Putnam-Logemann-Loveland procedure (1962). It is a backtracking search over CNF with two inferences that prune the tree:
+
+- **Unit propagation**: if a clause has only one unassigned literal left and the rest are false, that literal must be true. Assign it and simplify. This is modus ponens in clause form, and it does most of the work.
+- **Branching**: when propagation stalls, pick an unassigned atom, try it true, and backtrack to false if that leads to an empty clause.
+
+Clauses use the DIMACS convention: atoms are positive integers and $\lnot x$ is $-x$.
+
+```{python}
+Clause = frozenset[int]
+
+
+class DpllSolver:
+    def __init__(self, clauses: list[Clause]):
+        self.clauses = clauses
+
+    def solve(self) -> dict[int, bool] | None:
+        return self.search(self.clauses, {})
+
+    def search(self, clauses: list[Clause], assignment: dict[int, bool]) -> dict[int, bool] | None:
+        clauses, assignment = self.propagate_units(clauses, assignment)
+        if clauses is None:
+            return None
+        if not clauses:
+            return assignment
+        literal = next(iter(clauses[0]))
+        for choice in (literal, -literal):
+            result = self.search(self.assign(clauses, choice), {**assignment, abs(choice): choice > 0})
+            if result is not None:
+                return result
+        return None
+
+    def propagate_units(self, clauses, assignment):
+        while clauses is not None:
+            unit = next((clause for clause in clauses if len(clause) == 1), None)
+            if unit is None:
+                return clauses, assignment
+            literal = next(iter(unit))
+            clauses = self.assign(clauses, literal)
+            assignment = {**assignment, abs(literal): literal > 0}
+        return None, assignment
+
+    @staticmethod
+    def assign(clauses: list[Clause] | None, literal: int) -> list[Clause] | None:
+        if clauses is None:
+            return None
+        simplified = []
+        for clause in clauses:
+            if literal in clause:
+                continue
+            reduced = clause - {-literal}
+            if not reduced:
+                return None
+            simplified.append(reduced)
+        return simplified
+```
+
+### An Example: Dependency Resolution
+SAT solvers are hiding inside tools you use. openSUSE's `libsolv` (behind `zypper` and Fedora's `dnf`), `conda`, and Eclipse's plugin manager all resolve package dependencies by translating them into CNF. Here is a toy version. An app needs a logging library, which comes in versions 1 and 2. Version 2 needs a newer runtime; version 1 conflicts with a TLS library the app also needs.
+
+```{python}
+class PackageProblem:
+    def __init__(self, packages: list[str]):
+        self.number_of = {name: index + 1 for index, name in enumerate(packages)}
+        self.name_of = {number: name for name, number in self.number_of.items()}
+        self.clauses: list[Clause] = []
+
+    def require(self, package: str) -> None:
+        self.clauses.append(frozenset({self.number_of[package]}))
+
+    def depends(self, package: str, *alternatives: str) -> None:
+        self.clauses.append(frozenset({-self.number_of[package]} | {self.number_of[name] for name in alternatives}))
+
+    def conflicts(self, first: str, second: str) -> None:
+        self.clauses.append(frozenset({-self.number_of[first], -self.number_of[second]}))
+
+    def resolve(self) -> list[str] | None:
+        assignment = DpllSolver(self.clauses).solve()
+        if assignment is None:
+            return None
+        return sorted(self.name_of[number] for number, installed in assignment.items() if installed)
+
+
+problem = PackageProblem(["app", "log-v1", "log-v2", "tls", "runtime-new"])
+problem.require("app")
+problem.depends("app", "log-v1", "log-v2")
+problem.depends("app", "tls")
+problem.conflicts("log-v1", "log-v2")
+problem.conflicts("log-v1", "tls")
+problem.depends("log-v2", "runtime-new")
+print("install:", problem.resolve())
+
+problem.conflicts("runtime-new", "tls")
+print("after adding a runtime/tls conflict:", problem.resolve())
+```
+
+Each constraint is one clause: "app depends on log v1 or v2" is $\lnot\textit{app} \lor \textit{log}_1 \lor \textit{log}_2$, which is the implication law applied to $\textit{app} \to (\textit{log}_1 \lor \textit{log}_2)$, and "these conflict" is $\lnot a \lor \lnot b$. When the last conflict makes the problem unsatisfiable, the solver proves that *no* installation exists, which a hand-written greedy resolver cannot do. Real package resolution adds preferences (newest version first), which turns it into an optimization problem, but the core is exactly this.
+
+Other places SAT and its descendants (SMT solvers such as Z3, which add arithmetic and data types on top of SAT) do real work: hardware verification (checking that an optimized circuit is equivalent to its specification), bounded model checking of C programs, scheduling, cryptanalysis, and the occasional mathematical proof. In 2016 a SAT solver settled the Boolean Pythagorean triples problem with a 200-terabyte proof.
+
+## What Propositional Logic Cannot Say
+Propositional logic treats "the buffer is full" as an indivisible atom. It cannot look inside. That makes some obviously valid arguments impossible to express:
+
+> Every interrupt handler must be short. `uart_isr` is an interrupt handler. Therefore `uart_isr` must be short.
+
+Rendered propositionally, the three sentences are three unrelated atoms $p$, $q$, $r$, and $\{p, q\} \not\models r$. The argument's validity lives in the words "every" and in the shared name `uart_isr`, which propositional logic has no way to represent.
+
+**Predicate logic** (first-order logic) fixes this by adding objects, predicates over objects, and the quantifiers $\forall$ ("for all") and $\exists$ ("there exists"):
+
+$$
+\forall x\, (\textit{Handler}(x) \to \textit{Short}(x)), \; \textit{Handler}(\texttt{uart\_isr}) \models \textit{Short}(\texttt{uart\_isr})
+$$
+
+The cost is steep. First-order logic is still sound and complete (Gödel, 1929), but it is no longer decidable (Church and Turing, 1936): there is no truth table to fall back on, and no algorithm that always terminates with the answer. The jump from propositional to predicate logic is the jump from a language where every question can be settled to one where some cannot, and it is the same jump, by the same people, that defined what a computer is. See [The Theoretical Foundations](index.qmd#the-theoretical-foundations).
+
+## Where to Go Next
+
+### Textbooks
+- **Kenneth Rosen, *Discrete Mathematics and Its Applications*** is the standard course text and the likely source of whatever notes you would have taken. Chapter 1 covers everything in this chapter at a gentle pace, with many exercises.
+- **Michael Huth and Mark Ryan, *Logic in Computer Science*** is the best bridge for programmers. It covers natural deduction properly, then moves to model checking and program verification, which is where logic earns its keep in industry.
+- **Herbert Enderton, *A Mathematical Introduction to Logic*** is the rigorous treatment: unique readability, compactness, and completeness proved rather than asserted. Read it when the "why" behind soundness and completeness starts to itch.
+
+### Hardware and History
+- **Charles Petzold, *Code: The Hidden Language of Computer Hardware and Software*** builds a computer from relays upward, retracing Shannon's insight in a way that makes it feel inevitable.
+- **The Stanford Encyclopedia of Philosophy** entries on [Ancient Logic](https://plato.stanford.edu/entries/logic-ancient/){target="_blank" rel="noopener noreferrer"} (for the Stoics and Philo's conditional) and [Classical Logic](https://plato.stanford.edu/entries/logic-classical/){target="_blank" rel="noopener noreferrer"} are authoritative and free.
+
+### SAT in Practice
+- **Donald Knuth, *The Art of Computer Programming*, Volume 4B** devotes a long section to satisfiability, with algorithms, encodings, and history in Knuth's usual depth.
+- **[PySAT](https://pysathq.github.io/){target="_blank" rel="noopener noreferrer"}** gives Python access to industrial solvers such as CaDiCaL and Glucose. Reimplementing the package example above with it is a good exercise in CNF encoding.
+- **Z3** (Microsoft Research) is the SMT solver to try next; its Python bindings let you state constraints over integers and bit vectors as well as booleans.
+
+### Practice
+- Take a gnarly condition from code you maintain, translate it into a formula, simplify it with the laws, and check your result with the `TruthTable` class above.
+- Extend the interpreter with a `to_cnf` method that implements the three-step conversion, then feed its output to `DpllSolver`.
+- Encode a Sudoku as CNF (729 atoms, one per cell-digit pair) and solve it. It is the classic first SAT encoding, and it shows how much structure unit propagation exploits.
+
+## Further Reading
+- Boole, G. (1854). *An Investigation of the Laws of Thought*. Walton and Maberly.
+- Cook, S. A. (1971). The complexity of theorem-proving procedures. *Proceedings of the Third Annual ACM Symposium on Theory of Computing*, 151 to 158.
+- Davis, M., Logemann, G., and Loveland, D. (1962). A machine program for theorem-proving. *Communications of the ACM*, 5(7), 394 to 397.
+- Enderton, H. B. (2001). *A Mathematical Introduction to Logic* (2nd ed.). Academic Press.
+- Huth, M., and Ryan, M. (2004). *Logic in Computer Science: Modelling and Reasoning about Systems* (2nd ed.). Cambridge University Press.
+- Kleene, S. C. (1956). Representation of events in nerve nets and finite automata. In *Automata Studies*, Princeton University Press.
+- Knuth, D. E. (2022). *The Art of Computer Programming, Volume 4B: Combinatorial Algorithms, Part 2*. Addison-Wesley.
+- McCulloch, W. S., and Pitts, W. (1943). A logical calculus of the ideas immanent in nervous activity. *Bulletin of Mathematical Biophysics*, 5, 115 to 133.
+- Minsky, M., and Papert, S. (1969). *Perceptrons*. MIT Press.
+- Petzold, C. (2022). *Code: The Hidden Language of Computer Hardware and Software* (2nd ed.). Microsoft Press.
+- Post, E. L. (1921). Introduction to a general theory of elementary propositions. *American Journal of Mathematics*, 43(3), 163 to 185.
+- Rosen, K. H. (2019). *Discrete Mathematics and Its Applications* (8th ed.). McGraw-Hill.
+- Shannon, C. E. (1938). A symbolic analysis of relay and switching circuits. *Transactions of the AIEE*, 57(12), 713 to 723.

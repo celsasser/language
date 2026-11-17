@@ -58,6 +58,12 @@ Written: overview (Quarto as a build pipeline, not just Markdown), a short histo
 **Subtitle:** "A language whose type is text and whose composer is the pipe." Organized around that thesis rather than as a command dump.
 Why the shell exists and its core design decisions; variables and the environment (export, `source`, standard variables, special parameters, arrays); parameter expansion (trimming, defaults, slicing, argument parsing, `getopts`); running commands and capturing output; quoting and expansion (the processing order, word splitting); globbing; pipes and redirection; flow control (exit codes as conditions, `test`, arithmetic, loops, `case`); searching (`grep`, regex); finding (`find`); stream editing (`sed`); columns and computation (`awk`); composition idioms; gnarly breakdowns; writing safe shell.
 
+### Foundations
+
+#### `logic-propositional.qmd` — Propositional Logic (~980 lines)
+**Subtitle:** "The smallest language that can say true things." Treats propositional logic as a formal language: syntax, semantics, rules.
+History (Stoics, Boole, Frege, Sheffer, Post, Shannon, McCulloch and Pitts, Cook); syntax (connectives vs. C/Python/Rust operators, BNF grammar, precedence, parse trees); semantics with a live Python interpreter (`Formula` class hierarchy, `TruthTable`, `entails`) whose state later cells reuse; the material conditional; equivalence laws and a worked refactor; normal forms and Tseitin; functional completeness and Post's criterion; inference rules, resolution, soundness and completeness; logic in code (short-circuiting, truthiness, De Morgan); logic in hardware; the McCulloch-Pitts neuron (anchor `#mcculloch-pitts`) with the XOR proof; SAT with a DPLL solver and package-resolution example; the limits that motivate a future `logic-predicate.qmd`.
+
 ### The Ecosystem
 
 #### `ecosystem.qmd` — The Ecosystem (~27 lines) — **skeleton**

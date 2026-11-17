@@ -1,0 +1,2639 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2026-11-17">
+
+<title>Propositional Logic – Computer Language Notebook</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./ecosystem.html" rel="next">
+<link href="./latex.html" rel="prev">
+<link href="././favicon.png" rel="icon" type="image/png">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-3a2cfe5aac073c53854a930447b9ab47.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": true,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="mermaid-theme" content="neutral">
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./logic-propositional.html">Foundations</a></li><li class="breadcrumb-item"><a href="./logic-propositional.html">Propositional Logic</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header sidebar-header-stacked">
+      <a href="./index.html" class="sidebar-logo-link">
+      <img src="././images/logo.png" alt="" class="sidebar-logo light-content py-0 d-lg-inline d-none">
+      <img src="././images/logo.png" alt="" class="sidebar-logo dark-content py-0 d-lg-inline d-none">
+      </a>
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Computer Languages</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Languages</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./assembly.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./c.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The C Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">The C++ Language</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cpp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cpp-GL.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Guidelines</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">Build Systems</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./make.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Makefile Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./cmake.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CMake Language</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">The Rust Language</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth2 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-in.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-ho.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Hands On</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-cc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Cargo and Crates</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./rust-out.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Places You’ll Go</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./python.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Python Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./matlab.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The MATLAB Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./quarto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The Quarto Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shell.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Shell Scripting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./css.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The CSS Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./latex.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LaTeX Reference</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Foundations</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./logic-propositional.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Propositional Logic</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">The Ecosystem</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./ecosystem.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./git.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Git Version Control</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false">
+ <span class="menu-text">Briefs</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./b-pyperf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Python Performance Analysis</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="false">
+ <span class="menu-text">Reference</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/assembly-pc.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">PC Assembly Language</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-general.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Web Guide</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./reference/cs-css-selectors.pdf" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">CSS Selector Guide</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" role="navigation" aria-expanded="false">
+ <span class="menu-text">Appendix</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-9" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glossary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glossary</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#a-short-history" id="toc-a-short-history" class="nav-link" data-scroll-target="#a-short-history">A Short History</a>
+  <ul>
+  <li><a href="#the-stoics" id="toc-the-stoics" class="nav-link" data-scroll-target="#the-stoics">The Stoics</a></li>
+  <li><a href="#leibniz-boole-and-frege" id="toc-leibniz-boole-and-frege" class="nav-link" data-scroll-target="#leibniz-boole-and-frege">Leibniz, Boole, and Frege</a></li>
+  <li><a href="#truth-tables-completeness-and-a-single-connective" id="toc-truth-tables-completeness-and-a-single-connective" class="nav-link" data-scroll-target="#truth-tables-completeness-and-a-single-connective">Truth Tables, Completeness, and a Single Connective</a></li>
+  <li><a href="#shannon-and-the-switch" id="toc-shannon-and-the-switch" class="nav-link" data-scroll-target="#shannon-and-the-switch">Shannon and the Switch</a></li>
+  <li><a href="#mcculloch-and-pitts" id="toc-mcculloch-and-pitts" class="nav-link" data-scroll-target="#mcculloch-and-pitts">McCulloch and Pitts</a></li>
+  <li><a href="#cook-and-satisfiability" id="toc-cook-and-satisfiability" class="nav-link" data-scroll-target="#cook-and-satisfiability">Cook and Satisfiability</a></li>
+  </ul></li>
+  <li><a href="#syntax" id="toc-syntax" class="nav-link" data-scroll-target="#syntax">Syntax</a>
+  <ul>
+  <li><a href="#atoms-and-connectives" id="toc-atoms-and-connectives" class="nav-link" data-scroll-target="#atoms-and-connectives">Atoms and Connectives</a></li>
+  <li><a href="#the-grammar" id="toc-the-grammar" class="nav-link" data-scroll-target="#the-grammar">The Grammar</a></li>
+  <li><a href="#precedence-and-associativity" id="toc-precedence-and-associativity" class="nav-link" data-scroll-target="#precedence-and-associativity">Precedence and Associativity</a></li>
+  <li><a href="#parse-trees" id="toc-parse-trees" class="nav-link" data-scroll-target="#parse-trees">Parse Trees</a></li>
+  </ul></li>
+  <li><a href="#semantics" id="toc-semantics" class="nav-link" data-scroll-target="#semantics">Semantics</a>
+  <ul>
+  <li><a href="#valuations" id="toc-valuations" class="nav-link" data-scroll-target="#valuations">Valuations</a></li>
+  <li><a href="#an-interpreter-in-python" id="toc-an-interpreter-in-python" class="nav-link" data-scroll-target="#an-interpreter-in-python">An Interpreter in Python</a></li>
+  <li><a href="#tautology-contradiction-contingency" id="toc-tautology-contradiction-contingency" class="nav-link" data-scroll-target="#tautology-contradiction-contingency">Tautology, Contradiction, Contingency</a></li>
+  <li><a href="#logical-consequence" id="toc-logical-consequence" class="nav-link" data-scroll-target="#logical-consequence">Logical Consequence</a></li>
+  </ul></li>
+  <li><a href="#the-conditional" id="toc-the-conditional" class="nav-link" data-scroll-target="#the-conditional">The Conditional</a>
+  <ul>
+  <li><a href="#converse-inverse-contrapositive" id="toc-converse-inverse-contrapositive" class="nav-link" data-scroll-target="#converse-inverse-contrapositive">Converse, Inverse, Contrapositive</a></li>
+  <li><a href="#the-biconditional" id="toc-the-biconditional" class="nav-link" data-scroll-target="#the-biconditional">The Biconditional</a></li>
+  </ul></li>
+  <li><a href="#laws-of-equivalence" id="toc-laws-of-equivalence" class="nav-link" data-scroll-target="#laws-of-equivalence">Laws of Equivalence</a>
+  <ul>
+  <li><a href="#a-worked-simplification" id="toc-a-worked-simplification" class="nav-link" data-scroll-target="#a-worked-simplification">A Worked Simplification</a></li>
+  </ul></li>
+  <li><a href="#normal-forms" id="toc-normal-forms" class="nav-link" data-scroll-target="#normal-forms">Normal Forms</a>
+  <ul>
+  <li><a href="#reading-dnf-off-a-truth-table" id="toc-reading-dnf-off-a-truth-table" class="nav-link" data-scroll-target="#reading-dnf-off-a-truth-table">Reading DNF Off a Truth Table</a></li>
+  <li><a href="#converting-by-rewriting" id="toc-converting-by-rewriting" class="nav-link" data-scroll-target="#converting-by-rewriting">Converting by Rewriting</a></li>
+  <li><a href="#why-solvers-want-cnf" id="toc-why-solvers-want-cnf" class="nav-link" data-scroll-target="#why-solvers-want-cnf">Why Solvers Want CNF</a></li>
+  </ul></li>
+  <li><a href="#functional-completeness" id="toc-functional-completeness" class="nav-link" data-scroll-target="#functional-completeness">Functional Completeness</a>
+  <ul>
+  <li><a href="#posts-criterion" id="toc-posts-criterion" class="nav-link" data-scroll-target="#posts-criterion">Post’s Criterion</a></li>
+  </ul></li>
+  <li><a href="#inference-and-proof" id="toc-inference-and-proof" class="nav-link" data-scroll-target="#inference-and-proof">Inference and Proof</a>
+  <ul>
+  <li><a href="#rules-of-inference" id="toc-rules-of-inference" class="nav-link" data-scroll-target="#rules-of-inference">Rules of Inference</a></li>
+  <li><a href="#a-worked-proof" id="toc-a-worked-proof" class="nav-link" data-scroll-target="#a-worked-proof">A Worked Proof</a></li>
+  <li><a href="#resolution" id="toc-resolution" class="nav-link" data-scroll-target="#resolution">Resolution</a></li>
+  <li><a href="#soundness-completeness" id="toc-soundness-completeness" class="nav-link" data-scroll-target="#soundness-completeness">Soundness and Completeness</a></li>
+  </ul></li>
+  <li><a href="#logic-in-code" id="toc-logic-in-code" class="nav-link" data-scroll-target="#logic-in-code">Logic in Code</a>
+  <ul>
+  <li><a href="#de-morgan-in-practice" id="toc-de-morgan-in-practice" class="nav-link" data-scroll-target="#de-morgan-in-practice">De Morgan in Practice</a></li>
+  <li><a href="#guard-clauses-as-conditionals" id="toc-guard-clauses-as-conditionals" class="nav-link" data-scroll-target="#guard-clauses-as-conditionals">Guard Clauses as Conditionals</a></li>
+  </ul></li>
+  <li><a href="#logic-in-hardware" id="toc-logic-in-hardware" class="nav-link" data-scroll-target="#logic-in-hardware">Logic in Hardware</a>
+  <ul>
+  <li><a href="#a-half-adder" id="toc-a-half-adder" class="nav-link" data-scroll-target="#a-half-adder">A Half Adder</a></li>
+  </ul></li>
+  <li><a href="#mcculloch-pitts" id="toc-mcculloch-pitts" class="nav-link" data-scroll-target="#mcculloch-pitts">The McCulloch-Pitts Neuron</a>
+  <ul>
+  <li><a href="#why-xor-needs-a-network" id="toc-why-xor-needs-a-network" class="nav-link" data-scroll-target="#why-xor-needs-a-network">Why XOR Needs a Network</a></li>
+  </ul></li>
+  <li><a href="#sat" id="toc-sat" class="nav-link" data-scroll-target="#sat">SAT</a>
+  <ul>
+  <li><a href="#dpll" id="toc-dpll" class="nav-link" data-scroll-target="#dpll">DPLL</a></li>
+  <li><a href="#an-example-dependency-resolution" id="toc-an-example-dependency-resolution" class="nav-link" data-scroll-target="#an-example-dependency-resolution">An Example: Dependency Resolution</a></li>
+  </ul></li>
+  <li><a href="#what-propositional-logic-cannot-say" id="toc-what-propositional-logic-cannot-say" class="nav-link" data-scroll-target="#what-propositional-logic-cannot-say">What Propositional Logic Cannot Say</a></li>
+  <li><a href="#where-to-go-next" id="toc-where-to-go-next" class="nav-link" data-scroll-target="#where-to-go-next">Where to Go Next</a>
+  <ul>
+  <li><a href="#textbooks" id="toc-textbooks" class="nav-link" data-scroll-target="#textbooks">Textbooks</a></li>
+  <li><a href="#hardware-and-history" id="toc-hardware-and-history" class="nav-link" data-scroll-target="#hardware-and-history">Hardware and History</a></li>
+  <li><a href="#sat-in-practice" id="toc-sat-in-practice" class="nav-link" data-scroll-target="#sat-in-practice">SAT in Practice</a></li>
+  <li><a href="#practice" id="toc-practice" class="nav-link" data-scroll-target="#practice">Practice</a></li>
+  </ul></li>
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further Reading</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./logic-propositional.html">Foundations</a></li><li class="breadcrumb-item"><a href="./logic-propositional.html">Propositional Logic</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Propositional Logic</h1>
+<p class="subtitle lead">The smallest language that can say true things</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">November 17, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>Every language in this notebook has three parts: a <em>syntax</em> that says which strings are well formed, a <em>semantics</em> that says what a well-formed string means, and a set of <em>rules</em> for manipulating those strings without changing their meaning. Usually those three parts are buried under decades of practical compromise. C’s grammar runs to dozens of pages, its semantics has to account for undefined behavior, and its “rules of manipulation” are scattered between the standard and the optimizer.</p>
+<p>Propositional logic is what you get when you strip all of that away and keep only the skeleton. Its syntax fits on an index card. Its semantics is a single recursive function. Its rules of manipulation are complete, meaning every true statement can be proved, and decidable, meaning a machine can always settle whether a statement is true. It is the smallest language that is still a real language, and it is worth studying on those terms: not as a branch of philosophy, but as the formal system underneath every <code>if</code>, every logic gate, and, as McCulloch and Pitts showed in 1943, the first mathematical model of a neuron.</p>
+<p>The thesis of this chapter:</p>
+<blockquote class="blockquote">
+<p><strong>Propositional logic</strong> is a language whose only type is the truth value and whose programs are formulas. Everything else (circuits, conditionals, solvers, neurons) is that language running on different hardware.</p>
+</blockquote>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Object language and metalanguage
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A theme that runs through this whole notebook is the difference between a language and the language you use to <em>talk about</em> it. The Quarto chapter has to escape shortcodes because it writes about Quarto in Quarto. Logic makes the distinction explicit. Formulas such as <span class="math inline">\(p \land q\)</span> belong to the <strong>object language</strong>. Statements about formulas, such as “<span class="math inline">\(p \land q\)</span> is satisfiable” or <span class="math inline">\(\{p, p \to q\} \models q\)</span>, belong to the <strong>metalanguage</strong>. The symbols <span class="math inline">\(\models\)</span>, <span class="math inline">\(\vdash\)</span>, and <span class="math inline">\(\equiv\)</span> never appear inside a formula; they are commentary on formulas, the way a type checker’s verdict is not part of the program it checks.</p>
+</div>
+</div>
+</section>
+<section id="a-short-history" class="level2">
+<h2 class="anchored" data-anchor-id="a-short-history">A Short History</h2>
+<p>Propositional logic was discovered twice, about two thousand years apart, and only became a formal language once mathematicians needed one.</p>
+<section id="the-stoics" class="level3">
+<h3 class="anchored" data-anchor-id="the-stoics">The Stoics</h3>
+<p>Aristotle’s logic (4th century BCE) was a logic of <em>terms</em>: “all men are mortal” relates the categories <em>men</em> and <em>mortal</em>. The Stoics, a generation later, built a logic of whole <em>propositions</em> connected by “and”, “or”, and “if”. Chrysippus (c.&nbsp;279 to 206 BCE) set out five “indemonstrable” argument forms, including the ones we still call <em>modus ponens</em> and <em>modus tollens</em>. Philo of Megara had already proposed that a conditional is false only when its antecedent is true and its consequent false, which is exactly the modern <strong>material conditional</strong>. The question was hotly contested: the skeptic Sextus Empiricus reports the poet Callimachus joking that even the crows on the rooftops were cawing about which conditionals are true. They still are; see <a href="#the-conditional">The Conditional</a>.</p>
+</section>
+<section id="leibniz-boole-and-frege" class="level3">
+<h3 class="anchored" data-anchor-id="leibniz-boole-and-frege">Leibniz, Boole, and Frege</h3>
+<p>The Stoic work was largely lost, and logic stayed Aristotelian for most of two millennia. Leibniz dreamed of a <em>calculus ratiocinator</em> in which disputes would be settled by calculation, but never built it. George Boole did, in <em>The Laws of Thought</em> (1854): propositions became algebraic variables, “and” became multiplication, and truth and falsity became 1 and 0. Boole’s algebra had quirks (his “or” was exclusive and he leaned on division), and it took Jevons, Peirce, and others to tidy it into what we now call Boolean algebra.</p>
+<p>Gottlob Frege’s <em>Begriffsschrift</em> (1879) is where logic becomes a formal language in the modern sense: a precise syntax, explicit inference rules, and proofs that can be checked mechanically. Frege’s notation was two-dimensional and never caught on, but his program, carried forward by Russell and Whitehead’s <em>Principia Mathematica</em> (1910 to 1913), set the agenda.</p>
+</section>
+<section id="truth-tables-completeness-and-a-single-connective" class="level3">
+<h3 class="anchored" data-anchor-id="truth-tables-completeness-and-a-single-connective">Truth Tables, Completeness, and a Single Connective</h3>
+<p>In 1913 Henry Sheffer showed that a single connective, now called the <strong>Sheffer stroke</strong> or NAND, can express every other. Charles Peirce had found the same thing around 1880 but never published it. In 1921 Emil Post (and, independently, Ludwig Wittgenstein in the <em>Tractatus</em>) introduced <strong>truth tables</strong> as a decision procedure, and Post used them to prove that the propositional part of <em>Principia</em> is complete: every tautology is provable.</p>
+</section>
+<section id="shannon-and-the-switch" class="level3">
+<h3 class="anchored" data-anchor-id="shannon-and-the-switch">Shannon and the Switch</h3>
+<p>Claude Shannon’s master’s thesis, <em>A Symbolic Analysis of Relay and Switching Circuits</em> (written 1937, published 1938), noticed that a network of relays obeys Boolean algebra. Switches in series behave like one connective and switches in parallel like another, so circuit design reduces to algebraic simplification. This may be the most consequential master’s thesis ever written: it turned logic into engineering. See <a href="#logic-in-hardware">Logic in Hardware</a>.</p>
+</section>
+<section id="mcculloch-and-pitts" class="level3">
+<h3 class="anchored" data-anchor-id="mcculloch-and-pitts">McCulloch and Pitts</h3>
+<p>In 1943 Warren McCulloch, a neurophysiologist, and Walter Pitts, a self-taught teenage logician, published <em>A Logical Calculus of the Ideas Immanent in Nervous Activity</em>. They modeled the neuron as an all-or-nothing threshold device and proved that networks of such neurons compute exactly the functions of propositional logic (and, with feedback loops, something more). Von Neumann borrowed their notation for the logic elements in his 1945 EDVAC report, and Kleene’s attempt to characterize what their looped networks can recognize gave us <strong>regular expressions</strong>. See <a href="#mcculloch-pitts">The McCulloch-Pitts Neuron</a>.</p>
+</section>
+<section id="cook-and-satisfiability" class="level3">
+<h3 class="anchored" data-anchor-id="cook-and-satisfiability">Cook and Satisfiability</h3>
+<p>In 1971 Stephen Cook proved (and Leonid Levin independently) that deciding whether a propositional formula can be made true, the <strong>SAT</strong> problem, is NP-complete. The humblest logic turned out to sit at the center of computational complexity theory. See <a href="#sat">SAT</a>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Year</th>
+<th>Who</th>
+<th>Contribution</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>c.&nbsp;250 BCE</td>
+<td>Chrysippus, Philo</td>
+<td>Propositional connectives, material conditional, inference schemata</td>
+</tr>
+<tr class="even">
+<td>1854</td>
+<td>Boole</td>
+<td>Logic as algebra over 0 and 1</td>
+</tr>
+<tr class="odd">
+<td>1879</td>
+<td>Frege</td>
+<td>Logic as a formal language with mechanical proof</td>
+</tr>
+<tr class="even">
+<td>1913</td>
+<td>Sheffer</td>
+<td>NAND alone is sufficient</td>
+</tr>
+<tr class="odd">
+<td>1921</td>
+<td>Post, Wittgenstein</td>
+<td>Truth tables; completeness of propositional calculus</td>
+</tr>
+<tr class="even">
+<td>1938</td>
+<td>Shannon</td>
+<td>Switching circuits are Boolean algebra</td>
+</tr>
+<tr class="odd">
+<td>1943</td>
+<td>McCulloch, Pitts</td>
+<td>Neurons as logic gates</td>
+</tr>
+<tr class="even">
+<td>1956</td>
+<td>Kleene</td>
+<td>Regular expressions, from analyzing McCulloch-Pitts nets</td>
+</tr>
+<tr class="odd">
+<td>1962</td>
+<td>Davis, Logemann, Loveland</td>
+<td>DPLL, the ancestor of every modern SAT solver</td>
+</tr>
+<tr class="even">
+<td>1971</td>
+<td>Cook, Levin</td>
+<td>SAT is NP-complete</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="syntax" class="level2">
+<h2 class="anchored" data-anchor-id="syntax">Syntax</h2>
+<div class="subheading">
+<p>What counts as a formula</p>
+</div>
+<section id="atoms-and-connectives" class="level3">
+<h3 class="anchored" data-anchor-id="atoms-and-connectives">Atoms and Connectives</h3>
+<p>The building blocks are <strong>atoms</strong> (also called propositional variables): <span class="math inline">\(p\)</span>, <span class="math inline">\(q\)</span>, <span class="math inline">\(r\)</span>, and so on. An atom stands for a statement that is either true or false, such as “the buffer is full” or “the interrupt flag is set”. The logic does not care what the statement says; it cares only how statements combine. Two constants, <span class="math inline">\(\top\)</span> (true) and <span class="math inline">\(\bot\)</span> (false), are often included.</p>
+<p>Atoms combine through <strong>connectives</strong>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Connective</th>
+<th>Symbol</th>
+<th>Read as</th>
+<th>C operator</th>
+<th>Python</th>
+<th>Rust</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Negation</td>
+<td><span class="math inline">\(\lnot p\)</span></td>
+<td>not <span class="math inline">\(p\)</span></td>
+<td><code>!p</code></td>
+<td><code>not p</code></td>
+<td><code>!p</code></td>
+</tr>
+<tr class="even">
+<td>Conjunction</td>
+<td><span class="math inline">\(p \land q\)</span></td>
+<td><span class="math inline">\(p\)</span> and <span class="math inline">\(q\)</span></td>
+<td><code>p &amp;&amp; q</code></td>
+<td><code>p and q</code></td>
+<td><code>p &amp;&amp; q</code></td>
+</tr>
+<tr class="odd">
+<td>Disjunction</td>
+<td><span class="math inline">\(p \lor q\)</span></td>
+<td><span class="math inline">\(p\)</span> or <span class="math inline">\(q\)</span></td>
+<td><code>p || q</code></td>
+<td><code>p or q</code></td>
+<td><code>p || q</code></td>
+</tr>
+<tr class="even">
+<td>Exclusive or</td>
+<td><span class="math inline">\(p \oplus q\)</span></td>
+<td><span class="math inline">\(p\)</span> xor <span class="math inline">\(q\)</span></td>
+<td><code>!p != !q</code></td>
+<td><code>p != q</code></td>
+<td><code>p ^ q</code></td>
+</tr>
+<tr class="odd">
+<td>Conditional</td>
+<td><span class="math inline">\(p \to q\)</span></td>
+<td>if <span class="math inline">\(p\)</span> then <span class="math inline">\(q\)</span></td>
+<td><code>!p || q</code></td>
+<td><code>not p or q</code></td>
+<td><code>!p || q</code></td>
+</tr>
+<tr class="even">
+<td>Biconditional</td>
+<td><span class="math inline">\(p \leftrightarrow q\)</span></td>
+<td><span class="math inline">\(p\)</span> if and only if <span class="math inline">\(q\)</span></td>
+<td><code>!p == !q</code></td>
+<td><code>p == q</code></td>
+<td><code>p == q</code></td>
+</tr>
+</tbody>
+</table>
+<p>Notice that no mainstream programming language has an operator for <span class="math inline">\(\to\)</span>, even though it is arguably the most important connective in logic. Programmers express it as control flow (<code>if</code>) instead. C also lacks a logical XOR; the <code>!p != !q</code> idiom normalizes both operands to 0 or 1 first, because <code>p != q</code> on raw integers would treat 2 and 3 as “different truths.”</p>
+</section>
+<section id="the-grammar" class="level3">
+<h3 class="anchored" data-anchor-id="the-grammar">The Grammar</h3>
+<p>Here is the complete grammar in BNF. Compare it to the C grammar in Annex A of the standard.</p>
+<pre><code>formula  ::= atom
+           | "⊤" | "⊥"
+           | "¬" formula
+           | "(" formula connective formula ")"
+connective ::= "∧" | "∨" | "→" | "↔"
+atom     ::= "p" | "q" | "r" | ...</code></pre>
+<p>The fully parenthesized form guarantees <strong>unique readability</strong>: every formula has exactly one parse tree, so there is never a question of what a formula means structurally. This is the property C lacks in the dangling-<code>else</code> problem, and the property the precedence table exists to restore.</p>
+</section>
+<section id="precedence-and-associativity" class="level3">
+<h3 class="anchored" data-anchor-id="precedence-and-associativity">Precedence and Associativity</h3>
+<p>Nobody writes all those parentheses. The standard convention, from tightest to loosest:</p>
+<p><span class="math display">\[
+\lnot \quad &gt; \quad \land \quad &gt; \quad \lor \quad &gt; \quad \to \quad &gt; \quad \leftrightarrow
+\]</span></p>
+<p>and <span class="math inline">\(\to\)</span> is <strong>right associative</strong>: <span class="math inline">\(p \to q \to r\)</span> means <span class="math inline">\(p \to (q \to r)\)</span>. Right associativity is chosen because <span class="math inline">\(p \to (q \to r)\)</span> is equivalent to <span class="math inline">\((p \land q) \to r\)</span>, so a chain of conditionals reads as “given all of these, conclude that.” (This is the same reason function types in Haskell and Rust’s <code>Fn(A) -&gt; Fn(B) -&gt; C</code> currying associate to the right.)</p>
+<p>C agrees for the operators it has: <code>!</code> binds tighter than <code>&amp;&amp;</code>, which binds tighter than <code>||</code>. So <code>!a &amp;&amp; b || c</code> parses as <code>((!a) &amp;&amp; b) || c</code>, exactly as <span class="math inline">\(\lnot a \land b \lor c\)</span> would. The trouble in C is the <em>bitwise</em> operators, whose precedence sits below <code>==</code> for historical reasons; see <a href="./c.html#logical-vs.-bitwise">Logical vs.&nbsp;Bitwise</a> and <a href="./c.html#operator-precedence-surprises">Operator Precedence Surprises</a>.</p>
+</section>
+<section id="parse-trees" class="level3">
+<h3 class="anchored" data-anchor-id="parse-trees">Parse Trees</h3>
+<p>A formula is really a tree; the string is just a serialization of it. The formula <span class="math inline">\(\lnot p \lor q \to r\)</span> parses as <span class="math inline">\(((\lnot p) \lor q) \to r\)</span>:</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    implies["→"] --&gt; disjunction["∨"]
+    implies --&gt; r1["r"]
+    disjunction --&gt; negation["¬"]
+    disjunction --&gt; q1["q"]
+    negation --&gt; p1["p"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>The <strong>main connective</strong> is the one at the root, here <span class="math inline">\(\to\)</span>. It determines what kind of statement the formula is: this is a conditional, not a disjunction. Identifying the main connective is the first step of every proof and every truth-table evaluation, just as identifying the root of the AST is the first step of every compiler pass.</p>
+</section>
+</section>
+<section id="semantics" class="level2">
+<h2 class="anchored" data-anchor-id="semantics">Semantics</h2>
+<div class="subheading">
+<p>What a formula means</p>
+</div>
+<section id="valuations" class="level3">
+<h3 class="anchored" data-anchor-id="valuations">Valuations</h3>
+<p>A <strong>valuation</strong> (also called an interpretation or truth assignment) is a function from atoms to <span class="math inline">\(\{T, F\}\)</span>. It is the logic’s equivalent of a program’s input. Given a valuation <span class="math inline">\(v\)</span>, the truth value of any formula is defined recursively, one clause per production in the grammar:</p>
+<p><span class="math display">\[
+\begin{aligned}
+v(\lnot \varphi) &amp;= T \text{ iff } v(\varphi) = F \\
+v(\varphi \land \psi) &amp;= T \text{ iff } v(\varphi) = T \text{ and } v(\psi) = T \\
+v(\varphi \lor \psi) &amp;= T \text{ iff } v(\varphi) = T \text{ or } v(\psi) = T \\
+v(\varphi \to \psi) &amp;= F \text{ iff } v(\varphi) = T \text{ and } v(\psi) = F \\
+v(\varphi \leftrightarrow \psi) &amp;= T \text{ iff } v(\varphi) = v(\psi)
+\end{aligned}
+\]</span></p>
+<p>This is <strong>compositional semantics</strong>: the meaning of a compound is determined entirely by the meanings of its parts and the connective that joins them. It is also, line for line, a tree-walking interpreter. The semantics of propositional logic <em>is</em> an <code>eval</code> function.</p>
+</section>
+<section id="an-interpreter-in-python" class="level3">
+<h3 class="anchored" data-anchor-id="an-interpreter-in-python">An Interpreter in Python</h3>
+<p>To make that concrete, here is the whole language implemented in Python. Each grammar production becomes a class, and each semantic clause becomes an <code>evaluate</code> method. Python’s operator overloading lets us write <code>p &amp; q</code> instead of <code>And(p, q)</code>.</p>
+<div id="71708020" class="cell" data-execution_count="1">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> <span class="bu">reduce</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> itertools <span class="im">import</span> product</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Formula:</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__invert__</span>(<span class="va">self</span>):</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Not(<span class="va">self</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__and__</span>(<span class="va">self</span>, other):</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> And(<span class="va">self</span>, other)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__or__</span>(<span class="va">self</span>, other):</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Or(<span class="va">self</span>, other)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__rshift__</span>(<span class="va">self</span>, other):</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Implies(<span class="va">self</span>, other)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__xor__</span>(<span class="va">self</span>, other):</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Xor(<span class="va">self</span>, other)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> iff(<span class="va">self</span>, other):</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Iff(<span class="va">self</span>, other)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> variables(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">set</span>[<span class="bu">str</span>]:</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">NotImplementedError</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> evaluate(<span class="va">self</span>, valuation: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">bool</span>]) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">NotImplementedError</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> models(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">bool</span>]]:</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> [valuation <span class="cf">for</span> valuation <span class="kw">in</span> Valuations(<span class="va">self</span>.variables()) <span class="cf">if</span> <span class="va">self</span>.evaluate(valuation)]</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> is_satisfiable(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">len</span>(<span class="va">self</span>.models()) <span class="op">&gt;</span> <span class="dv">0</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> is_tautology(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">len</span>(<span class="va">self</span>.models()) <span class="op">==</span> <span class="dv">2</span> <span class="op">**</span> <span class="bu">len</span>(<span class="va">self</span>.variables())</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> is_equivalent_to(<span class="va">self</span>, other: <span class="st">"Formula"</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.iff(other).is_tautology()</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Variable(Formula):</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, name: <span class="bu">str</span>):</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.name <span class="op">=</span> name</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> variables(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">set</span>[<span class="bu">str</span>]:</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> {<span class="va">self</span>.name}</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> evaluate(<span class="va">self</span>, valuation: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">bool</span>]) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> valuation[<span class="va">self</span>.name]</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__str__</span>(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.name</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Not(Formula):</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, operand: Formula):</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.operand <span class="op">=</span> operand</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> variables(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">set</span>[<span class="bu">str</span>]:</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.operand.variables()</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> evaluate(<span class="va">self</span>, valuation: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">bool</span>]) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">not</span> <span class="va">self</span>.operand.evaluate(valuation)</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__str__</span>(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="ss">f"¬</span><span class="sc">{</span><span class="va">self</span><span class="sc">.</span>operand<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Binary(Formula):</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>    symbol <span class="op">=</span> <span class="st">"?"</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, left: Formula, right: Formula):</span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.left <span class="op">=</span> left</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.right <span class="op">=</span> right</span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> variables(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">set</span>[<span class="bu">str</span>]:</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.left.variables() <span class="op">|</span> <span class="va">self</span>.right.variables()</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> evaluate(<span class="va">self</span>, valuation: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">bool</span>]) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.<span class="bu">apply</span>(<span class="va">self</span>.left.evaluate(valuation), <span class="va">self</span>.right.evaluate(valuation))</span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">apply</span>(<span class="va">self</span>, left: <span class="bu">bool</span>, right: <span class="bu">bool</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">NotImplementedError</span></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__str__</span>(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="ss">f"(</span><span class="sc">{</span><span class="va">self</span><span class="sc">.</span>left<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span><span class="va">self</span><span class="sc">.</span>symbol<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span><span class="va">self</span><span class="sc">.</span>right<span class="sc">}</span><span class="ss">)"</span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> And(Binary):</span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>    symbol <span class="op">=</span> <span class="st">"∧"</span></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">apply</span>(<span class="va">self</span>, left: <span class="bu">bool</span>, right: <span class="bu">bool</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> left <span class="kw">and</span> right</span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Or(Binary):</span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a>    symbol <span class="op">=</span> <span class="st">"∨"</span></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">apply</span>(<span class="va">self</span>, left: <span class="bu">bool</span>, right: <span class="bu">bool</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> left <span class="kw">or</span> right</span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Xor(Binary):</span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a>    symbol <span class="op">=</span> <span class="st">"⊕"</span></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">apply</span>(<span class="va">self</span>, left: <span class="bu">bool</span>, right: <span class="bu">bool</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> left <span class="op">!=</span> right</span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Implies(Binary):</span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a>    symbol <span class="op">=</span> <span class="st">"→"</span></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">apply</span>(<span class="va">self</span>, left: <span class="bu">bool</span>, right: <span class="bu">bool</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> (<span class="kw">not</span> left) <span class="kw">or</span> right</span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Iff(Binary):</span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a>    symbol <span class="op">=</span> <span class="st">"↔"</span></span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">apply</span>(<span class="va">self</span>, left: <span class="bu">bool</span>, right: <span class="bu">bool</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> left <span class="op">==</span> right</span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Valuations:</span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, variables: <span class="bu">set</span>[<span class="bu">str</span>]):</span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.variables <span class="op">=</span> <span class="bu">sorted</span>(variables)</span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__iter__</span>(<span class="va">self</span>):</span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> values <span class="kw">in</span> product([<span class="va">True</span>, <span class="va">False</span>], repeat<span class="op">=</span><span class="bu">len</span>(<span class="va">self</span>.variables)):</span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a>            <span class="cf">yield</span> <span class="bu">dict</span>(<span class="bu">zip</span>(<span class="va">self</span>.variables, values))</span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> TruthTable:</span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, <span class="op">*</span>formulas: Formula):</span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.formulas <span class="op">=</span> formulas</span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.variables <span class="op">=</span> <span class="bu">sorted</span>(<span class="bu">set</span>().union(<span class="op">*</span>(formula.variables() <span class="cf">for</span> formula <span class="kw">in</span> formulas)))</span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> headers(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">str</span>]:</span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.variables <span class="op">+</span> [<span class="bu">str</span>(formula) <span class="cf">for</span> formula <span class="kw">in</span> <span class="va">self</span>.formulas]</span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> rows(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">list</span>[<span class="bu">bool</span>]]:</span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> [</span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a>            [valuation[name] <span class="cf">for</span> name <span class="kw">in</span> <span class="va">self</span>.variables] <span class="op">+</span> [formula.evaluate(valuation) <span class="cf">for</span> formula <span class="kw">in</span> <span class="va">self</span>.formulas]</span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> valuation <span class="kw">in</span> Valuations(<span class="bu">set</span>(<span class="va">self</span>.variables))</span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> show(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>        headers <span class="op">=</span> <span class="va">self</span>.headers()</span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a>        widths <span class="op">=</span> [<span class="bu">len</span>(header) <span class="cf">for</span> header <span class="kw">in</span> headers]</span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">" │ "</span>.join(header.center(width) <span class="cf">for</span> header, width <span class="kw">in</span> <span class="bu">zip</span>(headers, widths)))</span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"─┼─"</span>.join(<span class="st">"─"</span> <span class="op">*</span> width <span class="cf">for</span> width <span class="kw">in</span> widths))</span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> row <span class="kw">in</span> <span class="va">self</span>.rows():</span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a>            cells <span class="op">=</span> [<span class="st">"T"</span> <span class="cf">if</span> value <span class="cf">else</span> <span class="st">"F"</span> <span class="cf">for</span> value <span class="kw">in</span> row]</span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="st">" │ "</span>.join(cell.center(width) <span class="cf">for</span> cell, width <span class="kw">in</span> <span class="bu">zip</span>(cells, widths)))</span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> entails(premises: <span class="bu">list</span>[Formula], conclusion: Formula) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (<span class="bu">reduce</span>(And, premises) <span class="op">&gt;&gt;</span> conclusion).is_tautology()</span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a>p, q, r <span class="op">=</span> Variable(<span class="st">"p"</span>), Variable(<span class="st">"q"</span>), Variable(<span class="st">"r"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>That is a complete implementation of the language’s syntax and semantics, plus the semantic tests (satisfiability, validity, equivalence, entailment) defined in the next few sections. Here are the basic connectives:</p>
+<div id="cb15b249" class="cell" data-execution_count="2">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>TruthTable(<span class="op">~</span>p, p <span class="op">&amp;</span> q, p <span class="op">|</span> q, p <span class="op">^</span> q, p <span class="op">&gt;&gt;</span> q, p.iff(q)).show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>p │ q │ ¬p │ (p ∧ q) │ (p ∨ q) │ (p ⊕ q) │ (p → q) │ (p ↔ q)
+──┼───┼────┼─────────┼─────────┼─────────┼─────────┼────────
+T │ T │ F  │    T    │    T    │    F    │    T    │    T   
+T │ F │ F  │    F    │    T    │    T    │    F    │    F   
+F │ T │ T  │    F    │    T    │    T    │    T    │    F   
+F │ F │ T  │    F    │    F    │    F    │    T    │    T   </code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Borrowed operators keep their own precedence
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Python’s <code>&gt;&gt;</code> binds <em>tighter</em> than <code>&amp;</code>, <code>^</code>, and <code>|</code>, which is the opposite of the logical convention for <span class="math inline">\(\to\)</span>. So <code>p &amp; q &gt;&gt; r</code> builds <span class="math inline">\(p \land (q \to r)\)</span>, not <span class="math inline">\((p \land q) \to r\)</span>. Overloading lets you reuse an operator’s spelling, never its precedence. C++ has the same constraint, which is why every C++ DSL built on operator overloading (Boost.Spirit, expression templates, stream insertion) has a precedence wart somewhere. Parenthesize generously.</p>
+</div>
+</div>
+<div id="a537e6a7" class="cell" data-execution_count="3">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(p <span class="op">&amp;</span> q <span class="op">&gt;&gt;</span> r)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>((p <span class="op">&amp;</span> q) <span class="op">&gt;&gt;</span> r)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>(p ∧ (q → r))
+((p ∧ q) → r)</code></pre>
+</div>
+</div>
+</section>
+<section id="tautology-contradiction-contingency" class="level3">
+<h3 class="anchored" data-anchor-id="tautology-contradiction-contingency">Tautology, Contradiction, Contingency</h3>
+<p>Every formula falls into exactly one of three categories, determined by its truth table’s final column:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Category</th>
+<th>Final column</th>
+<th>Example</th>
+<th>Programming analogue</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Tautology</strong> (valid)</td>
+<td>All <span class="math inline">\(T\)</span></td>
+<td><span class="math inline">\(p \lor \lnot p\)</span></td>
+<td>An assertion that can never fire</td>
+</tr>
+<tr class="even">
+<td><strong>Contradiction</strong> (unsatisfiable)</td>
+<td>All <span class="math inline">\(F\)</span></td>
+<td><span class="math inline">\(p \land \lnot p\)</span></td>
+<td>Dead code: a branch no input reaches</td>
+</tr>
+<tr class="odd">
+<td><strong>Contingency</strong></td>
+<td>Mixed</td>
+<td><span class="math inline">\(p \to q\)</span></td>
+<td>An ordinary condition</td>
+</tr>
+</tbody>
+</table>
+<p>A formula is <strong>satisfiable</strong> if it is not a contradiction: at least one valuation makes it true. Satisfiability and validity are duals: <span class="math inline">\(\varphi\)</span> is a tautology exactly when <span class="math inline">\(\lnot\varphi\)</span> is unsatisfiable. That duality is how SAT solvers prove theorems; they look for a counterexample to the negation and report success when they fail to find one.</p>
+<div id="24d4e7ca" class="cell" data-execution_count="4">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> formula <span class="kw">in</span> [p <span class="op">|</span> <span class="op">~</span>p, p <span class="op">&amp;</span> <span class="op">~</span>p, p <span class="op">&gt;&gt;</span> q]:</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">str</span>(formula)<span class="sc">:12}</span><span class="ss">  tautology=</span><span class="sc">{</span>formula<span class="sc">.</span>is_tautology()<span class="sc">!s:5}</span><span class="ss">  satisfiable=</span><span class="sc">{</span>formula<span class="sc">.</span>is_satisfiable()<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>(p ∨ ¬p)      tautology=True   satisfiable=True
+(p ∧ ¬p)      tautology=False  satisfiable=False
+(p → q)       tautology=False  satisfiable=True</code></pre>
+</div>
+</div>
+</section>
+<section id="logical-consequence" class="level3">
+<h3 class="anchored" data-anchor-id="logical-consequence">Logical Consequence</h3>
+<p>The central relation of logic is <strong>semantic entailment</strong>. A set of premises <span class="math inline">\(\Gamma\)</span> entails a conclusion <span class="math inline">\(\varphi\)</span>, written <span class="math inline">\(\Gamma \models \varphi\)</span>, when every valuation that makes all the premises true also makes <span class="math inline">\(\varphi\)</span> true. Equivalently, <span class="math inline">\(\Gamma \models \varphi\)</span> exactly when <span class="math inline">\((\gamma_1 \land \cdots \land \gamma_n) \to \varphi\)</span> is a tautology, which is how <code>entails</code> is implemented above.</p>
+<div id="160ec025" class="cell" data-execution_count="5">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"{p → q, p} ⊨ q :"</span>, entails([p <span class="op">&gt;&gt;</span> q, p], q))</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"{p → q, q} ⊨ p :"</span>, entails([p <span class="op">&gt;&gt;</span> q, q], p))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>{p → q, p} ⊨ q : True
+{p → q, q} ⊨ p : False</code></pre>
+</div>
+</div>
+<p>The second line is the fallacy of <strong>affirming the consequent</strong>: “if it rained the street is wet; the street is wet; so it rained.” The truth table finds the counterexample (a street cleaner, <span class="math inline">\(p = F\)</span>, <span class="math inline">\(q = T\)</span>) mechanically.</p>
+<p>Two formulas are <strong>logically equivalent</strong>, <span class="math inline">\(\varphi \equiv \psi\)</span>, when they entail each other, which is the same as saying <span class="math inline">\(\varphi \leftrightarrow \psi\)</span> is a tautology. Equivalent formulas are interchangeable anywhere, and that is what licenses every refactoring of a boolean expression.</p>
+</section>
+</section>
+<section id="the-conditional" class="level2">
+<h2 class="anchored" data-anchor-id="the-conditional">The Conditional</h2>
+<div class="subheading">
+<p>The connective everyone argues about</p>
+</div>
+<p>The material conditional <span class="math inline">\(p \to q\)</span> is false in exactly one case: <span class="math inline">\(p\)</span> true and <span class="math inline">\(q\)</span> false. Two of its four rows surprise newcomers:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><span class="math inline">\(p\)</span></th>
+<th><span class="math inline">\(q\)</span></th>
+<th><span class="math inline">\(p \to q\)</span></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>T</td>
+<td>T</td>
+<td>T</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>T</td>
+<td>F</td>
+<td><strong>F</strong></td>
+<td>the only way to break a promise</td>
+</tr>
+<tr class="odd">
+<td>F</td>
+<td>T</td>
+<td>T</td>
+<td>vacuously true</td>
+</tr>
+<tr class="even">
+<td>F</td>
+<td>F</td>
+<td>T</td>
+<td>vacuously true</td>
+</tr>
+</tbody>
+</table>
+<p>Why should “if the moon is cheese, then <span class="math inline">\(2 + 2 = 4\)</span>” be true? The best way to see that this is the right design choice is to treat <span class="math inline">\(p \to q\)</span> as a <strong>promise</strong> or a <strong>contract</strong>. “If you pass the final, you pass the course” is broken only by a student who passes the final and still fails. A student who skipped the final has not tested the promise, so it stands. In programming terms, <code>assert(!p || q)</code> is the conditional, and an assertion whose guard is false does not fire.</p>
+<p>There is a deeper reason too. We want <span class="math inline">\(\to\)</span> to be a connective, a function of truth values alone, and we want modus ponens (from <span class="math inline">\(p\)</span> and <span class="math inline">\(p \to q\)</span>, conclude <span class="math inline">\(q\)</span>) to be valid. Of the 16 possible binary truth functions, the material conditional is the only one that makes modus ponens valid while also making <span class="math inline">\(p \to p\)</span> a tautology and keeping <span class="math inline">\(p \to q\)</span> distinct from <span class="math inline">\(q \to p\)</span>. The oddness of the false-antecedent rows is the price of being truth-functional. Logics that refuse to pay it (relevance logics, strict implication) exist, but they give up the simple semantics.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Python’s <code>&lt;=</code> is implication
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Python orders <code>False &lt; True</code>, so for booleans <code>p &lt;= q</code> is exactly <span class="math inline">\(p \to q\)</span>. The same holds in Rust (<code>bool: Ord</code>) and in C when operands are normalized to 0 and 1. It is a cute identity, not a recommended idiom: <code>not p or q</code> says what you mean.</p>
+</div>
+</div>
+<section id="converse-inverse-contrapositive" class="level3">
+<h3 class="anchored" data-anchor-id="converse-inverse-contrapositive">Converse, Inverse, Contrapositive</h3>
+<p>A conditional has three relatives, and only one of them is equivalent to it:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Form</th>
+<th>Equivalent to <span class="math inline">\(p \to q\)</span>?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Original</td>
+<td><span class="math inline">\(p \to q\)</span></td>
+<td>yes</td>
+</tr>
+<tr class="even">
+<td><strong>Contrapositive</strong></td>
+<td><span class="math inline">\(\lnot q \to \lnot p\)</span></td>
+<td><strong>yes</strong></td>
+</tr>
+<tr class="odd">
+<td>Converse</td>
+<td><span class="math inline">\(q \to p\)</span></td>
+<td>no</td>
+</tr>
+<tr class="even">
+<td>Inverse</td>
+<td><span class="math inline">\(\lnot p \to \lnot q\)</span></td>
+<td>no (but equivalent to the converse)</td>
+</tr>
+</tbody>
+</table>
+<div id="3eec12b9" class="cell" data-execution_count="6">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, formula <span class="kw">in</span> [(<span class="st">"contrapositive"</span>, <span class="op">~</span>q <span class="op">&gt;&gt;</span> <span class="op">~</span>p), (<span class="st">"converse"</span>, q <span class="op">&gt;&gt;</span> p), (<span class="st">"inverse"</span>, <span class="op">~</span>p <span class="op">&gt;&gt;</span> <span class="op">~</span>q)]:</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">:15}</span><span class="ss"> equivalent to p → q: </span><span class="sc">{</span>formula<span class="sc">.</span>is_equivalent_to(p <span class="op">&gt;&gt;</span> q)<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>contrapositive  equivalent to p → q: True
+converse        equivalent to p → q: False
+inverse         equivalent to p → q: False</code></pre>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Necessary and sufficient
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>“<span class="math inline">\(p\)</span> only if <span class="math inline">\(q\)</span>” means <span class="math inline">\(p \to q\)</span>, not <span class="math inline">\(q \to p\)</span>. In <span class="math inline">\(p \to q\)</span>, <span class="math inline">\(p\)</span> is <strong>sufficient</strong> for <span class="math inline">\(q\)</span> and <span class="math inline">\(q\)</span> is <strong>necessary</strong> for <span class="math inline">\(p\)</span>. A guard clause <code>if (!q) return;</code> at the top of a function establishes that <span class="math inline">\(q\)</span> is <em>necessary</em> for reaching the rest of the body: reaching the body implies <span class="math inline">\(q\)</span>. Confusing a conditional with its converse is the single most common reasoning error in code review (“this only crashes if the pointer is null; the pointer is null; so this is the crash”).</p>
+</div>
+</div>
+</section>
+<section id="the-biconditional" class="level3">
+<h3 class="anchored" data-anchor-id="the-biconditional">The Biconditional</h3>
+<p><span class="math inline">\(p \leftrightarrow q\)</span> is true when <span class="math inline">\(p\)</span> and <span class="math inline">\(q\)</span> agree. It is the conjunction of a conditional and its converse, <span class="math inline">\((p \to q) \land (q \to p)\)</span>, and it is the negation of XOR. Mathematicians write “iff”. In code it is <code>==</code> on booleans, which is why <code>if (flag == true)</code> is redundant: it is <span class="math inline">\(p \leftrightarrow \top\)</span>, which is equivalent to <span class="math inline">\(p\)</span>.</p>
+</section>
+</section>
+<section id="laws-of-equivalence" class="level2">
+<h2 class="anchored" data-anchor-id="laws-of-equivalence">Laws of Equivalence</h2>
+<div class="subheading">
+<p>The algebra you refactor with</p>
+</div>
+<p>Because equivalent formulas are interchangeable, a list of basic equivalences turns logic into algebra: you can rewrite a formula step by step, the way you simplify a polynomial. Each law below can be checked by truth table.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Law</th>
+<th><span class="math inline">\(\land\)</span> form</th>
+<th><span class="math inline">\(\lor\)</span> form</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Identity</td>
+<td><span class="math inline">\(p \land \top \equiv p\)</span></td>
+<td><span class="math inline">\(p \lor \bot \equiv p\)</span></td>
+</tr>
+<tr class="even">
+<td>Domination</td>
+<td><span class="math inline">\(p \land \bot \equiv \bot\)</span></td>
+<td><span class="math inline">\(p \lor \top \equiv \top\)</span></td>
+</tr>
+<tr class="odd">
+<td>Idempotence</td>
+<td><span class="math inline">\(p \land p \equiv p\)</span></td>
+<td><span class="math inline">\(p \lor p \equiv p\)</span></td>
+</tr>
+<tr class="even">
+<td>Complement</td>
+<td><span class="math inline">\(p \land \lnot p \equiv \bot\)</span></td>
+<td><span class="math inline">\(p \lor \lnot p \equiv \top\)</span></td>
+</tr>
+<tr class="odd">
+<td>Commutativity</td>
+<td><span class="math inline">\(p \land q \equiv q \land p\)</span></td>
+<td><span class="math inline">\(p \lor q \equiv q \lor p\)</span></td>
+</tr>
+<tr class="even">
+<td>Associativity</td>
+<td><span class="math inline">\((p \land q) \land r \equiv p \land (q \land r)\)</span></td>
+<td><span class="math inline">\((p \lor q) \lor r \equiv p \lor (q \lor r)\)</span></td>
+</tr>
+<tr class="odd">
+<td>Distributivity</td>
+<td><span class="math inline">\(p \land (q \lor r) \equiv (p \land q) \lor (p \land r)\)</span></td>
+<td><span class="math inline">\(p \lor (q \land r) \equiv (p \lor q) \land (p \lor r)\)</span></td>
+</tr>
+<tr class="even">
+<td>Absorption</td>
+<td><span class="math inline">\(p \land (p \lor q) \equiv p\)</span></td>
+<td><span class="math inline">\(p \lor (p \land q) \equiv p\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>De Morgan</strong></td>
+<td><span class="math inline">\(\lnot(p \land q) \equiv \lnot p \lor \lnot q\)</span></td>
+<td><span class="math inline">\(\lnot(p \lor q) \equiv \lnot p \land \lnot q\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>And the laws that eliminate the other connectives:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Law</th>
+<th>Equivalence</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Double negation</td>
+<td><span class="math inline">\(\lnot\lnot p \equiv p\)</span></td>
+</tr>
+<tr class="even">
+<td>Implication</td>
+<td><span class="math inline">\(p \to q \equiv \lnot p \lor q\)</span></td>
+</tr>
+<tr class="odd">
+<td>Contraposition</td>
+<td><span class="math inline">\(p \to q \equiv \lnot q \to \lnot p\)</span></td>
+</tr>
+<tr class="even">
+<td>Exportation</td>
+<td><span class="math inline">\((p \land q) \to r \equiv p \to (q \to r)\)</span></td>
+</tr>
+<tr class="odd">
+<td>Biconditional</td>
+<td><span class="math inline">\(p \leftrightarrow q \equiv (p \to q) \land (q \to p)\)</span></td>
+</tr>
+<tr class="even">
+<td>XOR</td>
+<td><span class="math inline">\(p \oplus q \equiv (p \lor q) \land \lnot(p \land q)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The table has a striking symmetry. Swap <span class="math inline">\(\land\)</span> with <span class="math inline">\(\lor\)</span> and <span class="math inline">\(\top\)</span> with <span class="math inline">\(\bot\)</span> in any law and you get another law. This is the <strong>duality principle</strong>, and it is why the two columns mirror each other. Shannon exploited it directly; see <a href="#logic-in-hardware">Logic in Hardware</a>.</p>
+<p>The interpreter confirms all of these mechanically:</p>
+<div id="adaf1268" class="cell" data-execution_count="7">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>laws <span class="op">=</span> {</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"De Morgan (∧)"</span>: (<span class="op">~</span>(p <span class="op">&amp;</span> q), <span class="op">~</span>p <span class="op">|</span> <span class="op">~</span>q),</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"De Morgan (∨)"</span>: (<span class="op">~</span>(p <span class="op">|</span> q), <span class="op">~</span>p <span class="op">&amp;</span> <span class="op">~</span>q),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Distributivity"</span>: (p <span class="op">&amp;</span> (q <span class="op">|</span> r), (p <span class="op">&amp;</span> q) <span class="op">|</span> (p <span class="op">&amp;</span> r)),</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Absorption"</span>: (p <span class="op">|</span> (p <span class="op">&amp;</span> q), p),</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Exportation"</span>: ((p <span class="op">&amp;</span> q) <span class="op">&gt;&gt;</span> r, p <span class="op">&gt;&gt;</span> (q <span class="op">&gt;&gt;</span> r)),</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"XOR"</span>: (p <span class="op">^</span> q, (p <span class="op">|</span> q) <span class="op">&amp;</span> <span class="op">~</span>(p <span class="op">&amp;</span> q)),</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, (left, right) <span class="kw">in</span> laws.items():</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">:15}</span><span class="ss"> </span><span class="sc">{</span>left<span class="sc">.</span>is_equivalent_to(right)<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>De Morgan (∧)   True
+De Morgan (∨)   True
+Distributivity  True
+Absorption      True
+Exportation     True
+XOR             True</code></pre>
+</div>
+</div>
+<section id="a-worked-simplification" class="level3">
+<h3 class="anchored" data-anchor-id="a-worked-simplification">A Worked Simplification</h3>
+<p>Here is a condition of the kind that accumulates in real code as features are bolted on:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(!(!</span>ready <span class="op">||</span> error<span class="op">)</span> <span class="op">||</span> <span class="op">(</span>ready <span class="op">&amp;&amp;</span> <span class="op">!</span>error <span class="op">&amp;&amp;</span> retry<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    transmit<span class="op">();</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Let <span class="math inline">\(r\)</span> = <code>ready</code>, <span class="math inline">\(e\)</span> = <code>error</code>, <span class="math inline">\(t\)</span> = <code>retry</code>. The condition is <span class="math inline">\(\lnot(\lnot r \lor e) \lor (r \land \lnot e \land t)\)</span>.</p>
+<p><span class="math display">\[
+\begin{aligned}
+&amp;\lnot(\lnot r \lor e) \lor (r \land \lnot e \land t) \\
+&amp;\equiv (\lnot\lnot r \land \lnot e) \lor (r \land \lnot e \land t) &amp;&amp; \text{De Morgan} \\
+&amp;\equiv (r \land \lnot e) \lor ((r \land \lnot e) \land t) &amp;&amp; \text{double negation, associativity} \\
+&amp;\equiv r \land \lnot e &amp;&amp; \text{absorption}
+\end{aligned}
+\]</span></p>
+<p>The <code>retry</code> term was dead weight all along: <code>if (ready &amp;&amp; !error)</code>. Absorption is the law that catches this, and it is worth knowing by sight because it is exactly the shape that redundant special cases take.</p>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Logic is commutative; C is not
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The laws above hold for pure formulas. C’s <code>&amp;&amp;</code> and <code>||</code> <strong>short-circuit</strong>: the right operand is evaluated only if the left does not already settle the answer. That makes them sequencing operators as well as logical ones, and it breaks commutativity whenever an operand has side effects or undefined behavior:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>node <span class="op">!=</span> NULL <span class="op">&amp;&amp;</span> node<span class="op">-&gt;</span>value <span class="op">&gt;</span> <span class="dv">0</span><span class="op">)</span>   <span class="co">/* safe */</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>node<span class="op">-&gt;</span>value <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">&amp;&amp;</span> node <span class="op">!=</span> NULL<span class="op">)</span>   <span class="co">/* dereferences NULL first */</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Logically <span class="math inline">\(a \land b \equiv b \land a\)</span>. Operationally, the left operand of <code>&amp;&amp;</code> acts as a <em>guard</em> for the right one. When you apply De Morgan or commute terms in real code, check that no operand depends on another having been tested first. The bitwise <code>&amp;</code> and <code>|</code> do not short-circuit, so they are closer to pure logic, and Rust deliberately allows them on <code>bool</code> for exactly that reason.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="normal-forms" class="level2">
+<h2 class="anchored" data-anchor-id="normal-forms">Normal Forms</h2>
+<div class="subheading">
+<p>Two canonical shapes for every formula</p>
+</div>
+<p>A <strong>literal</strong> is an atom or its negation: <span class="math inline">\(p\)</span>, <span class="math inline">\(\lnot q\)</span>. Every formula is equivalent to one in each of two standard shapes:</p>
+<ul>
+<li><strong>Disjunctive normal form (DNF)</strong>: an OR of ANDs of literals, such as <span class="math inline">\((p \land \lnot q) \lor (\lnot p \land q)\)</span>. Each AND term describes one way to make the formula true.</li>
+<li><strong>Conjunctive normal form (CNF)</strong>: an AND of ORs of literals, such as <span class="math inline">\((p \lor q) \land (\lnot p \lor \lnot q)\)</span>. Each OR term, called a <strong>clause</strong>, is a constraint that must hold.</li>
+</ul>
+<p>Both examples are <span class="math inline">\(p \oplus q\)</span>.</p>
+<section id="reading-dnf-off-a-truth-table" class="level3">
+<h3 class="anchored" data-anchor-id="reading-dnf-off-a-truth-table">Reading DNF Off a Truth Table</h3>
+<p>DNF is easy to construct: take each row where the formula is true, write the conjunction of literals that describes that row, and OR them together. For XOR the true rows are <span class="math inline">\((T, F)\)</span> and <span class="math inline">\((F, T)\)</span>, giving <span class="math inline">\((p \land \lnot q) \lor (\lnot p \land q)\)</span>. This is the <strong>sum of products</strong> form that digital designers use, and its existence is a constructive proof that <span class="math inline">\(\{\lnot, \land, \lor\}\)</span> can express every truth function.</p>
+<p>CNF comes from the false rows by duality: each false row contributes a clause that rules it out.</p>
+</section>
+<section id="converting-by-rewriting" class="level3">
+<h3 class="anchored" data-anchor-id="converting-by-rewriting">Converting by Rewriting</h3>
+<p>For an arbitrary formula the textbook algorithm has three steps:</p>
+<ol type="1">
+<li><strong>Eliminate</strong> <span class="math inline">\(\leftrightarrow\)</span> and <span class="math inline">\(\to\)</span> using the biconditional and implication laws.</li>
+<li><strong>Push negations inward</strong> with De Morgan and double negation until <span class="math inline">\(\lnot\)</span> applies only to atoms. This is <em>negation normal form</em>.</li>
+<li><strong>Distribute</strong> <span class="math inline">\(\lor\)</span> over <span class="math inline">\(\land\)</span> (for CNF) or <span class="math inline">\(\land\)</span> over <span class="math inline">\(\lor\)</span> (for DNF).</li>
+</ol>
+<p>Example: convert <span class="math inline">\((p \to q) \to r\)</span> to CNF.</p>
+<p><span class="math display">\[
+\begin{aligned}
+(p \to q) \to r &amp;\equiv \lnot(\lnot p \lor q) \lor r &amp;&amp; \text{implication, twice} \\
+&amp;\equiv (p \land \lnot q) \lor r &amp;&amp; \text{De Morgan, double negation} \\
+&amp;\equiv (p \lor r) \land (\lnot q \lor r) &amp;&amp; \text{distribution}
+\end{aligned}
+\]</span></p>
+</section>
+<section id="why-solvers-want-cnf" class="level3">
+<h3 class="anchored" data-anchor-id="why-solvers-want-cnf">Why Solvers Want CNF</h3>
+<p>CNF matters because it is the input format of SAT solvers. A clause is a constraint, and a CNF formula is a list of constraints that must all hold, which is a natural way to encode real problems (“at least one of these packages must be installed”, “these two cannot both be”). The standard <strong>DIMACS</strong> file format is nothing but a list of clauses with atoms numbered <span class="math inline">\(1, 2, 3, \ldots\)</span> and negation written as a minus sign.</p>
+<p>The catch is step 3: distribution can blow up exponentially. <span class="math inline">\((p_1 \land q_1) \lor (p_2 \land q_2) \lor \cdots \lor (p_n \land q_n)\)</span> has <span class="math inline">\(2^n\)</span> clauses in CNF. The fix, due to Grigori Tseitin (1968), is to introduce a fresh atom for each subformula. The result is not <em>equivalent</em> to the original (it has extra atoms), but it is <strong>equisatisfiable</strong> (satisfiable exactly when the original is) and only linearly larger. Every practical solver front end does this.</p>
+</section>
+</section>
+<section id="functional-completeness" class="level2">
+<h2 class="anchored" data-anchor-id="functional-completeness">Functional Completeness</h2>
+<div class="subheading">
+<p>How few connectives do you need?</p>
+</div>
+<p>With two inputs there are <span class="math inline">\(2^{2^2} = 16\)</span> possible truth functions. Here they all are, with outputs listed for <span class="math inline">\((p, q) = (T,T), (T,F), (F,T), (F,F)\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Output</th>
+<th>Formula</th>
+<th>Name</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>FFFF</td>
+<td><span class="math inline">\(\bot\)</span></td>
+<td>contradiction</td>
+</tr>
+<tr class="even">
+<td>FFFT</td>
+<td><span class="math inline">\(\lnot(p \lor q)\)</span></td>
+<td>NOR (Peirce arrow)</td>
+</tr>
+<tr class="odd">
+<td>FFTF</td>
+<td><span class="math inline">\(\lnot p \land q\)</span></td>
+<td>converse nonimplication</td>
+</tr>
+<tr class="even">
+<td>FFTT</td>
+<td><span class="math inline">\(\lnot p\)</span></td>
+<td>negation of <span class="math inline">\(p\)</span></td>
+</tr>
+<tr class="odd">
+<td>FTFF</td>
+<td><span class="math inline">\(p \land \lnot q\)</span></td>
+<td>nonimplication</td>
+</tr>
+<tr class="even">
+<td>FTFT</td>
+<td><span class="math inline">\(\lnot q\)</span></td>
+<td>negation of <span class="math inline">\(q\)</span></td>
+</tr>
+<tr class="odd">
+<td>FTTF</td>
+<td><span class="math inline">\(p \oplus q\)</span></td>
+<td>XOR</td>
+</tr>
+<tr class="even">
+<td>FTTT</td>
+<td><span class="math inline">\(\lnot(p \land q)\)</span></td>
+<td>NAND (Sheffer stroke)</td>
+</tr>
+<tr class="odd">
+<td>TFFF</td>
+<td><span class="math inline">\(p \land q\)</span></td>
+<td>AND</td>
+</tr>
+<tr class="even">
+<td>TFFT</td>
+<td><span class="math inline">\(p \leftrightarrow q\)</span></td>
+<td>XNOR, biconditional</td>
+</tr>
+<tr class="odd">
+<td>TFTF</td>
+<td><span class="math inline">\(q\)</span></td>
+<td>projection</td>
+</tr>
+<tr class="even">
+<td>TFTT</td>
+<td><span class="math inline">\(p \to q\)</span></td>
+<td>conditional</td>
+</tr>
+<tr class="odd">
+<td>TTFF</td>
+<td><span class="math inline">\(p\)</span></td>
+<td>projection</td>
+</tr>
+<tr class="even">
+<td>TTFT</td>
+<td><span class="math inline">\(q \to p\)</span></td>
+<td>converse conditional</td>
+</tr>
+<tr class="odd">
+<td>TTTF</td>
+<td><span class="math inline">\(p \lor q\)</span></td>
+<td>OR</td>
+</tr>
+<tr class="even">
+<td>TTTT</td>
+<td><span class="math inline">\(\top\)</span></td>
+<td>tautology</td>
+</tr>
+</tbody>
+</table>
+<p>A set of connectives is <strong>functionally complete</strong> if every truth function, of any number of inputs, can be built from it. The DNF construction shows <span class="math inline">\(\{\lnot, \land, \lor\}\)</span> is complete. De Morgan lets you drop one of <span class="math inline">\(\land\)</span> and <span class="math inline">\(\lor\)</span>, so <span class="math inline">\(\{\lnot, \land\}\)</span> and <span class="math inline">\(\{\lnot, \lor\}\)</span> are complete too.</p>
+<p>The surprise is that a single connective suffices. NAND alone works, because</p>
+<p><span class="math display">\[
+\lnot p \equiv p \uparrow p \qquad\qquad p \land q \equiv (p \uparrow q) \uparrow (p \uparrow q)
+\]</span></p>
+<p>where <span class="math inline">\(\uparrow\)</span> is NAND. Since <span class="math inline">\(\{\lnot, \land\}\)</span> is complete, so is <span class="math inline">\(\{\uparrow\}\)</span>. NOR works by the dual argument. They are the only two binary connectives with this property.</p>
+<div id="de3d033a" class="cell" data-execution_count="8">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Nand(Binary):</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    symbol <span class="op">=</span> <span class="st">"↑"</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">apply</span>(<span class="va">self</span>, left: <span class="bu">bool</span>, right: <span class="bu">bool</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">not</span> (left <span class="kw">and</span> right)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nand_not(operand: Formula) <span class="op">-&gt;</span> Formula:</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Nand(operand, operand)</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nand_and(left: Formula, right: Formula) <span class="op">-&gt;</span> Formula:</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> nand_not(Nand(left, right))</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nand_or(left: Formula, right: Formula) <span class="op">-&gt;</span> Formula:</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Nand(nand_not(left), nand_not(right))</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"¬p    :"</span>, nand_not(p).is_equivalent_to(<span class="op">~</span>p))</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"p ∧ q :"</span>, nand_and(p, q).is_equivalent_to(p <span class="op">&amp;</span> q))</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"p ∨ q :"</span>, nand_or(p, q).is_equivalent_to(p <span class="op">|</span> q))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>¬p    : True
+p ∧ q : True
+p ∨ q : True</code></pre>
+</div>
+</div>
+<section id="posts-criterion" class="level3">
+<h3 class="anchored" data-anchor-id="posts-criterion">Post’s Criterion</h3>
+<p>Which sets are <em>not</em> complete, and why? Emil Post answered this completely in 1941. There are five properties that are preserved under composition, so a set of connectives that all share one of them can never escape it:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Property</th>
+<th>Meaning</th>
+<th>Example of a trapped set</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Preserves <span class="math inline">\(F\)</span></td>
+<td>all-<span class="math inline">\(F\)</span> inputs give <span class="math inline">\(F\)</span></td>
+<td><span class="math inline">\(\{\land, \lor, \oplus\}\)</span></td>
+</tr>
+<tr class="even">
+<td>Preserves <span class="math inline">\(T\)</span></td>
+<td>all-<span class="math inline">\(T\)</span> inputs give <span class="math inline">\(T\)</span></td>
+<td><span class="math inline">\(\{\land, \lor, \to\}\)</span></td>
+</tr>
+<tr class="odd">
+<td>Monotone</td>
+<td>flipping an input from <span class="math inline">\(F\)</span> to <span class="math inline">\(T\)</span> never flips the output from <span class="math inline">\(T\)</span> to <span class="math inline">\(F\)</span></td>
+<td><span class="math inline">\(\{\land, \lor\}\)</span></td>
+</tr>
+<tr class="even">
+<td>Self-dual</td>
+<td>negating all inputs negates the output</td>
+<td><span class="math inline">\(\{\lnot\}\)</span></td>
+</tr>
+<tr class="odd">
+<td>Affine</td>
+<td>expressible with only <span class="math inline">\(\oplus\)</span> and constants</td>
+<td><span class="math inline">\(\{\oplus, \lnot\}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>A set is complete <strong>if and only if</strong> it escapes all five: for each property, it contains at least one connective that lacks it. NAND lacks all five by itself, which is why it is complete alone. <span class="math inline">\(\{\land, \lor\}\)</span> is monotone, so no amount of AND and OR can ever produce NOT; that is a precise version of the intuition that you need inversion somewhere. <span class="math inline">\(\{\to\}\)</span> preserves <span class="math inline">\(T\)</span>, so it cannot make <span class="math inline">\(\bot\)</span>, but <span class="math inline">\(\{\to, \bot\}\)</span> is complete.</p>
+</section>
+</section>
+<section id="inference-and-proof" class="level2">
+<h2 class="anchored" data-anchor-id="inference-and-proof">Inference and Proof</h2>
+<div class="subheading">
+<p>Deriving truths without truth tables</p>
+</div>
+<p>Truth tables decide entailment, but they cost <span class="math inline">\(2^n\)</span> rows for <span class="math inline">\(n\)</span> atoms. Thirty atoms is a billion rows. <strong>Proof</strong> is the alternative: start from premises and apply rules that are known to preserve truth, one step at a time, until the conclusion appears. Proofs are syntactic; they manipulate symbols without ever consulting a valuation.</p>
+<section id="rules-of-inference" class="level3">
+<h3 class="anchored" data-anchor-id="rules-of-inference">Rules of Inference</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Rule</th>
+<th>Premises</th>
+<th>Conclusion</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Modus ponens</td>
+<td><span class="math inline">\(p \to q\)</span>, <span class="math inline">\(p\)</span></td>
+<td><span class="math inline">\(q\)</span></td>
+</tr>
+<tr class="even">
+<td>Modus tollens</td>
+<td><span class="math inline">\(p \to q\)</span>, <span class="math inline">\(\lnot q\)</span></td>
+<td><span class="math inline">\(\lnot p\)</span></td>
+</tr>
+<tr class="odd">
+<td>Hypothetical syllogism</td>
+<td><span class="math inline">\(p \to q\)</span>, <span class="math inline">\(q \to r\)</span></td>
+<td><span class="math inline">\(p \to r\)</span></td>
+</tr>
+<tr class="even">
+<td>Disjunctive syllogism</td>
+<td><span class="math inline">\(p \lor q\)</span>, <span class="math inline">\(\lnot p\)</span></td>
+<td><span class="math inline">\(q\)</span></td>
+</tr>
+<tr class="odd">
+<td>Conjunction</td>
+<td><span class="math inline">\(p\)</span>, <span class="math inline">\(q\)</span></td>
+<td><span class="math inline">\(p \land q\)</span></td>
+</tr>
+<tr class="even">
+<td>Simplification</td>
+<td><span class="math inline">\(p \land q\)</span></td>
+<td><span class="math inline">\(p\)</span></td>
+</tr>
+<tr class="odd">
+<td>Addition</td>
+<td><span class="math inline">\(p\)</span></td>
+<td><span class="math inline">\(p \lor q\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>Resolution</strong></td>
+<td><span class="math inline">\(p \lor q\)</span>, <span class="math inline">\(\lnot p \lor r\)</span></td>
+<td><span class="math inline">\(q \lor r\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Every rule in the table is itself an entailment that a truth table would confirm. Their value is that they compose: a ten-step proof can be checked by eye even when its truth table would have thousands of rows.</p>
+</section>
+<section id="a-worked-proof" class="level3">
+<h3 class="anchored" data-anchor-id="a-worked-proof">A Worked Proof</h3>
+<p>Premises: <span class="math inline">\(p \to q\)</span>, <span class="math inline">\(q \to r\)</span>, <span class="math inline">\(\lnot r\)</span>. Prove <span class="math inline">\(\lnot p\)</span>.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Step</th>
+<th>Formula</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td><span class="math inline">\(p \to q\)</span></td>
+<td>premise</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td><span class="math inline">\(q \to r\)</span></td>
+<td>premise</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td><span class="math inline">\(\lnot r\)</span></td>
+<td>premise</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td><span class="math inline">\(p \to r\)</span></td>
+<td>hypothetical syllogism, 1, 2</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td><span class="math inline">\(\lnot p\)</span></td>
+<td>modus tollens, 4, 3</td>
+</tr>
+</tbody>
+</table>
+<p>In code-review terms: “if the config loads, the driver initializes; if the driver initializes, the LED blinks; the LED is not blinking; therefore the config did not load.” Debugging is mostly modus tollens.</p>
+</section>
+<section id="resolution" class="level3">
+<h3 class="anchored" data-anchor-id="resolution">Resolution</h3>
+<p>Resolution deserves special mention because it is the one rule a machine needs. Given two clauses that contain an atom and its negation, it produces a clause with that atom removed. To prove <span class="math inline">\(\Gamma \models \varphi\)</span>, convert <span class="math inline">\(\Gamma \cup \{\lnot\varphi\}\)</span> to CNF and resolve repeatedly. If you ever derive the <strong>empty clause</strong> (a contradiction), the entailment holds. This procedure is <em>refutation complete</em>: for propositional logic it always terminates with the right answer. It is the basis of Prolog’s execution model and, in a much refined form, of modern SAT solvers.</p>
+</section>
+<section id="soundness-completeness" class="level3">
+<h3 class="anchored" data-anchor-id="soundness-completeness">Soundness and Completeness</h3>
+<p>There are now two notions of “follows from”:</p>
+<ul>
+<li><span class="math inline">\(\Gamma \models \varphi\)</span>: semantic entailment, defined by truth.</li>
+<li><span class="math inline">\(\Gamma \vdash \varphi\)</span>: derivability, defined by proof.</li>
+</ul>
+<p>A proof system is <strong>sound</strong> if <span class="math inline">\(\Gamma \vdash \varphi\)</span> implies <span class="math inline">\(\Gamma \models \varphi\)</span> (it proves nothing false) and <strong>complete</strong> if <span class="math inline">\(\Gamma \models \varphi\)</span> implies <span class="math inline">\(\Gamma \vdash \varphi\)</span> (it can prove everything true). Standard proof systems for propositional logic are both, as Post showed in 1921. That match between syntax and semantics is the property every type system aspires to and few achieve: Rust’s borrow checker, for instance, is sound but deliberately incomplete, rejecting some programs that are actually safe.</p>
+<p>Propositional logic is also <strong>decidable</strong>: an algorithm (the truth table) always answers whether <span class="math inline">\(\Gamma \models \varphi\)</span>. First-order logic keeps soundness and completeness but loses decidability, which is one of the deepest results of the 1930s and the reason the jump to predicate logic is a jump in kind, not just in expressiveness.</p>
+</section>
+</section>
+<section id="logic-in-code" class="level2">
+<h2 class="anchored" data-anchor-id="logic-in-code">Logic in Code</h2>
+<div class="subheading">
+<p>Where the formulas hide in programs</p>
+</div>
+<p>Every condition in a program is a propositional formula whose atoms are comparisons. The language-level differences are in how strictly a language separates truth values from everything else.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>C</th>
+<th>C++</th>
+<th>Python</th>
+<th>Rust</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Boolean type</td>
+<td><code>_Bool</code> / <code>bool</code> (C99), but conditions take any scalar</td>
+<td><code>bool</code>, with implicit conversion from integers and pointers</td>
+<td><code>bool</code>, a subclass of <code>int</code></td>
+<td><code>bool</code>, no implicit conversion</td>
+</tr>
+<tr class="even">
+<td>What counts as true</td>
+<td>nonzero</td>
+<td>nonzero, non-null</td>
+<td><strong>truthiness</strong>: nonempty, nonzero, not <code>None</code></td>
+<td>only <code>true</code></td>
+</tr>
+<tr class="odd">
+<td><code>&amp;&amp;</code> / <code>and</code> returns</td>
+<td><code>int</code> 0 or 1</td>
+<td><code>bool</code></td>
+<td><strong>one of its operands</strong></td>
+<td><code>bool</code></td>
+</tr>
+<tr class="even">
+<td>Short-circuit</td>
+<td>yes</td>
+<td>yes (unless overloaded)</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr class="odd">
+<td>Non-short-circuit on bools</td>
+<td><code>&amp;</code>, <code>|</code>, <code>^</code></td>
+<td><code>&amp;</code>, <code>|</code>, <code>^</code></td>
+<td><code>&amp;</code>, <code>|</code>, <code>^</code></td>
+<td><code>&amp;</code>, <code>|</code>, <code>^</code></td>
+</tr>
+</tbody>
+</table>
+<p>Two entries deserve comment.</p>
+<p><strong>Python’s <code>and</code> and <code>or</code> return operands.</strong> <code>x or default</code> evaluates to <code>x</code> if <code>x</code> is truthy, else <code>default</code>. That is a useful idiom, but it means <code>and</code>/<code>or</code> are not boolean connectives; they are short-circuiting selection operators that happen to agree with logic when the operands are <code>bool</code>. <code>0 or None</code> is <code>None</code>, not <code>False</code>.</p>
+<p><strong>C++ loses short-circuiting when <code>&amp;&amp;</code> is overloaded.</strong> A user-defined <code>operator&amp;&amp;</code> is an ordinary function call, so both operands are evaluated. This is why Sutter and Alexandrescu’s <em>C++ Coding Standards</em> (Item 30) says never to overload <code>&amp;&amp;</code>, <code>||</code>, or <code>,</code>.</p>
+<section id="de-morgan-in-practice" class="level3">
+<h3 class="anchored" data-anchor-id="de-morgan-in-practice">De Morgan in Practice</h3>
+<p>De Morgan’s laws are the refactoring you will use most. Loop conditions are the classic case, because the condition to <em>continue</em> is the negation of the condition to <em>stop</em>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co">/* stop when the buffer is full or we see the terminator */</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(!(</span>count <span class="op">==</span> capacity <span class="op">||</span> byte <span class="op">==</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">))</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">/* De Morgan: continue while not full and not terminator */</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(</span>count <span class="op">!=</span> capacity <span class="op">&amp;&amp;</span> byte <span class="op">!=</span> <span class="ch">'</span><span class="sc">\0</span><span class="ch">'</span><span class="op">)</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The second form is easier to read because each negation has been pushed onto an atom, where it disappears into the comparison operator. This is negation normal form applied to source code.</p>
+</section>
+<section id="guard-clauses-as-conditionals" class="level3">
+<h3 class="anchored" data-anchor-id="guard-clauses-as-conditionals">Guard Clauses as Conditionals</h3>
+<p>An early return encodes an implication about the rest of the function:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode rust code-with-copy"><code class="sourceCode rust"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> transmit(frame<span class="op">:</span> <span class="op">&amp;</span>Frame<span class="op">,</span> link<span class="op">:</span> <span class="op">&amp;</span>Link) <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>()<span class="op">,</span> <span class="bu">Error</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">!</span>link<span class="op">.</span>is_up() <span class="op">{</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="cn">Err</span>(<span class="bu">Error</span><span class="pp">::</span>LinkDown)<span class="op">;</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> frame<span class="op">.</span>len() <span class="op">&gt;</span> link<span class="op">.</span>mtu() <span class="op">{</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="cn">Err</span>(<span class="bu">Error</span><span class="pp">::</span>TooLarge)<span class="op">;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    link<span class="op">.</span>send(frame)</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Reaching <code>link.send</code> implies <span class="math inline">\(\textit{up} \land \textit{fits}\)</span>. Every guard you pass adds a conjunct to what you know, which is the same reasoning a compiler’s flow analysis does when it narrows a type after a check (TypeScript’s narrowing, Rust’s <code>if let</code>).</p>
+</section>
+</section>
+<section id="logic-in-hardware" class="level2">
+<h2 class="anchored" data-anchor-id="logic-in-hardware">Logic in Hardware</h2>
+<div class="subheading">
+<p>Shannon’s insight</p>
+</div>
+<p>Shannon’s thesis observed that a relay contact is a propositional atom: it is either closed or open. Two contacts in <strong>series</strong> conduct only if both are closed, and two in <strong>parallel</strong> conduct if either is. Series is <span class="math inline">\(\land\)</span>, parallel is <span class="math inline">\(\lor\)</span>, and a normally closed contact is <span class="math inline">\(\lnot\)</span>. A circuit is therefore a formula, and the laws of equivalence become a way to remove relays.</p>
+<p>Shannon actually used the dual algebra. He measured a circuit’s <em>hindrance</em>, with 0 for a closed (conducting) path and 1 for an open one, so series became addition and parallel became multiplication. Because of the duality principle the choice does not matter, and the algebra is identical up to swapping <span class="math inline">\(\land\)</span> with <span class="math inline">\(\lor\)</span> and <span class="math inline">\(\top\)</span> with <span class="math inline">\(\bot\)</span>. Engineers later settled on the conducting-is-1 convention that we use today.</p>
+<p>Transistors replaced relays, but the mapping did not change. In CMOS, the cheapest gates to build are NAND and NOR (four transistors each), while AND and OR are a NAND or NOR followed by an inverter. So hardware designers think in NAND, and the functional completeness of NAND is not a curiosity: it is why a chip can be built from a sea of identical cells.</p>
+<section id="a-half-adder" class="level3">
+<h3 class="anchored" data-anchor-id="a-half-adder">A Half Adder</h3>
+<p>Adding two one-bit numbers <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> produces a sum bit and a carry bit:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><span class="math inline">\(a\)</span></th>
+<th><span class="math inline">\(b\)</span></th>
+<th>carry</th>
+<th>sum</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Reading off the columns, <span class="math inline">\(\textit{sum} = a \oplus b\)</span> and <span class="math inline">\(\textit{carry} = a \land b\)</span>. Arithmetic, at the bottom, is propositional logic. Chain these into full adders and you have the ALU, which is how Boole’s “algebra of thought” ended up running every <code>+</code> you have ever compiled.</p>
+<p>The <a href="./glossary.html#multiplexer">multiplexer</a> in the glossary is another formula in disguise: a 2-to-1 mux with select <span class="math inline">\(s\)</span> computes <span class="math inline">\((\lnot s \land a) \lor (s \land b)\)</span>, which is the hardware form of the ternary operator <code>s ? b : a</code>.</p>
+</section>
+</section>
+<section id="mcculloch-pitts" class="level2">
+<h2 class="anchored" data-anchor-id="mcculloch-pitts">The McCulloch-Pitts Neuron</h2>
+<div class="subheading">
+<p>Logic as a model of the brain</p>
+</div>
+<p>McCulloch and Pitts made five idealizations about neurons, the central ones being that a neuron is <strong>all-or-none</strong> (it fires or it does not), that it fires when the number of active excitatory inputs reaches a fixed <strong>threshold</strong>, and that any active <strong>inhibitory</strong> input absolutely prevents firing. Time advances in discrete steps, and a neuron’s output at step <span class="math inline">\(t+1\)</span> depends on its inputs at step <span class="math inline">\(t\)</span>.</p>
+<p>Under those assumptions a neuron is a boolean function, and the right threshold turns it into a logic gate:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Gate</th>
+<th>Excitatory inputs</th>
+<th>Inhibitory inputs</th>
+<th>Threshold</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>AND</td>
+<td><span class="math inline">\(a, b\)</span></td>
+<td>none</td>
+<td>2</td>
+</tr>
+<tr class="even">
+<td>OR</td>
+<td><span class="math inline">\(a, b\)</span></td>
+<td>none</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>NOT</td>
+<td>none</td>
+<td><span class="math inline">\(a\)</span></td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(a \land \lnot b\)</span></td>
+<td><span class="math inline">\(a\)</span></td>
+<td><span class="math inline">\(b\)</span></td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>The NOT unit is worth a second look: with threshold 0 it fires spontaneously, and the only thing that stops it is the inhibitory input. Here is the 1943 model in code:</p>
+<div id="1d5394f1" class="cell" data-execution_count="9">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ThresholdUnit:</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, excitatory: <span class="bu">list</span>[<span class="bu">str</span>], inhibitory: <span class="bu">list</span>[<span class="bu">str</span>], threshold: <span class="bu">int</span>):</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.excitatory <span class="op">=</span> excitatory</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.inhibitory <span class="op">=</span> inhibitory</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.threshold <span class="op">=</span> threshold</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> fires(<span class="va">self</span>, inputs: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">bool</span>]) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">any</span>(inputs[name] <span class="cf">for</span> name <span class="kw">in</span> <span class="va">self</span>.inhibitory):</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">sum</span>(inputs[name] <span class="cf">for</span> name <span class="kw">in</span> <span class="va">self</span>.excitatory) <span class="op">&gt;=</span> <span class="va">self</span>.threshold</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> NeuronTable:</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, units: <span class="bu">dict</span>[<span class="bu">str</span>, ThresholdUnit], input_names: <span class="bu">list</span>[<span class="bu">str</span>]):</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.units <span class="op">=</span> units</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.input_names <span class="op">=</span> input_names</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> show(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"  "</span>.join(<span class="va">self</span>.input_names <span class="op">+</span> <span class="bu">list</span>(<span class="va">self</span>.units)))</span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> values <span class="kw">in</span> product([<span class="va">False</span>, <span class="va">True</span>], repeat<span class="op">=</span><span class="bu">len</span>(<span class="va">self</span>.input_names)):</span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>            inputs <span class="op">=</span> <span class="bu">dict</span>(<span class="bu">zip</span>(<span class="va">self</span>.input_names, values))</span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>            outputs <span class="op">=</span> [<span class="bu">int</span>(unit.fires(inputs)) <span class="cf">for</span> unit <span class="kw">in</span> <span class="va">self</span>.units.values()]</span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>            cells <span class="op">=</span> [<span class="bu">str</span>(<span class="bu">int</span>(value)) <span class="cf">for</span> value <span class="kw">in</span> values] <span class="op">+</span> [<span class="bu">str</span>(output).center(<span class="bu">len</span>(name)) <span class="cf">for</span> name, output <span class="kw">in</span> <span class="bu">zip</span>(<span class="va">self</span>.units, outputs)]</span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="st">"  "</span>.join(cells))</span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a>gates <span class="op">=</span> {</span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AND"</span>: ThresholdUnit([<span class="st">"a"</span>, <span class="st">"b"</span>], [], <span class="dv">2</span>),</span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"OR"</span>: ThresholdUnit([<span class="st">"a"</span>, <span class="st">"b"</span>], [], <span class="dv">1</span>),</span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"NOT a"</span>: ThresholdUnit([], [<span class="st">"a"</span>], <span class="dv">0</span>),</span>
+<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"a∧¬b"</span>: ThresholdUnit([<span class="st">"a"</span>], [<span class="st">"b"</span>], <span class="dv">1</span>),</span>
+<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a>NeuronTable(gates, [<span class="st">"a"</span>, <span class="st">"b"</span>]).show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>a  b  AND  OR  NOT a  a∧¬b
+0  0   0   0     1     0  
+0  1   0   1     1     0  
+1  0   0   1     0     1  
+1  1   1   1     0     0  </code></pre>
+</div>
+</div>
+<p>Since AND, OR, and NOT are functionally complete, <strong>any</strong> propositional formula can be computed by a network of these units. That was the paper’s first main result. The second, that networks with loops (“circles”, in their words) can hold state and so behave like finite machines, is the one that led Kleene to regular expressions. The <code>grep</code> patterns in the <a href="./shell.html">shell chapter</a> are, by direct descent, a notation for what looped McCulloch-Pitts networks can recognize.</p>
+<section id="why-xor-needs-a-network" class="level3">
+<h3 class="anchored" data-anchor-id="why-xor-needs-a-network">Why XOR Needs a Network</h3>
+<p>No single unit computes XOR. The argument is short. If either input is inhibitory, then turning on that input alone silences the unit, but XOR must fire on a single active input. So both inputs are excitatory, and the unit fires when the count reaches the threshold. XOR must fire on a count of 1 and stay silent on a count of 2, and a threshold cannot do that: anything reaching 1 also reaches 2. A brute-force search over every configuration confirms it:</p>
+<div id="9dd3f96a" class="cell" data-execution_count="10">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> xor(inputs: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">bool</span>]) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> inputs[<span class="st">"a"</span>] <span class="op">!=</span> inputs[<span class="st">"b"</span>]</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> all_input_combinations() <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">bool</span>]]:</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [<span class="bu">dict</span>(<span class="bu">zip</span>([<span class="st">"a"</span>, <span class="st">"b"</span>], values)) <span class="cf">for</span> values <span class="kw">in</span> product([<span class="va">False</span>, <span class="va">True</span>], repeat<span class="op">=</span><span class="dv">2</span>)]</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> computes(unit: ThresholdUnit, target) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">all</span>(unit.fires(inputs) <span class="op">==</span> target(inputs) <span class="cf">for</span> inputs <span class="kw">in</span> all_input_combinations())</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>roles <span class="op">=</span> [<span class="st">"excitatory"</span>, <span class="st">"inhibitory"</span>, <span class="st">"unused"</span>]</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> [</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    ThresholdUnit(</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>        [name <span class="cf">for</span> name, role <span class="kw">in</span> <span class="bu">zip</span>([<span class="st">"a"</span>, <span class="st">"b"</span>], assignment) <span class="cf">if</span> role <span class="op">==</span> <span class="st">"excitatory"</span>],</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>        [name <span class="cf">for</span> name, role <span class="kw">in</span> <span class="bu">zip</span>([<span class="st">"a"</span>, <span class="st">"b"</span>], assignment) <span class="cf">if</span> role <span class="op">==</span> <span class="st">"inhibitory"</span>],</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>        threshold,</span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> assignment <span class="kw">in</span> product(roles, repeat<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> threshold <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, <span class="dv">4</span>)</span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(candidates)<span class="sc">}</span><span class="ss"> single-unit configurations; computing XOR: </span><span class="sc">{</span><span class="bu">sum</span>(computes(unit, xor) <span class="cf">for</span> unit <span class="kw">in</span> candidates)<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>36 single-unit configurations; computing XOR: 0</code></pre>
+</div>
+</div>
+<p>Two layers solve it, using the equivalence <span class="math inline">\(p \oplus q \equiv (p \land \lnot q) \lor (\lnot p \land q)\)</span>:</p>
+<div id="6fe5efe6" class="cell" data-execution_count="11">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> TwoLayerNetwork:</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, hidden: <span class="bu">dict</span>[<span class="bu">str</span>, ThresholdUnit], output: ThresholdUnit):</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.hidden <span class="op">=</span> hidden</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.output <span class="op">=</span> output</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> fires(<span class="va">self</span>, inputs: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">bool</span>]) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>        hidden_outputs <span class="op">=</span> {name: unit.fires(inputs) <span class="cf">for</span> name, unit <span class="kw">in</span> <span class="va">self</span>.hidden.items()}</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.output.fires(hidden_outputs)</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>xor_network <span class="op">=</span> TwoLayerNetwork(</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    hidden<span class="op">=</span>{<span class="st">"a_only"</span>: ThresholdUnit([<span class="st">"a"</span>], [<span class="st">"b"</span>], <span class="dv">1</span>), <span class="st">"b_only"</span>: ThresholdUnit([<span class="st">"b"</span>], [<span class="st">"a"</span>], <span class="dv">1</span>)},</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span>ThresholdUnit([<span class="st">"a_only"</span>, <span class="st">"b_only"</span>], [], <span class="dv">1</span>),</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"two-layer network computes XOR:"</span>, computes(xor_network, xor))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>two-layer network computes XOR: True</code></pre>
+</div>
+</div>
+<p>This tiny fact has a large history. Rosenblatt’s <strong>perceptron</strong> (1958) replaced the fixed thresholds with learnable real-valued weights. In <em>Perceptrons</em> (1969), Minsky and Papert proved that a single-layer perceptron can only compute <strong>linearly separable</strong> functions, and XOR is the canonical function that is not. The book is widely blamed (somewhat unfairly, since it said nothing against multilayer networks) for a decade-long collapse in neural network funding. The fix, multilayer networks trained by backpropagation, became practical in the 1980s, and the modern deep learning stack descends from it. The McCulloch-Pitts unit with real weights and a smooth activation function in place of a hard threshold is, structurally, the neuron in every network today.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>What the model got right and wrong
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>As neuroscience, McCulloch and Pitts were wrong in most details: real neurons are not binary, inhibition is not absolute, and timing is continuous. As computer science they were right in the way that mattered: they showed that a network of simple threshold devices is a universal propositional computer. Von Neumann took that idea, swapped neurons for vacuum tubes, and used their notation in the design of the EDVAC.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sat" class="level2">
+<h2 class="anchored" data-anchor-id="sat">SAT</h2>
+<div class="subheading">
+<p>The problem at the center of complexity</p>
+</div>
+<p>The <strong>Boolean satisfiability problem</strong> asks: given a formula, is there a valuation that makes it true? The truth table answers it in <span class="math inline">\(O(2^n)\)</span> time. Checking a proposed answer, by contrast, takes linear time: plug in the values and evaluate. Problems with that shape (hard to solve, easy to verify) form the class NP, and Cook’s theorem says SAT is the hardest of them: every NP problem can be translated into SAT in polynomial time. Nobody knows a polynomial algorithm for SAT, and finding one (or proving none exists) is the P versus NP problem.</p>
+<p>In theory, then, SAT is hopeless. In practice it is one of the great success stories of computer science. Modern <strong>CDCL</strong> solvers (conflict-driven clause learning, from GRASP in 1996 and Chaff in 2001) routinely solve industrial instances with millions of variables. Hardness is a worst-case statement, and the formulas that come from real problems have structure that solvers exploit.</p>
+<section id="dpll" class="level3">
+<h3 class="anchored" data-anchor-id="dpll">DPLL</h3>
+<p>Every modern solver descends from the Davis-Putnam-Logemann-Loveland procedure (1962). It is a backtracking search over CNF with two inferences that prune the tree:</p>
+<ul>
+<li><strong>Unit propagation</strong>: if a clause has only one unassigned literal left and the rest are false, that literal must be true. Assign it and simplify. This is modus ponens in clause form, and it does most of the work.</li>
+<li><strong>Branching</strong>: when propagation stalls, pick an unassigned atom, try it true, and backtrack to false if that leads to an empty clause.</li>
+</ul>
+<p>Clauses use the DIMACS convention: atoms are positive integers and <span class="math inline">\(\lnot x\)</span> is <span class="math inline">\(-x\)</span>.</p>
+<div id="eb3d1fb4" class="cell" data-execution_count="12">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>Clause <span class="op">=</span> <span class="bu">frozenset</span>[<span class="bu">int</span>]</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> DpllSolver:</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, clauses: <span class="bu">list</span>[Clause]):</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.clauses <span class="op">=</span> clauses</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> solve(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">dict</span>[<span class="bu">int</span>, <span class="bu">bool</span>] <span class="op">|</span> <span class="va">None</span>:</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.search(<span class="va">self</span>.clauses, {})</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> search(<span class="va">self</span>, clauses: <span class="bu">list</span>[Clause], assignment: <span class="bu">dict</span>[<span class="bu">int</span>, <span class="bu">bool</span>]) <span class="op">-&gt;</span> <span class="bu">dict</span>[<span class="bu">int</span>, <span class="bu">bool</span>] <span class="op">|</span> <span class="va">None</span>:</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>        clauses, assignment <span class="op">=</span> <span class="va">self</span>.propagate_units(clauses, assignment)</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> clauses <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> clauses:</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> assignment</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>        literal <span class="op">=</span> <span class="bu">next</span>(<span class="bu">iter</span>(clauses[<span class="dv">0</span>]))</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> choice <span class="kw">in</span> (literal, <span class="op">-</span>literal):</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>            result <span class="op">=</span> <span class="va">self</span>.search(<span class="va">self</span>.assign(clauses, choice), {<span class="op">**</span>assignment, <span class="bu">abs</span>(choice): choice <span class="op">&gt;</span> <span class="dv">0</span>})</span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> result <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> result</span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> propagate_units(<span class="va">self</span>, clauses, assignment):</span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> clauses <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>            unit <span class="op">=</span> <span class="bu">next</span>((clause <span class="cf">for</span> clause <span class="kw">in</span> clauses <span class="cf">if</span> <span class="bu">len</span>(clause) <span class="op">==</span> <span class="dv">1</span>), <span class="va">None</span>)</span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> unit <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> clauses, assignment</span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a>            literal <span class="op">=</span> <span class="bu">next</span>(<span class="bu">iter</span>(unit))</span>
+<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a>            clauses <span class="op">=</span> <span class="va">self</span>.assign(clauses, literal)</span>
+<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a>            assignment <span class="op">=</span> {<span class="op">**</span>assignment, <span class="bu">abs</span>(literal): literal <span class="op">&gt;</span> <span class="dv">0</span>}</span>
+<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span>, assignment</span>
+<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">@staticmethod</span></span>
+<span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> assign(clauses: <span class="bu">list</span>[Clause] <span class="op">|</span> <span class="va">None</span>, literal: <span class="bu">int</span>) <span class="op">-&gt;</span> <span class="bu">list</span>[Clause] <span class="op">|</span> <span class="va">None</span>:</span>
+<span id="cb27-36"><a href="#cb27-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> clauses <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb27-37"><a href="#cb27-37" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb27-38"><a href="#cb27-38" aria-hidden="true" tabindex="-1"></a>        simplified <span class="op">=</span> []</span>
+<span id="cb27-39"><a href="#cb27-39" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> clause <span class="kw">in</span> clauses:</span>
+<span id="cb27-40"><a href="#cb27-40" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> literal <span class="kw">in</span> clause:</span>
+<span id="cb27-41"><a href="#cb27-41" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb27-42"><a href="#cb27-42" aria-hidden="true" tabindex="-1"></a>            reduced <span class="op">=</span> clause <span class="op">-</span> {<span class="op">-</span>literal}</span>
+<span id="cb27-43"><a href="#cb27-43" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">not</span> reduced:</span>
+<span id="cb27-44"><a href="#cb27-44" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb27-45"><a href="#cb27-45" aria-hidden="true" tabindex="-1"></a>            simplified.append(reduced)</span>
+<span id="cb27-46"><a href="#cb27-46" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> simplified</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="an-example-dependency-resolution" class="level3">
+<h3 class="anchored" data-anchor-id="an-example-dependency-resolution">An Example: Dependency Resolution</h3>
+<p>SAT solvers are hiding inside tools you use. openSUSE’s <code>libsolv</code> (behind <code>zypper</code> and Fedora’s <code>dnf</code>), <code>conda</code>, and Eclipse’s plugin manager all resolve package dependencies by translating them into CNF. Here is a toy version. An app needs a logging library, which comes in versions 1 and 2. Version 2 needs a newer runtime; version 1 conflicts with a TLS library the app also needs.</p>
+<div id="a0688bc9" class="cell" data-execution_count="13">
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> PackageProblem:</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, packages: <span class="bu">list</span>[<span class="bu">str</span>]):</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.number_of <span class="op">=</span> {name: index <span class="op">+</span> <span class="dv">1</span> <span class="cf">for</span> index, name <span class="kw">in</span> <span class="bu">enumerate</span>(packages)}</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.name_of <span class="op">=</span> {number: name <span class="cf">for</span> name, number <span class="kw">in</span> <span class="va">self</span>.number_of.items()}</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.clauses: <span class="bu">list</span>[Clause] <span class="op">=</span> []</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> require(<span class="va">self</span>, package: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.clauses.append(<span class="bu">frozenset</span>({<span class="va">self</span>.number_of[package]}))</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> depends(<span class="va">self</span>, package: <span class="bu">str</span>, <span class="op">*</span>alternatives: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.clauses.append(<span class="bu">frozenset</span>({<span class="op">-</span><span class="va">self</span>.number_of[package]} <span class="op">|</span> {<span class="va">self</span>.number_of[name] <span class="cf">for</span> name <span class="kw">in</span> alternatives}))</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> conflicts(<span class="va">self</span>, first: <span class="bu">str</span>, second: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.clauses.append(<span class="bu">frozenset</span>({<span class="op">-</span><span class="va">self</span>.number_of[first], <span class="op">-</span><span class="va">self</span>.number_of[second]}))</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> resolve(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">str</span>] <span class="op">|</span> <span class="va">None</span>:</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>        assignment <span class="op">=</span> DpllSolver(<span class="va">self</span>.clauses).solve()</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> assignment <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">sorted</span>(<span class="va">self</span>.name_of[number] <span class="cf">for</span> number, installed <span class="kw">in</span> assignment.items() <span class="cf">if</span> installed)</span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>problem <span class="op">=</span> PackageProblem([<span class="st">"app"</span>, <span class="st">"log-v1"</span>, <span class="st">"log-v2"</span>, <span class="st">"tls"</span>, <span class="st">"runtime-new"</span>])</span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a>problem.require(<span class="st">"app"</span>)</span>
+<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a>problem.depends(<span class="st">"app"</span>, <span class="st">"log-v1"</span>, <span class="st">"log-v2"</span>)</span>
+<span id="cb28-26"><a href="#cb28-26" aria-hidden="true" tabindex="-1"></a>problem.depends(<span class="st">"app"</span>, <span class="st">"tls"</span>)</span>
+<span id="cb28-27"><a href="#cb28-27" aria-hidden="true" tabindex="-1"></a>problem.conflicts(<span class="st">"log-v1"</span>, <span class="st">"log-v2"</span>)</span>
+<span id="cb28-28"><a href="#cb28-28" aria-hidden="true" tabindex="-1"></a>problem.conflicts(<span class="st">"log-v1"</span>, <span class="st">"tls"</span>)</span>
+<span id="cb28-29"><a href="#cb28-29" aria-hidden="true" tabindex="-1"></a>problem.depends(<span class="st">"log-v2"</span>, <span class="st">"runtime-new"</span>)</span>
+<span id="cb28-30"><a href="#cb28-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"install:"</span>, problem.resolve())</span>
+<span id="cb28-31"><a href="#cb28-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-32"><a href="#cb28-32" aria-hidden="true" tabindex="-1"></a>problem.conflicts(<span class="st">"runtime-new"</span>, <span class="st">"tls"</span>)</span>
+<span id="cb28-33"><a href="#cb28-33" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"after adding a runtime/tls conflict:"</span>, problem.resolve())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>install: ['app', 'log-v2', 'runtime-new', 'tls']
+after adding a runtime/tls conflict: None</code></pre>
+</div>
+</div>
+<p>Each constraint is one clause: “app depends on log v1 or v2” is <span class="math inline">\(\lnot\textit{app} \lor \textit{log}_1 \lor \textit{log}_2\)</span>, which is the implication law applied to <span class="math inline">\(\textit{app} \to (\textit{log}_1 \lor \textit{log}_2)\)</span>, and “these conflict” is <span class="math inline">\(\lnot a \lor \lnot b\)</span>. When the last conflict makes the problem unsatisfiable, the solver proves that <em>no</em> installation exists, which a hand-written greedy resolver cannot do. Real package resolution adds preferences (newest version first), which turns it into an optimization problem, but the core is exactly this.</p>
+<p>Other places SAT and its descendants (SMT solvers such as Z3, which add arithmetic and data types on top of SAT) do real work: hardware verification (checking that an optimized circuit is equivalent to its specification), bounded model checking of C programs, scheduling, cryptanalysis, and the occasional mathematical proof. In 2016 a SAT solver settled the Boolean Pythagorean triples problem with a 200-terabyte proof.</p>
+</section>
+</section>
+<section id="what-propositional-logic-cannot-say" class="level2">
+<h2 class="anchored" data-anchor-id="what-propositional-logic-cannot-say">What Propositional Logic Cannot Say</h2>
+<p>Propositional logic treats “the buffer is full” as an indivisible atom. It cannot look inside. That makes some obviously valid arguments impossible to express:</p>
+<blockquote class="blockquote">
+<p>Every interrupt handler must be short. <code>uart_isr</code> is an interrupt handler. Therefore <code>uart_isr</code> must be short.</p>
+</blockquote>
+<p>Rendered propositionally, the three sentences are three unrelated atoms <span class="math inline">\(p\)</span>, <span class="math inline">\(q\)</span>, <span class="math inline">\(r\)</span>, and <span class="math inline">\(\{p, q\} \not\models r\)</span>. The argument’s validity lives in the words “every” and in the shared name <code>uart_isr</code>, which propositional logic has no way to represent.</p>
+<p><strong>Predicate logic</strong> (first-order logic) fixes this by adding objects, predicates over objects, and the quantifiers <span class="math inline">\(\forall\)</span> (“for all”) and <span class="math inline">\(\exists\)</span> (“there exists”):</p>
+<p><span class="math display">\[
+\forall x\, (\textit{Handler}(x) \to \textit{Short}(x)), \; \textit{Handler}(\texttt{uart\_isr}) \models \textit{Short}(\texttt{uart\_isr})
+\]</span></p>
+<p>The cost is steep. First-order logic is still sound and complete (Gödel, 1929), but it is no longer decidable (Church and Turing, 1936): there is no truth table to fall back on, and no algorithm that always terminates with the answer. The jump from propositional to predicate logic is the jump from a language where every question can be settled to one where some cannot, and it is the same jump, by the same people, that defined what a computer is. See <a href="./index.html#the-theoretical-foundations">The Theoretical Foundations</a>.</p>
+</section>
+<section id="where-to-go-next" class="level2">
+<h2 class="anchored" data-anchor-id="where-to-go-next">Where to Go Next</h2>
+<section id="textbooks" class="level3">
+<h3 class="anchored" data-anchor-id="textbooks">Textbooks</h3>
+<ul>
+<li><strong>Kenneth Rosen, <em>Discrete Mathematics and Its Applications</em></strong> is the standard course text and the likely source of whatever notes you would have taken. Chapter 1 covers everything in this chapter at a gentle pace, with many exercises.</li>
+<li><strong>Michael Huth and Mark Ryan, <em>Logic in Computer Science</em></strong> is the best bridge for programmers. It covers natural deduction properly, then moves to model checking and program verification, which is where logic earns its keep in industry.</li>
+<li><strong>Herbert Enderton, <em>A Mathematical Introduction to Logic</em></strong> is the rigorous treatment: unique readability, compactness, and completeness proved rather than asserted. Read it when the “why” behind soundness and completeness starts to itch.</li>
+</ul>
+</section>
+<section id="hardware-and-history" class="level3">
+<h3 class="anchored" data-anchor-id="hardware-and-history">Hardware and History</h3>
+<ul>
+<li><strong>Charles Petzold, <em>Code: The Hidden Language of Computer Hardware and Software</em></strong> builds a computer from relays upward, retracing Shannon’s insight in a way that makes it feel inevitable.</li>
+<li><strong>The Stanford Encyclopedia of Philosophy</strong> entries on <a href="https://plato.stanford.edu/entries/logic-ancient/" target="_blank" rel="noopener noreferrer">Ancient Logic</a> (for the Stoics and Philo’s conditional) and <a href="https://plato.stanford.edu/entries/logic-classical/" target="_blank" rel="noopener noreferrer">Classical Logic</a> are authoritative and free.</li>
+</ul>
+</section>
+<section id="sat-in-practice" class="level3">
+<h3 class="anchored" data-anchor-id="sat-in-practice">SAT in Practice</h3>
+<ul>
+<li><strong>Donald Knuth, <em>The Art of Computer Programming</em>, Volume 4B</strong> devotes a long section to satisfiability, with algorithms, encodings, and history in Knuth’s usual depth.</li>
+<li><strong><a href="https://pysathq.github.io/" target="_blank" rel="noopener noreferrer">PySAT</a></strong> gives Python access to industrial solvers such as CaDiCaL and Glucose. Reimplementing the package example above with it is a good exercise in CNF encoding.</li>
+<li><strong>Z3</strong> (Microsoft Research) is the SMT solver to try next; its Python bindings let you state constraints over integers and bit vectors as well as booleans.</li>
+</ul>
+</section>
+<section id="practice" class="level3">
+<h3 class="anchored" data-anchor-id="practice">Practice</h3>
+<ul>
+<li>Take a gnarly condition from code you maintain, translate it into a formula, simplify it with the laws, and check your result with the <code>TruthTable</code> class above.</li>
+<li>Extend the interpreter with a <code>to_cnf</code> method that implements the three-step conversion, then feed its output to <code>DpllSolver</code>.</li>
+<li>Encode a Sudoku as CNF (729 atoms, one per cell-digit pair) and solve it. It is the classic first SAT encoding, and it shows how much structure unit propagation exploits.</li>
+</ul>
+</section>
+</section>
+<section id="further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="further-reading">Further Reading</h2>
+<ul>
+<li>Boole, G. (1854). <em>An Investigation of the Laws of Thought</em>. Walton and Maberly.</li>
+<li>Cook, S. A. (1971). The complexity of theorem-proving procedures. <em>Proceedings of the Third Annual ACM Symposium on Theory of Computing</em>, 151 to 158.</li>
+<li>Davis, M., Logemann, G., and Loveland, D. (1962). A machine program for theorem-proving. <em>Communications of the ACM</em>, 5(7), 394 to 397.</li>
+<li>Enderton, H. B. (2001). <em>A Mathematical Introduction to Logic</em> (2nd ed.). Academic Press.</li>
+<li>Huth, M., and Ryan, M. (2004). <em>Logic in Computer Science: Modelling and Reasoning about Systems</em> (2nd ed.). Cambridge University Press.</li>
+<li>Kleene, S. C. (1956). Representation of events in nerve nets and finite automata. In <em>Automata Studies</em>, Princeton University Press.</li>
+<li>Knuth, D. E. (2022). <em>The Art of Computer Programming, Volume 4B: Combinatorial Algorithms, Part 2</em>. Addison-Wesley.</li>
+<li>McCulloch, W. S., and Pitts, W. (1943). A logical calculus of the ideas immanent in nervous activity. <em>Bulletin of Mathematical Biophysics</em>, 5, 115 to 133.</li>
+<li>Minsky, M., and Papert, S. (1969). <em>Perceptrons</em>. MIT Press.</li>
+<li>Petzold, C. (2022). <em>Code: The Hidden Language of Computer Hardware and Software</em> (2nd ed.). Microsoft Press.</li>
+<li>Post, E. L. (1921). Introduction to a general theory of elementary propositions. <em>American Journal of Mathematics</em>, 43(3), 163 to 185.</li>
+<li>Rosen, K. H. (2019). <em>Discrete Mathematics and Its Applications</em> (8th ed.). McGraw-Hill.</li>
+<li>Shannon, C. E. (1938). A symbolic analysis of relay and switching circuits. <em>Transactions of the AIEE</em>, 57(12), 713 to 723.</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation column-body">
+  <div class="nav-page nav-page-previous">
+      <a href="./latex.html" class="pagination-link" aria-label="LaTeX Reference">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">LaTeX Reference</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./ecosystem.html" class="pagination-link" aria-label="Introduction">
+        <span class="nav-page-text">Introduction</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
